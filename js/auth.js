@@ -92,31 +92,11 @@ const AuthManager = {
         else window.location.href = '/login.html';
         return status;
     },
-    async requireAdminGuard: async function () {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    
-    // 1. Agar session hi nahi hai, to login page bhejo (Logout mat chalao)
-    if (!session) {
-        window.location.href = 'login.html';
-        return null;
+    async requireAdminGuard() {
+        const user = await this.getUser();
+        if (!user) { window.location.href='/login.html'; return null; }
+        const profile = await this.getProfile();
+        if (!profile || profile.role !== 'admin') { alert('Admin credentials required.'); window.location.href='/dashboard.html'; return null; }
+        return { user, profile };
     }
-
-    // 2. Profile fetch karo
-    const { data: profile, error } = await supabaseClient
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-    // 3. Agar error ho ya role admin na ho
-    if (error  !profile  profile.role !== 'admin') {
-        console.error("Admin Access Denied:", error);
-        window.location.href = 'login.html';
-        return null;
-    }
-
-    return profile;
-}
 };
-// js/auth.js ke sabse niche add karein
-window.AuthManager = AuthManager;
