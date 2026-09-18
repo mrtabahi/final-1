@@ -118,3 +118,5 @@ const AuthManager = {
     return profile;
 }
 };
+// js/auth.js ke sabse niche add karein
+window.AuthManager = AuthManager;
