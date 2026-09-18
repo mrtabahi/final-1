@@ -106,7 +106,33 @@ const ScoringEngine = {
         const typedWords = typed.map(x => x.word);
         const alignment = this.alignWords(expectedWords, typedWords);
 
-        const wordErrors = alignment.reduce((sum, item) => sum + (item.type === "match" ? 0 : 1), 0);
+        // Count actual typing errors.
+        // Trailing deleted words are not errors because they simply mean
+        // the user ran out of time before reaching the end of the passage.
+        let wordErrors = 0;
+
+        for (let i = 0; i < alignment.length; i++) {
+            const item = alignment[i];
+
+            if (item.type === "match") {
+                continue;
+            }
+
+            if (item.type === "delete") {
+                const hasLaterTypedOperation = alignment
+                    .slice(i + 1)
+                    .some(op => op.type !== "delete");
+
+                // If all remaining operations are deletes, these are simply
+                // untyped words remaining at the end of the passage.
+                if (!hasLaterTypedOperation) {
+                    continue;
+                }
+            }
+
+            wordErrors++;
+        }
+
         const doubleSpaceErrors = this.countDoubleSpaceErrors(typedText);
         const totalErrors = wordErrors + doubleSpaceErrors;
 
