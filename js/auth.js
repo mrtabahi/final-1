@@ -19,7 +19,7 @@ const AuthManager = {
         if (!user.email_confirmed_at) return { ok:false, reason:'email' };
         const profile = await this.getProfile();
         if (!profile || profile.role !== 'candidate') return { ok:false, reason:'profile' };
-        if (!profile.phone || !profile.phone_verified) return { ok:false, reason:'phone' };
+      //  if (!profile.phone || !profile.phone_verified) return { ok:false, reason:'phone' }; //.....................................
         return { ok:true, user, profile };
     },
     async login(identifier, password) {
