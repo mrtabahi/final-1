@@ -1,5 +1,41 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Account | Decoding HCM</title><link rel="stylesheet" href="css/main.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><nav class="navbar"><a href="login.html" class="brand-container"><div class="brand-logo">HCM</div><div class="brand-title">DECODING HCM</div></a></nav><div class="container" style="max-width:560px;margin-top:2rem"><div class="card"><h2 class="card-title">Candidate Account</h2><div style="display:flex;gap:.5rem;margin-bottom:1rem"><button id="tab-login" class="btn btn-primary" type="button">Sign In</button><button id="tab-signup" class="btn btn-secondary" type="button">Create Account</button></div><div id="login-box"><form id="login-form"><div class="form-group"><label class="form-label">Email or Mobile Number</label><input id="login-id" class="form-control" required placeholder="name@gmail.com or +91XXXXXXXXXX"></div><div class="form-group"><label class="form-label">Password</label><input id="login-password" type="password" class="form-control" required></div><button class="btn btn-primary btn-block">Sign In</button></form><p style="text-align:center;margin-top:1rem"><a href="forgot.html">Forgot Password?</a></p></div><div id="signup-box" style="display:none"><p class="form-help">Only four details are required: name, email, mobile number and password. Your email and mobile must be verified before you can take a test.</p><form id="signup-form"><div class="form-group"><label class="form-label">Full Name</label><input id="signup-name" class="form-control" maxlength="100" required></div><div class="form-group"><label class="form-label">Gmail / Email</label><input id="signup-email" type="email" class="form-control" required placeholder="name@gmail.com"></div><div class="form-group"><label class="form-label">Mobile Number</label><input id="signup-phone" type="tel" class="form-control" required placeholder="+91XXXXXXXXXX"></div><div class="form-group"><label class="form-label">Password</label><input id="signup-password" type="password" minlength="8" class="form-control" required></div><div class="form-group"><label class="form-label">Confirm Password</label><input id="signup-confirm" type="password" minlength="8" class="form-control" required></div><button class="btn btn-primary btn-block">Create Account</button></form></div><p id="auth-message" class="form-help" style="margin-top:1rem"></p></div></div><script src="js/config.js"></script><script src="js/auth.js"></script><script>
 const $=id=>document.getElementById(id); $('tab-login').onclick=()=>{ $('login-box').style.display='block';$('signup-box').style.display='none';$('tab-login').className='btn btn-primary';$('tab-signup').className='btn btn-secondary';}; $('tab-signup').onclick=()=>{ $('login-box').style.display='none';$('signup-box').style.display='block';$('tab-login').className='btn btn-secondary';$('tab-signup').className='btn btn-primary';};
-$('login-form').onsubmit=async e=>{e.preventDefault();try{await AuthManager.login($('login-id').value,$('login-password').value);location.href='dashboard.html';}catch(err){$('auth-message').textContent=err.message;}};
-$('signup-form').onsubmit=async e=>{e.preventDefault();$('auth-message').textContent='';if($('signup-password').value!==$('signup-confirm').value){$('auth-message').textContent='Passwords do not match.';return;}try{const d=await AuthManager.register({email:$('signup-email').value,phone:$('signup-phone').value,password:$('signup-password').value,fullName:$('signup-name').value});if(d.session){location.href='verify.html';}else{$('auth-message').textContent='Account created. Check your email, confirm it, then sign in to complete mobile verification.';$('tab-login').click();}}catch(err){$('auth-message').textContent=err.message;}};
+// $('login-form').onsubmit=async e=>{e.preventDefault();try{await AuthManager.login($('login-id').value,$('login-password').value);location.href='dashboard.html';}catch(err){$('auth-message').textContent=err.message;}};
+$('login-form').onsubmit = async e => {
+    e.preventDefault();
+    $('auth-message').textContent = '';
+
+    try {
+        await AuthManager.login(
+            $('login-id').value,
+            $('login-password').value
+        );
+
+        // Login ke baad user ka role check karo
+        const profile = await AuthManager.getProfile();
+
+        if (!profile) {
+            $('auth-message').textContent =
+                'Account profile not found. Please contact administrator.';
+            await supabaseClient.auth.signOut();
+            return;
+        }
+
+        if (profile.role === 'admin') {
+            window.location.href = 'admin.html';
+        } else if (profile.role === 'candidate') {
+            window.location.href = 'dashboard.html';
+        } else {
+            $('auth-message').textContent =
+                'Your account role is not configured correctly.';
+            await supabaseClient.auth.signOut();
+        }
+
+    } catch (err) {
+        console.error('Login error:', err);
+        $('auth-message').textContent =
+            err.message || 'Unable to sign in. Please try again.';
+    }
+};
+  $('signup-form').onsubmit=async e=>{e.preventDefault();$('auth-message').textContent='';if($('signup-password').value!==$('signup-confirm').value){$('auth-message').textContent='Passwords do not match.';return;}try{const d=await AuthManager.register({email:$('signup-email').value,phone:$('signup-phone').value,password:$('signup-password').value,fullName:$('signup-name').value});if(d.session){location.href='verify.html';}else{$('auth-message').textContent='Account created. Check your email, confirm it, then sign in to complete mobile verification.';$('tab-login').click();}}catch(err){$('auth-message').textContent=err.message;}};
 </script></body></html>
