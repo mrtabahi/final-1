@@ -1,0 +1,51 @@
+/* ADMIN PANEL DASHBOARD LAYOUT */
+.admin-layout {
+  display: flex;
+  min-height: calc(100vh - 70px);
+}
+
+.admin-sidebar {
+  width: 260px;
+  background-color: #0f172a;
+  color: #cbd5e1;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-sidebar a {
+  color: #94a3b8;
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s;
+}
+
+.admin-sidebar a:hover, .admin-sidebar a.active {
+  background-color: var(--accent-blue);
+  color: white;
+}
+
+.admin-content {
+  flex: 1;
+  padding: 2rem;
+  background-color: #f1f5f9;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+  }
+}
+.admin-test-row{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:1rem 0;border-bottom:1px solid var(--border-color)}
+.admin-test-row:last-child{border-bottom:0}
+.btn-sm{padding:.45rem .7rem;font-size:.85rem}

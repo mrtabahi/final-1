@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard | Decoding HCM Typing Test Lab</title>
+    <link rel="stylesheet" href="css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">HCM</div>
+            <div class="brand-title">DECODING HCM</div>
+        </a>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2 class="card-title">🏆 Top Candidate Leaderboard</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Candidate</th>
+                            <th>Language</th>
+                            <th>Gross WPM</th>
+                            <th>Net WPM</th>
+                            <th>Accuracy</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <tr><td colspan="6">Loading rankings...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/leaderboard.js"></script>
+</body>
+</html>

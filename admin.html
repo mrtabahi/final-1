@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Decoding HCM</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">HCM</div>
+            <div class="brand-title">DECODING HCM — ADMIN</div>
+        </a>
+    </nav>
+
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <a href="#" class="active" id="nav-dash">Dashboard</a>
+            <a href="#" id="nav-tests">Manage Folders & Tests</a>
+            <a href="#" id="nav-attempts">All Candidate Attempts</a>
+            <a href="#" onclick="AuthManager.logout()">Logout</a>
+        </aside>
+
+        <main class="admin-content" id="admin-main-view">
+            <h2>System Overview</h2>
+            <div class="grid-3" style="margin-top: 1rem;">
+                <div class="stat-box">
+                    <div class="stat-value" id="adm-total-attempts">0</div>
+                    <div class="stat-label">Total Test Attempts</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="adm-total-passages">0</div>
+                    <div class="stat-label">Active Passages</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="adm-avg-wpm">0</div>
+                    <div class="stat-label">Avg Net WPM</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3 class="card-title">Create / Configure Typing Set</h3><div class="form-group"><label class="form-label">Folder</label><select id="pass-folder" class="form-control" required><option value="">Loading folders...</option></select></div>
+                <p class="form-help">Admin controls the passage, language, fixed timing, permissible errors, excess-error penalty, qualifying speed and optional accuracy threshold.</p>
+                <form id="add-passage-form">
+                    <div class="grid-2">
+                        <div class="form-group"><label class="form-label">Passage Title</label><input type="text" id="pass-title" class="form-control" required placeholder="e.g. BSF HCM Set 01"></div>
+                        <div class="form-group"><label class="form-label">Language</label><select id="pass-lang" class="form-control"><option value="English">English</option><option value="Hindi">Hindi</option></select></div>
+                    </div>
+                    <div class="grid-3">
+                        <div class="form-group"><label class="form-label">Fixed Duration (minutes)</label><input type="number" id="pass-duration" class="form-control" min="1" max="180" value="10" required></div>
+                        <div class="form-group"><label class="form-label">Target Net WPM</label><input type="number" id="pass-target-wpm" class="form-control" min="0" step="0.1" value="35" required></div>
+                        <div class="form-group"><label class="form-label">Minimum Accuracy % (optional)</label><input type="number" id="pass-min-accuracy" class="form-control" min="0" max="100" step="0.1" placeholder="e.g. 98"></div>
+                    </div>
+                    <div class="grid-3">
+                        <div class="form-group"><label class="form-label">Permissible Errors %</label><input type="number" id="pass-free-error" class="form-control" min="0" max="100" step="0.1" value="5" required></div>
+                        <div class="form-group"><label class="form-label">Penalty Words / Excess Error</label><input type="number" id="pass-penalty" class="form-control" min="0" max="100" value="10" required></div>
+                        <div class="form-group"><label class="form-label">Typing Mode</label><select id="pass-mode" class="form-control"><option value="screen">Screen → Screen</option><option value="page">Page → Screen</option></select></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Passage Text</label><textarea id="pass-text" class="form-control" style="height: 180px;" required></textarea></div>
+                    <div class="grid-3">
+                        <label><input type="checkbox" id="pass-active" checked> Active / visible to candidates</label>
+                        <label><input type="checkbox" id="pass-backspace" checked> Allow Backspace</label>
+                        <label><input type="checkbox" id="pass-leaderboard" checked> Show in Leaderboard</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Publish Typing Set</button>
+                </form>
+            </div>
+
+            <div class="card" style="margin-top:2rem;"><h3 class="card-title">Create Folder</h3><form id="folder-form"><div class="grid-2"><input id="folder-name" class="form-control" required placeholder="e.g. English 5 Minute Sets"><input id="folder-desc" class="form-control" placeholder="Short description"></div><button class="btn btn-secondary" style="margin-top:1rem">Create Folder</button></form></div><div class="card" style="margin-top:2rem;">
+                <h3 class="card-title">Existing Typing Sets</h3>
+                <div id="admin-tests-list" class="admin-list">Loading...</div>
+            </div>
+
+            <div class="card" style="margin-top:2rem;">
+                <h3 class="card-title">Admin Controls You Can Extend</h3>
+                <ul><li>Set-specific duration and qualifying speed</li><li>Set-specific permissible error percentage</li><li>Set-specific penalty per excess error</li><li>Optional accuracy threshold (e.g. 98%, 90%, 80%)</li><li>Screen or page mode</li><li>Activate/deactivate any set</li><li>Leaderboard visibility</li><li>Backspace policy flag for practice simulation</li><li>Future-ready fields for attempt limits, random passage pools and scheduled availability</li></ul>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

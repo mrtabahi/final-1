@@ -1,0 +1,10 @@
+-- Run this on an EXISTING installation. Then review and run rls.sql.
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email TEXT;ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone TEXT;ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN DEFAULT false;ALTER TABLE profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+CREATE TABLE IF NOT EXISTS folders(id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),name TEXT NOT NULL UNIQUE,description TEXT DEFAULT '',sort_order INT DEFAULT 0,active BOOLEAN DEFAULT true,created_at TIMESTAMPTZ DEFAULT now() NOT NULL);
+ALTER TABLE tests ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES folders(id) ON DELETE SET NULL;ALTER TABLE attempts ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES profiles(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_attempts_user_date ON attempts(user_id,created_at DESC);CREATE INDEX IF NOT EXISTS idx_tests_folder_active ON tests(folder_id,active);
+INSERT INTO folders(name,description,sort_order) VALUES('General','Default folder for existing typing sets',0) ON CONFLICT(name) DO NOTHING;
+UPDATE tests SET folder_id=(SELECT id FROM folders WHERE name='General') WHERE folder_id IS NULL;
+-- Existing GUEST attempts cannot be safely assigned to a candidate. Leave them unowned; after verifying backups, either archive/delete them before enforcing user_id NOT NULL.
+CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN INSERT INTO public.profiles(id,full_name,email,phone,phone_verified) VALUES(NEW.id,COALESCE(NULLIF(NEW.raw_user_meta_data->>'full_name',''),'Candidate'),NEW.email,NEW.raw_user_meta_data->>'phone',false) ON CONFLICT(id) DO UPDATE SET full_name=EXCLUDED.full_name,email=EXCLUDED.email,phone=COALESCE(EXCLUDED.phone,profiles.phone); RETURN NEW; END; $$;
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

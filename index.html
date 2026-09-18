@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decoding HCM Typing Test Lab | BSF HCM Typing Practice</title>
+    <meta name="description" content="Professional BSF HCM typing practice platform with English and Hindi typing tests, speed, accuracy, errors, results and performance tracking.">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/typing.css">
+    <!-- Supabase JS Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">HCM</div>
+            <div>
+                <div class="brand-title">DECODING HCM</div>
+                <div class="brand-subtitle">Typing Test Lab — BSF Preparation</div>
+            </div>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="leaderboard.html">Leaderboard</a></li>
+            <li><a href="dashboard.html">Candidate Portal</a></li>
+            
+        </ul>
+    </nav>
+
+    <div class="container" id="app-root">
+        <!-- STEP 1: TEST CONFIGURATION FORM -->
+        <div id="setup-section" class="card">
+            <h2 class="card-title">Select Typing Test</h2>
+            <p class="form-help">You are signed in. Your verified account name will be used automatically; no roll number or candidate-name entry is required.</p>
+            <form id="exam-config-form">
+                <div class="grid-2">
+                    <div class="form-group"><label class="form-label">Language</label><select id="select-language" class="form-control"><option value="English">English</option><option value="Hindi">Hindi</option></select></div>
+                    <div class="form-group"><label class="form-label">Typing Mode</label><select id="select-mode" class="form-control" disabled><option value="screen">Set controlled</option></select></div>
+                </div>
+                <div class="form-group"><label class="form-label">Select Test</label><select id="select-passage" class="form-control" required><option value="">Loading...</option></select></div>
+                <div class="form-group"><label class="form-label">Fixed Duration</label><input id="select-duration" class="form-control" readonly></div>
+                <button type="submit" class="btn btn-primary btn-block">Proceed to Exam Instructions</button>
+            </form>
+        </div>
+
+        <!-- STEP 2: INSTRUCTIONS -->
+        <div id="instruction-section" class="card" style="display: none;">
+            <h2 class="card-title">Typing Test Instructions</h2>
+            <div style="line-height: 1.8; margin-bottom: 1.5rem;">
+                <p><strong>1. Evaluation Rules:</strong> Word comparison uses sequence alignment: a skipped word is one error and does not shift all following correctly typed words. An extra word is one error. A double-space run is one whitespace error. The set's configured BSF-style free-error and penalty rules are applied.</p>
+                <p><strong>2. Anti-Cheat Monitoring:</strong> Do not switch browser tabs or minimize the window. All focus interruptions are logged.</p>
+                <p><strong>3. Paste Prohibition:</strong> Right-click and Clipboard Paste operations inside the typing terminal are disabled.</p>
+                <p><strong>4. Timer Rule:</strong> Countdown starts immediately when you type the first character. The set duration is controlled by the administrator.</p>
+            </div>
+            <button id="btn-start-test" class="btn btn-primary btn-block">I Agree & Start Typing Test</button>
+        </div>
+
+        <!-- STEP 3: EXAM TYPING LAB CANVAS -->
+        <div id="typing-section" style="display: none;">
+            <div class="exam-header">
+                <div>
+                    <strong id="disp-candidate-name">Candidate Name</strong> | 
+                    <span id="disp-test-title">Passage Title</span> | 
+                    <span id="disp-mode" class="badge badge-success">On Screen</span>
+                </div>
+                <div class="timer-box" id="timer-display">10:00</div>
+            </div>
+
+            <div class="card" style="border-top-left-radius: 0; border-top-right-radius: 0;">
+                <div id="offscreen-alert" class="offscreen-notice" style="display: none;">
+                    📄 OFF-SCREEN MODE ACTIVE: Passage is hidden on screen. Please look at your physical printed sheet and type below.
+                </div>
+
+                <div id="passage-container" class="passage-display">Loading passage...</div>
+
+                <textarea id="typing-textarea" class="typing-input" placeholder="Start typing here... The timer will start automatically." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+
+                <div class="grid-4" style="margin-top: 1rem;">
+                    <div class="stat-box">
+                        <div class="stat-value" id="live-gross-wpm">0</div>
+                        <div class="stat-label">Gross WPM</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="live-net-wpm">0</div>
+                        <div class="stat-label">Net WPM</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="live-accuracy">100%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="live-errors">0</div>
+                        <div class="stat-label">Errors</div>
+                    </div>
+                </div>
+
+                <button id="btn-submit-early" class="btn btn-danger" style="margin-top: 1rem; float: right;">Finalize & Submit Test</button>
+            </div>
+        </div>
+
+        <!-- STEP 4: RESULT SCORECARD -->
+        <div id="result-section" style="display: none;">
+            <div class="scorecard">
+                <h2>TEST RESULT SCORECARD</h2>
+                <div id="result-status-badge" class="score-status badge-success">QUALIFIED</div>
+                
+                <div class="score-main"><span id="res-net-wpm">0</span> <span style="font-size: 1.5rem; color: var(--text-muted);">NET WPM</span></div>
+
+                <div class="grid-4" style="margin-bottom: 2rem;">
+                    <div class="stat-box">
+                        <div class="stat-value" id="res-gross-wpm">0</div>
+                        <div class="stat-label">Gross WPM</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="res-accuracy">0%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="res-total-errors">0</div>
+                        <div class="stat-label">Total Errors</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="res-penalty">0</div>
+                        <div class="stat-label">Penalty Words</div>
+                    </div>
+                </div>
+
+                <div class="card" style="text-align: left; margin-top: 1.5rem;">
+                    <h3 class="card-title">Typing Comparison</h3>
+                    <p class="form-help">Correct words are shown normally. Wrong/extra/missing items are highlighted in red; the original word appears in brackets.</p>
+                    <h4>Original Content</h4>
+                    <div id="result-original-content" class="result-content original-content"></div>
+                    <h4 style="margin-top:1rem;">Your Typed Content & Mistakes</h4>
+                    <div id="result-typed-content" class="result-content typed-result-content"></div>
+                </div>
+
+                <div class="card" style="text-align: left;">
+                    <h3 class="card-title">BSF Formula Breakdown</h3>
+                    <p>Total Words Typed: <strong id="res-typed-words">0</strong></p>
+                    <p>Free Permissible Errors (5%): <strong id="res-free-errors">0</strong></p>
+                    <p>Excess Penalty Errors: <strong id="res-excess-errors">0</strong></p>
+                    <p>Time Elapsed: <strong id="res-elapsed">0</strong> minutes</p>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+                    <button onclick="window.location.reload()" class="btn btn-primary">Retake Test</button>
+                    <a href="leaderboard.html" class="btn btn-secondary">View Leaderboard</a>
+                    <button onclick="window.print()" class="btn btn-secondary">Print Scorecard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© Decoding HCM — All Rights Reserved | Official BSF HCM Preparation Platform</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/scoring.js"></script>
+    <script src="js/typing-engine.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

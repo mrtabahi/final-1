@@ -1,0 +1,176 @@
+/* EXAM TYPING LAB ENGINE STYLING */
+.exam-header {
+  background-color: var(--primary-blue);
+  color: white;
+  padding: 1rem;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timer-box {
+  background: #000000;
+  color: #00ff66;
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 700;
+  padding: 0.4rem 1.2rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 2px;
+  box-shadow: inset 0 0 8px rgba(0, 255, 102, 0.4);
+}
+
+.stat-box {
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary-blue);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* PASSAGE CANVAS */
+.passage-display {
+  background: #ffffff;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+  font-size: 1.2rem;
+  line-height: 1.8;
+  height: 180px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  user-select: none;
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.passage-char {
+  position: relative;
+}
+
+.char-correct {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.char-incorrect {
+  background-color: #fee2e2;
+  color: #991b1b;
+  text-decoration: underline;
+}
+
+.char-current {
+  background-color: var(--accent-blue);
+  color: white;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.6; }
+}
+
+/* INPUT TEXTAREA */
+.typing-input {
+  width: 100%;
+  height: 180px;
+  padding: 1.25rem;
+  font-size: 1.2rem;
+  line-height: 1.8;
+  font-family: var(--font-mono);
+  border: 2px solid var(--primary-blue);
+  border-radius: var(--radius-sm);
+  resize: none;
+  background-color: #ffffff;
+  color: var(--text-main);
+}
+
+.typing-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.2);
+}
+
+.offscreen-notice {
+  background-color: #fffbebf5;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* RESULT SCORECARD */
+.scorecard {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.score-main {
+  font-size: 4rem;
+  font-weight: 900;
+  color: var(--primary-blue);
+  margin: 1rem 0;
+  line-height: 1;
+}
+
+.score-status {
+  display: inline-block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+}
+
+.diff-box {
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  max-height: 250px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+
+.result-content {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  line-height: 2;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono);
+}
+.original-content { background: #fff; }
+.result-token { display: inline; }
+.result-token-wrong { color: #b91c1c; background: #fee2e2; font-weight: 800; padding: 0 .18rem; border-radius: 3px; }
+.result-token-missing { color: #b91c1c; background: #fee2e2; font-weight: 800; padding: .08rem .25rem; border-radius: 3px; }
+.result-token-extra { color: #b91c1c; background: #fee2e2; font-weight: 800; padding: .08rem .25rem; border-radius: 3px; }
+.result-space-error { color: #b91c1c; background: #fee2e2; font-weight: 800; padding: 0 .2rem; border-radius: 3px; }
+.result-legend { margin-top:.75rem; font-size:.9rem; color:var(--text-muted); }
+.form-help { color: var(--text-muted); font-size:.85rem; }
+
+.result-content{white-space:pre-wrap;line-height:1.9;padding:1rem;border:1px solid var(--border-color);border-radius:10px;background:var(--surface-color,#fff);overflow-wrap:anywhere}.result-token{color:inherit}.result-token-wrong,.result-token-extra,.result-token-missing{color:#d32f2f;font-weight:700}.result-token-missing{background:#fff1f1}.result-legend{margin-top:1rem;font-size:.9rem;color:#b42318}
