@@ -1,24 +1,18 @@
 /**
  * Decoding HCM - BSF HCM 2024-style typing scorer
  *
- * Error detection:
- * - Words are compared by sequence alignment.
- * - One omitted word = 1 error.
- * - One extra word = 1 error.
- * - One wrong/different word = 1 error.
- * - Repeated word = 1 error.
- * - Word mixing-up = handled through alignment.
- * - Double-space runs = 1 whitespace error.
+ * BSF HCM 2024 relevant rules:
+ * - English: 35 WPM = 10500 KDPH
+ * - Hindi:   30 WPM = 9000 KDPH
+ * - Average 5 key depressions = 1 word
+ * - 5% of actually typed words are permissible mistakes
+ * - Every mistake beyond the permissible limit deducts 10 words
+ * - Each mistake may include spelling error, omitted word/punctuation,
+ *   repeated word, extra word, word differing from passage, etc.
  *
- * Speed calculation:
- * - 5 key depressions = 1 equivalent word.
- * - Gross words = total key depressions / 5.
- * - 5% of actually typed equivalent words = permissible errors.
- * - Every error beyond permissible limit = 10 words deducted.
- *
- * Important:
- * Error detection remains word-based.
- * Speed calculation is keystroke-based.
+ * IMPORTANT:
+ * "5 key depressions = 1 word" is used for SPEED calculation.
+ * Errors are still counted according to the typed passage/words.
  */
 
 const ScoringEngine = {
@@ -27,6 +21,7 @@ const ScoringEngine = {
         const source = String(text ?? "");
         const re = /\S+/gu;
         const words = [];
+
         let m;
 
         while ((m = re.exec(source)) !== null) {
@@ -43,6 +38,7 @@ const ScoringEngine = {
     countDoubleSpaceErrors(text) {
         const source = String(text ?? "");
         const runs = source.match(/ {2,}/g);
+
         return runs ? runs.length : 0;
     },
 
@@ -50,13 +46,12 @@ const ScoringEngine = {
      * Levenshtein-style word alignment.
      *
      * Returns:
-     * match
-     * substitute
-     * delete
-     * insert
+     * - match
+     * - substitute
+     * - delete
+     * - insert
      */
     alignWords(expectedWords, typedWords) {
-
         const n = expectedWords.length;
         const m = typedWords.length;
 
@@ -81,49 +76,32 @@ const ScoringEngine = {
         }
 
         for (let i = 1; i <= n; i++) {
-
             for (let j = 1; j <= m; j++) {
 
                 if (expectedWords[i - 1] === typedWords[j - 1]) {
-
                     dp[i][j] = dp[i - 1][j - 1];
                     op[i][j] = "match";
-
                     continue;
                 }
 
-                const substitute =
-                    dp[i - 1][j - 1] + 1;
+                const substitute = dp[i - 1][j - 1] + 1;
+                const del = dp[i - 1][j] + 1;
+                const ins = dp[i][j - 1] + 1;
 
-                const del =
-                    dp[i - 1][j] + 1;
+                const best = Math.min(
+                    substitute,
+                    del,
+                    ins
+                );
 
-                const ins =
-                    dp[i][j - 1] + 1;
-
-                const best =
-                    Math.min(substitute, del, ins);
-
-                /*
-                 * Prefer substitution first.
-                 * Then deletion.
-                 * Then insertion.
-                 *
-                 * This prevents one omitted word from causing
-                 * every following correct word to become wrong.
-                 */
+                // Prefer substitution, then deletion, then insertion.
                 if (best === substitute) {
-
                     dp[i][j] = substitute;
                     op[i][j] = "substitute";
-
                 } else if (best === del) {
-
                     dp[i][j] = del;
                     op[i][j] = "delete";
-
                 } else {
-
                     dp[i][j] = ins;
                     op[i][j] = "insert";
                 }
@@ -192,30 +170,30 @@ const ScoringEngine = {
     },
 
     /**
-     * Calculate BSF HCM-style typing score.
+     * Calculate score according to BSF HCM 2024-style rules.
      *
-     * totalKeystrokes MUST come from the typing input engine.
-     *
-     * 5 key depressions = 1 equivalent word.
+     * config:
+     * {
+     *   freeErrorPct: 0.05,
+     *   penaltyPerError: 10,
+     *   minAccuracy: null,
+     *   targetWpm: 35,
+     *   keyDepressionsPerWord: 5,
+     *   keyDepressions: null
+     * }
      */
-    calculateScore(
-        expectedText,
-        typedText,
-        durationSeconds,
-        config = {},
-        totalKeystrokes = null
-    ) {
+    calculateScore(expectedText, typedText, durationSeconds, config = {}) {
 
         const freePct = Number(
-            config.freeErrorPct ??
-            CONFIG.DEFAULT_FREE_ERROR_PCT ??
-            0.05
+            config.freeErrorPct ?? CONFIG.DEFAULT_FREE_ERROR_PCT ?? 0.05
         );
 
         const penaltyMultiplier = Number(
-            config.penaltyPerError ??
-            CONFIG.DEFAULT_PENALTY_PER_ERROR ??
-            10
+            config.penaltyPerError ?? CONFIG.DEFAULT_PENALTY_PER_ERROR ?? 10
+        );
+
+        const keyDepressionsPerWord = Number(
+            config.keyDepressionsPerWord ?? 5
         );
 
         const minAccuracy =
@@ -232,43 +210,28 @@ const ScoringEngine = {
                 ? null
                 : Number(config.targetWpm);
 
-        const elapsedSeconds =
-            Math.max(Number(durationSeconds) || 0, 0.001);
+        const elapsedSeconds = Math.max(
+            Number(durationSeconds) || 0,
+            0.001
+        );
 
-        const elapsedMinutes =
-            elapsedSeconds / 60;
-
-        /*
-         * ---------------------------------------------------------
-         * 1. TOKENIZE
-         * ---------------------------------------------------------
-         */
+        const elapsedMinutes = elapsedSeconds / 60;
 
         const expected = this.tokenize(expectedText);
         const typed = this.tokenize(typedText);
 
-        const expectedWords =
-            expected.map(x => x.word);
+        const expectedWords = expected.map(x => x.word);
+        const typedWords = typed.map(x => x.word);
 
-        const typedWords =
-            typed.map(x => x.word);
-
-        /*
-         * ---------------------------------------------------------
-         * 2. WORD ALIGNMENT
-         * ---------------------------------------------------------
-         */
-
-        const alignment =
-            this.alignWords(
-                expectedWords,
-                typedWords
-            );
+        const alignment = this.alignWords(
+            expectedWords,
+            typedWords
+        );
 
         /*
-         * ---------------------------------------------------------
-         * 3. COUNT ACTUAL ERRORS
-         * ---------------------------------------------------------
+         * ------------------------------------------------------------
+         * 1. COUNT ERRORS
+         * ------------------------------------------------------------
          */
 
         let wordErrors = 0;
@@ -281,17 +244,16 @@ const ScoringEngine = {
                 continue;
             }
 
-            /*
-             * Words remaining at the end because the candidate
-             * ran out of time are not counted as mistakes.
-             */
             if (item.type === "delete") {
 
-                const hasLaterTypedOperation =
-                    alignment
-                        .slice(i + 1)
-                        .some(op => op.type !== "delete");
+                const hasLaterTypedOperation = alignment
+                    .slice(i + 1)
+                    .some(op => op.type !== "delete");
 
+                /*
+                 * Words remaining after the candidate stopped typing
+                 * are not counted as mistakes.
+                 */
                 if (!hasLaterTypedOperation) {
                     continue;
                 }
@@ -301,159 +263,140 @@ const ScoringEngine = {
         }
 
         /*
-         * ---------------------------------------------------------
-         * 4. WHITESPACE ERRORS
-         * ---------------------------------------------------------
+         * Keep your existing double-space reporting.
+         *
+         * NOTE:
+         * This is kept separately for UI/reporting compatibility.
+         * If you want exact BSF-style mistake calculation, it should
+         * NOT automatically be added as a separate error unless your
+         * test rules specifically define it that way.
          */
-
         const doubleSpaceErrors =
             this.countDoubleSpaceErrors(typedText);
 
         /*
-         * Total mistakes
+         * For BSF-style scoring, actual passage/word mistakes are used.
+         *
+         * Therefore double-space errors are NOT automatically added
+         * here as an independent mistake.
          */
-        const totalErrors =
-            wordErrors +
-            doubleSpaceErrors;
+        const totalErrors = wordErrors;
 
         /*
-         * ---------------------------------------------------------
-         * 5. KEY DEPRESSIONS
-         * ---------------------------------------------------------
+         * ------------------------------------------------------------
+         * 2. KEY DEPRESSIONS
+         * ------------------------------------------------------------
+         *
+         * BSF conversion:
+         *
+         * 5 key depressions = 1 word
+         *
+         * If keyDepressions is explicitly supplied by the typing
+         * application, use it.
+         *
+         * Otherwise fall back to typedText.length.
          *
          * IMPORTANT:
-         *
-         * totalKeystrokes should ideally be supplied by the
-         * actual typing input handler.
-         *
-         * If not supplied, fallback to text length is used only
-         * for compatibility, NOT as a perfect physical key count.
+         * typedText.length is only an approximation of actual
+         * key depressions if backspace/delete/correction is allowed.
          */
-
-        const typedString =
-            String(typedText ?? "");
-
-        const measuredKeystrokes =
-            Number.isFinite(Number(totalKeystrokes))
-                ? Math.max(0, Number(totalKeystrokes))
-                : typedString.length;
+        const totalTypedChars =
+            config.keyDepressions !== null &&
+            config.keyDepressions !== undefined
+                ? Math.max(
+                    0,
+                    Number(config.keyDepressions) || 0
+                )
+                : String(typedText ?? "").length;
 
         /*
-         * ---------------------------------------------------------
-         * 6. BSF EQUIVALENT WORDS
-         * ---------------------------------------------------------
-         *
-         * 5 key depressions = 1 word.
+         * Gross words according to BSF KDPH method.
          */
-
-        const equivalentTypedWords =
-            measuredKeystrokes / 5;
+        const grossWords =
+            totalTypedChars / keyDepressionsPerWord;
 
         /*
-         * ---------------------------------------------------------
-         * 7. PERMISSIBLE 5% ERRORS
-         * ---------------------------------------------------------
+         * ------------------------------------------------------------
+         * 3. PERMISSIBLE ERRORS
+         * ------------------------------------------------------------
          *
-         * BSF rule:
-         * 5% of words actually typed.
+         * Notification:
+         * mistakes equal to 5% of words actually typed
+         * are permissible.
          *
          * Example:
-         * 1500 key depressions
-         * = 300 words
-         * 5% = 15 permissible errors
-         */
-
-        const freeErrors =
-            Math.floor(
-                equivalentTypedWords * freePct
-            );
-
-        /*
-         * ---------------------------------------------------------
-         * 8. EXCESS ERRORS
-         * ---------------------------------------------------------
-         */
-
-        const excessErrors =
-            Math.max(
-                0,
-                totalErrors - freeErrors
-            );
-
-        /*
-         * ---------------------------------------------------------
-         * 9. 10 WORD PENALTY
-         * ---------------------------------------------------------
+         * 350 typed words
+         * 5% = 17.5
          *
-         * Every mistake beyond permissible limit
-         * = 10 words deducted.
+         * We use floor so only complete permissible errors count.
+         */
+        const freeErrors = Math.floor(
+            grossWords * freePct
+        );
+
+        /*
+         * ------------------------------------------------------------
+         * 4. EXCESS ERRORS
+         * ------------------------------------------------------------
          */
 
+        const excessErrors = Math.max(
+            0,
+            totalErrors - freeErrors
+        );
+
+        /*
+         * Every excess mistake = 10 words deduction.
+         */
         const penaltyWords =
             excessErrors * penaltyMultiplier;
 
         /*
-         * ---------------------------------------------------------
-         * 10. NET WORDS
-         * ---------------------------------------------------------
+         * ------------------------------------------------------------
+         * 5. NET WORDS
+         * ------------------------------------------------------------
          */
 
-        const netWords =
-            Math.max(
-                0,
-                equivalentTypedWords - penaltyWords
-            );
+        const netWords = Math.max(
+            0,
+            grossWords - penaltyWords
+        );
 
         /*
-         * ---------------------------------------------------------
-         * 11. GROSS WPM
-         * ---------------------------------------------------------
+         * ------------------------------------------------------------
+         * 6. SPEED
+         * ------------------------------------------------------------
          */
 
-        const grossWpm =
-            Number(
-                (equivalentTypedWords / elapsedMinutes)
-                    .toFixed(2)
-            );
+        const grossWpm = Number(
+            (grossWords / elapsedMinutes).toFixed(2)
+        );
+
+        const netWpm = Number(
+            (netWords / elapsedMinutes).toFixed(2)
+        );
 
         /*
-         * ---------------------------------------------------------
-         * 12. NET WPM
-         * ---------------------------------------------------------
-         */
-
-        const netWpm =
-            Number(
-                (netWords / elapsedMinutes)
-                    .toFixed(2)
-            );
-
-        /*
-         * ---------------------------------------------------------
-         * 13. CHARACTER FEEDBACK
-         * ---------------------------------------------------------
+         * ------------------------------------------------------------
+         * 7. CHARACTER ACCURACY
+         * ------------------------------------------------------------
          *
-         * Kept for UI feedback.
-         * This does NOT determine BSF speed.
+         * Kept for UI/feedback compatibility.
+         * This is NOT the BSF WPM calculation.
          */
-
-        const expectedChars =
-            String(expectedText ?? "");
+        const typedSource = String(typedText ?? "");
+        const expectedSource = String(expectedText ?? "");
 
         let correctChars = 0;
 
-        const maxChars =
-            Math.min(
-                expectedChars.length,
-                typedString.length
-            );
+        const maxChars = Math.min(
+            expectedSource.length,
+            typedSource.length
+        );
 
         for (let i = 0; i < maxChars; i++) {
 
-            if (
-                expectedChars[i] ===
-                typedString[i]
-            ) {
+            if (expectedSource[i] === typedSource[i]) {
                 correctChars++;
             }
         }
@@ -461,36 +404,27 @@ const ScoringEngine = {
         const incorrectChars =
             Math.max(
                 0,
-                typedString.length -
-                correctChars
+                typedSource.length - correctChars
             ) +
             Math.max(
                 0,
-                expectedChars.length -
-                typedString.length
+                expectedSource.length - typedSource.length
             );
 
-        /*
-         * ---------------------------------------------------------
-         * 14. ACCURACY
-         * ---------------------------------------------------------
-         */
-
         const accuracy =
-            measuredKeystrokes > 0
+            typedSource.length > 0
                 ? Number(
                     (
-                        (correctChars /
-                            measuredKeystrokes) *
+                        (correctChars / typedSource.length) *
                         100
                     ).toFixed(2)
                 )
                 : 0;
 
         /*
-         * ---------------------------------------------------------
-         * 15. PASS CONDITIONS
-         * ---------------------------------------------------------
+         * ------------------------------------------------------------
+         * 8. PASS / FAIL
+         * ------------------------------------------------------------
          */
 
         const passedByWpm =
@@ -504,84 +438,70 @@ const ScoringEngine = {
                 : accuracy >= minAccuracy;
 
         const passed =
-            passedByWpm &&
-            passedByAccuracy;
+            passedByWpm && passedByAccuracy;
 
         return {
 
             /*
-             * Raw typing data
+             * Original compatibility fields
              */
             totalTypedWords: typedWords.length,
 
-            totalTypedChars:
-                typedString.length,
+            totalTypedChars,
 
-            totalKeystrokes:
-                measuredKeystrokes,
-
-            /*
-             * BSF equivalent words
-             */
-            equivalentTypedWords:
-                Number(
-                    equivalentTypedWords.toFixed(2)
-                ),
-
-            /*
-             * Character feedback
-             */
             correctChars,
+
             incorrectChars,
 
-            /*
-             * Errors
-             */
             wordErrors,
+
             doubleSpaceErrors,
+
             totalErrors,
 
-            /*
-             * BSF 5% rule
-             */
             freeErrors,
+
             excessErrors,
 
-            /*
-             * 10-word penalty
-             */
             penaltyWords,
 
-            /*
-             * Final words
-             */
-            netWords:
-                Number(netWords.toFixed(2)),
+            netWords,
 
-            /*
-             * Speed
-             */
             grossWpm,
+
             netWpm,
 
-            /*
-             * Accuracy
-             */
             accuracy,
 
             elapsedMinutes,
 
-            /*
-             * Detailed analysis
-             */
             alignment,
 
             minAccuracy,
+
             targetWpm,
 
             passedByWpm,
+
             passedByAccuracy,
-            passed
+
+            passed,
+
+            /*
+             * New BSF/KDPH fields
+             */
+            keyDepressions: totalTypedChars,
+
+            keyDepressionsPerWord,
+
+            grossWords,
+
+            /*
+             * Useful diagnostic information
+             */
+            permissibleErrorPct: freePct,
+
+            penaltyPerExcessError: penaltyMultiplier
         };
     },
 
