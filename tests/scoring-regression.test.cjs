@@ -34,6 +34,8 @@ test('unfinished trailing passage is not penalized as a missing word', () => {
   const typed = 'one two';
   const bsf = scoring.calculateScore(passage, typed, 60, config, typed.length, 'bsf');
   assert.equal(bsf.totalErrors, 0);
+  assert.equal(bsf.errorBreakdown.notReached, 2);
+  assert.equal(bsf.accuracy, 100);
 });
 
 test('repeated internal spaces are counted once in BSF and occupy CRPF positions', () => {
@@ -55,4 +57,27 @@ test('same-position substitutions produce identical BSF and CRPF penalties', () 
   assert.equal(bsf.penaltyWords, crpf.penaltyWords);
   assert.equal(bsf.grossWpm, crpf.grossWpm);
   assert.equal(bsf.netWpm, crpf.netWpm);
+});
+
+test('accuracy is measured over typed characters, not untyped trailing passage text', () => {
+  const score = scoring.calculateScore('one two three four', 'one two', 60, config, 7, 'bsf');
+  assert.equal(score.accuracy, 100);
+  assert.equal(score.errorBreakdown.notReached, 2);
+  assert.equal(score.totalErrors, 0);
+});
+
+test('detailed error categories identify omission, spelling, incomplete, extra and repeated words', () => {
+  const score = scoring.calculateScore('one correct word end', 'one correc word word extra', 60, {freeErrorPct:0, penaltyPerError:10}, 25, 'bsf');
+  assert.equal(score.errorBreakdown.spellingErrors, 1);
+  assert.equal(score.errorBreakdown.incompleteWords, 1);
+  assert.equal(score.errorBreakdown.extraWords, 1);
+  assert.equal(score.errorBreakdown.repeatedWords, 1);
+  assert.ok(score.errorBreakdown.omissions >= 1);
+});
+
+test('capitalization and punctuation are reported as separate primary categories', () => {
+  const caps = scoring.calculateScore('Hello world.', 'hello world.', 60, {freeErrorPct:0, penaltyPerError:10}, 12, 'bsf');
+  const punct = scoring.calculateScore('Hello world.', 'Hello world', 60, {freeErrorPct:0, penaltyPerError:10}, 11, 'bsf');
+  assert.equal(caps.errorBreakdown.capitalizationErrors, 1);
+  assert.equal(punct.errorBreakdown.punctuationErrors, 1);
 });
