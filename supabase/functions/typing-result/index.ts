@@ -104,18 +104,18 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   const elapsedMinutes = Math.max(seconds, 1) / 60;
   const grossWpm = Number((equivalentTypedWords / elapsedMinutes).toFixed(2));
   const netWpm = Number((netWords / elapsedMinutes).toFixed(2));
-  let correctChars = 0, alignedPairs = 0;
+  let correctChars = 0, alignedPairs = 0, omittedErrorChars = 0;
   for (let i = 0; i < alignment.length; i++) {
     const item = alignment[i];
     if (item.type === "delete" && item.expected !== null && !alignment.slice(i + 1).some(next => next.type !== "delete")) continue;
-    if (item.type === "delete" && item.expected !== null) continue;
+    if (item.type === "delete" && item.expected !== null) { omittedErrorChars += Math.min(5, item.expected.length); continue; }
     if (item.expected === null || item.typed === null) continue;
     correctChars += Math.max(0, item.typed.length - editDistance(item.expected, item.typed));
     alignedPairs++;
   }
   const typedSeparators = (typedText.match(/\s/gu) || []).length;
   correctChars += Math.min(typedSeparators, Math.max(0, typed.length - 1), Math.max(0, alignedPairs - 1));
-  correctChars = Math.max(0, Math.min(typedText.length, correctChars));
+  correctChars = Math.max(0, Math.min(typedText.length, correctChars - omittedErrorChars));
   const incorrectChars = Math.max(0, typedText.length - correctChars);
   const accuracy = typedText.length ? Number((correctChars / typedText.length * 100).toFixed(2)) : 0;
   // Primary categories are mutually exclusive; repeatedWords is a subset of extraWords.
