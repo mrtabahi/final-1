@@ -279,3 +279,133 @@ document.addEventListener('DOMContentLoaded', async () => {
         '<tr><td colspan="7">Unable to load history. Please refresh and try again.</td></tr>';
     }
   }
+
+
+    // Update profile
+  profileForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const submitButton =
+      profileForm.querySelector('[type="submit"]');
+
+    const name = profileName.value.trim();
+    const email = profileEmail.value.trim().toLowerCase();
+
+    const originalEmail = String(user.email || '')
+      .trim()
+      .toLowerCase();
+
+    if (!name) {
+      setMessage(
+        profileMessage,
+        'Please enter your full name.',
+        true
+      );
+      profileName.focus();
+      return;
+    }
+
+    if (!email) {
+      setMessage(
+        profileMessage,
+        'Please enter your email address.',
+        true
+      );
+      profileEmail.focus();
+      return;
+    }
+
+    if (submitButton) submitButton.disabled = true;
+
+    setMessage(profileMessage, 'Saving profile…');
+
+    try {
+      await AuthManager.updateName(name);
+
+      welcomeName.textContent = name;
+
+      if (email !== originalEmail) {
+        await AuthManager.changeEmail(email);
+
+        setMessage(
+          profileMessage,
+          'Name saved. Check your new email inbox to confirm the email change.'
+        );
+      } else {
+        setMessage(
+          profileMessage,
+          'Profile updated successfully.'
+        );
+      }
+
+    } catch (error) {
+      console.error('Profile update failed:', error);
+
+      setMessage(
+        profileMessage,
+        error?.message ||
+          'Unable to update profile. Please try again.',
+        true
+      );
+
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+
+  // Change password
+  passwordForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const passwordInput = $('new-password');
+    const submitButton =
+      passwordForm.querySelector('[type="submit"]');
+
+    const password = passwordInput?.value || '';
+
+    if (!password) {
+      setMessage(
+        profileMessage,
+        'Please enter a new password.',
+        true
+      );
+
+      passwordInput?.focus();
+      return;
+    }
+
+    if (submitButton) submitButton.disabled = true;
+
+    setMessage(profileMessage, 'Changing password…');
+
+    try {
+      await AuthManager.changePassword(password);
+
+      passwordForm.reset();
+
+      setMessage(
+        profileMessage,
+        'Password changed successfully.'
+      );
+
+    } catch (error) {
+      console.error('Password change failed:', error);
+
+      setMessage(
+        profileMessage,
+        error?.message ||
+          'Unable to change password. Please try again.',
+        true
+      );
+
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+
+  // Load both dashboard sections concurrently
+  await Promise.all([
+    loadTests(),
+    loadHistory()
+  ]);
+});
