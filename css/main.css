@@ -337,3 +337,8 @@ body {
     margin-left: 0;
   }
 }
+
+
+/* Reserved navigation item for future Start Preparation features */
+.nav-placeholder { color: var(--text-muted, #777); cursor: default; text-decoration: none; opacity: .75; }
+.nav-placeholder:hover { color: var(--text-muted, #777); text-decoration: none; }
