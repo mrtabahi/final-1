@@ -19,13 +19,18 @@ document.addEventListener('DOMContentLoaded', async()=>{
         if(!display||!currentPassage||currentPassage.mode==='page')return;
         const passage=String(currentPassage.passage||'');
         const typed=String(typedValue||'');
+        const splitGraphemes=value=>typeof Intl!=='undefined'&&Intl.Segmenter
+            ?Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(value),part=>part.segment)
+            :Array.from(value);
+        const passageChars=splitGraphemes(passage);
+        const typedChars=splitGraphemes(typed);
         const fragment=document.createDocumentFragment();
-        for(let i=0;i<passage.length;i++){
+        for(let i=0;i<passageChars.length;i++){
             const span=document.createElement('span');
             span.className='passage-char';
-            if(i<typed.length)span.classList.add(typed[i]===passage[i]?'char-correct':'char-incorrect');
-            else if(i===typed.length)span.classList.add('char-current');
-            span.textContent=passage[i];
+            if(i<typedChars.length)span.classList.add(typedChars[i]===passageChars[i]?'char-correct':'char-incorrect');
+            else if(i===typedChars.length)span.classList.add('char-current');
+            span.textContent=passageChars[i];
             fragment.appendChild(span);
         }
         display.replaceChildren(fragment);
