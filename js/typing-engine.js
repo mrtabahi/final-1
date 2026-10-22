@@ -41,6 +41,7 @@
 ‎
 ‎        this.scoringConfig =
 ‎            config.scoringConfig || {};
+        this.allowBackspace = Boolean(config.allowBackspace);
 ‎
 ‎        this.mode =
 ‎            config.mode || "screen";
@@ -560,64 +561,17 @@
 ‎        const newText =
 ‎            String(text ?? "");
 ‎
-‎        /*
-‎         * If text suddenly becomes shorter,
-‎         * some deletion operation has happened.
-‎         *
-‎         * Backspace/Delete are supposed to be disabled.
-‎         *
-‎         * Restore previous text if that happens.
-‎         */
-‎
-‎        if (
-‎            newText.length <
-‎            this.typedText.length
-‎        ) {
-‎
-‎            if (this.inputElement) {
-‎
-‎                try {
-‎
-‎                    if (
-‎                        typeof this.inputElement.value ===
-‎                        "string"
-‎                    ) {
-‎
-‎                        this.inputElement.value =
-‎                            this.typedText;
-‎
-‎                    } else if (
-‎                        this.inputElement.isContentEditable
-‎                    ) {
-‎
-‎                        this.inputElement.textContent =
-‎                            this.typedText;
-‎                    }
-‎
-‎                } catch (error) {
-‎                    // Ignore DOM restoration errors.
-‎                }
-‎
-‎            }
-‎
-‎            return;
-‎        }
-‎
-‎        /*
-‎         * First actual text entry starts the test.
-‎         */
-‎
-‎        if (
-‎            !this.isActive &&
-‎            newText.length > 0
-‎        ) {
-‎
-‎            this.start();
-‎        }
-‎
-‎        /*
-‎         * Update typed text.
-‎         */
+‎        if (newText.length < this.typedText.length && !this.allowBackspace) {
+            if (this.inputElement) {
+                try {
+                    if (typeof this.inputElement.value === "string") this.inputElement.value = this.typedText;
+                    else if (this.inputElement.isContentEditable) this.inputElement.textContent = this.typedText;
+                } catch (error) { /* Ignore DOM restoration errors. */ }
+            }
+            return;
+        }
+
+        /* Update typed text. */
 ‎
 ‎        this.typedText =
 ‎            newText;
