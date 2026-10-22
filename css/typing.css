@@ -265,3 +265,7 @@
   #setup-section, #instruction-section { margin: 1rem auto; }
   #result-section .scorecard { padding: 1rem; }
 }
+
+.passage-display.no-highlight .char-correct,
+.passage-display.no-highlight .char-incorrect,
+.passage-display.no-highlight .char-current { background: transparent; color: inherit; text-decoration: none; box-shadow: none; }
