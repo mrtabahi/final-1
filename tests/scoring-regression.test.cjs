@@ -45,3 +45,14 @@ test('repeated internal spaces are counted once in BSF and occupy CRPF positions
   assert.equal(bsf.totalErrors, 1);
   assert.ok(crpf.totalErrors > bsf.totalErrors);
 });
+
+test('same-position substitutions produce identical BSF and CRPF penalties', () => {
+  const passage = 'one two three four five';
+  const typed = 'one too three four five';
+  const bsf = scoring.calculateScore(passage, typed, 60, config, typed.length, 'bsf');
+  const crpf = scoring.calculateScore(passage, typed, 60, config, typed.length, 'crpf');
+  assert.equal(bsf.totalErrors, crpf.totalErrors);
+  assert.equal(bsf.penaltyWords, crpf.penaltyWords);
+  assert.equal(bsf.grossWpm, crpf.grossWpm);
+  assert.equal(bsf.netWpm, crpf.netWpm);
+});
