@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async()=>{
     const status=await AuthManager.requireCandidateGuard(); if(!status.ok)return;
-    const {user,profile}=status; let currentPassage=null,engine=null,tests=[];
+    const {user,profile}=status; let currentPassage=null,engine=null,tests=[],serverSessionPromise=null,serverSessionId=null;
     const $=id=>document.getElementById(id); let soundEnabled=true,highlightEnabled=true,backspaceEnabled=false,passageHidden=false,lastTypedValue='',audioContext=null; const setup=$('setup-section'),inst=$('instruction-section'),typing=$('typing-section'),result=$('result-section'),passageSelect=$('select-passage'),lang=$('select-language'),duration=$('select-duration'),textarea=$('typing-textarea'),display=$('passage-container');
     textarea.addEventListener('paste',e=>{e.preventDefault();alert('Pasting is disabled for this typing test.');});textarea.addEventListener('drop',e=>e.preventDefault());textarea.addEventListener('contextmenu',e=>e.preventDefault());
     textarea.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!backspaceEnabled)e.preventDefault();});
@@ -18,9 +18,39 @@ document.addEventListener('DOMContentLoaded', async()=>{
     lang.onchange=render;passageSelect.onchange=update;await loadTests();const requestedTestId=new URLSearchParams(location.search).get('test');if(requestedTestId){const requestedTest=tests.find(t=>String(t.id)===requestedTestId);if(requestedTest){currentPassage=requestedTest;setup.style.display='none';inst.style.display='block';}}
     $('exam-config-form').onsubmit=async e=>{e.preventDefault();const id=passageSelect.value;const {data,error}=await supabaseClient.from('tests').select('*').eq('id',id).eq('active',true).single();if(error||!data){alert('Unable to load this test.');return;}currentPassage=data;setup.style.display='none';inst.style.display='block';};
     $('btn-start-test').onclick=()=>{if(!currentPassage)return;inst.style.display='none';typing.style.display='block';textarea.value='';const name=profile.full_name,mode=currentPassage.mode||'screen',durationMin=Number(currentPassage.duration_minutes||10),cfg={freeErrorPct:Number(currentPassage.free_error_pct??CONFIG.DEFAULT_FREE_ERROR_PCT),penaltyPerError:Number(currentPassage.penalty_per_error??CONFIG.DEFAULT_PENALTY_PER_ERROR),minAccuracy:currentPassage.min_accuracy,targetWpm:currentPassage.target_wpm};$('disp-candidate-name').textContent=name;$('disp-test-title').textContent=currentPassage.title;$('disp-mode').textContent=mode==='page'?'Off Screen':'On Screen';if(mode==='page'){ $('offscreen-alert').style.display='block';display.style.display='none';}else{$('offscreen-alert').style.display='none';display.style.display='block';display.textContent=currentPassage.passage;}
-        lastTypedValue='';passageHidden=false;display.style.visibility='visible';if(hideButton){hideButton.textContent='🙈 Hide passage';hideButton.setAttribute('aria-pressed','false');}engine=new TypingEngine({passageText:currentPassage.passage,durationSeconds:durationMin*60,mode,scoringConfig:cfg,onTick:(remaining,elapsed)=>{const m=Math.floor(remaining/60).toString().padStart(2,'0'),s=(remaining%60).toString().padStart(2,'0');$('timer-display').textContent=`${m}:${s}`;const st=ScoringEngine.calculateScore(currentPassage.passage,textarea.value,elapsed||.001,cfg);$('live-gross-wpm').textContent=st.grossWpm;$('live-net-wpm').textContent=st.netWpm;$('live-accuracy').textContent=`${st.accuracy}%`;$('live-errors').textContent=st.totalErrors;},onComplete:async res=>{typing.style.display='none';result.style.display='block';displayResult(res.score);await submitAttempt(res,name,mode);}});textarea.oninput=()=>{if(soundEnabled&&textarea.value.length>lastTypedValue.length)beep();lastTypedValue=textarea.value;engine.handleInput(textarea.value);};textarea.focus();};
+        lastTypedValue='';passageHidden=false;display.style.visibility='visible';if(hideButton){hideButton.textContent='🙈 Hide passage';hideButton.setAttribute('aria-pressed','false');}engine=new TypingEngine({passageText:currentPassage.passage,durationSeconds:durationMin*60,mode,scoringConfig:cfg,onTick:(remaining,elapsed)=>{const m=Math.floor(remaining/60).toString().padStart(2,'0'),s=(remaining%60).toString().padStart(2,'0');$('timer-display').textContent=`${m}:${s}`;const st=ScoringEngine.calculateScore(currentPassage.passage,textarea.value,elapsed||.001,cfg);$('live-gross-wpm').textContent=st.grossWpm;$('live-net-wpm').textContent=st.netWpm;$('live-accuracy').textContent=`${st.accuracy}%`;$('live-errors').textContent=st.totalErrors;},onComplete:async res=>{typing.style.display='none';result.style.display='block';displayResult(res.score);await submitAttempt(res,name,mode);}});textarea.oninput=()=>{if(soundEnabled&&textarea.value.length>lastTypedValue.length)beep();lastTypedValue=textarea.value;if(textarea.value.length>0&&!serverSessionPromise){serverSessionPromise=startSecureSession(currentPassage.id);}engine.handleInput(textarea.value);};textarea.focus();};
     $('btn-submit-early').onclick=()=>{if(engine&&confirm('End this test now?'))engine.stop();};
     function renderComparison(score){$('result-original-content').textContent=currentPassage.passage;const c=$('result-typed-content');c.innerHTML='';score.alignment.forEach((x,i)=>{if(i)c.appendChild(document.createTextNode(' '));const s=document.createElement('span');s.className=x.type==='match'?'result-token':x.type==='substitute'?'result-token-wrong':x.type==='delete'?'result-token-missing':'result-token-extra';s.textContent=x.type==='match'?x.typed:x.type==='substitute'?`${x.typed} [${x.expected}]`:x.type==='delete'?`[${x.expected} — skipped]`:`${x.typed} [extra]`;c.appendChild(s);});if(score.doubleSpaceErrors){const n=document.createElement('div');n.className='result-legend';n.textContent=`Double-space errors: ${score.doubleSpaceErrors} (each space-run counts once)`;c.appendChild(n);}}
     function displayResult(s){$('res-net-wpm').textContent=s.netWpm;$('res-gross-wpm').textContent=s.grossWpm;$('res-accuracy').textContent=`${s.accuracy}%`;$('res-total-errors').textContent=s.totalErrors;$('res-penalty').textContent=s.penaltyWords;$('res-typed-words').textContent=s.totalTypedWords;$('res-free-errors').textContent=s.freeErrors;$('res-excess-errors').textContent=s.excessErrors;$('res-elapsed').textContent=s.elapsedMinutes.toFixed(2);const p=ScoringEngine.getPerformanceLabel(s),b=$('result-status-badge');b.textContent=p.text;b.className=`score-status ${p.class}`;renderComparison(s);}
-    async function submitAttempt(res,name,mode){const s=res.score;const payload={user_id:user.id,candidate_name:name,candidate_id:user.id,test_id:currentPassage.id,language:currentPassage.language,mode,duration_seconds:Math.round(res.elapsedSeconds||s.elapsedMinutes*60),typed_words:s.totalTypedWords,typed_characters:s.totalTypedChars,correct_characters:s.correctChars,incorrect_characters:s.incorrectChars,total_errors:s.totalErrors,free_errors:s.freeErrors,excess_errors:s.excessErrors,penalty_words:s.penaltyWords,gross_wpm:s.grossWpm,net_wpm:s.netWpm,accuracy:s.accuracy,suspicious_events:res.suspiciousEvents||[],typed_content:res.typedText||'',result_snapshot:{score:s}};const {error}=await supabaseClient.from('attempts').insert(payload);if(error)console.error('Attempt save failed',error);}
+    async function startSecureSession(testId){
+        try {
+            const {data,error}=await supabaseClient.auth.getSession();
+            if(error||!data?.session?.access_token)throw new Error('Please sign in again before starting the test.');
+            const response=await fetch(`${SUPABASE_URL}/functions/v1/typing-result`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${data.session.access_token}`},body:JSON.stringify({action:'start',test_id:testId})});
+            const payload=await response.json();
+            if(!response.ok||!payload.session_id)throw new Error(payload.error||'Unable to start secure result session.');
+            serverSessionId=payload.session_id;
+            return payload;
+        } catch(error) {
+            console.error('Secure typing session failed:',error);
+            throw error;
+        }
+    }
+    async function submitAttempt(res,name,mode){
+        try {
+            if(!serverSessionPromise)throw new Error('Secure typing session was not started.');
+            await serverSessionPromise;
+            if(!serverSessionId)throw new Error('Secure typing session is unavailable.');
+            const {data,error}=await supabaseClient.auth.getSession();
+            if(error||!data?.session?.access_token)throw new Error('Your login session expired. Please sign in again.');
+            const response=await fetch(`${SUPABASE_URL}/functions/v1/typing-result`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${data.session.access_token}`},body:JSON.stringify({action:'submit',session_id:serverSessionId,typed_text:String(res.typedText||textarea.value||'')})});
+            const payload=await response.json();
+            if(!response.ok||!payload.score)throw new Error(payload.error||'The server could not validate this result.');
+            displayResult(payload.score);
+            console.info('Server-validated typing attempt saved:',payload.attempt_id);
+        } catch(error) {
+            console.error('Server result validation/save failed:',error);
+            alert('Your result could not be securely saved. Please keep this page open and contact support. Details: '+(error?.message||'Unknown error'));
+        }
+    }
 });
