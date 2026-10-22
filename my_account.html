@@ -1,1 +1,16 @@
-
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta name="google-adsense-account" content="ca-pub-2757719583090087">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>My Account | Decoding HCM</title>
+<link rel="stylesheet" href="css/main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head><body><nav class="navbar">
+<a href="index.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="SRB"></div><div><div class="brand-title">DECODING HCM</div><div class="brand-subtitle">BSF HCM Preparation</div></div></a>
+<ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="my_results.html">My Results</a></li><li><a href="my_account.html">My Account</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="dashboard.html">Start Preparation</a></li><li><a href="#" id="logout-btn" class="btn-nav">Logout</a></li></ul></nav><div class="container"><section class="card"><h2 class="card-title">My Account</h2><p class="form-help">Manage your account name, email and password.</p>
+<form id="profile-form"><div class="grid-2"><div class="form-group"><label class="form-label" for="profile-name">Name</label><input id="profile-name" class="form-control" required maxlength="100"></div><div class="form-group"><label class="form-label" for="profile-phone">Phone</label><input id="profile-phone" class="form-control" readonly></div></div>
+<div class="grid-2"><div class="form-group"><label class="form-label" for="profile-email">Email</label><input id="profile-email" type="email" class="form-control" required></div><div class="form-group"><label class="form-label" for="profile-status">Account Status</label><input id="profile-status" class="form-control" readonly></div></div>
+<button class="btn btn-primary" type="submit">Save Name / Email</button></form><hr style="margin:2rem 0"><h3>Change Password</h3>
+<form id="password-form"><div class="form-group"><label class="form-label" for="new-password">New Password</label><input id="new-password" type="password" minlength="8" autocomplete="new-password" class="form-control" required></div><button class="btn btn-secondary" type="submit">Change Password</button></form><p id="profile-message" class="form-help" role="status" aria-live="polite" style="margin-top:1rem"></p></section></div>
+<script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/my-account.js"></script>
+</body></html>
