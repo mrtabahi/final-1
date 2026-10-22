@@ -51,47 +51,46 @@ function alignWords(expected: string[], typed: string[]) {
   return result;
 }
 
-function calculateScore(passage: string, typedText: string, seconds: number, test: Record<string, unknown>) {
-  const expected = tokenize(passage), typed = tokenize(typedText);
-  const alignment = alignWords(expected, typed);
-  let wordErrors = 0;
+function calculateScore(passage: string, typedText: string, seconds: number, test: Record<string, unknown>, formula: "bsf" | "crpf") {
+  const expected = tokenize(passage);
+  const typed = tokenize(typedText);
+  const alignment = formula === "crpf"
+    ? Array.from({ length: Math.max(expected.length, typed.length) }, (_, i) => {
+        const e = expected[i] ?? null, t = typed[i] ?? null;
+        return { type: e === null ? "insert" : t === null ? "delete" : e === t ? "match" : "substitute", expected: e, typed: t };
+      })
+    : alignWords(expected, typed);
+  let wordErrors = 0, correctWords = 0;
   for (let i = 0; i < alignment.length; i++) {
     const item = alignment[i];
-    if (item.type === "match") continue;
+    if (item.type === "match") { correctWords++; continue; }
+    // Unfinished original words at the end are not treated as errors.
     if (item.type === "delete" && !alignment.slice(i + 1).some(next => next.type !== "delete")) continue;
     wordErrors++;
   }
   const doubleSpaceErrors = (typedText.match(/ {2,}/g) || []).length;
   const totalErrors = wordErrors + doubleSpaceErrors;
-  // Client keystroke counters are deliberately ignored. Text length is a
-  // server-derived proxy, not proof of physical key presses.
-  const measuredKeystrokes = typedText.length;
-  const equivalentTypedWords = measuredKeystrokes / 5;
+  const totalTypedWords = typed.length;
   const freePct = Math.max(0, Math.min(0.2, Number(test.free_error_pct ?? 0.05)));
   const penaltyPerError = Math.max(0, Math.min(100, Number(test.penalty_per_error ?? 10)));
-  const freeErrors = Math.floor(equivalentTypedWords * freePct);
+  const freeErrors = Math.floor(totalTypedWords * freePct);
   const excessErrors = Math.max(0, totalErrors - freeErrors);
   const penaltyWords = excessErrors * penaltyPerError;
-  const netWords = Math.max(0, equivalentTypedWords - penaltyWords);
+  const grossWords = formula === "crpf" ? Math.min(totalTypedWords, expected.length) : totalTypedWords;
+  const netWords = Math.max(0, grossWords - penaltyWords);
   const elapsedMinutes = Math.max(seconds, 1) / 60;
-  const grossWpm = Number((equivalentTypedWords / elapsedMinutes).toFixed(2));
+  const grossWpm = Number((grossWords / elapsedMinutes).toFixed(2));
   const netWpm = Number((netWords / elapsedMinutes).toFixed(2));
-  let correctChars = 0;
-  for (let i = 0; i < Math.min(passage.length, typedText.length); i++) {
-    if (passage[i] === typedText[i]) correctChars++;
-  }
-  const incorrectChars = Math.max(0, typedText.length - correctChars) + Math.max(0, passage.length - typedText.length);
-  const accuracy = measuredKeystrokes > 0 ? Number(((correctChars / measuredKeystrokes) * 100).toFixed(2)) : 0;
+  const accuracy = totalTypedWords ? Number((correctWords / totalTypedWords * 100).toFixed(2)) : 0;
   const targetWpm = test.target_wpm == null ? null : Number(test.target_wpm);
   const minAccuracy = test.min_accuracy == null ? null : Number(test.min_accuracy);
   const passedByWpm = targetWpm === null || netWpm >= targetWpm;
   const passedByAccuracy = minAccuracy === null || accuracy >= minAccuracy;
   return {
-    totalTypedWords: typed.length, totalTypedChars: typedText.length, totalKeystrokes: measuredKeystrokes,
-    equivalentTypedWords: Number(equivalentTypedWords.toFixed(2)), correctChars, incorrectChars,
-    wordErrors, doubleSpaceErrors, totalErrors, freeErrors, excessErrors, penaltyWords,
+    formula, totalTypedWords, totalTypedChars: typedText.length, totalKeystrokes: typedText.length,
+    correctWords, wordErrors, doubleSpaceErrors, totalErrors, freeErrors, excessErrors, penaltyWords,
     netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes,
-    alignment, minAccuracy, targetWpm, passedByWpm, passedByAccuracy,
+    elapsedSeconds: Math.max(seconds, 1), alignment, minAccuracy, targetWpm, passedByWpm, passedByAccuracy,
     passed: passedByWpm && passedByAccuracy,
   };
 }
@@ -143,16 +142,20 @@ Deno.serve(async (req) => {
       if (!Number.isFinite(startedAt) || startedAt > now + 5000) return reply(400, { error: "Invalid session start time" });
       const actualElapsed = Math.max(1, Math.floor((now - startedAt) / 1000));
       const durationSeconds = Math.min(actualElapsed, Math.max(1, Number(test.duration_minutes) * 60));
-      const score = calculateScore(String(test.passage || ""), typedText, durationSeconds, test);
+      const scores = {
+        bsf: calculateScore(String(test.passage || ""), typedText, durationSeconds, test, "bsf"),
+        crpf: calculateScore(String(test.passage || ""), typedText, durationSeconds, test, "crpf"),
+      };
+      const score = scores.bsf;
       const { data: attempt, error: insertError } = await db.from("attempts").insert({
         session_id: session.id, user_id: user.id, candidate_name: profile.full_name || "Candidate",
         candidate_id: user.id, test_id: test.id, language: test.language, mode: test.mode || "screen",
         duration_seconds: durationSeconds, typed_words: score.totalTypedWords,
-        typed_characters: score.totalTypedChars, correct_characters: score.correctChars,
-        incorrect_characters: score.incorrectChars, total_errors: score.totalErrors,
+        typed_characters: score.totalTypedChars, correct_characters: score.correctWords,
+        incorrect_characters: Math.max(0, score.totalTypedWords - score.correctWords), total_errors: score.totalErrors,
         free_errors: score.freeErrors, excess_errors: score.excessErrors, penalty_words: score.penaltyWords,
         gross_wpm: score.grossWpm, net_wpm: score.netWpm, accuracy: score.accuracy,
-        suspicious_events: [], typed_content: typedText, result_snapshot: { score, server_validated: true }
+        suspicious_events: [], typed_content: typedText, result_snapshot: { score, scores, server_validated: true }
       }).select("id,created_at").single();
       if (insertError || !attempt) {
         if (insertError?.code === "23505") return reply(409, { error: "This typing session has already been submitted" });
@@ -160,7 +163,7 @@ Deno.serve(async (req) => {
         return reply(500, { error: "Unable to save typing result" });
       }
       await db.from("typing_exam_sessions").update({ submitted_at: new Date().toISOString() }).eq("id", session.id).is("submitted_at", null);
-      return reply(200, { attempt_id: attempt.id, created_at: attempt.created_at, score, test: { title: test.title, language: test.language, mode: test.mode }, duration_seconds: durationSeconds });
+      return reply(200, { attempt_id: attempt.id, created_at: attempt.created_at, score, scores, test: { title: test.title, language: test.language, mode: test.mode }, duration_seconds: durationSeconds });
     }
 
     return reply(400, { error: "Unsupported action" });
