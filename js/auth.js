@@ -1,102 +1,354 @@
-// DECODING HCM — AUTH + PROFILE HELPERS
+
+/* DECODING HCM — AUTH + PROFILE HELPERS */
+
 const AuthManager = {
-    async getUser() {
-        if (!supabaseClient) return null;
-        const { data: { user }, error } = await supabaseClient.auth.getUser();
-        if (error) return null;
-        return user;
-    },
-    async getProfile() {
-        const user = await this.getUser();
-        if (!user) return null;
-        const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-        if (error) return null;
-        return data;
-    },
-    async isVerifiedCandidate() {
-        const user = await this.getUser();
-        if (!user) return { ok:false, reason:'login' };
-        if (!user.email_confirmed_at) return { ok:false, reason:'email' };
-        const profile = await this.getProfile();
-        if (!profile || profile.role !== 'candidate') return { ok:false, reason:'profile' };
-      //  if (!profile.phone || !profile.phone_verified) return { ok:false, reason:'phone' }; //.....................................
-        return { ok:true, user, profile };
-    },
-    async login(identifier, password) {
-        const value = String(identifier || '').trim();
-        const payload = value.includes('@') ? { email:value, password } : { phone:value, password };
-        const { data, error } = await supabaseClient.auth.signInWithPassword(payload);
-        if (error) throw error;
-        return data;
-    },
-    async register({ email, phone, password, fullName }) {
-        const { data, error } = await supabaseClient.auth.signUp({
-            email: email.trim().toLowerCase(),
-            password,
-            options: {
-                data: { full_name: fullName.trim(), phone: phone.trim() },
-                emailRedirectTo: `${window.location.origin}/login.html`
-            }
-        });
-        if (error) throw error;
-        // If email confirmation is disabled, immediately attach the phone and send OTP.
-        if (data.user && data.session && phone) {
-            const { error: phoneError } = await supabaseClient.auth.updateUser({ phone: phone.trim() });
-            if (phoneError) throw phoneError;
-        }
-        return data;
-    },
-    async sendPhoneOtp(phone) {
-        const { error } = await supabaseClient.auth.signInWithOtp({ phone: phone.trim(), options: { shouldCreateUser:false } });
-        if (error) throw error;
-    },
-    async verifyPhoneOtp(phone, token) {
-        const { data, error } = await supabaseClient.auth.verifyOtp({ phone: phone.trim(), token: token.trim(), type:'sms' });
-        if (error) throw error;
-        if (data.user) {
-            await supabaseClient.from('profiles').update({ phone:phone.trim(), phone_verified:true }).eq('id', data.user.id);
-        }
-        return data;
-    },
-    async attachAndVerifyPhone(phone) {
-        const value = phone.trim();
-        const { error } = await supabaseClient.auth.updateUser({ phone:value });
-        if (error) throw error;
-        await supabaseClient.from('profiles').update({ phone:value, phone_verified:false }).eq('id', (await this.getUser()).id);
-        return true;
-    },
-    async updateName(fullName) {
-        const user = await this.getUser();
-        if (!user) throw new Error('Please sign in again.');
-        const { error } = await supabaseClient.from('profiles').update({ full_name:fullName.trim() }).eq('id', user.id);
-        if (error) throw error;
-        await supabaseClient.auth.updateUser({ data:{ full_name:fullName.trim() } });
-    },
-    async changeEmail(email) {
-        const { error } = await supabaseClient.auth.updateUser({ email:email.trim().toLowerCase() });
-        if (error) throw error;
-    },
-    async changePassword(password) {
-        const { error } = await supabaseClient.auth.updateUser({ password });
-        if (error) throw error;
-    },
-    async logout() {
-        await supabaseClient.auth.signOut();
-        window.location.href = '/login.html';
-    },
-    async requireCandidateGuard() {
-        const status = await this.isVerifiedCandidate();
-        if (status.ok) return status;
-        if (status.reason === 'login') window.location.href = '/login.html';
-        else if (status.reason === 'email' || status.reason === 'phone') window.location.href = '/verify.html';
-        else window.location.href = '/login.html';
-        return status;
-    },
-    async requireAdminGuard() {
-        const user = await this.getUser();
-        if (!user) { window.location.href='/login.html'; return null; }
-        const profile = await this.getProfile();
-        if (!profile || profile.role !== 'admin') { alert('Admin credentials required.'); window.location.href='/dashboard.html'; return null; }
-        return { user, profile };
+  async getUser() {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+      throw new Error('Supabase client is not initialized.');
     }
+
+    const { data, error } = await supabaseClient.auth.getUser();
+
+    if (error) {
+      console.error('getUser failed:', error);
+      return null;
+    }
+
+    return data?.user || null;
+  },
+
+  async getProfile(userId = null) {
+    const user = userId ? null : await this.getUser();
+    const id = userId || user?.id;
+
+    if (!id) return null;
+
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('id, full_name, phone, phone_verified, email, role')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('getProfile failed:', error);
+      throw error;
+    }
+
+    return data || null;
+  },
+
+  async isVerifiedCandidate() {
+    const user = await this.getUser();
+
+    if (!user) {
+      return { ok: false, reason: 'login' };
+    }
+
+    if (!user.email_confirmed_at) {
+      return { ok: false, reason: 'email' };
+    }
+
+    let profile;
+
+    try {
+      profile = await this.getProfile(user.id);
+    } catch {
+      return { ok: false, reason: 'profile' };
+    }
+
+    if (!profile || profile.role !== 'candidate') {
+      return { ok: false, reason: 'profile' };
+    }
+
+    // Enable this check if phone verification is mandatory.
+    // if (!profile.phone || !profile.phone_verified) {
+    //   return { ok: false, reason: 'phone' };
+    // }
+
+    return { ok: true, user, profile };
+  },
+
+  async login(identifier, password) {
+    const value = String(identifier || '').trim();
+
+    if (!value || !password) {
+      throw new Error('Enter your email/phone and password.');
+    }
+
+    // Phone login requires a phone number in the format
+    // configured for your Supabase project, usually E.164.
+    const payload = value.includes('@')
+      ? { email: value.toLowerCase(), password }
+      : { phone: value, password };
+
+    const { data, error } =
+      await supabaseClient.auth.signInWithPassword(payload);
+
+    if (error) throw error;
+    return data;
+  },
+
+  async register({ email, phone, password, fullName }) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedName = String(fullName || '').trim();
+    const normalizedPhone = String(phone || '').trim();
+
+    if (!normalizedEmail || !normalizedName || !password) {
+      throw new Error('Name, email and password are required.');
+    }
+
+    const { data, error } = await supabaseClient.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          full_name: normalizedName,
+          phone: normalizedPhone
+        },
+        emailRedirectTo: `${window.location.origin}/login.html`
+      }
+    });
+
+    if (error) throw error;
+
+    // Only update the Auth phone when a session exists.
+    // Supabase may require a separate phone-change OTP confirmation.
+    if (data.user && data.session && normalizedPhone) {
+      const { error: phoneError } =
+        await supabaseClient.auth.updateUser({
+          phone: normalizedPhone
+        });
+
+      if (phoneError) throw phoneError;
+    }
+
+    return data;
+  },
+
+  // OTP for phone sign-in. This is NOT the phone-change verification flow.
+  async sendPhoneOtp(phone) {
+    const value = String(phone || '').trim();
+    if (!value) throw new Error('Enter your phone number.');
+
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      phone: value,
+      options: { shouldCreateUser: false }
+    });
+
+    if (error) throw error;
+  },
+
+  // Verify an OTP sent for phone sign-in.
+  async verifyPhoneOtp(phone, token) {
+    const value = String(phone || '').trim();
+    const otp = String(token || '').trim();
+
+    if (!value || !otp) {
+      throw new Error('Phone number and OTP are required.');
+    }
+
+    const { data, error } = await supabaseClient.auth.verifyOtp({
+      phone: value,
+      token: otp,
+      type: 'sms'
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Attach/update the phone on the currently signed-in account.
+  async attachAndVerifyPhone(phone) {
+    const value = String(phone || '').trim();
+
+    if (!value) throw new Error('Enter your phone number.');
+
+    const user = await this.getUser();
+    if (!user) throw new Error('Please sign in again.');
+
+    const { error } = await supabaseClient.auth.updateUser({
+      phone: value
+    });
+
+    if (error) throw error;
+
+    // Do not mark the phone verified before OTP confirmation.
+    const { error: profileError } = await supabaseClient
+      .from('profiles')
+      .update({
+        phone: value,
+        phone_verified: false
+      })
+      .eq('id', user.id);
+
+    if (profileError) throw profileError;
+
+    return true;
+  },
+
+  // Verify the OTP sent after updateUser({ phone }).
+  async verifyPhoneChangeOtp(phone, token) {
+    const value = String(phone || '').trim();
+    const otp = String(token || '').trim();
+
+    if (!value || !otp) {
+      throw new Error('Phone number and OTP are required.');
+    }
+
+    const { data, error } = await supabaseClient.auth.verifyOtp({
+      phone: value,
+      token: otp,
+      type: 'phone_change'
+    });
+
+    if (error) throw error;
+
+    const user = data?.user || await this.getUser();
+
+    if (!user) throw new Error('Please sign in again.');
+
+    const { error: profileError } = await supabaseClient
+      .from('profiles')
+      .update({
+        phone: value,
+        phone_verified: true
+      })
+      .eq('id', user.id);
+
+    if (profileError) {
+      console.error('Phone verified but profile update failed:', profileError);
+      throw new Error(
+        'Phone verification succeeded, but the profile could not be updated. Please contact support.'
+      );
+    }
+
+    return data;
+  },
+
+  async updateName(fullName) {
+    const name = String(fullName || '').trim();
+
+    if (!name) throw new Error('Enter your full name.');
+
+    const user = await this.getUser();
+    if (!user) throw new Error('Please sign in again.');
+
+    // Update the profile table first.
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .update({ full_name: name })
+      .eq('id', user.id)
+      .select('id')
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      throw new Error(
+        'Profile was not updated. Check your profile and database permissions.'
+      );
+    }
+
+    // Keep Supabase Auth metadata in sync.
+    const { error: authError } =
+      await supabaseClient.auth.updateUser({
+        data: { full_name: name }
+      });
+
+    if (authError) {
+      console.error('Auth metadata update failed:', authError);
+      throw new Error(
+        'Profile name was saved, but account metadata could not be updated.'
+      );
+    }
+
+    return true;
+  },
+
+  async changeEmail(email) {
+    const value = String(email || '').trim().toLowerCase();
+
+    if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      throw new Error('Enter a valid email address.');
+    }
+
+    const { error } = await supabaseClient.auth.updateUser({
+      email: value
+    });
+
+    if (error) throw error;
+    return true;
+  },
+
+  async changePassword(password) {
+    if (typeof password !== 'string' || !password) {
+      throw new Error('Enter a new password.');
+    }
+
+    const { error } = await supabaseClient.auth.updateUser({
+      password
+    });
+
+    if (error) throw error;
+    return true;
+  },
+
+  async logout() {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+      console.error('Logout failed:', error);
+      throw error;
+    }
+
+    window.location.href = '/login.html';
+  },
+
+  async requireCandidateGuard() {
+    let status;
+
+    try {
+      status = await this.isVerifiedCandidate();
+    } catch (error) {
+      console.error('Candidate guard failed:', error);
+      window.location.href = '/login.html';
+      return { ok: false, reason: 'error' };
+    }
+
+    if (status.ok) return status;
+
+    if (status.reason === 'email' || status.reason === 'phone') {
+      window.location.href = '/verify.html';
+    } else {
+      window.location.href = '/login.html';
+    }
+
+    return status;
+  },
+
+  async requireAdminGuard() {
+    const user = await this.getUser();
+
+    if (!user) {
+      window.location.href = '/login.html';
+      return null;
+    }
+
+    let profile;
+
+    try {
+      profile = await this.getProfile(user.id);
+    } catch (error) {
+      console.error('Admin profile lookup failed:', error);
+      window.location.href = '/login.html';
+      return null;
+    }
+
+    if (!profile || profile.role !== 'admin') {
+      window.location.href = '/dashboard.html';
+      return null;
+    }
+
+    return { user, profile };
+  }
 };
