@@ -54,8 +54,7 @@ const ScoringEngine = {
     let alignment;
     if(mode==="crpf"){
       // Keep internal repeated spaces as empty word slots. Ignore unfinished trailing slots.
-      const normalized=typedString.replace(/[\r\n\t]/g," ").trimEnd();
-      const slots=normalized.length?normalized.split(" "):[];
+      const slots=this.tokenize(typedString.replace(/[\r\n\t]/g," "));
       alignment=this.positionalAlignment(expected,slots);
     } else alignment=this.alignWords(expected,typed);
     let wordErrors=0,correctWords=0,scoredTypedWords=0;
@@ -68,7 +67,7 @@ const ScoringEngine = {
       wordErrors++; if(item.typed!==null && item.typed!=="")scoredTypedWords++;
     }
     const doubleSpaceErrors=this.countDoubleSpaceErrors(typedString);
-    if(mode==="bsf") wordErrors+=doubleSpaceErrors;
+    wordErrors+=doubleSpaceErrors;
     const totalErrors=wordErrors;
     const freePct=Math.max(0,Math.min(.2,Number(config.freeErrorPct??config.free_error_pct??.05)));
     const penaltyPerError=Math.max(0,Math.min(100,Number(config.penaltyPerError??config.penalty_per_error??10)));
