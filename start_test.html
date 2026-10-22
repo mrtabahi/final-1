@@ -37,7 +37,7 @@
         <!-- STEP 1: TEST CONFIGURATION FORM -->
         <div id="setup-section" class="card" style="display: none;">
             <span class="eyebrow">EXAM PRACTICE LAB</span><h2 class="card-title">Configure your typing test</h2>
-            <p class="form-help">You are signed in. Your verified account name will be used automatically; no roll number or candidate-name entry is required.</p>
+            <p class="form-help">Choose a language and active passage. Your account name and the test duration are applied automatically.</p>
             <form id="exam-config-form">
                 <div class="grid-2">
                     <div class="form-group"><label class="form-label">Language</label><select id="select-language" class="form-control"><option value="English">English</option><option value="Hindi">Hindi</option></select></div>
@@ -45,7 +45,7 @@
                 </div>
                 <div class="form-group"><label class="form-label">Select Test</label><select id="select-passage" class="form-control" required><option value="">Loading...</option></select></div>
                 <div class="form-group"><label class="form-label">Fixed Duration</label><input id="select-duration" class="form-control" readonly></div>
-                <button type="submit" class="btn btn-primary btn-block">Review test instructions</button>
+                <button type="submit" class="btn btn-primary btn-block">Start typing test</button>
             </form>
         </div>
 
@@ -86,7 +86,7 @@
 
                 <div id="passage-container" class="passage-display">Loading passage...</div>
 
-                <textarea id="typing-textarea" class="typing-input" placeholder="Start typing here... The timer will start automatically." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+                <textarea id="typing-textarea" class="typing-input" placeholder="Start typing here. Your timer begins with your first keystroke." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 
                 <div class="grid-4" style="margin-top: 1rem;">
                     <div class="stat-box">
