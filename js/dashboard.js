@@ -1,28 +1,281 @@
-document.addEventListener('DOMContentLoaded', async()=>{
-    const status=await AuthManager.requireCandidateGuard(); if(!status.ok) return;
-    const {user,profile}=status;
-    const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    document.getElementById('welcome-name').textContent=profile.full_name;
-    document.getElementById('profile-name').value=profile.full_name||'';
-    document.getElementById('profile-phone').value=profile.phone||'';
-    document.getElementById('profile-email').value=user.email||profile.email||'';
-    document.getElementById('profile-status').value=profile.phone_verified?'Verified':'Verification required';
-    document.getElementById('logout-btn').onclick=e=>{e.preventDefault();AuthManager.logout();};
+document.addEventListener('DOMContentLoaded', async () => {
+  const $ = (id) => document.getElementById(id);
 
-    async function loadTests(){
-        const {data:folders,error:fe}=await supabaseClient.from('folders').select('id,name,description,sort_order').eq('active',true).order('sort_order').order('created_at');
-        const {data:tests,error:te}=await supabaseClient.from('tests').select('id,title,language,duration_minutes,target_wpm,min_accuracy,folder_id,mode').eq('active',true).order('created_at',{ascending:false});
-        const box=document.getElementById('folder-list'); if(fe||te){box.textContent='Unable to load tests. Please refresh.';return;}
-        const groups=(folders||[]).map(f=>({...f,tests:(tests||[]).filter(t=>t.folder_id===f.id)})).filter(f=>f.tests.length);
-        if(!groups.length){box.innerHTML='<p>No active typing sets are available yet.</p>';return;}
-        box.innerHTML=groups.map(f=>`<div class="test-folder" style="margin-bottom:1.5rem;padding:1rem;border:1px solid var(--border-color);border-radius:12px"><h3>${esc(f.name)}</h3><p class="form-help">${esc(f.description||'')}</p><div class="table-responsive"><table class="data-table"><thead><tr><th>Test</th><th>Language</th><th>Time</th><th>Target</th><th>Accuracy</th><th></th></tr></thead><tbody>${f.tests.map(t=>`<tr><td><strong>${esc(t.title)}</strong></td><td>${esc(t.language)}</td><td>${t.duration_minutes} min</td><td>${t.target_wpm ?? '—'} WPM</td><td>${t.min_accuracy==null?'—':t.min_accuracy+'%'}</td><td><a class="btn btn-primary btn-sm" href="start_test.html?test=${encodeURIComponent(t.id)}">Attempt</a></td></tr>`).join('')}</tbody></table></div></div>`).join('');
+  const setMessage = (el, message, isError = false) => {
+    if (!el) return;
+    el.textContent = message;
+    el.classList.toggle('is-error', isError);
+    el.classList.toggle('is-success', !isError);
+  };
+
+  const esc = (value) =>
+    String(value ?? '').replace(/[&<>'"]/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    })[char]);
+
+  // Check required dependencies
+  if (
+    typeof AuthManager === 'undefined' ||
+    typeof supabaseClient === 'undefined'
+  ) {
+    console.error('AuthManager or supabaseClient is not available.');
+    return;
+  }
+
+  let status;
+
+  try {
+    status = await AuthManager.requireCandidateGuard();
+  } catch (error) {
+    console.error('Candidate guard failed:', error);
+    return;
+  }
+
+  if (!status?.ok) return;
+
+  const { user, profile } = status;
+
+  if (!user?.id || !profile) {
+    console.error('Candidate session is missing user/profile data.');
+    return;
+  }
+
+  // Get page elements
+  const welcomeName = $('welcome-name');
+  const profileName = $('profile-name');
+  const profilePhone = $('profile-phone');
+  const profileEmail = $('profile-email');
+  const profileStatus = $('profile-status');
+  const logoutBtn = $('logout-btn');
+  const profileForm = $('profile-form');
+  const passwordForm = $('password-form');
+  const profileMessage = $('profile-message');
+  const folderList = $('folder-list');
+  const historyBody = $('history-table-body');
+
+  const requiredElements = [
+    welcomeName,
+    profileName,
+    profilePhone,
+    profileEmail,
+    profileStatus,
+    logoutBtn,
+    profileForm,
+    passwordForm,
+    profileMessage,
+    folderList,
+    historyBody
+  ];
+
+  if (!requiredElements.every(Boolean)) {
+    console.error('One or more required dashboard elements are missing.');
+    return;
+  }
+
+  // Populate profile
+  welcomeName.textContent = profile.full_name || 'Candidate';
+  profileName.value = profile.full_name || '';
+  profilePhone.value = profile.phone || '';
+  profileEmail.value = user.email || profile.email || '';
+
+  profileStatus.value = profile.phone_verified
+    ? 'Verified'
+    : 'Verification required';
+
+  // Logout
+  logoutBtn.addEventListener('click', async (event) => {
+    event.preventDefault();
+    logoutBtn.disabled = true;
+
+    try {
+      await AuthManager.logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+      logoutBtn.disabled = false;
+
+      setMessage(
+        profileMessage,
+        'Unable to log out. Please try again.',
+        true
+      );
     }
-    async function loadHistory(){
-        const {data,error}=await supabaseClient.from('attempts').select('created_at,mode,gross_wpm,net_wpm,accuracy,total_errors,test_id,tests(title)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50);
-        const body=document.getElementById('history-table-body'); if(error){body.innerHTML='<tr><td colspan="7">Unable to load history.</td></tr>';return;}
-        body.innerHTML=data?.length?data.map(a=>`<tr><td>${new Date(a.created_at).toLocaleString()}</td><td>${esc(a.tests?.title||'Typing Test')}</td><td>${esc(a.mode)}</td><td>${a.gross_wpm}</td><td>${a.net_wpm}</td><td>${a.accuracy}%</td><td>${a.total_errors}</td></tr>`).join(''):'<tr><td colspan="7">No attempts yet.</td></tr>';
+  });
+
+  // Load active typing tests
+  async function loadTests() {
+    folderList.textContent = 'Loading typing tests…';
+
+    try {
+      const [foldersResult, testsResult] = await Promise.all([
+        supabaseClient
+          .from('folders')
+          .select('id,name,description,sort_order,created_at')
+          .eq('active', true)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true }),
+
+        supabaseClient
+          .from('tests')
+          .select(
+            'id,title,language,duration_minutes,target_wpm,min_accuracy,folder_id,mode'
+          )
+          .eq('active', true)
+          .order('created_at', { ascending: false })
+      ]);
+
+      if (foldersResult.error) throw foldersResult.error;
+      if (testsResult.error) throw testsResult.error;
+
+      const folders = foldersResult.data || [];
+      const tests = testsResult.data || [];
+
+      const groups = folders
+        .map((folder) => ({
+          ...folder,
+          tests: tests.filter(
+            (test) => test.folder_id === folder.id
+          )
+        }))
+        .filter((folder) => folder.tests.length > 0);
+
+      if (!groups.length) {
+        folderList.textContent =
+          'No active typing sets are available yet.';
+        return;
+      }
+
+      folderList.innerHTML = groups.map((folder) => `
+        <section
+          class="test-folder"
+          style="margin-bottom:1.5rem;padding:1rem;border:1px solid var(--border-color);border-radius:12px"
+        >
+          <h3>${esc(folder.name)}</h3>
+
+          <p class="form-help">
+            ${esc(folder.description || '')}
+          </p>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Test</th>
+                  <th>Language</th>
+                  <th>Time</th>
+                  <th>Target</th>
+                  <th>Accuracy</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                ${folder.tests.map((test) => `
+                  <tr>
+                    <td><strong>${esc(test.title)}</strong></td>
+                    <td>${esc(test.language || '—')}</td>
+                    <td>${esc(test.duration_minutes ?? '—')} min</td>
+                    <td>
+                      ${
+                        test.target_wpm == null
+                          ? '—'
+                          : `${esc(test.target_wpm)} WPM`
+                      }
+                    </td>
+                    <td>
+                      ${
+                        test.min_accuracy == null
+                          ? '—'
+                          : `${esc(test.min_accuracy)}%`
+                      }
+                    </td>
+                    <td>
+                      <a
+                        class="btn btn-primary btn-sm"
+                        href="start_test.html?test=${encodeURIComponent(String(test.id))}"
+                      >
+                        Attempt
+                      </a>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `).join('');
+
+    } catch (error) {
+      console.error('Unable to load typing tests:', error);
+
+      folderList.textContent =
+        'Unable to load tests. Please refresh and try again.';
     }
-    document.getElementById('profile-form').addEventListener('submit',async e=>{e.preventDefault();const msg=document.getElementById('profile-message');try{await AuthManager.updateName(document.getElementById('profile-name').value);const email=document.getElementById('profile-email').value.trim().toLowerCase();if(email!==user.email){await AuthManager.changeEmail(email);msg.textContent='Name saved. A confirmation link has been sent to the new email address.';}else msg.textContent='Profile updated successfully.';}catch(err){msg.textContent=err.message;}});
-    document.getElementById('password-form').addEventListener('submit',async e=>{e.preventDefault();const msg=document.getElementById('profile-message');try{await AuthManager.changePassword(document.getElementById('new-password').value);e.target.reset();msg.textContent='Password changed successfully.';}catch(err){msg.textContent=err.message;}});
-    await loadTests(); await loadHistory();
-});
+  }
+
+  // Load candidate's attempt history
+  async function loadHistory() {
+    historyBody.innerHTML =
+      '<tr><td colspan="7">Loading history…</td></tr>';
+
+    try {
+      const { data, error } = await supabaseClient
+        .from('attempts')
+        .select(
+          'created_at,mode,gross_wpm,net_wpm,accuracy,total_errors,test_id,tests(title)'
+        )
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      if (!data?.length) {
+        historyBody.innerHTML =
+          '<tr><td colspan="7">No attempts yet.</td></tr>';
+        return;
+      }
+
+      historyBody.innerHTML = data.map((attempt) => {
+        const date = attempt.created_at
+          ? new Date(attempt.created_at)
+          : null;
+
+        const dateText =
+          date && !Number.isNaN(date.getTime())
+            ? date.toLocaleString()
+            : '—';
+
+        const relatedTest = Array.isArray(attempt.tests)
+          ? attempt.tests[0]
+          : attempt.tests;
+
+        return `
+          <tr>
+            <td>${esc(dateText)}</td>
+            <td>${esc(relatedTest?.title || 'Typing Test')}</td>
+            <td>${esc(attempt.mode || '—')}</td>
+            <td>${esc(attempt.gross_wpm ?? '—')}</td>
+            <td>${esc(attempt.net_wpm ?? '—')}</td>
+            <td>
+              ${
+                attempt.accuracy == null
+                  ? '—'
+                  : `${esc(attempt.accuracy)}%`
+              }
+            </td>
+            <td>${esc(attempt.total_errors ?? '—')}</td>
+          </tr>
+        `;
+      }).join('');
+
+    } catch (error) {
+      console.error('Unable to load attempt history:', error);
+
+      historyBody.innerHTML =
+        '<tr><td colspan="7">Unable to load history. Please refresh and try again.</td></tr>';
+    }
+  }
