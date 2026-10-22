@@ -31,11 +31,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (testsResult.error) throw testsResult.error;
     const tests = testsResult.data || [];
     const folders = (foldersResult.data || []).map(folder => ({...folder, count:tests.filter(test => test.folder_id === folder.id).length})).filter(folder => folder.count > 0);
+    const selfTestCard = `<a class="category-card category-card-self" href="self-test.html">
+      <div class="category-thumb"><span class="category-symbol">✎</span></div>
+      <div class="category-copy"><h2>Self Test</h2><p>Paste your own passage, set a timer and practise with your preferred controls.</p>
+      <div class="category-foot"><span>Start personal practice <span aria-hidden="true">→</span></span><span class="category-count">Custom text</span></div></div>
+    </a>`;
     if (!folders.length) {
-      box.innerHTML = '<div class="loading-card">No active typing categories are available yet.</div>';
+      box.innerHTML = selfTestCard;
       return;
     }
-    box.innerHTML = folders.map(folder => `
+    box.innerHTML = selfTestCard + folders.map(folder => `
       <a class="category-card" href="test-list.html?folder=${encodeURIComponent(String(folder.id))}">
         <div class="category-thumb" aria-hidden="true">${folder.thumbnail_url ? `<img src="${esc(folder.thumbnail_url)}" alt="" loading="lazy">` : `<span class="category-symbol">${esc(chooseSymbol(folder.name))}</span>`}</div>
         <div class="category-copy">
