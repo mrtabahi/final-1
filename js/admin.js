@@ -1043,23 +1043,23 @@ async function loadDashboard() {
                     min_accuracy:
                         minAccuracy,
 
-                    permissible_error_percent:
-                        permissibleErrorPercent,
+                    free_error_pct:
+                        permissibleErrorPercent / 100,
 
-                    penalty_words:
+                    penalty_per_error:
                         penaltyWords,
 
-                    passage_text:
+                    passage:
                         content,
 
                     mode,
 
-                    backspace_disabled:
-                        backspaceDisabled,
+                    allow_backspace:
+                        !backspaceDisabled,
 
                     active,
 
-                    show_leaderboard:
+                    leaderboard_enabled:
                         leaderboard
 
                 });
