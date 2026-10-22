@@ -88,7 +88,8 @@
 
                 <textarea id="typing-textarea" class="typing-input" placeholder="Start typing here. Your timer begins with your first keystroke." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 
-                <div class="grid-4" style="margin-top: 1rem;">
+                <div class="live-metrics-toolbar"><strong>Live performance</strong><button type="button" id="btn-toggle-live-metrics" class="btn btn-secondary" aria-controls="live-metrics-panel" aria-expanded="true">📊 Hide live calculation</button></div>
+                <div id="live-metrics-panel"><div class="grid-4" style="margin-top: 1rem;">
                     <div class="stat-box">
                         <div class="stat-value" id="live-gross-wpm">0</div>
                         <div class="stat-label">Gross WPM</div>
@@ -105,7 +106,7 @@
                         <div class="stat-value" id="live-errors">0</div>
                         <div class="stat-label">Errors</div>
                     </div>
-                </div>
+                </div></div>
 
                 <button id="btn-submit-early" class="btn btn-danger" style="margin-top: 1rem; float: right;">Finalize & Submit Test</button>
             </div>
