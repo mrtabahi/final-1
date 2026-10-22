@@ -156,6 +156,24 @@
                     <p>Time Elapsed: <strong id="res-elapsed">0</strong> minutes</p>
                 </div>
 
+                <div class="card result-analysis-card" style="text-align:left;margin-top:1rem;">
+                    <h3 class="card-title">Detailed Error Analysis</h3>
+                    <p class="form-help">Primary categories do not double-count an error. “Repeated words” is included within extra words; “not reached” words are shown for transparency and are not penalized as typing mistakes.</p>
+                    <div class="result-analysis-grid">
+                        <div><span>Omitted words</span><strong id="analysis-omissions">0</strong></div>
+                        <div><span>Wrong word / substitution</span><strong id="analysis-substitutions">0</strong></div>
+                        <div><span>Spelling errors</span><strong id="analysis-spelling">0</strong></div>
+                        <div><span>Incomplete words</span><strong id="analysis-incomplete">0</strong></div>
+                        <div><span>Extra words</span><strong id="analysis-extra">0</strong></div>
+                        <div><span>Repeated words (subset)</span><strong id="analysis-repeated">0</strong></div>
+                        <div><span>Spacing errors</span><strong id="analysis-spacing">0</strong></div>
+                        <div><span>Capitalization</span><strong id="analysis-capitalization">0</strong></div>
+                        <div><span>Punctuation</span><strong id="analysis-punctuation">0</strong></div>
+                        <div><span>Words not reached</span><strong id="analysis-not-reached">0</strong></div>
+                    </div>
+                    <p class="result-analysis-note">Accuracy is calculated over the characters actually typed. Unreached words are not treated as wrong typed characters; they remain visible in the passage comparison.</p>
+                </div>
+
                 <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
                     <button onclick="window.location.reload()" class="btn btn-primary">Retake Test</button>
                     <a href="my_results.html" class="btn btn-secondary">My Results</a>
