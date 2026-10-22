@@ -619,7 +619,13 @@
       #skTypingDemo .sk-key.sk-space small { font-size: 6px; }
     }
 
-  </style>
+  
+    /* Keep the keyboard demo purposeful, not flashy */
+    #skTypingDemo .sk-stage.sk-burn { animation:none!important; border-color:#cbd5e1!important; box-shadow:0 10px 25px rgba(0,0,0,.08)!important; }
+    #skTypingDemo .sk-flash { display:none!important; }
+    #skTypingDemo .sk-stage.sk-burn .sk-stat-value { animation:none!important; }
+    #skTypingDemo .sk-dot { animation:none!important; }
+</style>
 
   <div class="sk-stage">
     <div class="sk-flash"></div>
