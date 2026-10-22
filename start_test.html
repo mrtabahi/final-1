@@ -32,10 +32,11 @@
         </ul>
     </nav>
 
+    <div id="page-loading" class="page-loading" role="status" aria-live="polite"><span class="loading-spinner" aria-hidden="true"></span><strong>Preparing your typing test</strong><span>Loading your exam settings securely…</span></div>
     <div class="container" id="app-root">
         <!-- STEP 1: TEST CONFIGURATION FORM -->
-        <div id="setup-section" class="card">
-            <h2 class="card-title">Select Typing Test</h2>
+        <div id="setup-section" class="card" style="display: none;">
+            <span class="eyebrow">EXAM PRACTICE LAB</span><h2 class="card-title">Configure your typing test</h2>
             <p class="form-help">You are signed in. Your verified account name will be used automatically; no roll number or candidate-name entry is required.</p>
             <form id="exam-config-form">
                 <div class="grid-2">
@@ -44,25 +45,25 @@
                 </div>
                 <div class="form-group"><label class="form-label">Select Test</label><select id="select-passage" class="form-control" required><option value="">Loading...</option></select></div>
                 <div class="form-group"><label class="form-label">Fixed Duration</label><input id="select-duration" class="form-control" readonly></div>
-                <button type="submit" class="btn btn-primary btn-block">Proceed to Exam Instructions</button>
+                <button type="submit" class="btn btn-primary btn-block">Review test instructions</button>
             </form>
         </div>
 
         <!-- STEP 2: INSTRUCTIONS -->
         <div id="instruction-section" class="card" style="display: none;">
-            <h2 class="card-title">Typing Test Instructions</h2>
+            <span class="eyebrow">BEFORE YOU BEGIN</span><h2 class="card-title">Your test is ready</h2>
             <div style="line-height: 1.8; margin-bottom: 1.5rem;">
-                <p><strong>1. Evaluation Rules:</strong> Word comparison uses sequence alignment: a skipped word is one error and does not shift all following correctly typed words. An extra word is one error. A double-space run is one whitespace error. The set's configured BSF-style free-error and penalty rules are applied.</p>
-                <p><strong>2. Anti-Cheat Monitoring:</strong> Do not switch browser tabs or minimize the window. All focus interruptions are logged.</p>
-                <p><strong>3. Paste Prohibition:</strong> Right-click and Clipboard Paste operations inside the typing terminal are disabled.</p>
-                <p><strong>4. Timer Rule:</strong> Countdown starts immediately when you type the first character. The set duration is controlled by the administrator.</p>
+                <p><strong>1. Scoring:</strong> After submission, review your result with either the BSF practice formula or the CRPF positional practice formula. The selected formula and its deductions will be shown clearly.</p>
+                <p><strong>2. Focus:</strong> Keep this tab active during the test. Switching tabs may interrupt your concentration.</p>
+                <p><strong>3. Typing controls:</strong> Paste is disabled. Backspace is controlled by the test settings. Use the toolbar to adjust supported display options.</p>
+                <p><strong>4. Timer:</strong> The clock starts with your first keystroke. You can submit early, or the test will submit automatically when time expires. The result uses the measured attempt time.</p>
             </div>
-            <button id="btn-start-test" class="btn btn-primary btn-block">I Agree & Start Typing Test</button>
+            <div class="instruction-actions"><button id="btn-back-setup" type="button" class="btn btn-secondary">Back</button><button id="btn-start-test" class="btn btn-primary">Start typing test <span aria-hidden="true">→</span></button></div>
         </div>
 
         <!-- STEP 3: EXAM TYPING LAB CANVAS -->
         <div id="typing-section" style="display: none;">
-            <div class="exam-header">
+            <div class="exam-header"><div class="exam-heading"><span class="eyebrow">LIVE ASSESSMENT</span><h1>Typing test</h1></div>
                 <div>
                     <strong id="disp-candidate-name">Candidate Name</strong> | 
                     <span id="disp-test-title">Passage Title</span> | 
@@ -113,7 +114,7 @@
         <!-- STEP 4: RESULT SCORECARD -->
         <div id="result-section" style="display: none;">
             <div class="scorecard">
-                <h2>TEST RESULT SCORECARD</h2>
+                <span class="eyebrow">ATTEMPT COMPLETE</span><h2>Typing test results</h2><p class="result-intro">Choose a scoring formula to compare your performance. Your measured attempt time is used for both calculations.</p><div class="formula-switch" role="group" aria-label="Choose result scoring formula"><button type="button" id="formula-bsf" class="formula-option is-active" aria-pressed="true"><span>01</span><strong>BSF Typing Formula</strong><small>Sequence-based error review</small></button><button type="button" id="formula-crpf" class="formula-option" aria-pressed="false"><span>02</span><strong>CRPF Typing Formula</strong><small>Position-based error review</small></button></div><p id="formula-note" class="formula-note">BSF practice mode selected. Verify the latest recruitment notice for official assessment rules.</p>
                 <div id="result-status-badge" class="score-status badge-success">QUALIFIED</div>
                 
                 <div class="score-main"><span id="res-net-wpm">0</span> <span style="font-size: 1.5rem; color: var(--text-muted);">NET WPM</span></div>
@@ -147,9 +148,9 @@
                 </div>
 
                 <div class="card" style="text-align: left;">
-                    <h3 class="card-title">BSF Formula Breakdown</h3>
+                    <h3 class="card-title" id="formula-breakdown-title">BSF Formula Breakdown</h3>
                     <p>Total Words Typed: <strong id="res-typed-words">0</strong></p>
-                    <p>Free Permissible Errors (5%): <strong id="res-free-errors">0</strong></p>
+                    <p>Permissible Errors (5%): <strong id="res-free-errors">0</strong></p>
                     <p>Excess Penalty Errors: <strong id="res-excess-errors">0</strong></p>
                     <p>Time Elapsed: <strong id="res-elapsed">0</strong> minutes</p>
                 </div>
