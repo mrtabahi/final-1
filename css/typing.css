@@ -183,3 +183,51 @@
 #app-root:fullscreen { overflow:auto; background:var(--bg-main); padding:1rem; }
 #app-root:fullscreen .typing-controls { position:sticky; top:0; z-index:10; box-shadow:var(--shadow-md); }
 @media (max-width:600px) { .typing-controls .btn { flex:1 1 42%; } .scorecard { padding:1rem; } .score-main { font-size:3rem; } }
+
+
+/* Professional exam flow and result experience */
+.page-loading{min-height:55vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem;color:var(--text-main);text-align:center;padding:2rem}
+.page-loading>span:last-child{font-size:.92rem;color:var(--text-muted)}
+.loading-spinner{width:34px;height:34px;border:3px solid #dbeafe;border-top-color:var(--accent-blue);border-radius:50%;animation:exam-spin .8s linear infinite}
+@keyframes exam-spin{to{transform:rotate(360deg)}}
+.eyebrow{display:block;color:var(--accent-blue);font-size:.72rem;letter-spacing:.13em;font-weight:800;margin-bottom:.4rem}
+#setup-section,#instruction-section{max-width:760px;margin:2.5rem auto;padding:clamp(1.25rem,3vw,2.25rem);border:1px solid #e2e8f0;box-shadow:0 12px 36px rgba(15,23,42,.07)}
+#setup-section .card-title,#instruction-section .card-title{font-size:clamp(1.45rem,3vw,2rem);margin-bottom:.65rem}
+#setup-section .form-help{font-size:.96rem;line-height:1.7;margin-bottom:1.4rem}
+#instruction-section>div:not(.instruction-actions){display:grid;gap:.85rem}
+#instruction-section p{padding:1rem 1.1rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;color:#334155}
+.instruction-actions{display:flex;justify-content:space-between;gap:.8rem;margin-top:1.5rem}
+.instruction-actions .btn-primary{min-width:220px}
+#app-root{width:min(1180px,calc(100% - 2rem));max-width:none;margin:1.5rem auto 2.5rem}
+.exam-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto;gap:1.25rem;padding:1.25rem 1.5rem;border-radius:16px 16px 0 0;background:linear-gradient(120deg,#0f2f54,#174f83)}
+.exam-heading h1{font-size:1.35rem;line-height:1.2;color:#fff;margin:0}
+.exam-heading .eyebrow{color:#bfdbfe;margin:0 0 .25rem}
+.exam-header>div:nth-child(2){align-self:center;line-height:1.7;color:#eaf3ff;overflow-wrap:anywhere}
+.timer-box{align-self:center;min-width:112px;text-align:center;background:#071827;color:#86efac;border:1px solid rgba(134,239,172,.25);font-size:1.7rem;padding:.55rem .9rem;box-shadow:none}
+.typing-controls{background:#fff;border:1px solid #e2e8f0;border-bottom:0;border-radius:0;padding:.8rem 1rem;margin:0;gap:.5rem}
+.typing-controls .btn{border-radius:9px}
+#typing-section>.card:last-of-type{border-radius:0 0 16px 16px;border-top:1px solid #e2e8f0;padding:clamp(1rem,3vw,1.75rem)}
+.passage-display{height:clamp(150px,23vh,240px);font-size:clamp(1.05rem,1.5vw,1.25rem);line-height:1.95;border:1px solid #cbd5e1;background:#fbfdff}
+.typing-input{height:clamp(150px,22vh,220px);font-size:1.1rem;line-height:1.8;border:1.5px solid #94a3b8;border-radius:12px}
+.typing-input:focus{border-color:var(--accent-blue);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+.stat-box{border-radius:12px;padding:1rem;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.035)}
+.stat-value{font-variant-numeric:tabular-nums}
+#btn-submit-early{float:none!important;display:block;margin:1.25rem 0 0 auto!important;min-width:190px}
+.scorecard{max-width:1100px;margin:0 auto;padding:clamp(1rem,3vw,2.5rem);border:1px solid #e2e8f0}
+.scorecard>h2{font-size:clamp(1.6rem,3vw,2.2rem);margin:.15rem 0 .5rem}
+.result-intro{max-width:680px;margin:.25rem auto 1.25rem;color:var(--text-muted);line-height:1.65}
+.formula-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem;max-width:760px;margin:1.25rem auto .8rem}
+.formula-option{display:grid;grid-template-columns:2.2rem 1fr;grid-template-rows:auto auto;gap:.15rem .7rem;align-items:center;text-align:left;padding:1rem 1.1rem;border:1.5px solid #dbe3ed;border-radius:14px;background:#fff;color:var(--text-main);cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+.formula-option>span{grid-row:1/3;display:grid;place-items:center;width:2rem;height:2rem;border-radius:9px;background:#f1f5f9;color:#475569;font-size:.78rem;font-weight:800}
+.formula-option strong{font-size:.95rem}
+.formula-option small{color:var(--text-muted);font-size:.78rem}
+.formula-option:hover{border-color:#93c5fd}
+.formula-option.is-active{border-color:var(--accent-blue);background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.formula-option.is-active>span{background:var(--accent-blue);color:#fff}
+.formula-note{font-size:.82rem;line-height:1.5;color:var(--text-muted);max-width:760px;margin:0 auto 1.5rem}
+#result-section .card{border:1px solid #e2e8f0;border-radius:14px;box-shadow:none;padding:clamp(1rem,2vw,1.5rem)}
+#result-section .card-title{margin-bottom:.75rem}
+#result-typed-content .result-token-wrong,#result-typed-content .result-token-extra,#result-typed-content .result-token-missing{border-radius:4px}
+@media(max-width:760px){.exam-header{grid-template-columns:1fr auto;gap:.75rem}.exam-heading{grid-column:1/-1}.exam-header>div:nth-child(2){font-size:.85rem}.timer-box{font-size:1.4rem;min-width:95px}.formula-switch{grid-template-columns:1fr}.formula-option{padding:.85rem}.typing-controls .btn{flex:1 1 42%}#app-root{width:calc(100% - 1rem);margin:.75rem auto 1.5rem}}
+@media(max-width:440px){.exam-header{padding:1rem}.exam-header>div:nth-child(2){grid-column:1/-1}.timer-box{grid-column:1/-1;justify-self:start}.instruction-actions{flex-direction:column-reverse}.instruction-actions .btn{width:100%;min-width:0}.score-main{font-size:2.7rem}}
+@media print{.navbar,.footer,.formula-switch,.instruction-actions,#btn-submit-early,.typing-controls,.scorecard>div:last-child{display:none!important}body{background:#fff}.scorecard{box-shadow:none;border:0}}
