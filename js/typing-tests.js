@@ -1,17 +1,51 @@
 document.addEventListener('DOMContentLoaded', async () => {
- const box=document.getElementById('folder-list'); if(!box)return;
- const status=await AuthManager.requireCandidateGuard(); if(!status?.ok)return;
- const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
- document.getElementById('logout-btn')?.addEventListener('click',async e=>{e.preventDefault();try{await AuthManager.logout()}catch(err){console.error(err);alert('Logout failed. Please try again.')}});
- box.textContent='Loading typing tests…';
- try{
-  const [fr,tr]=await Promise.all([
-   supabaseClient.from('folders').select('id,name,description,sort_order,created_at').eq('active',true).order('sort_order').order('created_at'),
-   supabaseClient.from('tests').select('id,title,language,duration_minutes,target_wpm,min_accuracy,folder_id,mode').eq('active',true).order('created_at',{ascending:false})
-  ]);
-  if(fr.error)throw fr.error;if(tr.error)throw tr.error;
-  const groups=(fr.data||[]).map(f=>({...f,tests:(tr.data||[]).filter(t=>t.folder_id===f.id)})).filter(f=>f.tests.length);
-  if(!groups.length){box.textContent='No active typing sets are available yet.';return}
-  box.innerHTML=groups.map(f=>`<section class="test-folder" style="margin-bottom:1.5rem;padding:1rem;border:1px solid var(--border-color);border-radius:12px"><h3>${esc(f.name)}</h3><p class="form-help">${esc(f.description||'')}</p><div class="table-responsive"><table class="data-table"><thead><tr><th>Test</th><th>Language</th><th>Time</th><th>Target</th><th>Accuracy</th><th>Action</th></tr></thead><tbody>${f.tests.map(t=>`<tr><td><strong>${esc(t.title)}</strong></td><td>${esc(t.language||'—')}</td><td>${esc(t.duration_minutes??'—')} min</td><td>${t.target_wpm==null?'—':esc(t.target_wpm)+' WPM'}</td><td>${t.min_accuracy==null?'—':esc(t.min_accuracy)+'%'}</td><td><a class="btn btn-primary btn-sm" href="start_test.html?test=${encodeURIComponent(String(t.id))}">Attempt</a></td></tr>`).join('')}</tbody></table></div></section>`).join('');
- }catch(err){console.error(err);box.textContent='Unable to load tests. Please refresh and try again.'}
+  const box = document.getElementById('folder-list');
+  if (!box) return;
+  const status = await AuthManager.requireCandidateGuard();
+  if (!status?.ok) return;
+  const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const symbols = ['⌨️','📝','🎯','⚡','📚','🏆','🌐','📖'];
+  const chooseSymbol = name => {
+    const value = String(name || '').toLowerCase();
+    if (value.includes('daily')) return '📅';
+    if (value.includes('bsf') || value.includes('hcm')) return '🛡️';
+    if (value.includes('basic')) return '⌨️';
+    if (value.includes('special')) return '🎯';
+    if (value.includes('live')) return '⚡';
+    if (value.includes('target')) return '🏆';
+    if (value.includes('hindi')) return 'अ';
+    if (value.includes('english')) return 'A';
+    return symbols[(value.length + value.charCodeAt(0 || 0)) % symbols.length] || '⌨️';
+  };
+  document.getElementById('logout-btn')?.addEventListener('click', async event => {
+    event.preventDefault();
+    try { await AuthManager.logout(); } catch (error) { console.error(error); alert('Logout failed. Please try again.'); }
+  });
+  box.innerHTML = '<div class="loading-card">Loading typing categories…</div>';
+  try {
+    const [foldersResult, testsResult] = await Promise.all([
+      supabaseClient.from('folders').select('id,name,description,sort_order,created_at').eq('active', true).order('sort_order', {ascending:true}).order('created_at', {ascending:true}),
+      supabaseClient.from('tests').select('id,folder_id').eq('active', true)
+    ]);
+    if (foldersResult.error) throw foldersResult.error;
+    if (testsResult.error) throw testsResult.error;
+    const tests = testsResult.data || [];
+    const folders = (foldersResult.data || []).map(folder => ({...folder, count:tests.filter(test => test.folder_id === folder.id).length})).filter(folder => folder.count > 0);
+    if (!folders.length) {
+      box.innerHTML = '<div class="loading-card">No active typing categories are available yet.</div>';
+      return;
+    }
+    box.innerHTML = folders.map(folder => `
+      <a class="category-card" href="test-list.html?folder=${encodeURIComponent(String(folder.id))}">
+        <div class="category-thumb" aria-hidden="true"><span class="category-symbol">${esc(chooseSymbol(folder.name))}</span></div>
+        <div class="category-copy">
+          <h2>${esc(folder.name)}</h2>
+          <p>${esc(folder.description || 'Practice typing with a set of guided tests.')}</p>
+          <div class="category-foot"><span>Explore tests <span aria-hidden="true">→</span></span><span class="category-count">${folder.count} ${folder.count === 1 ? 'test' : 'tests'}</span></div>
+        </div>
+      </a>`).join('');
+  } catch (error) {
+    console.error('Unable to load typing categories:', error);
+    box.innerHTML = '<div class="loading-card">Unable to load typing categories. Please refresh and try again.</div>';
+  }
 });
