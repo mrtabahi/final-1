@@ -1,89 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="google-adsense-account" content="ca-pub-2757719583090087">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Decoding HCM</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/admin.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="google-adsense-account" content="ca-pub-2757719583090087">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1220">
+<title>Admin Control Center | Decoding HCM</title>
+<link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-    <nav class="navbar">
-        <a href="https://decoding-hcm.vercel.app/admin" class="brand-container">
-            <div class="brand-logo"><img src="logo.png" alt="SRB"/></div>
-            <div class="brand-title">DECODING HCM — ADMIN</div>
-        </a>
-    </nav>
-
-    <div class="admin-layout">
-      <aside class="admin-sidebar">
-    <a href="#" class="active" id="nav-dash">Dashboard</a>
-    <a href="#" id="nav-tests">Manage Folders & Tests</a>
-    <a href="#" id="nav-attempts">All Candidate Attempts</a>
-    <a href="#" id="nav-logout">Logout</a>
+<body class="admin-body">
+<div id="admin-loading" class="admin-loading"><div class="admin-loader"></div><strong>Securing your workspace…</strong><span>Verifying administrator access</span></div>
+<div id="admin-app" class="admin-shell" style="display:none">
+<aside class="admin-sidebar" id="admin-sidebar">
+<a href="admin.html" class="admin-brand"><span class="admin-brand-mark">D</span><span><strong>DECODING HCM</strong><small>CONTROL CENTER</small></span></a>
+<div class="admin-workspace-label">WORKSPACE</div>
+<nav class="admin-nav" aria-label="Admin navigation">
+<button type="button" class="admin-nav-link active" id="nav-dash"><span>▦</span> Overview</button>
+<div class="admin-nav-label">EXAM MANAGEMENT</div>
+<button type="button" class="admin-nav-link" id="nav-tests"><span>⌨</span> Folders &amp; Tests</button>
+<button type="button" class="admin-nav-link" id="nav-attempts"><span>▤</span> Results &amp; Attempts</button>
+<button type="button" class="admin-nav-link" data-module="candidates"><span>♙</span> Candidates</button>
+<button type="button" class="admin-nav-link" data-module="content"><span>▧</span> Website Content</button>
+<div class="admin-nav-label">BUSINESS &amp; ACCESS</div>
+<button type="button" class="admin-nav-link" data-module="subscriptions"><span>◇</span> Plans &amp; Subscriptions <em>Future</em></button>
+<button type="button" class="admin-nav-link" data-module="payments"><span>₹</span> Payments &amp; Coupons <em>Future</em></button>
+<button type="button" class="admin-nav-link" data-module="roles"><span>⚿</span> Roles &amp; Permissions <em>Future</em></button>
+<div class="admin-nav-label">SYSTEM</div>
+<button type="button" class="admin-nav-link" data-module="analytics"><span>⌁</span> Analytics &amp; Reports <em>Future</em></button>
+<button type="button" class="admin-nav-link" data-module="security"><span>⬡</span> Security &amp; Audit <em>Future</em></button>
+<button type="button" class="admin-nav-link" data-module="settings"><span>⚙</span> Website Settings <em>Future</em></button>
+</nav>
+<div class="admin-sidebar-bottom"><div class="admin-profile"><div class="admin-avatar" id="admin-avatar">A</div><div class="admin-profile-copy"><strong id="admin-name">Administrator</strong><small id="admin-email">Verified admin</small></div></div><button type="button" class="admin-logout" id="nav-logout">↗ <span>Sign out securely</span></button><a class="admin-back-link" href="index.html">← View public website</a></div>
 </aside>
-
-        <main class="admin-content" id="admin-main-view">
-            <h2>System Overview</h2>
-            <div class="grid-3" style="margin-top: 1rem;">
-                <div class="stat-box">
-                    <div class="stat-value" id="adm-total-attempts">0</div>
-                    <div class="stat-label">Total Test Attempts</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="adm-total-passages">0</div>
-                    <div class="stat-label">Active Passages</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="adm-avg-wpm">0</div>
-                    <div class="stat-label">Avg Net WPM</div>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top: 2rem;">
-                <h3 class="card-title">Create / Configure Typing Set</h3><div class="form-group"><label class="form-label">Folder</label><select id="pass-folder" class="form-control" required><option value="">Loading folders...</option></select></div>
-                <p class="form-help">Admin controls the passage, language, fixed timing, permissible errors, excess-error penalty, qualifying speed and optional accuracy threshold.</p>
-                <form id="add-passage-form">
-                    <div class="grid-2">
-                        <div class="form-group"><label class="form-label">Passage Title</label><input type="text" id="pass-title" class="form-control" required placeholder="e.g. BSF HCM Set 01"></div>
-                        <div class="form-group"><label class="form-label">Language</label><select id="pass-lang" class="form-control"><option value="English">English</option><option value="Hindi">Hindi</option></select></div>
-                    </div>
-                    <div class="grid-3">
-                        <div class="form-group"><label class="form-label">Fixed Duration (minutes)</label><input type="number" id="pass-duration" class="form-control" min="1" max="180" value="10" required></div>
-                        <div class="form-group"><label class="form-label">Target Net WPM</label><input type="number" id="pass-target-wpm" class="form-control" min="0" step="0.1" value="35" required></div>
-                        <div class="form-group"><label class="form-label">Minimum Accuracy % (optional)</label><input type="number" id="pass-min-accuracy" class="form-control" min="0" max="100" step="0.1" placeholder="e.g. 98"></div>
-                    </div>
-                    <div class="grid-3">
-                        <div class="form-group"><label class="form-label">Permissible Errors %</label><input type="number" id="pass-free-error" class="form-control" min="0" max="100" step="0.1" value="5" required></div>
-                        <div class="form-group"><label class="form-label">Penalty Words / Excess Error</label><input type="number" id="pass-penalty" class="form-control" min="0" max="100" value="10" required></div>
-                        <div class="form-group"><label class="form-label">Typing Mode</label><select id="pass-mode" class="form-control"><option value="screen">Screen → Screen</option><option value="page">Page → Screen</option></select></div>
-                    </div>
-                    <div class="form-group"><label class="form-label">Passage Text</label><textarea id="pass-text" class="form-control" style="height: 180px;" required></textarea></div>
-                    <div class="grid-3">
-                        <label><input type="checkbox" id="pass-active" checked> Active / visible to candidates</label>
-                        <label><input type="checkbox" id="pass-backspace" checked> Allow Backspace</label>
-                        <label><input type="checkbox" id="pass-leaderboard" checked> Show in Leaderboard</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Publish Typing Set</button>
-                </form>
-            </div>
-
-            <div class="card" style="margin-top:2rem;"><h3 class="card-title">Create Folder</h3><form id="folder-form"><div class="grid-2"><input id="folder-name" class="form-control" required placeholder="e.g. English 5 Minute Sets"><input id="folder-desc" class="form-control" placeholder="Short description"></div><button class="btn btn-secondary" style="margin-top:1rem">Create Folder</button></form></div><div class="card" style="margin-top:2rem;">
-                <h3 class="card-title">Existing Typing Sets</h3>
-                <div id="admin-tests-list" class="admin-list">Loading...</div>
-            </div>
-
-            <div class="card" style="margin-top:2rem;">
-                <h3 class="card-title">Admin Controls You Can Extend</h3>
-                <ul><li>Set-specific duration and qualifying speed</li><li>Set-specific permissible error percentage</li><li>Set-specific penalty per excess error</li><li>Optional accuracy threshold (e.g. 98%, 90%, 80%)</li><li>Screen or page mode</li><li>Activate/deactivate any set</li><li>Leaderboard visibility</li><li>Backspace policy flag for practice simulation</li><li>Future-ready fields for attempt limits, random passage pools and scheduled availability</li></ul>
-            </div>
-        </main>
-    </div>
-
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/admin.js"></script>
-</body>
-</html>
+<div class="admin-main-column">
+<header class="admin-topbar"><button type="button" id="admin-menu-toggle" class="admin-icon-button" aria-label="Toggle sidebar">☰</button><div class="admin-breadcrumb"><span>Control Center</span><span>/</span><strong id="page-title">Overview</strong></div><div class="admin-topbar-right"><span class="admin-live-dot"></span><span class="admin-live-label">Admin session</span><button type="button" class="admin-icon-button" id="admin-refresh" aria-label="Refresh current view" title="Refresh">↻</button><div class="admin-top-avatar" id="admin-top-avatar">A</div></div></header>
+<main class="admin-content">
+<section id="view-dashboard" class="admin-view">
+<div class="admin-page-heading"><div><div class="admin-kicker">YOUR PLATFORM AT A GLANCE</div><h1 id="dashboard-title">Welcome to your control center</h1><p id="page-subtitle">Manage tests, candidate performance and platform operations.</p></div><div class="admin-heading-actions"><button class="admin-btn admin-btn-secondary" type="button" id="quick-view-attempts">View attempts ↗</button><button class="admin-btn admin-btn-primary" type="button" id="quick-create-test">＋ Create a test</button></div></div>
+<div class="admin-stat-grid">
+<article class="admin-stat-card"><div class="admin-stat-top"><span>Total attempts</span><span class="admin-stat-icon indigo">▤</span></div><strong id="adm-total-attempts">—</strong><small>Submitted typing sessions</small></article>
+<article class="admin-stat-card"><div class="admin-stat-top"><span>Active tests</span><span class="admin-stat-icon green">⌨</span></div><strong id="adm-active-tests">—</strong><small>Currently available tests</small></article>
+<article class="admin-stat-card"><div class="admin-stat-top"><span>Candidates</span><span class="admin-stat-icon amber">♙</span></div><strong id="adm-total-candidates">—</strong><small>Candidate accounts</small></article>
+<article class="admin-stat-card"><div class="admin-stat-top"><span>Average net WPM</span><span class="admin-stat-icon blue">⌁</span></div><strong id="adm-avg-wpm">—</strong><small>Across retrieved attempts</small></article>
+</div>
+<div class="admin-dashboard-grid"><section class="admin-panel admin-panel-wide"><div class="admin-panel-heading"><div><h2>Recent candidate attempts</h2><p>Latest submitted typing sessions</p></div><button type="button" class="admin-text-button" id="dashboard-view-all">View all →</button></div><div id="dashboard-recent-attempts"><div class="admin-empty">Loading recent activity…</div></div></section>
+<section class="admin-panel"><div class="admin-panel-heading"><div><h2>Quick actions</h2><p>Common administration tasks</p></div></div><div class="admin-quick-actions"><button type="button" id="quick-create-folder"><span>▧</span><div><strong>Create a folder</strong><small>Organize test categories</small></div><b>→</b></button><button type="button" id="quick-create-test"><span>⌨</span><div><strong>Publish a typing test</strong><small>Set timing and scoring rules</small></div><b>→</b></button><button type="button" id="quick-view-attempts"><span>▤</span><div><strong>Review attempts</strong><small>Inspect scores and accuracy</small></div><b>→</b></button></div></section></div>
+<section class="admin-panel admin-roadmap"><div class="admin-panel-heading"><div><h2>Control areas</h2><p>Core tools are connected; advanced modules need their own backend and permission policies.</p></div></div><div class="admin-module-grid">
+<button type="button" data-module="candidates"><span>♙</span><strong>Candidate management</strong><small>Profiles, status, account history</small><em>Needs implementation</em></button>
+<button type="button" data-module="subscriptions"><span>◇</span><strong>Subscriptions</strong><small>Free/Premium plans, renewals, entitlements</small><em>Future module</em></button>
+<button type="button" data-module="payments"><span>₹</span><strong>Payments &amp; coupons</strong><small>Gateway events, invoices, refunds, discounts</small><em>Future module</em></button>
+<button type="button" data-module="roles"><span>⚿</span><strong>Roles &amp; permissions</strong><small>Least-privilege admin access</small><em>Future module</em></button>
+<button type="button" data-module="security"><span>⬡</span><strong>Security &amp; audit log</strong><small>Admin actions, bans, sign-in events</small><em>Future module</em></button>
+<button type="button" data-module="settings"><span>⚙</span><strong>Website settings</strong><small>Branding, navigation, maintenance mode</small><em>Future module</em></button>
+</div></section>
+</section>
+<section id="view-tests" class="admin-view" style="display:none">
+<div class="admin-page-heading"><div><div class="admin-kicker">CONTENT &amp; EXAM CONFIGURATION</div><h1>Folders &amp; Tests</h1><p id="tests-subtitle">Create, organize and control typing tests.</p></div><div class="admin-heading-actions"><button type="button" class="admin-btn admin-btn-secondary" id="refresh-folders">↻ Refresh</button><button type="button" class="admin-btn admin-btn-secondary" id="btn-create-folder">＋ Folder</button><button type="button" class="admin-btn admin-btn-primary" id="btn-create-test">＋ New test</button></div></div>
+<section class="admin-panel"><div class="admin-panel-heading"><div><h2>Test folders</h2><p>Organize tests into candidate-facing categories</p></div></div><div id="manage-folders-list"><div class="admin-empty">Loading folders…</div></div></section>
+<section class="admin-panel"><div class="admin-panel-heading"><div><h2>Typing tests</h2><p>Duration, target speed, accuracy threshold and publication status</p></div><button type="button" class="admin-btn admin-btn-secondary" id="refresh-tests">↻ Refresh tests</button></div><div id="manage-tests-list"><div class="admin-empty">Loading tests…</div></div></section>
+</section>
+<section id="view-attempts" class="admin-view" style="display:none">
+<div class="admin-page-heading"><div><div class="admin-kicker">CANDIDATE PERFORMANCE</div><h1>Results &amp; Attempts</h1><p id="attempts-subtitle">Review submitted results and export the current dataset.</p></div><div class="admin-heading-actions"><button type="button" class="admin-btn admin-btn-secondary" id="refresh-attempts">↻ Refresh</button><button type="button" class="admin-btn admin-btn-primary" id="export-attempts">↓ Export CSV</button></div></div>
+<section class="admin-panel"><div class="admin-filter-bar"><label class="admin-search">⌕ <input type="search" id="attempt-search" placeholder="Search candidate name…"></label><select id="attempt-test-filter" class="admin-select"><option value="">All tests</option></select><select id="attempt-language-filter" class="admin-select"><option value="">All languages</option><option value="English">English</option><option value="Hindi">Hindi</option></select></div><div id="all-attempts-list"><div class="admin-empty">Loading attempts…</div></div></section>
+</section>
+<section id="view-module" class="admin-view" style="display:none"><div class="admin-page-heading"><div><div class="admin-kicker">PLATFORM OPERATIONS</div><h1 id="module-title">Administration module</h1><p id="module-subtitle">Module overview</p></div></div><section class="admin-panel"><div class="admin-module-notice"><span class="admin-notice-icon">✦</span><div><h2 id="module-status-title">Designed for the next implementation phase</h2><p id="module-status-copy">This area is a planning surface, not an active control. No data will be changed from this page.</p></div></div><div id="module-capabilities" class="admin-capability-list"></div><div class="admin-security-note"><strong>Security rule</strong><p>Account bans, role changes, billing, refunds and subscription entitlements must be enforced server-side with audited permissions. A visual control alone is not authorization.</p></div></section></section>
+</main>
+<footer class="admin-footer"><span>Decoding HCM · Admin Control Center</span><span>Secure operations · Least privilege by design</span></footer>
+</div>
+</div>
+<div class="admin-modal-backdrop" id="folder-modal" role="dialog" aria-modal="true" aria-labelledby="folder-modal-title" style="display:none"><div class="admin-modal"><div class="admin-modal-head"><div><div class="admin-kicker">ORGANIZATION</div><h2 id="folder-modal-title">Create folder</h2></div><button type="button" class="admin-icon-button" id="folder-modal-close" aria-label="Close">×</button></div><form id="folder-form"><div class="admin-form-field"><label for="folder-name">Folder name</label><input id="folder-name" class="admin-input" required maxlength="120" placeholder="e.g. BSF HCM English"></div><div class="admin-form-field"><label for="folder-description">Description</label><textarea id="folder-description" class="admin-input" rows="3" maxlength="500" placeholder="What will candidates practice?"></textarea></div><label class="admin-check"><input type="checkbox" id="folder-active" checked> Active and visible to candidates</label><p id="folder-message" class="admin-form-message" role="status"></p><div class="admin-modal-actions"><button type="button" id="folder-cancel" class="admin-btn admin-btn-secondary">Cancel</button><button type="submit" class="admin-btn admin-btn-primary">Create folder</button></div></form></div></div>
+<div class="admin-modal-backdrop" id="test-modal" role="dialog" aria-modal="true" aria-labelledby="test-modal-title" style="display:none"><div class="admin-modal admin-modal-wide"><div class="admin-modal-head"><div><div class="admin-kicker">EXAM CONFIGURATION</div><h2 id="test-modal-title">Create typing test</h2></div><button type="button" class="admin-icon-button" id="test-modal-close" aria-label="Close">×</button></div><form id="test-form">
+<div class="admin-form-grid"><div class="admin-form-field"><label for="test-title">Test title</label><input id="test-title" class="admin-input" required maxlength="160" placeholder="BSF HCM Practice Set 01"></div><div class="admin-form-field"><label for="test-folder">Folder</label><select id="test-folder" class="admin-input" required><option value="">Select folder</option></select></div><div class="admin-form-field"><label for="test-language">Language</label><select id="test-language" class="admin-input"><option value="English">English</option><option value="Hindi">Hindi</option></select></div><div class="admin-form-field"><label for="test-mode">Typing mode</label><select id="test-mode" class="admin-input"><option value="screen">Screen → Screen</option><option value="page">Page → Screen</option></select></div><div class="admin-form-field"><label for="test-duration">Duration (minutes)</label><input id="test-duration" class="admin-input" type="number" min="1" max="180" value="5" required></div><div class="admin-form-field"><label for="test-target-wpm">Target net WPM</label><input id="test-target-wpm" class="admin-input" type="number" min="0" step=".1" value="0" required></div><div class="admin-form-field"><label for="test-min-accuracy">Minimum accuracy (%)</label><input id="test-min-accuracy" class="admin-input" type="number" min="0" max="100" step=".1" placeholder="Optional"></div><div class="admin-form-field"><label for="test-error-percent">Permissible errors (%)</label><input id="test-error-percent" class="admin-input" type="number" min="0" max="100" step=".1" value="5" required></div><div class="admin-form-field"><label for="test-penalty">Penalty per excess error (words)</label><input id="test-penalty" class="admin-input" type="number" min="0" max="100" value="10" required></div></div>
+<div class="admin-form-field"><label for="test-content">Passage text</label><textarea id="test-content" class="admin-input admin-passage-input" rows="8" required placeholder="Paste the typing passage here…"></textarea></div><div class="admin-check-row"><label class="admin-check"><input type="checkbox" id="test-active" checked> Publish / active</label><label class="admin-check"><input type="checkbox" id="test-backspace-disabled"> Disable Backspace</label><label class="admin-check"><input type="checkbox" id="test-leaderboard" checked> Show on leaderboard</label></div><p id="test-message" class="admin-form-message" role="status"></p><div class="admin-modal-actions"><button type="button" id="test-cancel" class="admin-btn admin-btn-secondary">Cancel</button><button type="submit" class="admin-btn admin-btn-primary">Create typing test</button></div></form></div></div>
+<script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/admin.js"></script>
+</body></html>
