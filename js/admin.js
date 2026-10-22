@@ -128,10 +128,14 @@
     function showAdminView(view) {
         const views = { dashboard: $('view-dashboard'), tests: $('view-tests'), attempts: $('view-attempts'), module: $('view-module') };
         Object.values(views).forEach(element => { if (element) element.style.display = 'none'; });
-        if (views[view]) { views[view].style.display = 'block'; currentView = view; }
+        const isCore = ['dashboard', 'tests', 'attempts'].includes(view);
+        const target = isCore ? views[view] : views.module;
+        if (target) target.style.display = 'block';
+        currentView = view;
         document.querySelectorAll('.admin-nav-link').forEach(link => link.classList.remove('active'));
         const activeMap = { dashboard: 'nav-dash', tests: 'nav-tests', attempts: 'nav-attempts' };
         if (activeMap[view] && $(activeMap[view])) $(activeMap[view]).classList.add('active');
+        if (!isCore) document.querySelectorAll('.admin-nav-link[data-module]').forEach(link => { if (link.getAttribute('data-module') === view) link.classList.add('active'); });
         updatePageHeader(view);
         if (view === 'dashboard') loadDashboard();
         if (view === 'tests') loadManageTests();
