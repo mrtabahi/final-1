@@ -7,6 +7,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head><body><nav class="navbar">
 <a href="index.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="SRB"></div><div><div class="brand-title">DECODING HCM</div><div class="brand-subtitle">BSF HCM Preparation</div></div></a>
-<ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="my_results.html">My Results</a></li><li><a href="my_account.html">My Account</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="dashboard.html">Start Preparation</a></li><li><a href="#" id="logout-btn" class="btn-nav">Logout</a></li></ul></nav><div class="container"><section class="card"><h2 class="card-title">My Results</h2><p class="form-help">Your latest 50 typing attempts.</p><div class="table-responsive"><table class="data-table"><thead><tr><th>Date</th><th>Test</th><th>Mode</th><th>Gross</th><th>Net</th><th>Accuracy</th><th>Errors</th></tr></thead><tbody id="history-table-body"><tr><td colspan="7">Loading...</td></tr></tbody></table></div></section></div>
+<ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="Typing_test.html">Typing Tests</a></li>
+            <li><a href="my_results.html" aria-current="page">My Results</a></li>
+            <li><a href="leaderboard.html">Leaderboard</a></li>
+            <li><a href="dashboard.html">Start Preparation</a></li>
+            <li><a href="#" id="logout-btn" class="btn-nav">Logout</a></li>
+            <li class="account-nav-item"><a href="my_account.html" class="account-nav-link" aria-label="My Account"><span class="account-nav-icon" aria-hidden="true">👤</span><span>My Account</span></a></li>
+        </ul></nav><div class="container"><section class="card"><h2 class="card-title">My Results</h2><p class="form-help">Your latest 50 typing attempts.</p><div class="table-responsive"><table class="data-table"><thead><tr><th>Date</th><th>Test</th><th>Mode</th><th>Gross</th><th>Net</th><th>Accuracy</th><th>Errors</th></tr></thead><tbody id="history-table-body"><tr><td colspan="7">Loading...</td></tr></tbody></table></div></section></div>
 <script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/my-results.js"></script>
 </body></html>
