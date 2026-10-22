@@ -93,8 +93,9 @@ const ScoringEngine = {
       }
     }
 
-    // Repeated spaces are an explicit error in both practice formulas.
-    wordErrors += doubleSpaceErrors;
+    // BSF counts repeated-space runs directly. CRPF counts an internal blank slot
+    // positionally, so adding the whitespace penalty again would double-count it.
+    if (mode === "bsf") wordErrors += doubleSpaceErrors;
     const totalErrors = wordErrors;
     const freePct = Math.max(0, Math.min(0.2, Number(config.freeErrorPct ?? config.free_error_pct ?? 0.05)));
     const penaltyPerError = Math.max(0, Math.min(100, Number(config.penaltyPerError ?? config.penalty_per_error ?? 10)));
