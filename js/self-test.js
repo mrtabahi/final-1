@@ -8,7 +8,7 @@ const formatTime=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).
 function renderPassage(){
  const input=typed.value; let html='';
  for(let i=0;i<original.length;i++){
-  const ch=original[i], isCurrent=highlight&&i===input.length, isDone=i<input.length;
+  const ch=original[i], isCurrent=i===input.length, isDone=i<input.length;
   let cls=isCurrent?'self-current':(isDone?(input[i]===ch?'self-char-correct':'self-char-wrong'):'');
   html+=cls?'<span class="'+cls+'">'+(ch===' '?'&nbsp;':ch==='\n'?'<br>':esc(ch))+'</span>':(ch===' '?'&nbsp;':ch==='\n'?'<br>':esc(ch));
  }
