@@ -76,57 +76,14 @@
     ===================================================== */
 
     async function checkAdminAccess() {
-
         try {
-
-            const session = await AuthManager.getSession();
-
-            if (!session) {
-                window.location.href = 'login.html';
-                return false;
-            }
-
-
-            const profile = await AuthManager.getProfile();
-
-            if (!profile) {
-
-                console.error(
-                    'Admin access denied: profile not found.'
-                );
-
-                await AuthManager.logout();
-
-                return false;
-            }
-
-
-            if (profile.role !== 'admin') {
-
-                console.error(
-                    'Admin access denied: role =',
-                    profile.role
-                );
-
-                window.location.href = 'dashboard.html';
-
-                return false;
-            }
-
-
-            setAdminIdentity(profile, session.user);
-
+            const access = await AuthManager.requireAdminGuard();
+            if (!access?.user || !access?.profile) return false;
+            setAdminIdentity(access.profile, access.user);
             return true;
-
         } catch (error) {
-
-            console.error(
-                'Admin authentication error:',
-                error
-            );
-
+            console.error('Admin authentication error:', error);
             window.location.href = 'login.html';
-
             return false;
         }
     }
@@ -183,89 +140,44 @@
 
 
     function updatePageHeader(view) {
-        const title = $('page-title');
-        const subtitle = $('page-subtitle');
+        const title = $('page-title'), subtitle = $('page-subtitle');
         const data = {
-            dashboard: {title:'Overview', subtitle:'Manage your typing practice platform.'},
-            tests: {title:'Folders & Tests', subtitle:'Create, organize and control typing tests.'},
-            attempts: {title:'Results & Attempts', subtitle:'Review candidate typing performance.'},
-            candidates: {title:'Candidate Management', subtitle:'Review accounts, account history and candidate status.'},
-            content: {title:'Website Content', subtitle:'Plan and manage public-facing pages, banners and announcements.'},
-            subscriptions: {title:'Plans & Subscriptions', subtitle:'Design paid tiers, entitlements, renewals and cancellation workflows.'},
-            payments: {title:'Payments & Coupons', subtitle:'Plan gateway integration, invoices, coupon rules and refunds.'},
-            roles: {title:'Roles & Permissions', subtitle:'Define least-privilege roles and privileged action approvals.'},
-            analytics: {title:'Analytics & Reports', subtitle:'Plan trends, funnels, exports and operational reports.'},
-            security: {title:'Security & Audit', subtitle:'Plan account actions, audit events, session review and alerts.'},
-            settings: {title:'Website Settings', subtitle:'Plan global branding, navigation, feature flags and maintenance mode.'}
+            dashboard:{title:'Overview',subtitle:'Manage your typing practice platform.'},
+            tests:{title:'Folders & Tests',subtitle:'Create, organize and control typing tests.'},
+            attempts:{title:'Results & Attempts',subtitle:'Review candidate typing performance.'},
+            candidates:{title:'Candidate Management',subtitle:'Review accounts, account history and candidate status.'},
+            content:{title:'Website Content',subtitle:'Manage public-facing pages, banners and announcements.'},
+            subscriptions:{title:'Plans & Subscriptions',subtitle:'Plan paid tiers, renewals and premium access.'},
+            payments:{title:'Payments & Coupons',subtitle:'Payment ledger, invoices, coupons and refunds.'},
+            roles:{title:'Roles & Permissions',subtitle:'Define least-privilege access for administrators.'},
+            analytics:{title:'Analytics & Reports',subtitle:'Performance trends and operational reports.'},
+            security:{title:'Security & Audit',subtitle:'Account enforcement, admin actions and audit events.'},
+            settings:{title:'Website Settings',subtitle:'Branding, navigation, feature flags and maintenance.'}
         };
-        const item = data[view] || data.dashboard;
-        if (title) title.textContent = item.title;
-        if (subtitle) subtitle.textContent = item.subtitle;
-        if (view !== 'dashboard' && view !== 'tests' && view !== 'attempts') renderPlannedModule(view, item);
+        const item=data[view]||data.dashboard;
+        if(title) title.textContent=item.title;
+        if(subtitle) subtitle.textContent=item.subtitle;
+        if(view!=='dashboard'&&view!=='tests'&&view!=='attempts') renderPlannedModule(view,item);
     }
 
 
-    function renderPlannedModule(view, item) {
+    function renderPlannedModule(view,item) {
         const configs = {
-            candidates: [
-                ['Candidate directory','Search profiles and review verified account details.'],
-                ['Account status & access','Add safe suspend/restore actions after server-side enforcement exists.'],
-                ['Candidate history','Review attempts, progress and support notes with privacy controls.'],
-                ['Identity & verification','Review email/phone verification states without exposing secrets.']
-            ],
-            content: [
-                ['Public pages','Manage homepage copy, FAQ, policy pages and footer links.'],
-                ['Announcements','Schedule notices, exam updates and maintenance banners.'],
-                ['Media library','Manage uploaded logos, thumbnails and passage attachments.'],
-                ['SEO & discoverability','Edit page titles, descriptions and social preview metadata.']
-            ],
-            subscriptions: [
-                ['Plan catalogue','Draft Free, Monthly, Quarterly and Annual plans with clear limits.'],
-                ['Entitlements','Gate premium test sets, history depth, analytics and attempt limits.'],
-                ['Lifecycle','Trial, renewals, grace periods, cancellation and expiry handling.'],
-                ['Reconciliation','Verify provider webhooks before changing paid access.']
-            ],
-            payments: [
-                ['Payment ledger','Track provider transaction IDs, status and linked invoices.'],
-                ['Coupons & campaigns','Expiry, redemption limits, eligibility and usage reporting.'],
-                ['Refunds & disputes','Require elevated permission and preserve a full audit trail.'],
-                ['Provider integration','Use server-side secrets and verified webhook signatures only.']
-            ],
-            roles: [
-                ['Role templates','Owner, administrator, content manager, evaluator and support roles.'],
-                ['Permission matrix','Separate read, create, edit, publish, export and destructive actions.'],
-                ['Approval rules','Require confirmation or a second approver for high-risk actions.'],
-                ['Session management','Review active sessions and revoke access through trusted APIs.']
-            ],
-            analytics: [
-                ['Performance trends','WPM, accuracy, errors, completion and category-level trends.'],
-                ['Conversion funnel','Registration, verification, first attempt and subscription conversion.'],
-                ['Exports','Scoped CSV reports with access logging and privacy limits.'],
-                ['Operational alerts','Unusual score spikes, failed jobs and service degradation.']
-            ],
-            security: [
-                ['Audit log','Record who performed each privileged action, when and on what record.'],
-                ['Account enforcement','Ban/unban with reason, expiry and server-side policy checks.'],
-                ['Abuse monitoring','Review suspicious attempts with transparent review history.'],
-                ['Recovery & backup','Document restore tests, incident response and key rotation.']
-            ],
-            settings: [
-                ['Brand & navigation','Logo, theme, menu labels and public links.'],
-                ['Exam defaults','Default duration, scoring policy and leaderboard visibility.'],
-                ['Feature flags','Enable features gradually with safe rollback controls.'],
-                ['Maintenance & integrations','Controlled maintenance page, email provider and payment settings.']
-            ]
+            candidates:[['Candidate directory','Search profiles and review verified account details.'],['Account status','Add suspend/restore only after server-side enforcement exists.'],['Candidate history','Review attempts and support notes with privacy controls.'],['Identity verification','Review verification status without exposing secrets.']],
+            content:[['Public pages','Manage homepage copy, FAQ, policy pages and footer links.'],['Announcements','Schedule notices and maintenance banners.'],['Media library','Manage logos, thumbnails and passage attachments.'],['SEO settings','Edit titles, descriptions and social previews.']],
+            subscriptions:[['Plan catalogue','Free, monthly, quarterly and annual plans.'],['Entitlements','Gate premium tests, analytics, history and attempt limits.'],['Lifecycle','Trials, renewals, grace periods, cancellation and expiry.'],['Reconciliation','Verify payment webhooks before granting paid access.']],
+            payments:[['Payment ledger','Provider transaction IDs, status and linked invoices.'],['Coupons','Expiry, redemption limits, eligibility and usage reports.'],['Refunds & disputes','Require elevated permission and an audit trail.'],['Provider integration','Keep secrets server-side and verify webhook signatures.']],
+            roles:[['Role templates','Owner, admin, content manager, evaluator and support.'],['Permission matrix','Separate read, create, edit, publish, export and delete.'],['Approval rules','Confirm or require second approval for high-risk actions.'],['Session management','Review and revoke sessions through trusted APIs.']],
+            analytics:[['Performance trends','WPM, accuracy, errors, completion and category trends.'],['Conversion funnel','Registration, verification, first attempt and subscription.'],['Scoped exports','Report exports with access logging and privacy limits.'],['Operational alerts','Unusual score spikes, failed jobs and service degradation.']],
+            security:[['Audit log','Who performed each privileged action and when.'],['Account enforcement','Ban/unban with reason, expiry and policy checks.'],['Abuse monitoring','Review suspicious attempts with transparent history.'],['Backup & recovery','Restore tests, incident response and key rotation.']],
+            settings:[['Brand & navigation','Logo, theme, menu labels and public links.'],['Exam defaults','Default duration, scoring and leaderboard visibility.'],['Feature flags','Gradual rollout with safe rollback controls.'],['Maintenance & integrations','Maintenance page, email and payment settings.']]
         };
-        const title = $('module-title');
-        const subtitle = $('module-subtitle');
-        const box = $('module-capabilities');
-        const heading = $('module-status-title');
-        const copy = $('module-status-copy');
-        if (title) title.textContent = item.title;
-        if (subtitle) subtitle.textContent = item.subtitle;
-        if (heading) heading.textContent = view === 'candidates' ? 'Candidate controls need a secure backend workflow' : 'Module blueprint — not yet connected';
-        if (copy) copy.textContent = 'This screen documents the intended controls. It does not pretend to perform actions until the database schema, server-side authorization, and audit behavior are implemented and tested.';
-        if (box) box.innerHTML = (configs[view] || []).map(([name, detail]) => '<article class="admin-capability"><strong>' + esc(name) + '</strong><p>' + esc(detail) + '</p></article>').join('');
+        const heading=$('module-title'), sub=$('module-subtitle'), box=$('module-capabilities'), status=$('module-status-title'), copy=$('module-status-copy');
+        if(heading) heading.textContent=item.title;
+        if(sub) sub.textContent=item.subtitle;
+        if(status) status.textContent=view==='candidates'?'Candidate controls need a secure backend workflow':'Module blueprint — not yet connected';
+        if(copy) copy.textContent='This screen documents intended controls only. It does not perform actions until database support, server-side authorization and audit behavior are implemented and tested.';
+        if(box) box.innerHTML=(configs[view]||[]).map(([name,detail])=>'<article class="admin-capability"><strong>'+esc(name)+'</strong><p>'+esc(detail)+'</p></article>').join('');
     }
 
 
@@ -1846,4 +1758,3 @@ async function loadDashboard() {
     }
 
 })();
-```
