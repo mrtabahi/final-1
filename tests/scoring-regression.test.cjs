@@ -68,7 +68,7 @@ test('accuracy is measured over typed characters, not untyped trailing passage t
 
 test('detailed error categories identify omission, spelling, incomplete, extra and repeated words', () => {
   const omission = scoring.calculateScore('one two three', 'one three', 60, {freeErrorPct:0, penaltyPerError:10}, 9, 'bsf');
-  const spelling = scoring.calculateScore('one correct word end', 'one korrekt word end', 60, {freeErrorPct:0, penaltyPerError:10}, 21, 'bsf');
+  const spelling = scoring.calculateScore('one correct word end', 'one korrekt word end', 60, {freeErrorPct:0, penaltyPerError:10}, 20, 'bsf');
   const incomplete = scoring.calculateScore('one correct word end', 'one correc word end', 60, {freeErrorPct:0, penaltyPerError:10}, 19, 'bsf');
   const repeated = scoring.calculateScore('one word end', 'one word word end', 60, {freeErrorPct:0, penaltyPerError:10}, 17, 'bsf');
   assert.equal(omission.errorBreakdown.omissions, 1);
