@@ -371,7 +371,7 @@ class TypingEngine {
         // BACKSPACE - COMPLETELY DISABLED
         // ---------------------------------------------------------
 
-        if (key === "Backspace") {
+        if (key === "Backspace" && !this.allowBackspace) {
 
             event.preventDefault();
             event.stopPropagation();
