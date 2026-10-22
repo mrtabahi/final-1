@@ -107,7 +107,7 @@ const ScoringEngine = {
       } else if(item.type==="substitute"){
         const e=String(item.expected??""),t=String(item.typed??"");
         const lowerE=e.toLocaleLowerCase(),lowerT=t.toLocaleLowerCase();
-        const bareE=lowerE.replace(/[^\\p{L}\\p{N}]/gu,""),bareT=lowerT.replace(/[^\\p{L}\\p{N}]/gu,"");
+        const bareE=lowerE.replace(/[^\p{L}\p{N}]/gu,""),bareT=lowerT.replace(/[^\p{L}\p{N}]/gu,"");
         if(lowerE===lowerT&&e!==t)errorBreakdown.capitalizationErrors++;
         else if(bareE===bareT&&e!==t)errorBreakdown.punctuationErrors++;
         else if(t.length>0&&t.length<e.length&&lowerE.startsWith(lowerT))errorBreakdown.incompleteWords++;
