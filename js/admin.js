@@ -69,6 +69,8 @@
     let cachedTests = [];
 
     let cachedFolders = [];
+    let editingFolderId = null;
+    let editingTestId = null;
 
 
     /* =====================================================
@@ -449,11 +451,9 @@ async function loadDashboard() {
         );
 
 
-        populateFolderSelect(
-            cachedFolders
-        );
-
-
+        populateFolderSelect(cachedFolders);
+        folderBox?.querySelectorAll('[data-folder-edit]').forEach(button => button.addEventListener('click', () => openEditFolder(button.dataset.folderEdit)));
+        folderBox?.querySelectorAll('[data-folder-delete]').forEach(button => button.addEventListener('click', () => deleteFolder(button.dataset.folderDelete)));
         return cachedFolders;
     }
 
@@ -502,18 +502,9 @@ async function loadDashboard() {
 
 
                     <div class="list-meta">
-
-                        <span class="
-                            status-badge
-                            ${folder.active
-                                ? 'active'
-                                : 'inactive'}
-                        ">
-                            ${folder.active
-                                ? 'Active'
-                                : 'Inactive'}
-                        </span>
-
+                        <span class="status-badge ${folder.active ? 'active' : 'inactive'}">${folder.active ? 'Active' : 'Inactive'}</span>
+                        <button type="button" class="admin-btn admin-btn-secondary" data-folder-edit="${esc(folder.id)}">Edit</button>
+                        <button type="button" class="admin-btn admin-btn-danger" data-folder-delete="${esc(folder.id)}">Delete</button>
                     </div>
 
                 </div>
@@ -630,9 +621,9 @@ async function loadDashboard() {
         );
 
 
-        populateTestFilter(
-            cachedTests
-        );
+        populateTestFilter(cachedTests);
+        testBox?.querySelectorAll('[data-test-edit]').forEach(button => button.addEventListener('click', () => openEditTest(button.dataset.testEdit)));
+        testBox?.querySelectorAll('[data-test-delete]').forEach(button => button.addEventListener('click', () => deleteTest(button.dataset.testDelete)));
     }
 
 
@@ -674,6 +665,7 @@ async function loadDashboard() {
                         <th>Target WPM</th>
                         <th>Accuracy</th>
                         <th>Status</th>
+                        <th>Actions</th>
 
                     </tr>
 
@@ -751,6 +743,10 @@ async function loadDashboard() {
                                 </span>
 
                             </td>
+                            <td class="admin-row-actions">
+                                <button type="button" class="admin-btn admin-btn-secondary" data-test-edit="${esc(test.id)}">Edit</button>
+                                <button type="button" class="admin-btn admin-btn-danger" data-test-delete="${esc(test.id)}">Delete</button>
+                            </td>
 
                         </tr>
 
@@ -804,11 +800,36 @@ async function loadDashboard() {
     ===================================================== */
 
     function openFolderModal() {
-
-        $('folder-modal').style.display =
-            'flex';
-
+        editingFolderId = null;
+        $('folder-modal-title').textContent = 'Create folder';
+        $('folder-form').querySelector('[type="submit"]').textContent = 'Create folder';
+        $('folder-form').reset();
+        $('folder-active').checked = true;
+        $('folder-message').textContent = '';
+        $('folder-modal').style.display = 'flex';
         $('folder-name').focus();
+    }
+
+    function openEditFolder(id) {
+        const folder = cachedFolders.find(item => String(item.id) === String(id));
+        if (!folder) return;
+        editingFolderId = folder.id;
+        $('folder-name').value = folder.name || '';
+        $('folder-description').value = folder.description || '';
+        $('folder-active').checked = Boolean(folder.active);
+        $('folder-modal-title').textContent = 'Edit folder';
+        $('folder-form').querySelector('[type="submit"]').textContent = 'Save folder';
+        $('folder-message').textContent = '';
+        $('folder-modal').style.display = 'flex';
+        $('folder-name').focus();
+    }
+
+    async function deleteFolder(id) {
+        const folder = cachedFolders.find(item => String(item.id) === String(id));
+        if (!folder || !confirm('Delete folder "' + folder.name + '"? Folders linked to tests may be protected by database constraints.')) return;
+        const { error } = await supabaseClient.from('folders').delete().eq('id', id);
+        if (error) { alert('Could not delete folder: ' + error.message); return; }
+        await loadManageTests();
     }
 
 
@@ -818,7 +839,9 @@ async function loadDashboard() {
             'none';
 
         $('folder-form').reset();
-
+        editingFolderId = null;
+        $('folder-modal-title').textContent = 'Create folder';
+        $('folder-form').querySelector('[type="submit"]').textContent = 'Create folder';
         $('folder-active').checked = true;
 
         $('folder-message').textContent = '';
@@ -853,14 +876,10 @@ async function loadDashboard() {
             'Creating folder...';
 
 
-        const { error } =
-            await supabaseClient
-                .from('folders')
-                .insert({
-                    name,
-                    description,
-                    active
-                });
+        const query = editingFolderId
+            ? supabaseClient.from('folders').update({ name, description, active }).eq('id', editingFolderId)
+            : supabaseClient.from('folders').insert({ name, description, active });
+        const { error } = await query;
 
 
         if (error) {
@@ -877,8 +896,7 @@ async function loadDashboard() {
         }
 
 
-        message.textContent =
-            'Folder created successfully.';
+        message.textContent = editingFolderId ? 'Folder updated successfully.' : 'Folder created successfully.';
 
 
         await loadFolders();
@@ -897,7 +915,17 @@ async function loadDashboard() {
     ===================================================== */
 
     function openTestModal() {
-
+        editingTestId = null;
+        $('test-modal-title').textContent = 'Create typing test';
+        $('test-form').querySelector('[type="submit"]').textContent = 'Create typing test';
+        $('test-form').reset();
+        $('test-duration').value = '5';
+        $('test-target-wpm').value = '0';
+        $('test-error-percent').value = '5';
+        $('test-penalty').value = '10';
+        $('test-active').checked = true;
+        $('test-backspace-disabled').checked = false;
+        $('test-leaderboard').checked = true;
         if (!cachedFolders.length) {
 
             alert(
@@ -922,10 +950,44 @@ async function loadDashboard() {
     }
 
 
-    function closeTestModal() {
+    function openEditTest(id) {
+        const test = cachedTests.find(item => String(item.id) === String(id));
+        if (!test) return;
+        editingTestId = test.id;
+        populateFolderSelect(cachedFolders);
+        $('test-title').value = test.title || '';
+        $('test-folder').value = test.folder_id || '';
+        $('test-language').value = test.language || 'English';
+        $('test-mode').value = test.mode || 'screen';
+        $('test-duration').value = Number(test.duration_minutes || 5);
+        $('test-target-wpm').value = Number(test.target_wpm || 0);
+        $('test-min-accuracy').value = test.min_accuracy ?? '';
+        $('test-error-percent').value = Number(test.free_error_pct ?? .05) * 100;
+        $('test-penalty').value = Number(test.penalty_per_error ?? 10);
+        $('test-content').value = test.passage || '';
+        $('test-active').checked = Boolean(test.active);
+        $('test-backspace-disabled').checked = !Boolean(test.allow_backspace);
+        $('test-leaderboard').checked = test.leaderboard_enabled !== false;
+        $('test-modal-title').textContent = 'Edit typing test';
+        $('test-form').querySelector('[type="submit"]').textContent = 'Save test changes';
+        $('test-message').textContent = '';
+        $('test-modal').style.display = 'flex';
+        $('test-title').focus();
+    }
 
-        $('test-modal').style.display =
-            'none';
+    async function deleteTest(id) {
+        const test = cachedTests.find(item => String(item.id) === String(id));
+        if (!test || !confirm('Permanently delete test "' + test.title + '"? Existing attempts or sessions may be protected by database constraints.')) return;
+        const { error } = await supabaseClient.from('tests').delete().eq('id', id);
+        if (error) { alert('Could not delete test: ' + error.message); return; }
+        await loadManageTests();
+    }
+
+    function closeTestModal() {
+        editingTestId = null;
+        $('test-modal-title').textContent = 'Create typing test';
+        $('test-form').querySelector('[type="submit"]').textContent = 'Create typing test';
+        $('test-modal').style.display = 'none';
 
         $('test-form').reset();
 
@@ -1026,47 +1088,25 @@ async function loadDashboard() {
             'Creating test...';
 
 
-        const { error } =
-            await supabaseClient
-                .from('tests')
-                .insert({
-
-                    title,
-
-                    folder_id:
-                        folderId,
-
-                    language,
-
-                    duration_minutes:
-                        duration,
-
-                    target_wpm:
-                        targetWpm,
-
-                    min_accuracy:
-                        minAccuracy,
-
-                    free_error_pct:
-                        permissibleErrorPercent / 100,
-
-                    penalty_per_error:
-                        penaltyWords,
-
-                    passage:
-                        content,
-
-                    mode,
-
-                    allow_backspace:
-                        !backspaceDisabled,
-
-                    active,
-
-                    leaderboard_enabled:
-                        leaderboard
-
-                });
+        const values = {
+            title,
+            folder_id: folderId,
+            language,
+            duration_minutes: duration,
+            target_wpm: targetWpm,
+            min_accuracy: minAccuracy,
+            free_error_pct: permissibleErrorPercent / 100,
+            penalty_per_error: penaltyWords,
+            passage: content,
+            mode,
+            allow_backspace: !backspaceDisabled,
+            active,
+            leaderboard_enabled: leaderboard
+        };
+        const query = editingTestId
+            ? supabaseClient.from('tests').update(values).eq('id', editingTestId)
+            : supabaseClient.from('tests').insert(values);
+        const { error } = await query;
 
 
         if (error) {
@@ -1083,8 +1123,7 @@ async function loadDashboard() {
         }
 
 
-        message.textContent =
-            'Typing test created successfully.';
+        message.textContent = editingTestId ? 'Typing test updated successfully.' : 'Typing test created successfully.';
 
 
         await loadManageTests();
