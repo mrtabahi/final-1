@@ -77,21 +77,22 @@ const ScoringEngine = {
     const grossWpm=Number((equivalentWords/elapsedMinutes).toFixed(2)),netWpm=Number((netWords/elapsedMinutes).toFixed(2));
     // Character accuracy follows word alignment, not raw character indexes; one missing
     // word therefore does not falsely mark every later character wrong.
-    let correctChars=0,alignedPairs=0;
-    for(const item of alignment){
+    let correctChars=0,alignedPairs=0,omittedErrorChars=0;
+    for(let i=0;i<alignment.length;i++){
+      const item=alignment[i];
+      if(item.type==="delete"&&item.expected!=null&&!alignment.slice(i+1).some(next=>next.type!=="delete"))continue;
+      if(item.type==="delete"&&item.expected!=null){omittedErrorChars+=Math.min(5,item.expected.length);continue;}
       if(item.expected==null||item.typed==null)continue;
       const distance=this.editDistance(item.expected,item.typed);
       correctChars+=Math.max(0,item.typed.length-distance);
       alignedPairs++;
     }
-    // Count spaces only where neighboring typed tokens exist; this makes a perfect
-    // transcript 100% and avoids counting the passage's untyped trailing text.
     const typedSeparators=(typedSource.match(/\s/gu)||[]).length;
     const expectedTypedSpaces=Math.max(0,typedWords.length-1);
-    const correctlyAlignedSpaces=Math.min(typedSeparators,expectedTypedSpaces,Math.max(0,alignedPairs-1));
-    correctChars+=correctlyAlignedSpaces;
+    correctChars+=Math.min(typedSeparators,expectedTypedSpaces,Math.max(0,alignedPairs-1));
+    correctChars=Math.max(0,Math.min(typedSource.length,correctChars-omittedErrorChars));
     const incorrectChars=Math.max(0,typedSource.length-correctChars);
-    const accuracy=typedSource.length?Number((Math.min(typedSource.length,correctChars)/typedSource.length*100).toFixed(2)):0;
+    const accuracy=typedSource.length?Number((correctChars/typedSource.length*100).toFixed(2)):0;
     const minAccuracy=config.minAccuracy==null||config.minAccuracy===""?null:Number(config.minAccuracy);
     const targetWpm=config.targetWpm==null||config.targetWpm===""?null:Number(config.targetWpm);
     const passedByWpm=targetWpm===null||netWpm>=targetWpm,passedByAccuracy=minAccuracy===null||accuracy>=minAccuracy;
