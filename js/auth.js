@@ -173,12 +173,11 @@ const AuthManager = {
     if (error) throw error;
 
     // Do not mark the phone verified before OTP confirmation.
+    // The profile phone is informational only until Supabase Auth confirms
+    // the phone-change OTP. Do not let browser code write phone_verified.
     const { error: profileError } = await supabaseClient
       .from('profiles')
-      .update({
-        phone: value,
-        phone_verified: false
-      })
+      .update({ phone: value })
       .eq('id', user.id);
 
     if (profileError) throw profileError;
@@ -207,18 +206,14 @@ const AuthManager = {
 
     if (!user) throw new Error('Please sign in again.');
 
-    const { error: profileError } = await supabaseClient
-      .from('profiles')
-      .update({
-        phone: value,
-        phone_verified: true
-      })
-      .eq('id', user.id);
+    // The database verifies auth.users.phone_confirmed_at before updating
+    // the profile flag; never trust a client-supplied phone_verified boolean.
+    const { error: profileError } = await supabaseClient.rpc('sync_verified_phone');
 
     if (profileError) {
-      console.error('Phone verified but profile update failed:', profileError);
+      console.error('Phone verified but profile sync failed:', profileError);
       throw new Error(
-        'Phone verification succeeded, but the profile could not be updated. Please contact support.'
+        'Phone verification succeeded, but the profile could not be synced. Please contact support.'
       );
     }
 
