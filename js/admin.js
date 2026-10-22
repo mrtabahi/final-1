@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    DECODING HCM TYPING LAB
    ADMIN PANEL
@@ -160,14 +159,8 @@
         }
 
 
-        if ($('admin-avatar')) {
-
-            $('admin-avatar').textContent =
-                name
-                    .trim()
-                    .charAt(0)
-                    .toUpperCase() || 'A';
-        }
+        if ($('admin-avatar')) $('admin-avatar').textContent = name.trim().charAt(0).toUpperCase() || 'A';
+        if ($('admin-top-avatar')) $('admin-top-avatar').textContent = name.trim().charAt(0).toUpperCase() || 'A';
     }
 
 
@@ -176,142 +169,110 @@
     ===================================================== */
 
     function showAdminView(view) {
-
-        const views = {
-
-            dashboard: $('view-dashboard'),
-
-            tests: $('view-tests'),
-
-            attempts: $('view-attempts')
-
-        };
-
-
-        Object.values(views).forEach(element => {
-
-            if (element) {
-                element.style.display = 'none';
-            }
-
-        });
-
-
-        if (views[view]) {
-
-            views[view].style.display = 'block';
-
-            currentView = view;
-
-        }
-
-
-        document
-            .querySelectorAll('.admin-nav-link')
-            .forEach(link => {
-
-                link.classList.remove('active');
-
-            });
-
-
-        const activeMap = {
-
-            dashboard: 'nav-dash',
-
-            tests: 'nav-tests',
-
-            attempts: 'nav-attempts'
-
-        };
-
-
-        const activeLink =
-            $(activeMap[view]);
-
-
-        if (activeLink) {
-            activeLink.classList.add('active');
-        }
-
-
+        const views = { dashboard: $('view-dashboard'), tests: $('view-tests'), attempts: $('view-attempts'), module: $('view-module') };
+        Object.values(views).forEach(element => { if (element) element.style.display = 'none'; });
+        if (views[view]) { views[view].style.display = 'block'; currentView = view; }
+        document.querySelectorAll('.admin-nav-link').forEach(link => link.classList.remove('active'));
+        const activeMap = { dashboard: 'nav-dash', tests: 'nav-tests', attempts: 'nav-attempts' };
+        if (activeMap[view] && $(activeMap[view])) $(activeMap[view]).classList.add('active');
         updatePageHeader(view);
-
-
-        /*
-         * Load data when section opens.
-         */
-
-        if (view === 'dashboard') {
-
-            loadDashboard();
-
-        }
-
-
-        if (view === 'tests') {
-
-            loadManageTests();
-
-        }
-
-
-        if (view === 'attempts') {
-
-            loadAllAttempts();
-
-        }
+        if (view === 'dashboard') loadDashboard();
+        if (view === 'tests') loadManageTests();
+        if (view === 'attempts') loadAllAttempts();
     }
 
 
     function updatePageHeader(view) {
-
         const title = $('page-title');
-
         const subtitle = $('page-subtitle');
-
-
         const data = {
-
-            dashboard: {
-                title: 'Dashboard',
-                subtitle:
-                    'Manage your typing practice platform'
-            },
-
-            tests: {
-                title: 'Manage Folders & Tests',
-                subtitle:
-                    'Create, organize and control typing tests'
-            },
-
-            attempts: {
-                title: 'All Candidate Attempts',
-                subtitle:
-                    'Review candidate typing performance'
-            }
-
+            dashboard: {title:'Overview', subtitle:'Manage your typing practice platform.'},
+            tests: {title:'Folders & Tests', subtitle:'Create, organize and control typing tests.'},
+            attempts: {title:'Results & Attempts', subtitle:'Review candidate typing performance.'},
+            candidates: {title:'Candidate Management', subtitle:'Review accounts, account history and candidate status.'},
+            content: {title:'Website Content', subtitle:'Plan and manage public-facing pages, banners and announcements.'},
+            subscriptions: {title:'Plans & Subscriptions', subtitle:'Design paid tiers, entitlements, renewals and cancellation workflows.'},
+            payments: {title:'Payments & Coupons', subtitle:'Plan gateway integration, invoices, coupon rules and refunds.'},
+            roles: {title:'Roles & Permissions', subtitle:'Define least-privilege roles and privileged action approvals.'},
+            analytics: {title:'Analytics & Reports', subtitle:'Plan trends, funnels, exports and operational reports.'},
+            security: {title:'Security & Audit', subtitle:'Plan account actions, audit events, session review and alerts.'},
+            settings: {title:'Website Settings', subtitle:'Plan global branding, navigation, feature flags and maintenance mode.'}
         };
+        const item = data[view] || data.dashboard;
+        if (title) title.textContent = item.title;
+        if (subtitle) subtitle.textContent = item.subtitle;
+        if (view !== 'dashboard' && view !== 'tests' && view !== 'attempts') renderPlannedModule(view, item);
+    }
 
 
-        if (title) {
-            title.textContent =
-                data[view]?.title || 'Admin Panel';
-        }
-
-
-        if (subtitle) {
-            subtitle.textContent =
-                data[view]?.subtitle || '';
-        }
+    function renderPlannedModule(view, item) {
+        const configs = {
+            candidates: [
+                ['Candidate directory','Search profiles and review verified account details.'],
+                ['Account status & access','Add safe suspend/restore actions after server-side enforcement exists.'],
+                ['Candidate history','Review attempts, progress and support notes with privacy controls.'],
+                ['Identity & verification','Review email/phone verification states without exposing secrets.']
+            ],
+            content: [
+                ['Public pages','Manage homepage copy, FAQ, policy pages and footer links.'],
+                ['Announcements','Schedule notices, exam updates and maintenance banners.'],
+                ['Media library','Manage uploaded logos, thumbnails and passage attachments.'],
+                ['SEO & discoverability','Edit page titles, descriptions and social preview metadata.']
+            ],
+            subscriptions: [
+                ['Plan catalogue','Draft Free, Monthly, Quarterly and Annual plans with clear limits.'],
+                ['Entitlements','Gate premium test sets, history depth, analytics and attempt limits.'],
+                ['Lifecycle','Trial, renewals, grace periods, cancellation and expiry handling.'],
+                ['Reconciliation','Verify provider webhooks before changing paid access.']
+            ],
+            payments: [
+                ['Payment ledger','Track provider transaction IDs, status and linked invoices.'],
+                ['Coupons & campaigns','Expiry, redemption limits, eligibility and usage reporting.'],
+                ['Refunds & disputes','Require elevated permission and preserve a full audit trail.'],
+                ['Provider integration','Use server-side secrets and verified webhook signatures only.']
+            ],
+            roles: [
+                ['Role templates','Owner, administrator, content manager, evaluator and support roles.'],
+                ['Permission matrix','Separate read, create, edit, publish, export and destructive actions.'],
+                ['Approval rules','Require confirmation or a second approver for high-risk actions.'],
+                ['Session management','Review active sessions and revoke access through trusted APIs.']
+            ],
+            analytics: [
+                ['Performance trends','WPM, accuracy, errors, completion and category-level trends.'],
+                ['Conversion funnel','Registration, verification, first attempt and subscription conversion.'],
+                ['Exports','Scoped CSV reports with access logging and privacy limits.'],
+                ['Operational alerts','Unusual score spikes, failed jobs and service degradation.']
+            ],
+            security: [
+                ['Audit log','Record who performed each privileged action, when and on what record.'],
+                ['Account enforcement','Ban/unban with reason, expiry and server-side policy checks.'],
+                ['Abuse monitoring','Review suspicious attempts with transparent review history.'],
+                ['Recovery & backup','Document restore tests, incident response and key rotation.']
+            ],
+            settings: [
+                ['Brand & navigation','Logo, theme, menu labels and public links.'],
+                ['Exam defaults','Default duration, scoring policy and leaderboard visibility.'],
+                ['Feature flags','Enable features gradually with safe rollback controls.'],
+                ['Maintenance & integrations','Controlled maintenance page, email provider and payment settings.']
+            ]
+        };
+        const title = $('module-title');
+        const subtitle = $('module-subtitle');
+        const box = $('module-capabilities');
+        const heading = $('module-status-title');
+        const copy = $('module-status-copy');
+        if (title) title.textContent = item.title;
+        if (subtitle) subtitle.textContent = item.subtitle;
+        if (heading) heading.textContent = view === 'candidates' ? 'Candidate controls need a secure backend workflow' : 'Module blueprint — not yet connected';
+        if (copy) copy.textContent = 'This screen documents the intended controls. It does not pretend to perform actions until the database schema, server-side authorization, and audit behavior are implemented and tested.';
+        if (box) box.innerHTML = (configs[view] || []).map(([name, detail]) => '<article class="admin-capability"><strong>' + esc(name) + '</strong><p>' + esc(detail) + '</p></article>').join('');
     }
 
 
     /* =====================================================
        DASHBOARD
     ===================================================== */
-
-    async function loadDashboard() {
+async function loadDashboard() {
 
         try {
 
@@ -1586,6 +1547,13 @@
     ===================================================== */
 
     function setupNavigation() {
+        document.querySelectorAll('[data-module]').forEach(button => {
+            button.addEventListener('click', () => {
+                const module = button.getAttribute('data-module');
+                showAdminView(module);
+                $('admin-sidebar')?.classList.remove('is-open');
+            });
+        });
 
 
         $('nav-dash')?.addEventListener(
@@ -1845,13 +1813,10 @@
         setupTestActions();
 
         setupAttemptActions();
-
-
-        $('admin-loading').style.display =
-            'none';
-
-        $('admin-app').style.display =
-            'flex';
+        $('admin-menu-toggle')?.addEventListener('click', () => $('admin-sidebar')?.classList.toggle('is-open'));
+        $('admin-refresh')?.addEventListener('click', () => { if (currentView === 'dashboard') loadDashboard(); else if (currentView === 'tests') loadManageTests(); else if (currentView === 'attempts') loadAllAttempts(); });
+        if ($('admin-loading')) $('admin-loading').style.display = 'none';
+        if ($('admin-app')) $('admin-app').style.display = 'flex';
 
 
         showAdminView(
