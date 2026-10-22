@@ -72,11 +72,12 @@ document.addEventListener('DOMContentLoaded', async()=>{
             const payload=await response.json();
             if(!response.ok||!payload.score)throw new Error(payload.error||'The server could not validate this result.');
             if(payload.scores)resultScores=payload.scores;else if(payload.score)resultScores.bsf=payload.score;
+            const saveStatus=$('result-save-status');if(saveStatus){saveStatus.hidden=false;saveStatus.className='result-save-status is-success';saveStatus.textContent='Result saved securely to your account.';}
             displayResult(resultScores[selectedFormula]||payload.score);
             console.info('Server-validated typing attempt saved:',payload.attempt_id);
         } catch(error) {
             console.error('Server result validation/save failed:',error);
-            alert('Your result could not be securely saved. Please keep this page open and contact support. Details: '+(error?.message||'Unknown error'));
+            const saveStatus=$('result-save-status');if(saveStatus){saveStatus.hidden=false;saveStatus.className='result-save-status is-error';saveStatus.textContent='Your score is displayed, but it could not be saved to your account. Secure result saving may need to be configured; please try again later.';}
         }
     }
 });
