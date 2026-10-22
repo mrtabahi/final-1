@@ -880,8 +880,9 @@ async function loadDashboard() {
         const nextActive = !folder.active;
         const action = nextActive ? 'enable' : 'disable';
         if (!confirm((nextActive ? 'Enable' : 'Disable') + ' folder "' + folder.name + '"? ' + (nextActive ? 'Its active tests will become visible to candidates again.' : 'Tests in this folder will no longer be available to candidates.'))) return;
-        const { error } = await supabaseClient.from('folders').update({ active: nextActive }).eq('id', id);
+        const { data: updatedFolder, error } = await supabaseClient.from('folders').update({ active: nextActive }).eq('id', id).select('id, active').maybeSingle();
         if (error) { alert('Could not ' + action + ' folder: ' + error.message); return; }
+        if (!updatedFolder) { alert('Folder was not changed. Your admin permissions may have expired; refresh and sign in again.'); return; }
         await loadManageTests();
     }
 
@@ -943,20 +944,33 @@ async function loadDashboard() {
             return;
         }
         const values = { name, description, active, thumbnail_url: thumbnailUrl };
-        const query = editingFolderId
-            ? supabaseClient.from('folders').update(values).eq('id', editingFolderId)
-            : supabaseClient.from('folders').insert(values);
-        const { error } = await query;
-        if (error) {
+        try {
+            // Request the saved row back. PostgREST can report no error for an
+            // UPDATE that matched zero rows (for example when RLS filters it out).
+            const { data: savedFolder, error } = editingFolderId
+                ? await supabaseClient.from('folders').update(values).eq('id', editingFolderId).select('*').maybeSingle()
+                : await supabaseClient.from('folders').insert(values).select('*').single();
+
+            if (error) throw error;
+            if (!savedFolder) {
+                throw new Error('No folder was saved. Your admin session or folder permissions may have expired; refresh and sign in again.');
+            }
+
+            if (currentFolder?.thumbnail_url && currentFolder.thumbnail_url !== thumbnailUrl) {
+                await removeFolderThumbnail(currentFolder.thumbnail_url);
+            }
+
+            // Refresh the authoritative list and keep the modal open if refresh fails.
+            await loadFolders();
+            message.textContent = editingFolderId ? 'Folder updated successfully.' : 'Folder created successfully.';
+            setTimeout(closeFolderModal, 500);
+        } catch (error) {
             console.error('Save folder error:', error);
-            message.textContent = error.message;
-            if (thumbnailUrl && thumbnailUrl !== currentFolder?.thumbnail_url) await removeFolderThumbnail(thumbnailUrl);
-            return;
+            message.textContent = error.message || 'Could not save folder. Check admin permissions and try again.';
+            if (thumbnailUrl && thumbnailUrl !== currentFolder?.thumbnail_url) {
+                await removeFolderThumbnail(thumbnailUrl);
+            }
         }
-        if (currentFolder?.thumbnail_url && currentFolder.thumbnail_url !== thumbnailUrl) await removeFolderThumbnail(currentFolder.thumbnail_url);
-        message.textContent = editingFolderId ? 'Folder updated successfully.' : 'Folder created successfully.';
-        await loadFolders();
-        setTimeout(closeFolderModal, 500);
     }
 
 
