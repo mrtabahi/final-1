@@ -61,9 +61,8 @@ const ScoringEngine = {
     for(let i=0;i<alignment.length;i++){
       const item=alignment[i];
       if(item.type==="match"){correctWords++;scoredTypedWords++;continue;}
-      if(item.type==="delete" && i>=Math.max(0,alignment.length-1) && mode==="crpf") continue;
-      // A trailing untyped suffix is not an error for CRPF.
-      if(mode==="crpf" && item.typed===null && i>=typedString.trimEnd().split(/\s+/u).filter(Boolean).length) continue;
+      // Unfinished original words at the end of the passage are not counted as omissions.
+      if(item.type==="delete" && !alignment.slice(i+1).some(next=>next.type!=="delete")) continue;
       wordErrors++; if(item.typed!==null && item.typed!=="")scoredTypedWords++;
     }
     const doubleSpaceErrors=this.countDoubleSpaceErrors(typedString);
