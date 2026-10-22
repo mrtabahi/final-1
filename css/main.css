@@ -292,3 +292,48 @@ body {
 .badge-success { background: #dcfce7; color: #15803d; }
 .badge-warning { background: #fef3c7; color: #b45309; }
 .badge-danger { background: #fee2e2; color: #b91c1c; }
+
+
+/* Consistent navigation across public pages */
+.nav-links {
+  flex-wrap: wrap;
+}
+
+.nav-links a[aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.account-nav-item {
+  margin-left: auto;
+}
+
+.nav-links .account-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.account-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    justify-content: center;
+    gap: 0.75rem 1rem;
+    width: 100%;
+  }
+
+  .account-nav-item {
+    margin-left: 0;
+  }
+}
