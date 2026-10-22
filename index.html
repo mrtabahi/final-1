@@ -323,11 +323,11 @@
       100% { opacity: 0; }
     }
 
-    @keyframes skFire {
-      0% { color: #fff; text-shadow: 0 0 30px #ff4c16; }
-      45% { color: #ffb14b; text-shadow: 0 0 24px #ff3815; }
-      100% { color: var(--sk-accent); text-shadow: 0 0 18px #36f5c233; }
-    }
+
+
+
+
+      
 
     @keyframes skShake {
       0%, 100% { transform: translateX(0); }
@@ -355,6 +355,156 @@
         animation-duration: 2s;
       }
     }
+
+/* DECODING HCM THEME OVERRIDE */
+#skTypingDemo {
+  --sk-accent: #2563eb;
+  --sk-bg: #f8fafc;
+  color: #0f172a;
+  background: transparent;
+}
+
+#skTypingDemo .sk-stage {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+#skTypingDemo .sk-brand {
+  color: #0f4c81;
+}
+
+#skTypingDemo .sk-dot {
+  background: #2563eb;
+  box-shadow: 0 0 12px #2563eb66;
+}
+
+#skTypingDemo .sk-live {
+  color: #2563eb;
+}
+
+#skTypingDemo .sk-screen {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+#skTypingDemo .sk-label,
+#skTypingDemo .sk-hint {
+  color: #475569;
+}
+
+#skTypingDemo .sk-input {
+  color: #0f4c81;
+  text-shadow: none;
+}
+
+#skTypingDemo .sk-cursor {
+  background: #2563eb;
+  box-shadow: 0 0 8px #2563eb88;
+}
+
+#skTypingDemo .sk-keyboard {
+  background: linear-gradient(145deg, #e2e8f0, #f8fafc);
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 0 #cbd5e1, 0 12px 20px #0f172a12;
+}
+
+#skTypingDemo .sk-key {
+  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  color: #0f172a;
+  border-color: #cbd5e1;
+  border-bottom-color: #b8c5d5;
+  text-shadow: none;
+}
+
+#skTypingDemo .sk-key.sk-wide {
+  color: #475569;
+}
+
+#skTypingDemo .sk-key.sk-active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #60a5fa;
+  box-shadow: 0 0 16px #2563eb55;
+  text-shadow: none;
+}
+
+#skTypingDemo .sk-key.sk-used {
+  color: #0f4c81;
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+#skTypingDemo .sk-stat {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+#skTypingDemo .sk-stat-name {
+  color: #475569;
+}
+
+#skTypingDemo .sk-stat-value {
+  color: #0f4c81;
+  text-shadow: none;
+}
+
+#skTypingDemo .sk-stat-unit {
+  color: #475569;
+}
+
+#skTypingDemo .sk-footer {
+  color: #475569;
+}
+
+#skTypingDemo .sk-footer-line {
+  background: #cbd5e1;
+}
+
+/* Blue electric flash with subtle warm sparks */
+#skTypingDemo .sk-flash {
+  background:
+    radial-gradient(
+      ellipse at 50% 70%,
+      #60a5fa99 0%,
+      #2563eb44 30%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle at 75% 35%,
+      #f59e0b55 0%,
+      transparent 28%
+    );
+}
+
+#skTypingDemo .sk-stage.sk-burn {
+  border-color: #60a5fa;
+  box-shadow: 0 0 30px #2563eb33,
+              0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+#skTypingDemo .sk-stage.sk-burn .sk-stat-value {
+  animation: skFire 0.7s ease-out;
+}
+
+@keyframes skFire {
+  0% {
+    color: #ffffff;
+    text-shadow: 0 0 25px #2563eb;
+  }
+  45% {
+    color: #2563eb;
+    text-shadow: 0 0 18px #60a5fa;
+  }
+  100% {
+    color: #0f4c81;
+    text-shadow: none;
+  }
+}
+
+      
   </style>
 
   <div class="sk-stage">
