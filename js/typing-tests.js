@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   box.innerHTML = '<div class="loading-card">Loading typing categories…</div>';
   try {
     const [foldersResult, testsResult] = await Promise.all([
-      supabaseClient.from('folders').select('id,name,description,sort_order,created_at').eq('active', true).order('sort_order', {ascending:true}).order('created_at', {ascending:true}),
+      supabaseClient.from('folders').select('id,name,description,thumbnail_url,sort_order,created_at').eq('active', true).order('sort_order', {ascending:true}).order('created_at', {ascending:true}),
       supabaseClient.from('tests').select('id,folder_id').eq('active', true)
     ]);
     if (foldersResult.error) throw foldersResult.error;
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     box.innerHTML = folders.map(folder => `
       <a class="category-card" href="test-list.html?folder=${encodeURIComponent(String(folder.id))}">
-        <div class="category-thumb" aria-hidden="true"><span class="category-symbol">${esc(chooseSymbol(folder.name))}</span></div>
+        <div class="category-thumb" aria-hidden="true">${folder.thumbnail_url ? `<img src="${esc(folder.thumbnail_url)}" alt="" loading="lazy">` : `<span class="category-symbol">${esc(chooseSymbol(folder.name))}</span>`}</div>
         <div class="category-copy">
           <h2>${esc(folder.name)}</h2>
           <p>${esc(folder.description || 'Practice typing with a set of guided tests.')}</p>
