@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    DECODING HCM TYPING LAB
    ADMIN PANEL
@@ -80,15 +79,13 @@
 
         try {
 
-            const session = await AuthManager.getSession();
+            const status = await AuthManager.requireAdminGuard();
 
-            if (!session) {
-                window.location.href = 'login.html';
+            if (!status) {
                 return false;
             }
 
-
-            const profile = await AuthManager.getProfile();
+            const { user, profile } = status;
 
             if (!profile) {
 
@@ -115,7 +112,7 @@
             }
 
 
-            setAdminIdentity(profile, session.user);
+            setAdminIdentity(profile, user);
 
             return true;
 
@@ -1170,23 +1167,23 @@
                     min_accuracy:
                         minAccuracy,
 
-                    permissible_error_percent:
-                        permissibleErrorPercent,
+                    free_error_pct:
+                        (permissibleErrorPercent > 1 ? permissibleErrorPercent / 100 : permissibleErrorPercent),
 
-                    penalty_words:
+                    penalty_per_error:
                         penaltyWords,
 
-                    passage_text:
+                    passage:
                         content,
 
                     mode,
 
-                    backspace_disabled:
-                        backspaceDisabled,
+                    allow_backspace:
+                        !backspaceDisabled,
 
                     active,
 
-                    show_leaderboard:
+                    leaderboard_enabled:
                         leaderboard
 
                 });
@@ -1881,4 +1878,3 @@
     }
 
 })();
-```
