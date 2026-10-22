@@ -454,6 +454,7 @@ async function loadDashboard() {
         populateFolderSelect(cachedFolders);
         folderBox?.querySelectorAll('[data-folder-edit]').forEach(button => button.addEventListener('click', () => openEditFolder(button.dataset.folderEdit)));
         folderBox?.querySelectorAll('[data-folder-delete]').forEach(button => button.addEventListener('click', () => deleteFolder(button.dataset.folderDelete)));
+        folderBox?.querySelectorAll('[data-folder-toggle]').forEach(button => button.addEventListener('click', () => toggleFolderActive(button.dataset.folderToggle)));
         return cachedFolders;
     }
 
@@ -503,6 +504,7 @@ async function loadDashboard() {
 
                     <div class="list-meta">
                         <span class="status-badge ${folder.active ? 'active' : 'inactive'}">${folder.active ? 'Active' : 'Inactive'}</span>
+                        <button type="button" class="admin-btn admin-btn-secondary" data-folder-toggle="${esc(folder.id)}">${folder.active ? 'Disable' : 'Enable'}</button>
                         <button type="button" class="admin-btn admin-btn-secondary" data-folder-edit="${esc(folder.id)}">Edit</button>
                         <button type="button" class="admin-btn admin-btn-danger" data-folder-delete="${esc(folder.id)}">Delete</button>
                     </div>
@@ -624,6 +626,7 @@ async function loadDashboard() {
         populateTestFilter(cachedTests);
         testBox?.querySelectorAll('[data-test-edit]').forEach(button => button.addEventListener('click', () => openEditTest(button.dataset.testEdit)));
         testBox?.querySelectorAll('[data-test-delete]').forEach(button => button.addEventListener('click', () => deleteTest(button.dataset.testDelete)));
+        testBox?.querySelectorAll('[data-test-toggle]').forEach(button => button.addEventListener('click', () => toggleTestActive(button.dataset.testToggle)));
     }
 
 
@@ -744,6 +747,7 @@ async function loadDashboard() {
 
                             </td>
                             <td class="admin-row-actions">
+                                <button type="button" class="admin-btn admin-btn-secondary" data-test-toggle="${esc(test.id)}">${test.active ? 'Disable' : 'Enable'}</button>
                                 <button type="button" class="admin-btn admin-btn-secondary" data-test-edit="${esc(test.id)}">Edit</button>
                                 <button type="button" class="admin-btn admin-btn-danger" data-test-delete="${esc(test.id)}">Delete</button>
                             </td>
@@ -824,11 +828,33 @@ async function loadDashboard() {
         $('folder-name').focus();
     }
 
+    async function toggleFolderActive(id) {
+        const folder = cachedFolders.find(item => String(item.id) === String(id));
+        if (!folder) return;
+        const nextActive = !folder.active;
+        const action = nextActive ? 'enable' : 'disable';
+        if (!confirm((nextActive ? 'Enable' : 'Disable') + ' folder "' + folder.name + '"? ' + (nextActive ? 'Its active tests will become visible to candidates again.' : 'Tests in this folder will no longer be available to candidates.'))) return;
+        const { error } = await supabaseClient.from('folders').update({ active: nextActive }).eq('id', id);
+        if (error) { alert('Could not ' + action + ' folder: ' + error.message); return; }
+        await loadManageTests();
+    }
+
+    async function toggleTestActive(id) {
+        const test = cachedTests.find(item => String(item.id) === String(id));
+        if (!test) return;
+        const nextActive = !test.active;
+        const action = nextActive ? 'enable' : 'disable';
+        if (!confirm((nextActive ? 'Enable' : 'Disable') + ' typing test "' + test.title + '"?')) return;
+        const { error } = await supabaseClient.from('tests').update({ active: nextActive }).eq('id', id);
+        if (error) { alert('Could not ' + action + ' typing test: ' + error.message); return; }
+        await loadManageTests();
+    }
+
     async function deleteFolder(id) {
         const folder = cachedFolders.find(item => String(item.id) === String(id));
         if (!folder || !confirm('Delete folder "' + folder.name + '"? Folders linked to tests may be protected by database constraints.')) return;
         const { error } = await supabaseClient.from('folders').delete().eq('id', id);
-        if (error) { alert('Could not delete folder: ' + error.message); return; }
+        if (error) { alert(error.code === '23503' ? 'This folder still has typing tests linked to it. Move those tests to another folder or delete them first; you can also disable this folder instead.' : 'Could not delete folder: ' + error.message); return; }
         await loadManageTests();
     }
 
@@ -979,7 +1005,7 @@ async function loadDashboard() {
         const test = cachedTests.find(item => String(item.id) === String(id));
         if (!test || !confirm('Permanently delete test "' + test.title + '"? Existing attempts or sessions may be protected by database constraints.')) return;
         const { error } = await supabaseClient.from('tests').delete().eq('id', id);
-        if (error) { alert('Could not delete test: ' + error.message); return; }
+        if (error) { alert(error.code === '23503' ? 'This test has saved attempts or exam sessions, so it cannot be permanently deleted. Disable it instead to keep historical results safe.' : 'Could not delete test: ' + error.message); return; }
         await loadManageTests();
     }
 
