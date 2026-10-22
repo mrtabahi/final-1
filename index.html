@@ -363,17 +363,17 @@
     <div class="sk-top">
       <div class="sk-brand">
         <span class="sk-dot"></span>
-        TYPE MASTER
+        TYPING MASTER
       </div>
       <div class="sk-live">● LIVE TYPING</div>
     </div>
 
     <div class="sk-screen">
-      <div class="sk-label">TYPING TEST / TERMINAL</div>
+      <div class="sk-label"></div>
       <div class="sk-input">
-        <span class="sk-typed"></span><span class="sk-cursor"></span>
+        <span class="sk-typed">DECODING HCM FREE TYPING SITE</span><span class="sk-cursor"></span>
       </div>
-      <div class="sk-hint">Type the name shown on the keyboard...</div>
+      <div class="sk-hint">The quick brown fox jump's over the lazy dog.</div>
     </div>
 
     <div class="sk-keyboard">
@@ -459,7 +459,7 @@
       const results = root.querySelector(".sk-results");
       const keys = [...root.querySelectorAll(".sk-key")];
 
-      const text = "saurabh kumar";
+      const text = "SAURABH KUMAR (@Decoding_HCM)";
       const keyMap = {};
 
       keys.forEach(key => {
@@ -505,7 +505,7 @@
               key.classList.add("sk-active");
             }
 
-            await wait(115);
+            await wait(160);
             typed.textContent += char;
 
             if (key) {
@@ -520,7 +520,7 @@
           results.classList.add("sk-show");
 
           // Result ko kuch der visible rakho
-          await wait(1900);
+          await wait(2900);
 
           // Fiery flash effect
           stage.classList.add("sk-burn");
