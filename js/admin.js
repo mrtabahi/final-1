@@ -487,6 +487,7 @@ async function loadDashboard() {
 
                 <div class="admin-list-row">
 
+                    <div class="folder-admin-thumb">\${folder.thumbnail_url ? \`<img src="\${esc(folder.thumbnail_url)}" alt="">\` : \`<span>▦</span>\`}</div>
                     <div class="list-main">
 
                         <strong>
@@ -848,6 +849,9 @@ async function loadDashboard() {
         $('folder-form').querySelector('[type="submit"]').textContent = 'Create folder';
         $('folder-form').reset();
         $('folder-active').checked = true;
+        $('folder-thumbnail').value = '';
+        $('folder-remove-thumbnail').checked = false;
+        renderFolderThumbnailPreview('');
         $('folder-message').textContent = '';
         $('folder-modal').style.display = 'flex';
         $('folder-name').focus();
@@ -860,6 +864,9 @@ async function loadDashboard() {
         $('folder-name').value = folder.name || '';
         $('folder-description').value = folder.description || '';
         $('folder-active').checked = Boolean(folder.active);
+        $('folder-thumbnail').value = '';
+        $('folder-remove-thumbnail').checked = false;
+        renderFolderThumbnailPreview(folder.thumbnail_url);
         $('folder-modal-title').textContent = 'Edit folder';
         $('folder-form').querySelector('[type="submit"]').textContent = 'Save folder';
         $('folder-message').textContent = '';
