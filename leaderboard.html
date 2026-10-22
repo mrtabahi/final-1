@@ -4,41 +4,45 @@
     <meta name="google-adsense-account" content="ca-pub-2757719583090087">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View typing practice leaderboard rankings on Decoding HCM.">
     <title>Leaderboard | Decoding HCM Typing Test Lab</title>
     <link rel="stylesheet" href="css/main.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="index.html" class="brand-container">
-            <div class="brand-logo"><img src="logo.png" alt="SRB"/></div>
-            <div class="brand-title">DECODING HCM</div>
+    <nav class="navbar" aria-label="Main navigation">
+        <a href="index.html" class="brand-container" aria-label="Decoding HCM Home">
+            <div class="brand-logo"><img src="logo.png" alt="Decoding HCM logo"></div>
+            <div>
+                <div class="brand-title">DECODING HCM</div>
+                <div class="brand-subtitle">Typing Test Lab — BSF Preparation</div>
+            </div>
         </a>
-               <ul class="nav-links">
+
+        <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
-            <li><a href="leaderboard.html">Leaderboard</a></li>
+            <li><a href="Typing_test.html">Typing Tests</a></li>
+            <li><a href="my_results.html">My Results</a></li>
+            <li><a href="my_account.html">My Account</a></li>
+            <li><a href="leaderboard.html" aria-current="page">Leaderboard</a></li>
             <li><a href="dashboard.html">Start Preparation</a></li>
-            <li><a href=""></li>
-            <li><a href=""></li>
-            <li><a href=""></li>
-            
-            
         </ul>
     </nav>
 
-    <div class="container">
-        <div class="card">
-            <h2 class="card-title">🏆 Top Candidate Leaderboard</h2>
+    <main class="container">
+        <section class="card" aria-labelledby="leaderboard-title">
+            <h1 class="card-title" id="leaderboard-title">🏆 Top Candidate Leaderboard</h1>
+            <p class="form-help">Compare typing performance and accuracy with other candidates.</p>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Rank</th>
-                            <th>Candidate</th>
-                            <th>Language</th>
-                            <th>Gross WPM</th>
-                            <th>Net WPM</th>
-                            <th>Accuracy</th>
+                            <th scope="col">Rank</th>
+                            <th scope="col">Candidate</th>
+                            <th scope="col">Language</th>
+                            <th scope="col">Gross WPM</th>
+                            <th scope="col">Net WPM</th>
+                            <th scope="col">Accuracy</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
@@ -46,8 +50,13 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
+            <p id="leaderboard-message" class="form-help" role="status" aria-live="polite"></p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>© Decoding HCM — All Rights Reserved | BSF HCM Typing Preparation</p>
+    </footer>
 
     <script src="js/config.js"></script>
     <script src="js/leaderboard.js"></script>
