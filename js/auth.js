@@ -345,7 +345,7 @@ const AuthManager = {
     }
 
     if (!profile || profile.role !== 'admin') {
-      window.location.href = '/dashboard.html';
+      window.location.href = '/index.html';
       return null;
     }
 
