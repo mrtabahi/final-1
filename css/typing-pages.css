@@ -31,3 +31,7 @@
 .loading-card { padding: 1.5rem; border: 1px dashed var(--border-color); border-radius: 12px; background: white; color: var(--text-muted); }
 @media (max-width: 900px) { .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .test-row { grid-template-columns: 48px minmax(0, 1fr) auto; } .test-meta { grid-column: 2 / 3; } .test-start { grid-column: 3; grid-row: 1 / span 2; } }
 @media (max-width: 600px) { .category-grid { grid-template-columns: 1fr; } .category-thumb { min-height: 125px; } .test-row { grid-template-columns: 42px minmax(0,1fr); gap: .7rem; } .test-number { width: 38px; height: 38px; } .test-meta { grid-column: 1 / -1; padding-left: .1rem; } .test-start { grid-column: 1 / -1; grid-row: auto; width: 100%; } }
+
+.category-card-self .category-thumb { background:#eaf1f7; }
+.category-card-self .category-symbol { color:#174f7c; background:#fff; }
+.category-card-self { border-color:#c8d8e6; }
