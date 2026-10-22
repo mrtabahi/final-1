@@ -11,7 +11,8 @@
 * - Paste/Cut disabled
 * - Editing shortcuts disabled
 * - Focus/visibility monitoring
-* - Sends keystroke count to ScoringEngine
+* - Tracks physical key events for diagnostics; score metrics use the final typed text length
+*   to match the server-authoritative result exactly.
 *
 * IMPORTANT:
 * The ScoringEngine is responsible for:
