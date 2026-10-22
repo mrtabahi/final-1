@@ -992,7 +992,9 @@ async function loadDashboard() {
         $('test-penalty').value = Number(test.penalty_per_error ?? 10);
         $('test-content').value = test.passage || '';
         $('test-active').checked = Boolean(test.active);
-        $('test-backspace-disabled').checked = !Boolean(test.allow_backspace);
+        $('test-backspace-mode').value = test.backspace_mode || (test.allow_backspace ? 'on' : 'off');
+        $('test-highlight-mode').value = test.highlight_mode || 'candidate';
+        $('test-hide-mode').value = test.hide_paragraph_mode || 'candidate';
         $('test-leaderboard').checked = test.leaderboard_enabled !== false;
         $('test-modal-title').textContent = 'Edit typing test';
         $('test-form').querySelector('[type="submit"]').textContent = 'Save test changes';
@@ -1027,8 +1029,9 @@ async function loadDashboard() {
 
         $('test-active').checked = true;
 
-        $('test-backspace-disabled').checked =
-            true;
+        $('test-backspace-mode').value = 'candidate';
+        $('test-highlight-mode').value = 'candidate';
+        $('test-hide-mode').value = 'candidate';
 
         $('test-leaderboard').checked =
             true;
@@ -1089,8 +1092,9 @@ async function loadDashboard() {
         const mode =
             $('test-mode').value;
 
-        const backspaceDisabled =
-            $('test-backspace-disabled').checked;
+        const backspaceMode = $('test-backspace-mode').value;
+        const highlightMode = $('test-highlight-mode').value;
+        const hideParagraphMode = $('test-hide-mode').value;
 
         const active =
             $('test-active').checked;
@@ -1125,7 +1129,10 @@ async function loadDashboard() {
             penalty_per_error: penaltyWords,
             passage: content,
             mode,
-            allow_backspace: !backspaceDisabled,
+            allow_backspace: backspaceMode === 'on' || (backspaceMode === 'candidate' && Boolean(editingTestId ? cachedTests.find(item => String(item.id) === String(editingTestId))?.allow_backspace : false)),
+            backspace_mode: backspaceMode,
+            highlight_mode: highlightMode,
+            hide_paragraph_mode: hideParagraphMode,
             active,
             leaderboard_enabled: leaderboard
         };
