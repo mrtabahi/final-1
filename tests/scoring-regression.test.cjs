@@ -67,12 +67,15 @@ test('accuracy is measured over typed characters, not untyped trailing passage t
 });
 
 test('detailed error categories identify omission, spelling, incomplete, extra and repeated words', () => {
-  const score = scoring.calculateScore('one correct word end', 'one correc word word extra', 60, {freeErrorPct:0, penaltyPerError:10}, 25, 'bsf');
-  assert.equal(score.errorBreakdown.spellingErrors, 1);
-  assert.equal(score.errorBreakdown.incompleteWords, 1);
-  assert.equal(score.errorBreakdown.extraWords, 1);
-  assert.equal(score.errorBreakdown.repeatedWords, 1);
-  assert.ok(score.errorBreakdown.omissions >= 1);
+  const omission = scoring.calculateScore('one two three', 'one three', 60, {freeErrorPct:0, penaltyPerError:10}, 9, 'bsf');
+  const spelling = scoring.calculateScore('one correct word end', 'one korrekt word end', 60, {freeErrorPct:0, penaltyPerError:10}, 21, 'bsf');
+  const incomplete = scoring.calculateScore('one correct word end', 'one correc word end', 60, {freeErrorPct:0, penaltyPerError:10}, 19, 'bsf');
+  const repeated = scoring.calculateScore('one word end', 'one word word end', 60, {freeErrorPct:0, penaltyPerError:10}, 17, 'bsf');
+  assert.equal(omission.errorBreakdown.omissions, 1);
+  assert.equal(spelling.errorBreakdown.spellingErrors, 1);
+  assert.equal(incomplete.errorBreakdown.incompleteWords, 1);
+  assert.equal(repeated.errorBreakdown.extraWords, 1);
+  assert.equal(repeated.errorBreakdown.repeatedWords, 1);
 });
 
 test('capitalization and punctuation are reported as separate primary categories', () => {
