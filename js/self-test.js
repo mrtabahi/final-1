@@ -34,7 +34,7 @@ function finishTest(){
  totalElapsed=startedAt===null?0:Math.max(1,Math.min(duration,(Date.now()-startedAt)/1000));
  typed.disabled=true;
  const input=typed.value;
- const score=window.ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,'bsf');
+ const score=ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,'bsf');
  $('self-gross').textContent=score.grossWpm.toFixed(2);
  $('self-net').textContent=score.netWpm.toFixed(2);
  $('self-accuracy').textContent=score.accuracy.toFixed(2)+'%';
