@@ -61,7 +61,7 @@ const ScoringEngine = {
     if (mode === "crpf") {
       // Positional mode preserves empty slots created by repeated spaces.
       // Trailing untyped passage words are not errors; interior omissions are.
-      const normalized = typedSource.replace(/[\\r\\n\\t]+/g, " ");
+      const normalized = typedSource.replace(/[\r\n\t]+/g, " ");
       const slots = normalized.length ? normalized.split(" ") : [];
       while (slots.length && slots[slots.length - 1] === "") slots.pop();
       for (let i = 0; i < Math.max(expectedWords.length, slots.length); i++) {
@@ -99,7 +99,7 @@ const ScoringEngine = {
     const totalErrors = wordErrors;
     const freePct = Math.max(0, Math.min(0.2, Number(config.freeErrorPct ?? config.free_error_pct ?? 0.05)));
     const penaltyPerError = Math.max(0, Math.min(100, Number(config.penaltyPerError ?? config.penalty_per_error ?? 10)));
-    const measuredKeystrokes = Number.isFinite(Number(totalKeystrokes)) ? Math.max(0, Number(totalKeystrokes)) : typedSource.length;
+    const measuredKeystrokes = totalKeystrokes !== null && totalKeystrokes !== undefined && Number.isFinite(Number(totalKeystrokes)) ? Math.max(0, Number(totalKeystrokes)) : typedSource.length;
     const equivalentWords = measuredKeystrokes / 5;
     const freeErrors = Math.floor(equivalentWords * freePct);
     const excessErrors = Math.max(0, totalErrors - freeErrors);
