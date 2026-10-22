@@ -71,7 +71,14 @@
                 <div class="timer-box" id="timer-display">10:00</div>
             </div>
 
-            <div class="card" style="border-top-left-radius: 0; border-top-right-radius: 0;">
+            <div class="card typing-controls" aria-label="Typing test controls">
+                    <button type="button" id="btn-sound" class="btn btn-secondary" aria-pressed="true">🔊 Sound: On</button>
+                    <button type="button" id="btn-highlight" class="btn btn-secondary" aria-pressed="true">🖍 Highlight: On</button>
+                    <button type="button" id="btn-backspace" class="btn btn-secondary" aria-pressed="false">⌫ Backspace: Off</button>
+                    <button type="button" id="btn-hide-passage" class="btn btn-secondary" aria-pressed="false">🙈 Hide passage</button>
+                    <button type="button" id="btn-fullscreen" class="btn btn-secondary">⛶ Full screen</button>
+                </div>
+                <div class="card" style="border-top-left-radius: 0; border-top-right-radius: 0;">
                 <div id="offscreen-alert" class="offscreen-notice" style="display: none;">
                     📄 OFF-SCREEN MODE ACTIVE: Passage is hidden on screen. Please look at your physical printed sheet and type below.
                 </div>
@@ -149,6 +156,7 @@
 
                 <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
                     <button onclick="window.location.reload()" class="btn btn-primary">Retake Test</button>
+                    <a href="my_results.html" class="btn btn-secondary">My Results</a>
                     <a href="leaderboard.html" class="btn btn-secondary">View Leaderboard</a>
                     <button onclick="window.print()" class="btn btn-secondary">Print Scorecard</button>
                 </div>
