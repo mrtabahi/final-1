@@ -45,48 +45,85 @@ const ScoringEngine = {
     }
     return out;
   },
-  calculateScore(expectedText, typedText, durationSeconds, config={}, totalKeystrokes=null, formula="bsf") {
-    const expectedTextSafe=String(expectedText??""), typedString=String(typedText??"");
-    const expected=this.tokenize(expectedTextSafe), typed=this.tokenize(typedString);
-    const elapsedSeconds=Math.max(Number(durationSeconds)||0,1);
-    const elapsedMinutes=elapsedSeconds/60;
-    const mode=String(formula).toLowerCase()==="crpf"?"crpf":"bsf";
-    let alignment;
-    if(mode==="crpf"){
-      // Keep internal repeated spaces as empty word slots. Ignore unfinished trailing slots.
-      const slots=this.tokenize(typedString.replace(/[\r\n\t]/g," "));
-      alignment=this.positionalAlignment(expected,slots);
-    } else alignment=this.alignWords(expected,typed);
-    let wordErrors=0,correctWords=0,scoredTypedWords=0;
-    for(let i=0;i<alignment.length;i++){
-      const item=alignment[i];
-      if(item.type==="match"){correctWords++;scoredTypedWords++;continue;}
-      // Unfinished original words at the end of the passage are not counted as omissions.
-      if(item.type==="delete" && !alignment.slice(i+1).some(next=>next.type!=="delete")) continue;
-      wordErrors++; if(item.typed!==null && item.typed!=="")scoredTypedWords++;
+  calculateScore(expectedText, typedText, durationSeconds, config = {}, totalKeystrokes = null, formula = "bsf") {
+    const expectedSource = String(expectedText ?? "");
+    const typedSource = String(typedText ?? "");
+    const expectedWords = this.tokenize(expectedSource);
+    const typedWords = this.tokenize(typedSource);
+    const elapsedSeconds = Math.max(Number(durationSeconds) || 0, 1);
+    const elapsedMinutes = elapsedSeconds / 60;
+    const mode = String(formula).toLowerCase() === "crpf" ? "crpf" : "bsf";
+    const doubleSpaceErrors = this.countDoubleSpaceErrors(typedSource);
+    let alignment = [];
+    let wordErrors = 0;
+    let correctWords = 0;
+
+    if (mode === "crpf") {
+      // Positional mode preserves empty slots created by repeated spaces.
+      // Trailing untyped passage words are not errors; interior omissions are.
+      const normalized = typedSource.replace(/[\\r\\n\\t]+/g, " ");
+      const slots = normalized.length ? normalized.split(" ") : [];
+      while (slots.length && slots[slots.length - 1] === "") slots.pop();
+      for (let i = 0; i < Math.max(expectedWords.length, slots.length); i++) {
+        const expected = expectedWords[i] ?? null;
+        const typed = slots[i] ?? null;
+        if (typed === null) {
+          alignment.push({ type: "delete", expected, typed: null });
+          continue;
+        }
+        if (expected === null) {
+          alignment.push({ type: "insert", expected: null, typed });
+          wordErrors++;
+        } else if (typed === expected) {
+          alignment.push({ type: "match", expected, typed });
+          correctWords++;
+        } else {
+          alignment.push({ type: typed === "" ? "delete" : "substitute", expected, typed });
+          wordErrors++;
+        }
+      }
+    } else {
+      alignment = this.alignWords(expectedWords, typedWords);
+      for (let i = 0; i < alignment.length; i++) {
+        const item = alignment[i];
+        if (item.type === "match") { correctWords++; continue; }
+        // Do not penalize passage words that simply were not reached at the end.
+        if (item.type === "delete" && !alignment.slice(i + 1).some(next => next.type !== "delete")) continue;
+        wordErrors++;
+      }
     }
-    const doubleSpaceErrors=this.countDoubleSpaceErrors(typedString);
-    wordErrors+=doubleSpaceErrors;
-    const totalErrors=wordErrors;
-    const freePct=Math.max(0,Math.min(.2,Number(config.freeErrorPct??config.free_error_pct??.05)));
-    const penaltyPerError=Math.max(0,Math.min(100,Number(config.penaltyPerError??config.penalty_per_error??10)));
-    const totalTypedWords=typed.length;
-    const freeErrors=Math.floor(totalTypedWords*freePct);
-    const excessErrors=Math.max(0,totalErrors-freeErrors);
-    const penaltyWords=excessErrors*penaltyPerError;
-    const grossWords=mode==="crpf"?Math.min(typed.length,expected.length):typed.length;
-    const netWords=Math.max(0,grossWords-penaltyWords);
-    const grossWpm=Number((grossWords/elapsedMinutes).toFixed(2));
-    const netWpm=Number((netWords/elapsedMinutes).toFixed(2));
-    const accuracy=totalTypedWords?Number((correctWords/totalTypedWords*100).toFixed(2)):0;
-    const minAccuracy=config.minAccuracy==null||config.minAccuracy===""?null:Number(config.minAccuracy);
-    const targetWpm=config.targetWpm==null||config.targetWpm===""?null:Number(config.targetWpm);
-    const passedByWpm=targetWpm===null||netWpm>=targetWpm;
-    const passedByAccuracy=minAccuracy===null||accuracy>=minAccuracy;
-    return {formula:mode,totalTypedWords,totalTypedChars:typedString.length,totalKeystrokes:totalKeystrokes??typedString.length,
-      correctChars:0,incorrectChars:0,correctWords,wordErrors,doubleSpaceErrors,totalErrors,freeErrors,excessErrors,penaltyWords,
-      netWords:Number(netWords.toFixed(2)),grossWpm,netWpm,accuracy,elapsedMinutes,elapsedSeconds,alignment,
-      minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
+
+    // Repeated spaces are an explicit error in both practice formulas.
+    wordErrors += doubleSpaceErrors;
+    const totalErrors = wordErrors;
+    const freePct = Math.max(0, Math.min(0.2, Number(config.freeErrorPct ?? config.free_error_pct ?? 0.05)));
+    const penaltyPerError = Math.max(0, Math.min(100, Number(config.penaltyPerError ?? config.penalty_per_error ?? 10)));
+    const measuredKeystrokes = Number.isFinite(Number(totalKeystrokes)) ? Math.max(0, Number(totalKeystrokes)) : typedSource.length;
+    const equivalentWords = measuredKeystrokes / 5;
+    const freeErrors = Math.floor(equivalentWords * freePct);
+    const excessErrors = Math.max(0, totalErrors - freeErrors);
+    const penaltyWords = excessErrors * penaltyPerError;
+    const netWords = Math.max(0, equivalentWords - penaltyWords);
+    const grossWpm = Number((equivalentWords / elapsedMinutes).toFixed(2));
+    const netWpm = Number((netWords / elapsedMinutes).toFixed(2));
+    let correctChars = 0;
+    for (let i = 0; i < Math.min(expectedSource.length, typedSource.length); i++) {
+      if (expectedSource[i] === typedSource[i]) correctChars++;
+    }
+    const incorrectChars = Math.max(0, typedSource.length - correctChars) + Math.max(0, expectedSource.length - typedSource.length);
+    const accuracy = measuredKeystrokes > 0 ? Number((correctChars / measuredKeystrokes * 100).toFixed(2)) : 0;
+    const minAccuracy = config.minAccuracy == null || config.minAccuracy === "" ? null : Number(config.minAccuracy);
+    const targetWpm = config.targetWpm == null || config.targetWpm === "" ? null : Number(config.targetWpm);
+    const passedByWpm = targetWpm === null || netWpm >= targetWpm;
+    const passedByAccuracy = minAccuracy === null || accuracy >= minAccuracy;
+    return {
+      formula: mode, totalTypedWords: typedWords.length, totalTypedChars: typedSource.length,
+      totalKeystrokes: measuredKeystrokes, equivalentTypedWords: Number(equivalentWords.toFixed(2)),
+      correctChars, incorrectChars, correctWords, wordErrors, doubleSpaceErrors, totalErrors,
+      freeErrors, excessErrors, penaltyWords, netWords: Number(netWords.toFixed(2)),
+      grossWpm, netWpm, accuracy, elapsedMinutes, elapsedSeconds, alignment,
+      minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy
+    };
   },
   getPerformanceLabel(score) {
     return score.passed?{text:"TARGET ACHIEVED",class:"badge-success"}:{text:"KEEP PRACTISING",class:"badge-danger"};
