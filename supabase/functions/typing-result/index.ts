@@ -104,20 +104,42 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   const elapsedMinutes = Math.max(seconds, 1) / 60;
   const grossWpm = Number((equivalentTypedWords / elapsedMinutes).toFixed(2));
   const netWpm = Number((netWords / elapsedMinutes).toFixed(2));
-  let correctChars = 0, alignedPairs = 0, omittedErrorChars = 0;
+  let correctChars = 0, alignedPairs = 0;
   for (let i = 0; i < alignment.length; i++) {
     const item = alignment[i];
     if (item.type === "delete" && item.expected !== null && !alignment.slice(i + 1).some(next => next.type !== "delete")) continue;
-    if (item.type === "delete" && item.expected !== null) { omittedErrorChars += Math.min(5, item.expected.length); continue; }
+    if (item.type === "delete" && item.expected !== null) continue;
     if (item.expected === null || item.typed === null) continue;
     correctChars += Math.max(0, item.typed.length - editDistance(item.expected, item.typed));
     alignedPairs++;
   }
   const typedSeparators = (typedText.match(/\s/gu) || []).length;
   correctChars += Math.min(typedSeparators, Math.max(0, typed.length - 1), Math.max(0, alignedPairs - 1));
-  correctChars = Math.max(0, Math.min(typedText.length, correctChars - omittedErrorChars));
+  correctChars = Math.max(0, Math.min(typedText.length, correctChars));
   const incorrectChars = Math.max(0, typedText.length - correctChars);
   const accuracy = typedText.length ? Number((correctChars / typedText.length * 100).toFixed(2)) : 0;
+  // Primary categories are mutually exclusive; repeatedWords is a subset of extraWords.
+  const errorBreakdown = { omissions: 0, substitutions: 0, spellingErrors: 0, incompleteWords: 0, extraWords: 0, repeatedWords: 0, spacingErrors: doubleSpaceErrors, capitalizationErrors: 0, punctuationErrors: 0, notReached: 0 };
+  for (let i = 0; i < alignment.length; i++) {
+    const item = alignment[i];
+    if (item.type === "delete" && item.expected !== null) {
+      const trailing = !alignment.slice(i + 1).some(next => next.type !== "delete");
+      if (trailing) errorBreakdown.notReached++;
+      else errorBreakdown.omissions++;
+    } else if (item.type === "insert") {
+      errorBreakdown.extraWords++;
+      if (i > 0 && alignment[i - 1].typed !== null && alignment[i - 1].typed === item.typed) errorBreakdown.repeatedWords++;
+    } else if (item.type === "substitute") {
+      const e = String(item.expected ?? ""), t = String(item.typed ?? "");
+      const lowerE = e.toLocaleLowerCase(), lowerT = t.toLocaleLowerCase();
+      const bareE = lowerE.replace(/[^\\p{L}\\p{N}]/gu, ""), bareT = lowerT.replace(/[^\\p{L}\\p{N}]/gu, "");
+      if (lowerE === lowerT && e !== t) errorBreakdown.capitalizationErrors++;
+      else if (bareE === bareT && e !== t) errorBreakdown.punctuationErrors++;
+      else if (t.length > 0 && t.length < e.length && lowerE.startsWith(lowerT)) errorBreakdown.incompleteWords++;
+      else if (editDistance(lowerE, lowerT) <= Math.max(1, Math.floor(Math.min(e.length, t.length) * 0.25))) errorBreakdown.spellingErrors++;
+      else errorBreakdown.substitutions++;
+    }
+  }
   const targetWpm = test.target_wpm == null ? null : Number(test.target_wpm);
   const minAccuracy = test.min_accuracy == null ? null : Number(test.min_accuracy);
   const passedByWpm = targetWpm === null || netWpm >= targetWpm;
@@ -127,7 +149,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
     equivalentTypedWords: Number(equivalentTypedWords.toFixed(2)), correctChars, incorrectChars, correctWords,
     wordErrors, doubleSpaceErrors, totalErrors, freeErrors, excessErrors, penaltyWords,
     netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes,
-    alignment, minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy,
+    alignment, errorBreakdown, minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy,
   };
 }
 
