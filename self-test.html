@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b63">
+<title>Self Test | Decoding HCM Typing</title>
+<meta name="description" content="Create a personal typing practice test using your own text and chosen duration.">
+<link rel="stylesheet" href="css/main.css?v=20261023-selftest1">
+<link rel="stylesheet" href="css/self-test.css?v=20261023-selftest1">
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+<nav class="navbar">
+<a href="index.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="Decoding HCM"></div><div><div class="brand-title">DECODING HCM</div><div class="brand-subtitle">Typing Test Lab — BSF Preparation</div></div></a>
+<ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html" aria-current="page">Typing Tests</a></li><li><a href="my_results.html">My Results</a></li><li><a href="my_account.html">My Account</a></li></ul>
+</nav>
+<main class="container selftest-container">
+<section class="selftest-heading"><span class="eyebrow">PERSONAL PRACTICE WORKSPACE</span><h1>Self Test</h1><p>Paste your own passage, choose a duration and practise at your own pace. This is a personal practice score, not an official exam result.</p></section>
+<section id="self-setup" class="card self-setup">
+<h2 class="card-title">1. Prepare your passage</h2>
+<label class="form-label" for="source-text">Your typing passage</label>
+<textarea id="source-text" class="form-control self-source" placeholder="Paste or type your passage here…" maxlength="50000" required></textarea>
+<div class="self-setup-grid">
+<div class="form-group"><label class="form-label" for="self-duration">Test duration</label><select id="self-duration" class="form-control"><option value="1">1 minute</option><option value="2">2 minutes</option><option value="3">3 minutes</option><option value="5" selected>5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
+<label class="self-check"><input id="self-backspace" type="checkbox" checked><span><strong>Allow Backspace</strong><small>You can correct your typing.</small></span></label>
+</div>
+<button id="self-start" class="btn btn-primary" type="button">Start self test →</button>
+<p id="self-message" class="self-message" role="status"></p>
+</section>
+<section id="self-workspace" class="self-workspace" hidden>
+<div class="self-toolbar card">
+<div class="self-timer-block"><span class="self-metric-label">TIME LEFT</span><strong id="self-timer">05:00</strong></div>
+<div class="self-toolbar-actions">
+<button id="self-highlight" type="button" class="btn btn-secondary" aria-pressed="false">Highlight: Off</button>
+<button id="self-hide" type="button" class="btn btn-secondary" aria-pressed="false">Hide passage</button>
+<button id="self-end" type="button" class="btn btn-primary">Finish test</button>
+</div>
+</div>
+<div class="self-passage-card card" id="self-passage-card"><div class="self-section-label">PASSAGE</div><div id="self-passage" class="self-passage" aria-label="Typing passage"></div></div>
+<div id="self-pdf-row" class="self-pdf-row" hidden><div><strong>Passage hidden</strong><p>Download your own passage as a printable PDF (14 pt text).</p></div><button id="self-pdf" type="button" class="btn btn-secondary">↓ Download passage PDF</button></div>
+<div class="card self-type-card"><div class="self-section-label">TYPE HERE</div><textarea id="self-typed" class="form-control self-typed" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Start typing here…"></textarea><p class="self-hint">Timer starts with your first keystroke. Your passage and typing stay in this browser session.</p></div>
+<div id="self-result" class="card self-result" hidden><div class="self-section-label">SESSION SUMMARY</div><h2>Self-test complete</h2><div class="self-result-grid"><div><span>Gross WPM</span><strong id="self-gross">0.00</strong></div><div><span>Accuracy</span><strong id="self-accuracy">0%</strong></div><div><span>Correct characters</span><strong id="self-correct">0</strong></div><div><span>Typed characters</span><strong id="self-count">0</strong></div></div><p class="self-result-note">Self-test results are for personal practice only and are not saved to your official results.</p><button id="self-again" class="btn btn-primary" type="button">Create another self test</button></div>
+</section>
+</main>
+<footer class="footer"><p>© Decoding HCM — All Rights Reserved</p><div class="site-social-links"><a href="https://www.youtube.com/@decoding_hcm" target="_blank" rel="noopener noreferrer">▶ YouTube</a><a href="https://t.me/decoding_hcm" target="_blank" rel="noopener noreferrer">✈ Telegram Chat</a><a href="https://t.me/defense_aspirants" target="_blank" rel="noopener noreferrer">📄 PDF &amp; Study Material</a></div></footer>
+<script src="js/self-test.js?v=20261023-selftest1"></script>
+</body></html>
