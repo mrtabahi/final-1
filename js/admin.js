@@ -900,7 +900,11 @@ async function loadDashboard() {
         const folder = cachedFolders.find(item => String(item.id) === String(id));
         if (!folder || !confirm('Delete folder "' + folder.name + '"? Folders linked to tests may be protected by database constraints.')) return;
         const { error } = await supabaseClient.from('folders').delete().eq('id', id);
-        if (error) { alert(error.code === '23503' ? 'This folder still has typing tests linked to it. Move those tests to another folder or delete them first; you can also disable this folder instead.' : 'Could not delete folder: ' + error.message); return; }
+        if (error) {
+            alert(error.code === '23503' ? 'This folder still has typing tests linked to it. Move those tests to another folder or delete them first; you can also disable this folder instead.' : 'Could not delete folder: ' + error.message);
+            return;
+        }
+        await removeFolderThumbnail(folder.thumbnail_url);
         await loadManageTests();
     }
 
@@ -921,64 +925,38 @@ async function loadDashboard() {
 
 
     async function createFolder(event) {
-
         event.preventDefault();
-
-
-        const name =
-            $('folder-name').value.trim();
-
-        const description =
-            $('folder-description').value.trim();
-
-        const active =
-            $('folder-active').checked;
-
-
-        if (!name) {
+        const name = $('folder-name').value.trim();
+        const description = $('folder-description').value.trim();
+        const active = $('folder-active').checked;
+        const currentFolder = editingFolderId ? cachedFolders.find(item => String(item.id) === String(editingFolderId)) : null;
+        const message = $('folder-message');
+        if (!name) return;
+        message.textContent = 'Saving folder...';
+        let thumbnailUrl = currentFolder?.thumbnail_url || null;
+        try {
+            const file = $('folder-thumbnail')?.files?.[0];
+            if ($('folder-remove-thumbnail')?.checked) thumbnailUrl = null;
+            if (file) thumbnailUrl = await uploadFolderThumbnail(file);
+        } catch (error) {
+            message.textContent = error.message || 'Thumbnail upload failed.';
             return;
         }
-
-
-        const message =
-            $('folder-message');
-
-
-        message.textContent =
-            'Creating folder...';
-
-
+        const values = { name, description, active, thumbnail_url: thumbnailUrl };
         const query = editingFolderId
-            ? supabaseClient.from('folders').update({ name, description, active }).eq('id', editingFolderId)
-            : supabaseClient.from('folders').insert({ name, description, active });
+            ? supabaseClient.from('folders').update(values).eq('id', editingFolderId)
+            : supabaseClient.from('folders').insert(values);
         const { error } = await query;
-
-
         if (error) {
-
-            console.error(
-                'Create folder error:',
-                error
-            );
-
-            message.textContent =
-                error.message;
-
+            console.error('Save folder error:', error);
+            message.textContent = error.message;
+            if (thumbnailUrl && thumbnailUrl !== currentFolder?.thumbnail_url) await removeFolderThumbnail(thumbnailUrl);
             return;
         }
-
-
+        if (currentFolder?.thumbnail_url && currentFolder.thumbnail_url !== thumbnailUrl) await removeFolderThumbnail(currentFolder.thumbnail_url);
         message.textContent = editingFolderId ? 'Folder updated successfully.' : 'Folder created successfully.';
-
-
         await loadFolders();
-
-
-        setTimeout(() => {
-
-            closeFolderModal();
-
-        }, 500);
+        setTimeout(closeFolderModal, 500);
     }
 
 
@@ -1738,6 +1716,17 @@ async function loadDashboard() {
             );
 
 
+        $('folder-thumbnail')?.addEventListener('change', () => {
+            const file = $('folder-thumbnail').files?.[0];
+            if (file) renderFolderThumbnailPreview(URL.createObjectURL(file));
+        });
+        $('folder-remove-thumbnail')?.addEventListener('change', () => {
+            if ($('folder-remove-thumbnail').checked) renderFolderThumbnailPreview('');
+            else if (editingFolderId) {
+                const folder = cachedFolders.find(item => String(item.id) === String(editingFolderId));
+                renderFolderThumbnailPreview(folder?.thumbnail_url || '');
+            }
+        });
         $('refresh-folders')
             ?.addEventListener(
                 'click',
