@@ -62,7 +62,7 @@ body {
   height: 40px;
   background-color: white;
   color: var(--primary-blue);
-  border-radius: var(--radius-sm);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
