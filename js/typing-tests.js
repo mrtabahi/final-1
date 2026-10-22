@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (value.includes('target')) return '🏆';
     if (value.includes('hindi')) return 'अ';
     if (value.includes('english')) return 'A';
-    return symbols[(value.length + value.charCodeAt(0 || 0)) % symbols.length] || '⌨️';
+    return symbols[(value.length + (value.charCodeAt(0) || 0)) % symbols.length] || '⌨️';
   };
   document.getElementById('logout-btn')?.addEventListener('click', async event => {
     event.preventDefault();
