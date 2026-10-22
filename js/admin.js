@@ -1521,6 +1521,11 @@ async function loadDashboard() {
 
 
     function setupDashboardActions() {
+        document.querySelectorAll('[data-quick-action]').forEach(button => button.addEventListener('click', async () => {
+            const action = button.getAttribute('data-quick-action');
+            if (action === 'create-test') { showAdminView('tests'); await loadFolders(); openTestModal(); }
+            if (action === 'view-attempts') showAdminView('attempts');
+        }));
 
 
         $('quick-create-folder')
