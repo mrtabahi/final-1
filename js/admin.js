@@ -950,7 +950,9 @@ async function loadDashboard() {
         $('test-error-percent').value = '5';
         $('test-penalty').value = '10';
         $('test-active').checked = true;
-        $('test-backspace-disabled').checked = false;
+        $('test-backspace-mode').value = 'candidate';
+        $('test-highlight-mode').value = 'candidate';
+        $('test-hide-mode').value = 'candidate';
         $('test-leaderboard').checked = true;
         if (!cachedFolders.length) {
 
