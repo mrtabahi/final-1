@@ -274,3 +274,12 @@
 .result-save-status[hidden] { display: none; }
 .result-save-status.is-success { border-color: #86efac; border-left-color: #16a34a; background: #f0fdf4; color: #166534; }
 .result-save-status.is-error { border-color: #fcd34d; border-left-color: #d97706; background: #fffbeb; color: #92400e; }
+
+
+/* Reliable live metrics controls and status */
+.live-metrics-toolbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1.1rem;padding:.75rem 0 .15rem;color:var(--text-main)}
+.live-metrics-toolbar strong{font-size:1rem}
+#live-metrics-panel[hidden]{display:none!important}
+#btn-toggle-live-metrics{min-height:40px;border-radius:9px}
+#timer-display{font-variant-numeric:tabular-nums;min-width:120px}
+@media(max-width:480px){.live-metrics-toolbar{align-items:stretch}.live-metrics-toolbar button{width:100%}}
