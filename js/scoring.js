@@ -77,11 +77,11 @@ const ScoringEngine = {
     const grossWpm=Number((equivalentWords/elapsedMinutes).toFixed(2)),netWpm=Number((netWords/elapsedMinutes).toFixed(2));
     // Character accuracy follows word alignment, not raw character indexes; one missing
     // word therefore does not falsely mark every later character wrong.
-    let correctChars=0,alignedPairs=0,omittedErrorChars=0;
+    let correctChars=0,alignedPairs=0;
     for(let i=0;i<alignment.length;i++){
       const item=alignment[i];
       if(item.type==="delete"&&item.expected!=null&&!alignment.slice(i+1).some(next=>next.type!=="delete"))continue;
-      if(item.type==="delete"&&item.expected!=null){omittedErrorChars+=Math.min(5,item.expected.length);continue;}
+      if(item.type==="delete"&&item.expected!=null)continue;
       if(item.expected==null||item.typed==null)continue;
       const distance=this.editDistance(item.expected,item.typed);
       correctChars+=Math.max(0,item.typed.length-distance);
@@ -90,16 +90,38 @@ const ScoringEngine = {
     const typedSeparators=(typedSource.match(/\s/gu)||[]).length;
     const expectedTypedSpaces=Math.max(0,typedWords.length-1);
     correctChars+=Math.min(typedSeparators,expectedTypedSpaces,Math.max(0,alignedPairs-1));
-    correctChars=Math.max(0,Math.min(typedSource.length,correctChars-omittedErrorChars));
+    correctChars=Math.max(0,Math.min(typedSource.length,correctChars));
     const incorrectChars=Math.max(0,typedSource.length-correctChars);
     const accuracy=typedSource.length?Number((correctChars/typedSource.length*100).toFixed(2)):0;
+    // Mutually exclusive primary classifications; repeatedWords is a subset of extraWords.
+    const errorBreakdown={omissions:0,substitutions:0,spellingErrors:0,incompleteWords:0,extraWords:0,repeatedWords:0,spacingErrors:doubleSpaceErrors,capitalizationErrors:0,punctuationErrors:0,notReached:0};
+    for(let i=0;i<alignment.length;i++){
+      const item=alignment[i];
+      if(item.type==="delete"&&item.expected!=null){
+        const trailing=!alignment.slice(i+1).some(next=>next.type!=="delete");
+        if(trailing)errorBreakdown.notReached++;
+        else errorBreakdown.omissions++;
+      } else if(item.type==="insert"){
+        errorBreakdown.extraWords++;
+        if(i>0&&alignment[i-1].typed!=null&&alignment[i-1].typed===item.typed)errorBreakdown.repeatedWords++;
+      } else if(item.type==="substitute"){
+        const e=String(item.expected??""),t=String(item.typed??"");
+        const lowerE=e.toLocaleLowerCase(),lowerT=t.toLocaleLowerCase();
+        const bareE=lowerE.replace(/[^\\p{L}\\p{N}]/gu,""),bareT=lowerT.replace(/[^\\p{L}\\p{N}]/gu,"");
+        if(lowerE===lowerT&&e!==t)errorBreakdown.capitalizationErrors++;
+        else if(bareE===bareT&&e!==t)errorBreakdown.punctuationErrors++;
+        else if(t.length>0&&t.length<e.length&&lowerE.startsWith(lowerT))errorBreakdown.incompleteWords++;
+        else if(this.editDistance(lowerE,lowerT)<=Math.max(1,Math.floor(Math.min(e.length,t.length)*.25)))errorBreakdown.spellingErrors++;
+        else errorBreakdown.substitutions++;
+      }
+    }
     const minAccuracy=config.minAccuracy==null||config.minAccuracy===""?null:Number(config.minAccuracy);
     const targetWpm=config.targetWpm==null||config.targetWpm===""?null:Number(config.targetWpm);
     const passedByWpm=targetWpm===null||netWpm>=targetWpm,passedByAccuracy=minAccuracy===null||accuracy>=minAccuracy;
     return {formula:mode,totalTypedWords:typedWords.length,totalTypedChars:typedSource.length,totalKeystrokes:measuredKeystrokes,
       equivalentTypedWords:Number(equivalentWords.toFixed(2)),correctChars,incorrectChars,correctWords,wordErrors,doubleSpaceErrors,totalErrors,
       freeErrors,excessErrors,penaltyWords,netWords:Number(netWords.toFixed(2)),grossWpm,netWpm,accuracy,elapsedMinutes,elapsedSeconds,
-      alignment,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
+      alignment,errorBreakdown,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
   },
   getPerformanceLabel(score){return score.passed?{text:"TARGET ACHIEVED",class:"badge-success"}:{text:"KEEP PRACTISING",class:"badge-danger"};}
 };
