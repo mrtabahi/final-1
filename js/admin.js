@@ -803,6 +803,45 @@ async function loadDashboard() {
        CREATE FOLDER
     ===================================================== */
 
+
+    function folderStoragePath(url) {
+        const marker = '/storage/v1/object/public/folder-thumbnails/';
+        const at = String(url || '').indexOf(marker);
+        return at < 0 ? null : decodeURIComponent(String(url).slice(at + marker.length));
+    }
+
+    function renderFolderThumbnailPreview(url) {
+        const preview = $('folder-thumbnail-preview');
+        if (!preview) return;
+        preview.innerHTML = url ? '<img src="' + esc(url) + '" alt="Folder thumbnail preview">' : '<span>No thumbnail selected</span>';
+    }
+
+    async function uploadFolderThumbnail(file) {
+        if (!file) return null;
+        if (!['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error('Use a JPG, PNG or WebP image.');
+        if (file.size > 5 * 1024 * 1024) throw new Error('Thumbnail must be 5 MB or smaller.');
+        const dimensions = await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => { resolve({width:image.naturalWidth,height:image.naturalHeight}); URL.revokeObjectURL(image.src); };
+            image.onerror = () => reject(new Error('Could not read this image.'));
+            image.src = URL.createObjectURL(file);
+        });
+        if (Math.abs(dimensions.width / dimensions.height - 16 / 9) > 0.025) throw new Error('Please crop the thumbnail to 16:9 before uploading.');
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-').slice(-90);
+        const path = Date.now() + '-' + safeName;
+        const {error} = await supabaseClient.storage.from('folder-thumbnails').upload(path, file, {upsert:false,contentType:file.type,cacheControl:'3600'});
+        if (error) throw error;
+        const {data} = supabaseClient.storage.from('folder-thumbnails').getPublicUrl(path);
+        return data.publicUrl;
+    }
+
+    async function removeFolderThumbnail(url) {
+        const path = folderStoragePath(url);
+        if (!path) return;
+        const {error} = await supabaseClient.storage.from('folder-thumbnails').remove([path]);
+        if (error) console.warn('Old thumbnail could not be removed:', error.message);
+    }
+
     function openFolderModal() {
         editingFolderId = null;
         $('folder-modal-title').textContent = 'Create folder';
