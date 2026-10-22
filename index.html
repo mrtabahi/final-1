@@ -555,6 +555,58 @@
 
 
       
+
+    /* Extra legends for shifted symbols and the spacebar caption */
+    #skTypingDemo .sk-key.sk-number {
+      flex-direction: column;
+      gap: 0;
+      line-height: 1;
+    }
+    #skTypingDemo .sk-key.sk-number small {
+      display: block;
+      font-size: clamp(7px, 1vw, 10px);
+      color: #64748b;
+      line-height: 1.05;
+      font-weight: 700;
+    }
+    #skTypingDemo .sk-key.sk-number b {
+      font-size: clamp(9px, 1.5vw, 13px);
+      line-height: 1.1;
+    }
+    #skTypingDemo .sk-key.sk-number.sk-active small,
+    #skTypingDemo .sk-key.sk-number.sk-active b {
+      color: #fff;
+    }
+    #skTypingDemo .sk-key.sk-space {
+      flex-direction: column;
+      gap: 2px;
+      line-height: 1;
+    }
+    #skTypingDemo .sk-key.sk-space small {
+      display: block;
+      font-size: 7px;
+      line-height: 1;
+      letter-spacing: .1px;
+      font-weight: 600;
+      color: #64748b;
+    }
+    #skTypingDemo .sk-key.sk-space.sk-active small {
+      color: #fff;
+    }
+    #skTypingDemo .sk-key.sk-shift.sk-active {
+      background: #0f4c81;
+      color: #fff;
+      border-color: #2563eb;
+      box-shadow: 0 0 16px #2563eb55;
+    }
+    #skTypingDemo .sk-key.sk-used {
+      text-decoration: none !important;
+    }
+    @media (max-width: 600px) {
+      #skTypingDemo .sk-key.sk-number small { font-size: 7px; }
+      #skTypingDemo .sk-key.sk-space small { font-size: 6px; }
+    }
+
   </style>
 
   <div class="sk-stage">
@@ -578,51 +630,61 @@
 
     <div class="sk-keyboard">
       <div class="sk-row">
-        <span class="sk-key sk-wide">ESC</span>
-        <span class="sk-key">1</span><span class="sk-key">2</span>
-        <span class="sk-key">3</span><span class="sk-key">4</span>
-        <span class="sk-key">5</span><span class="sk-key">6</span>
-        <span class="sk-key">7</span><span class="sk-key">8</span>
-        <span class="sk-key">9</span><span class="sk-key">0</span>
-        <span class="sk-key sk-wide">⌫</span>
+        <span class="sk-key sk-wide" data-key="ESC">ESC</span>
+        <span class="sk-key sk-number" data-key="`"><small>~</small><b>`</b></span>
+        <span class="sk-key sk-number" data-key="1"><small>!</small><b>1</b></span>
+        <span class="sk-key sk-number" data-key="2"><small>@</small><b>2</b></span>
+        <span class="sk-key sk-number" data-key="3"><small>#</small><b>3</b></span>
+        <span class="sk-key sk-number" data-key="4"><small>$</small><b>4</b></span>
+        <span class="sk-key sk-number" data-key="5"><small>%</small><b>5</b></span>
+        <span class="sk-key sk-number" data-key="6"><small>^</small><b>6</b></span>
+        <span class="sk-key sk-number" data-key="7"><small>&amp;</small><b>7</b></span>
+        <span class="sk-key sk-number" data-key="8"><small>*</small><b>8</b></span>
+        <span class="sk-key sk-number" data-key="9"><small>(</small><b>9</b></span>
+        <span class="sk-key sk-number" data-key="0"><small>)</small><b>0</b></span>
+        <span class="sk-key sk-number" data-key="-"><small>_</small><b>-</b></span>
+        <span class="sk-key sk-number" data-key="="><small>+</small><b>=</b></span>
+        <span class="sk-key sk-wide" data-key="BACKSPACE">⌫</span>
       </div>
-
       <div class="sk-row">
-        <span class="sk-key sk-wide">TAB</span>
-        <span class="sk-key">Q</span><span class="sk-key">W</span>
-        <span class="sk-key">E</span><span class="sk-key">R</span>
-        <span class="sk-key">T</span><span class="sk-key">Y</span>
-        <span class="sk-key">U</span><span class="sk-key">I</span>
-        <span class="sk-key">O</span><span class="sk-key">P</span>
-        <span class="sk-key sk-wide">↵</span>
+        <span class="sk-key sk-wide" data-key="TAB">TAB</span>
+        <span class="sk-key" data-key="Q">Q</span><span class="sk-key" data-key="W">W</span>
+        <span class="sk-key" data-key="E">E</span><span class="sk-key" data-key="R">R</span>
+        <span class="sk-key" data-key="T">T</span><span class="sk-key" data-key="Y">Y</span>
+        <span class="sk-key" data-key="U">U</span><span class="sk-key" data-key="I">I</span>
+        <span class="sk-key" data-key="O">O</span><span class="sk-key" data-key="P">P</span>
+        <span class="sk-key sk-number" data-key="["><small>{</small><b>[</b></span>
+        <span class="sk-key sk-number" data-key="]"><small>}</small><b>]</b></span>
+        <span class="sk-key sk-number" data-key="\"><small>|</small><b>\</b></span>
       </div>
-
       <div class="sk-row">
-        <span class="sk-key sk-wide">CAPS</span>
-        <span class="sk-key">A</span><span class="sk-key">S</span>
-        <span class="sk-key">D</span><span class="sk-key">F</span>
-        <span class="sk-key">G</span><span class="sk-key">H</span>
-        <span class="sk-key">J</span><span class="sk-key">K</span>
-        <span class="sk-key">L</span>
-        <span class="sk-key sk-wide">ENTER</span>
+        <span class="sk-key sk-wide" data-key="CAPS">CAPS</span>
+        <span class="sk-key" data-key="A">A</span><span class="sk-key" data-key="S">S</span>
+        <span class="sk-key" data-key="D">D</span><span class="sk-key" data-key="F">F</span>
+        <span class="sk-key" data-key="G">G</span><span class="sk-key" data-key="H">H</span>
+        <span class="sk-key" data-key="J">J</span><span class="sk-key" data-key="K">K</span>
+        <span class="sk-key" data-key="L">L</span>
+        <span class="sk-key sk-number" data-key=";"><small>:</small><b>;</b></span>
+        <span class="sk-key sk-number" data-key="'"><small>"</small><b>'</b></span>
+        <span class="sk-key sk-wide" data-key="ENTER">ENTER</span>
       </div>
-
       <div class="sk-row">
-        <span class="sk-key sk-wide">SHIFT</span>
-        <span class="sk-key">Z</span><span class="sk-key">X</span>
-        <span class="sk-key">C</span><span class="sk-key">V</span>
-        <span class="sk-key">B</span><span class="sk-key">N</span>
-        <span class="sk-key">M</span>
-        <span class="sk-key">,</span><span class="sk-key">.</span>
-        <span class="sk-key sk-wide">SHIFT</span>
+        <span class="sk-key sk-wide sk-shift" data-key="SHIFT">SHIFT</span>
+        <span class="sk-key" data-key="Z">Z</span><span class="sk-key" data-key="X">X</span>
+        <span class="sk-key" data-key="C">C</span><span class="sk-key" data-key="V">V</span>
+        <span class="sk-key" data-key="B">B</span><span class="sk-key" data-key="N">N</span>
+        <span class="sk-key" data-key="M">M</span>
+        <span class="sk-key sk-number" data-key=","><small>&lt;</small><b>,</b></span>
+        <span class="sk-key sk-number" data-key="."><small>&gt;</small><b>.</b></span>
+        <span class="sk-key sk-number" data-key="/"><small>?</small><b>/</b></span>
+        <span class="sk-key sk-wide sk-shift" data-key="SHIFT">SHIFT</span>
       </div>
-
       <div class="sk-row">
-        <span class="sk-key sk-wide">CTRL</span>
-        <span class="sk-key sk-wide">ALT</span>
-        <span class="sk-key sk-space">SPACE</span>
-        <span class="sk-key sk-wide">ALT</span>
-        <span class="sk-key sk-wide">CTRL</span>
+        <span class="sk-key sk-wide" data-key="CTRL">CTRL</span>
+        <span class="sk-key sk-wide" data-key="ALT">ALT</span>
+        <span class="sk-key sk-space" data-key="SPACE"><b>SPACE</b><small>(@decoding_hcm)</small></span>
+        <span class="sk-key sk-wide" data-key="ALT">ALT</span>
+        <span class="sk-key sk-wide" data-key="CTRL">CTRL</span>
       </div>
     </div>
 
@@ -659,94 +721,97 @@
       const results = root.querySelector(".sk-results");
       const keys = [...root.querySelectorAll(".sk-key")];
 
+      // Apna typing text sirf is line mein replace karein.
       const text = "SAURABH KUMAR (@Decoding_HCM)";
+
       const keyMap = {};
-
       keys.forEach(key => {
-        const value = key.textContent.trim().toLowerCase();
-        if (/^[a-z]$/.test(value)) keyMap[value] = key;
+        const value = key.dataset.key;
+        if (value && value.length === 1) keyMap[value.toLowerCase()] = key;
       });
+      const spaceKey = keys.find(key => key.dataset.key === "SPACE");
+      const shiftKeys = keys.filter(key => key.dataset.key === "SHIFT");
 
-      const spaceKey = keys.find(key =>
-        key.classList.contains("sk-space")
-      );
+      // US keyboard: shifted character -> physical base key.
+      const shiftedSymbols = {
+        "!":"1", "@":"2", "#":"3", "$":"4", "%":"5",
+        "^":"6", "&":"7", "*":"8", "(":"9", ")":"0",
+        "_":"-", "+":"=", "{":"[", "}":"]", "|":"\\",
+        ":":";", '"':"'", "<":",", ">":".", "?":"/", "~":"`"
+      };
 
-      const wait = ms => new Promise(resolve =>
-        setTimeout(resolve, ms)
-      );
-
-      let timer = null;
+      const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
       let cancelled = false;
+      let runId = 0;
+      const KEY_INTERVAL = 500;       // har character/key ke liye 0.5 second
+      const RESULT_DURATION = 5000;   // results exactly 5 seconds visible
 
       function clearKeys() {
-        keys.forEach(key =>
-          key.classList.remove("sk-active", "sk-used")
-        );
+        keys.forEach(key => key.classList.remove("sk-active", "sk-used"));
       }
 
-      async function animate() {
-        while (!cancelled) {
+      function getKeyAndShift(char) {
+        if (char === " ") return { key: spaceKey, shift: false };
+        if (/[A-Z]/.test(char)) return { key: keyMap[char.toLowerCase()], shift: true };
+        if (shiftedSymbols[char]) return { key: keyMap[shiftedSymbols[char]], shift: true };
+        return { key: keyMap[char.toLowerCase()] || null, shift: false };
+      }
+
+      async function animate(myRun) {
+        while (!cancelled && myRun === runId) {
           clearKeys();
           stage.classList.remove("sk-burn");
           results.classList.remove("sk-show");
           typed.textContent = "";
-
           await wait(250);
 
-          for (let i = 0; i < text.length; i++) {
-            if (cancelled) return;
+          for (const char of text) {
+            if (cancelled || myRun !== runId) return;
+            const { key, shift } = getKeyAndShift(char);
+            if (shift) shiftKeys.forEach(k => k.classList.add("sk-active"));
+            if (key) key.classList.add("sk-active");
 
-            const char = text[i];
-            const key = char === " "
-              ? spaceKey
-              : keyMap[char];
-
-            if (key) {
-              key.classList.add("sk-active");
-            }
-
-            await wait(160);
+            // Show the character at the exact moment the key is pressed.
+            // Keep the key (and Shift, when needed) highlighted for 500 ms,
+            // then move to the next character.
             typed.textContent += char;
+            await wait(KEY_INTERVAL);
+            if (cancelled || myRun !== runId) return;
 
             if (key) {
               key.classList.remove("sk-active");
               key.classList.add("sk-used");
             }
-
-            await wait(65);
+            if (shift) shiftKeys.forEach(k => {
+              k.classList.remove("sk-active");
+              k.classList.add("sk-used");
+            });
           }
 
-          await wait(180);
           results.classList.add("sk-show");
-
-          // Result ko kuch der visible rakho
-          await wait(2900);
-
-          // Fiery flash effect
+          await wait(RESULT_DURATION);
+          if (cancelled || myRun !== runId) return;
           stage.classList.add("sk-burn");
           await wait(750);
           stage.classList.remove("sk-burn");
-
-          // Next loop se pehle chhota pause
           await wait(250);
         }
       }
 
       function start() {
         cancelled = false;
-        animate();
+        runId++;
+        animate(runId);
       }
 
-      // Page visibility par unnecessary animation pause karo
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
           cancelled = true;
-          clearTimeout(timer);
+          runId++;
         } else {
           start();
         }
       });
-
       start();
     })();
   </script>
