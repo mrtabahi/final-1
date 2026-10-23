@@ -24,7 +24,9 @@ $('login-form').onsubmit = async e => {
         if (profile.role === 'admin') {
             window.location.href = 'admin.html';
         } else if (profile.role === 'candidate') {
-            window.location.href = 'index.html';
+            const requested = new URLSearchParams(window.location.search).get('redirect') || '';
+            const safeTarget = requested && !requested.startsWith('//') && !requested.includes('://') && !requested.startsWith('/\\') ? requested : '';
+            window.location.href = safeTarget || 'index.html';
         } else {
             $('auth-message').textContent =
                 'Your account role is not configured correctly.';
