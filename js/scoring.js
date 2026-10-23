@@ -48,8 +48,8 @@ const ScoringEngine = {
     const mode=String(formula).toLowerCase()==="crpf"?"crpf":"bsf";
     const doubleSpaceErrors=this.countDoubleSpaceErrors(typedSource);
     let alignment=[],wordErrors=0,correctWords=0;
-    if(mode==="bsf"){
-      // BSF is strictly positional: each literal space creates a slot. A double
+    if(mode==="crpf"){
+      // CRPF is strictly positional: each literal space creates a slot. A double
       // space creates an empty slot, and extra/missing words shift later positions.
       const slots=typedSource.trim().length?typedSource.trim().split(/[ ]/u):[];
       for(let i=0;i<Math.max(expectedWords.length,slots.length);i++){
@@ -66,7 +66,7 @@ const ScoringEngine = {
         if(item.type==="delete"&&!alignment.slice(i+1).some(next=>next.type!=="delete"))continue;
         wordErrors++;}
     }
-    if(mode==="crpf")wordErrors+=doubleSpaceErrors;
+    if(mode==="bsf")wordErrors+=doubleSpaceErrors;
     const totalErrors=wordErrors;
     const freePct=Math.max(0,Math.min(.2,Number(config.freeErrorPct??config.free_error_pct??.05)));
     const penaltyPerError=Math.max(0,Math.min(100,Number(config.penaltyPerError??config.penalty_per_error??10)));
@@ -94,7 +94,7 @@ const ScoringEngine = {
     const incorrectChars=Math.max(0,typedSource.length-correctChars);
     const accuracy=typedSource.length?Number((correctChars/typedSource.length*100).toFixed(2)):0;
     // Mutually exclusive primary classifications; repeatedWords is a subset of extraWords.
-    const errorBreakdown={omissions:0,substitutions:0,spellingErrors:0,incompleteWords:0,extraWords:0,repeatedWords:0,spacingErrors:mode==="crpf"?doubleSpaceErrors:0,capitalizationErrors:0,punctuationErrors:0,notReached:0};
+    const errorBreakdown={omissions:0,substitutions:0,spellingErrors:0,incompleteWords:0,extraWords:0,repeatedWords:0,spacingErrors:mode==="bsf"?doubleSpaceErrors:0,capitalizationErrors:0,punctuationErrors:0,notReached:0};
     for(let i=0;i<alignment.length;i++){
       const item=alignment[i];
       if(item.type==="delete"&&item.expected!=null){
@@ -120,7 +120,7 @@ const ScoringEngine = {
     return {formula:mode,totalTypedWords:typedWords.length,totalTypedChars:typedSource.length,totalKeystrokes:measuredKeystrokes,
       equivalentTypedWords:Number(equivalentWords.toFixed(2)),correctChars,incorrectChars,correctWords,wordErrors,doubleSpaceErrors,totalErrors,
       freeErrors,excessErrors,penaltyWords,netWords:Number(netWords.toFixed(2)),grossWpm,netWpm,accuracy,elapsedMinutes,elapsedSeconds,
-      alignment:mode==="crpf"?alignment.filter((item,i)=>!(item.type==="delete"&&!alignment.slice(i+1).some(next=>next.type!=="delete"))):alignment.filter((item,i)=>!(item.type==="delete"&&item.typed===null&&i>=typedWords.length)),errorBreakdown,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
+      alignment:mode==="bsf"?alignment.filter((item,i)=>!(item.type==="delete"&&!alignment.slice(i+1).some(next=>next.type!=="delete"))):alignment.filter((item,i)=>!(item.type==="delete"&&item.typed===null&&i>=typedWords.length)),errorBreakdown,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
   },
   getPerformanceLabel(score){return score.passed?{text:"TARGET ACHIEVED",class:"badge-success"}:{text:"KEEP PRACTISING",class:"badge-danger"};}
 };
