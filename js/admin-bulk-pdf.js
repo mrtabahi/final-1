@@ -109,7 +109,7 @@
         '<small class="admin-field-help">Source: ' + escapeHtml(draft.fileName) + (draft.warning ? ' · <strong class="admin-warning-text">' + escapeHtml(draft.warning) + '</strong>' : '') + '</small>' +
         '</article>').join('');
     box.querySelectorAll('[data-draft-include]').forEach(input => input.addEventListener('change', () => { drafts[Number(input.dataset.draftInclude)].include = input.checked; updateSaveState(); }));
-    box.querySelectorAll('[data-draft-title]').forEach(input => input.addEventListener('input', () => { drafts[Number(input.dataset.draftTitle)].title = input.value; }));
+    box.querySelectorAll('[data-draft-title]').forEach(input => input.addEventListener('input', () => { const d=drafts[Number(input.dataset.draftTitle)]; d.title=input.value; d.titleManuallyEdited=true; }));
     box.querySelectorAll('[data-draft-text]').forEach(input => input.addEventListener('input', () => { drafts[Number(input.dataset.draftText)].text = input.value; const d=drafts[Number(input.dataset.draftText)]; const card=input.closest('.admin-bulk-draft'); const words=card?.querySelector('.admin-bulk-draft-head span'); if(words) words.textContent=d.pages+' page(s) · '+d.text.trim().split(/\s+/).filter(Boolean).length.toLocaleString()+' words'; updateSaveState(); }));
     updateSaveState();
   }
@@ -125,7 +125,8 @@
   async function extractAll() {
     const files = [...($('bulk-pdf-files').files || [])];
     const folderName = $('bulk-folder-name').value.trim();
-    if (!folderName) { setStatus('Enter the folder name first.', true); $('bulk-folder-name').focus(); return; }
+    if (!$('bulk-folder-select').value && !folderName) { setStatus('Choose an existing folder or enter a new folder name.', true); $('bulk-folder-name').focus(); return; }
+    if (!$('bulk-base-title').value.trim()) { setStatus('Enter the base test name first.', true); $('bulk-base-title').focus(); return; }
     if (!files.length) { setStatus('Choose one or more PDF files.', true); return; }
     if (files.some(file => !/\.pdf$/i.test(file.name) && file.type !== 'application/pdf')) { setStatus('Only PDF files are supported.', true); return; }
     if (files.length > 40) { setStatus('Please process up to 40 PDFs at a time.', true); return; }
@@ -137,8 +138,10 @@
         setStatus('Reading PDF ' + (i + 1) + ' of ' + files.length + ': ' + files[i].name);
         try {
           const result = await extractPdf(files[i]);
+          if ($('bulk-remove-heading').checked) { const lines = result.text.split('\n'); const stripped = lines.slice(1).join('\n').trim(); if (stripped.length >= 20) result.text = stripped; }
           const suspicious = result.text.split('\n').filter(line => line.trim().length < 4 || /^(contents|index|chapter\s+\d+|page\s+\d+)/i.test(line.trim()));
-          drafts.push({ ...result, include: true, warning: suspicious.length ? 'Possible headings/short lines detected — review before saving' : '' });
+          const title = $('bulk-base-title').value.trim() + ' - ' + (drafts.length + 1);
+          drafts.push({ ...result, title, titleManuallyEdited: false, include: true, warning: suspicious.length ? 'Possible headings/short lines detected — review before saving' : '' });
         } catch (error) {
           drafts.push({ title: safeName(files[i].name), fileName: files[i].name, pages: 0, text: '', include: false, warning: error.message || 'Could not extract this PDF' });
         }
@@ -154,17 +157,20 @@
 
   async function saveDrafts() {
     const folderName = $('bulk-folder-name').value.trim();
+    const selectedFolderId = $('bulk-folder-select').value;
     const included = drafts.filter(d => d.include && d.title.trim() && d.text.trim().length >= 20);
-    if (!folderName || !included.length) return;
+    if ((!selectedFolderId && !folderName) || !included.length) { setStatus('Choose a folder and at least one valid reviewed test.', true); return; }
     const duplicateTitles = included.map(d => d.title.trim().toLowerCase());
     if (new Set(duplicateTitles).size !== duplicateTitles.length && !confirm('Some selected PDFs have duplicate test titles. Save them anyway?')) return;
     const saveButton = $('bulk-pdf-save');
     saveButton.disabled = true;
     try {
       setStatus('Checking folder and preparing ' + included.length + ' test(s)…');
-      const { data: existingFolders, error: folderError } = await supabaseClient.from('folders').select('id,name').ilike('name', folderName);
-      if (folderError) throw folderError;
-      let folder = (existingFolders || []).find(item => item.name.toLowerCase() === folderName.toLowerCase());
+      let folder = null;
+      if (selectedFolderId) { const {data,error}=await supabaseClient.from('folders').select('id,name').eq('id',selectedFolderId).single(); if(error) throw error; folder=data; }
+      if (!folder) { const { data: existingFolders, error: folderError } = await supabaseClient.from('folders').select('id,name').ilike('name', folderName);
+        if (folderError) throw folderError;
+        folder = (existingFolders || []).find(item => item.name.toLowerCase() === folderName.toLowerCase()); }
       if (!folder) {
         const { data, error } = await supabaseClient.from('folders').insert({ name: folderName, description: 'Bulk-imported typing tests from PDFs', active: true }).select('id,name').single();
         if (error) throw error;
@@ -179,10 +185,10 @@
         title: d.title.trim(), folder_id: folder.id, language: $('bulk-language').value,
         duration_minutes: Number($('bulk-duration').value) || 5,
         target_wpm: Number($('bulk-target-wpm').value) || 0,
-        min_accuracy: null, free_error_pct: (Number($('bulk-errors').value) || 0) / 100,
-        penalty_per_error: 10, passage: d.text.trim(), mode: 'candidate',
-        allow_backspace: false, backspace_mode: 'candidate', highlight_mode: 'candidate',
-        hide_paragraph_mode: 'candidate', active: false, leaderboard_enabled: true
+        min_accuracy: $('bulk-min-accuracy').value === '' ? null : Number($('bulk-min-accuracy').value), free_error_pct: Number($('bulk-errors').value || 0) / 100,
+        penalty_per_error: Number($('bulk-penalty').value || 10), passage: d.text.trim(), mode: $('bulk-mode').value,
+        allow_backspace: $('bulk-backspace').value === 'on', backspace_mode: $('bulk-backspace').value, highlight_mode: $('bulk-highlight').value,
+        hide_paragraph_mode: $('bulk-hide').value, active: $('bulk-publish').checked, leaderboard_enabled: $('bulk-leaderboard').checked
       }));
       if (!rows.length) { setStatus('No new tests saved: all selected passages were exact duplicates.'); return; }
       const { data, error } = await supabaseClient.from('tests').insert(rows).select('id,title');
@@ -224,5 +230,7 @@
     $('bulk-pdf-modal')?.addEventListener('click', event => { if (event.target === $('bulk-pdf-modal')) closeModal(); });
     $('bulk-extract-pdfs')?.addEventListener('click', extractAll);
     $('bulk-pdf-save')?.addEventListener('click', saveDrafts);
+    $('bulk-folder-select')?.addEventListener('change', () => { const chosen=!!$('bulk-folder-select').value; $('bulk-folder-name').disabled=chosen; if(chosen)$('bulk-folder-name').value=''; else $('bulk-folder-name').disabled=false; });
+    $('bulk-base-title')?.addEventListener('input', () => { const base=$('bulk-base-title').value.trim(); drafts.forEach((d,i)=>{if(!d.titleManuallyEdited)d.title=base ? base+' - '+(i+1) : safeName(d.fileName)}); renderDrafts(); });
   });
 })();
