@@ -5,9 +5,9 @@
     : path === 'typing_test.html' ? 'typing_listing_enabled'
     : path === 'materials.html' ? 'materials_enabled' : null;
   // Only explicit content pages can ever request AdSense. Never load it on test runners.
-  if (!pageKey || !window.supabaseClient) return;
+  if (!pageKey || typeof supabaseClient === 'undefined' || !supabaseClient) return;
   try {
-    const { data, error } = await window.supabaseClient
+    const { data, error } = await supabaseClient
       .from('ad_settings')
       .select('ads_enabled, home_enabled, typing_listing_enabled, materials_enabled')
       .eq('id', 1).maybeSingle();
