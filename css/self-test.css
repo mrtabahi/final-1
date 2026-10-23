@@ -122,3 +122,7 @@
   .self-analysis-grid > div { padding:.65rem; }
   .self-analysis-grid strong { font-size:1.15rem; }
 }
+
+/* Keep every passage word on one line; move the whole word when it does not fit. */
+.self-passage .self-word { white-space: nowrap; word-break: keep-all; overflow-wrap: normal; hyphens: none; }
+.self-passage { word-break: normal; overflow-wrap: normal; hyphens: none; }
