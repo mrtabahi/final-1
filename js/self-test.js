@@ -32,7 +32,7 @@ function renderPassage(){
  const input=typed.value; let html='';
  for(let i=0;i<original.length;i++){
   const ch=original[i], isCurrent=i===input.length, isDone=i<input.length;
-  let cls=''; if(isCurrent&&highlight)cls='self-current'; else if(highlight&&isDone)cls=input[i]===ch?'self-char-correct':'self-char-wrong';
+  let cls=''; if(highlight&&isDone)cls=input[i]===ch?'self-char-correct':'self-char-wrong';
   html+=cls?'<span class="'+cls+'">'+(ch===' '?'&nbsp;':ch==='\n'?'<br>':esc(ch))+'</span>':(ch===' '?'&nbsp;':ch==='\n'?'<br>':esc(ch));
  }
  passage.innerHTML=html;
