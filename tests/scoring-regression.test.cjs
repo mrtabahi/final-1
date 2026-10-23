@@ -152,7 +152,7 @@ test('BSF treats a short prefix as a spelling/incomplete error without shifting 
 
 test('BSF does not count unreached trailing words as errors', () => {
   const score = scoring.calculateScore('Why the cat comming and why cat dancing', 'Why the', 60, config, null, 'bsf');
-  assert.equal(score.errorBreakdown.notReached, 5);
+  assert.equal(score.errorBreakdown.notReached, 6);
   assert.equal(score.errorBreakdown.omissions, 0);
   assert.equal(score.totalErrors, 0);
 });
