@@ -44,7 +44,6 @@
 /* Focused, compact typing workspace and readable formula comparison */
 .self-typed{height:calc(3 * 1.75em + 2rem)!important;min-height:0!important;max-height:calc(3 * 1.75em + 2rem)!important;resize:none;overflow-y:auto;scroll-behavior:smooth}
 .self-passage{height:8em!important;max-height:8em!important;line-height:1.9;scroll-behavior:smooth}
-.self-char-correct,.self-char-wrong{color:inherit!important;background:transparent!important;text-decoration:none!important}
 .self-passage-card:not(.self-highlight-enabled) .self-char-correct,
 .self-passage-card:not(.self-highlight-enabled) .self-char-wrong{color:inherit!important;background:transparent!important;text-decoration:none!important}
 .self-formula-comparison{margin:1rem 0;padding:1rem;border:1px solid #dbe5ef;border-radius:14px;background:linear-gradient(135deg,#f5f9ff,#f8fffc)}
