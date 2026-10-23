@@ -96,7 +96,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   const totalErrors = wordErrors;
   // Anti-inflation cap mirrors the client: cap each typed word at the original word length at the same index, ignore extra-word characters, and cap spaces to original separators.
   const cappedWordKeystrokes = typed.reduce((sum, word, i) => sum + Math.min(word.length, expected[i]?.length ?? 0), 0);
-  const cappedSeparatorKeystrokes = Math.min((typedText.match(/\\s/gu) || []).length, Math.max(0, expected.length - 1));
+  const cappedSeparatorKeystrokes = Math.min((typedText.match(/\s/gu) || []).length, Math.max(0, expected.length - 1));
   const measuredKeystrokes = cappedWordKeystrokes + cappedSeparatorKeystrokes;
   const equivalentTypedWords = measuredKeystrokes / 5;
   const freePct = Math.max(0, Math.min(0.2, Number(test.free_error_pct ?? 0.05)));
