@@ -46,3 +46,20 @@ FROM public.attempts AS a
 LEFT JOIN public.tests AS t ON t.id = a.test_id
 WHERE COALESCE(t.leaderboard_enabled, true) = true;
 GRANT SELECT ON public.public_leaderboard_attempts TO anon, authenticated;
+
+
+-- Homepage notices, timed offers and admin-managed promotional content
+CREATE TABLE IF NOT EXISTS public.site_announcements (
+ id UUID PRIMARY KEY DEFAULT gen_random_uuid(), title TEXT NOT NULL, body TEXT NOT NULL DEFAULT '',
+ content_type TEXT NOT NULL DEFAULT 'notice' CHECK (content_type IN ('notice','offer','announcement','event','maintenance','featured')),
+ theme TEXT NOT NULL DEFAULT 'aurora' CHECK (theme IN ('aurora','gold','blue','rose','green')),
+ cta_label TEXT, cta_url TEXT, starts_at TIMESTAMPTZ, ends_at TIMESTAMPTZ,
+ is_active BOOLEAN NOT NULL DEFAULT true, is_public BOOLEAN NOT NULL DEFAULT true, sort_order INTEGER NOT NULL DEFAULT 0,
+ created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE public.site_announcements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public can read active site announcements" ON public.site_announcements;
+CREATE POLICY "Public can read active site announcements" ON public.site_announcements FOR SELECT TO anon, authenticated USING (is_active = true AND is_public = true);
+DROP POLICY IF EXISTS "Admins can manage site announcements" ON public.site_announcements;
+CREATE POLICY "Admins can manage site announcements" ON public.site_announcements FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin')) WITH CHECK (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
+CREATE INDEX IF NOT EXISTS site_announcements_public_sort ON public.site_announcements (is_active, is_public, sort_order, starts_at, ends_at);
