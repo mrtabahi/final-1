@@ -136,7 +136,7 @@ const ScoringEngine = {
     const passedByWpm=targetWpm===null||netWpm>=targetWpm,passedByAccuracy=minAccuracy===null||accuracy>=minAccuracy;
     return {formula:mode,totalTypedWords:typedWords.length,totalTypedChars:typedSource.length,totalKeystrokes:measuredKeystrokes,
       equivalentTypedWords:Number(equivalentWords.toFixed(2)),correctChars,incorrectChars,correctWords,wordErrors,doubleSpaceErrors,totalErrors,
-      freeErrors,excessErrors,penaltyWords,netWords:Number(netWords.toFixed(2)),grossWpm,netWpm,accuracy,elapsedMinutes,elapsedSeconds,
+      freeErrors:Number(freeErrors.toFixed(2)),excessErrors:Number(excessErrors.toFixed(2)),penaltyWords:Number(penaltyWords.toFixed(2)),netWords:Number(netWords.toFixed(2)),grossWpm,netWpm,accuracy,elapsedMinutes:Number(elapsedMinutes.toFixed(2)),elapsedSeconds,
       attemptingTimeSeconds:elapsedSeconds,penaltyWpm:Number((penaltyWords/elapsedMinutes).toFixed(2)),allowedErrors:Number(freeErrors.toFixed(2)),alignment:mode==="bsf"?alignment.filter((item,i)=>!(item.type==="delete"&&i>lastReachedAlignmentIndex)):alignment.filter((item,i)=>!(item.type==="delete"&&item.typed===null&&i>=typedWords.length)),errorBreakdown,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
   },
   getPerformanceLabel(score){return score.passed?{text:"TARGET ACHIEVED",class:"badge-success"}:{text:"KEEP PRACTISING",class:"badge-danger"};}
