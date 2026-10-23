@@ -7,7 +7,7 @@
     <title>Decoding HCM Typing Test Lab | BSF HCM Typing Practice</title>
     <meta name="description" content="Professional BSF HCM typing practice platform with English and Hindi typing tests, speed, accuracy, errors, results and performance tracking.">
     <link rel="stylesheet" href="css/main.css?v=20261023-navigation3">
-    <link rel="stylesheet" href="css/typing.css?v=20261023-result-grid1">
+    <link rel="stylesheet" href="css/typing.css?v=20261023-colored-metrics1">
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -91,23 +91,15 @@
                 <textarea id="typing-textarea" class="typing-input" placeholder="Start typing here. Your timer begins with your first keystroke." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 
                 
-                <div id="live-metrics-panel"><div class="grid-4" style="margin-top: 1rem;">
-                    <div class="stat-box">
-                        <div class="stat-value" id="live-gross-wpm">0</div>
-                        <div class="stat-label">Gross WPM</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="live-net-wpm">0</div>
-                        <div class="stat-label">Net WPM</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="live-accuracy">100%</div>
-                        <div class="stat-label">Accuracy</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="live-errors">0</div>
-                        <div class="stat-label">Errors</div>
-                    </div>
+                <div id="live-metrics-panel"><div class="live-metrics-grid" style="margin-top: 1rem;">
+                    <div class="stat-box live-metric-gross"><div class="stat-value" id="live-gross-wpm">0</div><div class="stat-label">Gross Speed (WPM)</div></div>
+                    <div class="stat-box live-metric-net"><div class="stat-value" id="live-net-wpm">0</div><div class="stat-label">Net Speed (WPM)</div></div>
+                    <div class="stat-box live-metric-accuracy"><div class="stat-value" id="live-accuracy">100%</div><div class="stat-label">Accuracy</div></div>
+                    <div class="stat-box live-metric-errors"><div class="stat-value" id="live-errors">0</div><div class="stat-label">Total Errors</div></div>
+                    <div class="stat-box live-metric-allowed"><div class="stat-value" id="live-allowed-errors">0</div><div class="stat-label">Allowed Errors (5%)</div></div>
+                    <div class="stat-box live-metric-extra"><div class="stat-value" id="live-extra-errors">0</div><div class="stat-label">Extra Errors</div></div>
+                    <div class="stat-box live-metric-penalty"><div class="stat-value" id="live-penalty-speed">0</div><div class="stat-label">Penalty Speed (WPM)</div></div>
+                    <div class="stat-box live-metric-time"><div class="stat-value" id="live-attempting-time">00:00</div><div class="stat-label">Attempting Time</div></div>
                 </div></div>
 
                 <div class="typing-submit-row" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1rem;"><div class="live-metrics-toolbar"><strong>Live performance</strong><button type="button" id="btn-toggle-live-metrics" class="btn btn-secondary" aria-controls="live-metrics-panel" aria-expanded="true">📊 Hide live calculation</button></div><button id="btn-submit-early" class="btn btn-danger" style="margin:0;float:none;">Finalize &amp; Submit Test</button></div>
@@ -184,6 +176,6 @@
     <script src="js/scoring.js?v=20261023-result-grid2"></script>
     <script src="js/typing-engine.js?v=20261023-controls-fix1"></script>
     <script src="js/auth.js?v=20261023-typing-fix2"></script>
-    <script src="js/app.js?v=20261023-result-grid2"></script>
+    <script src="js/app.js?v=20261023-live-formula1"></script>
 </body>
 </html>
