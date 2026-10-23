@@ -1,0 +1,52 @@
+/* Professional typing-result screen and print/PDF layout */
+.result-pdf-header{display:grid;gap:14px;padding:22px 24px;margin:0 0 22px;border-radius:14px;background:linear-gradient(125deg,#102d50,#175783);color:#fff;break-inside:avoid}
+.result-pdf-brand{display:flex;align-items:center;gap:13px}
+.result-pdf-mark{display:grid;place-items:center;width:48px;height:48px;flex:0 0 48px;border:2px solid rgba(255,255,255,.72);border-radius:12px;font-size:27px;font-weight:900;color:#fff}
+.result-pdf-brand h1{margin:0;font-size:clamp(1.2rem,2.6vw,1.8rem);line-height:1.2;color:#fff;letter-spacing:-.025em}
+.result-pdf-brand p{margin:5px 0 0;color:#d9e8f6;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase}
+.result-pdf-meta{display:grid;grid-template-columns:minmax(0,2fr) minmax(130px,1fr);gap:12px}
+.result-pdf-meta>div{min-width:0;padding:11px 13px;border:1px solid rgba(255,255,255,.24);border-radius:9px;background:rgba(255,255,255,.08)}
+.result-pdf-meta span,.result-pdf-meta strong{display:block}
+.result-pdf-meta span{font-size:.72rem;color:#d9e8f6;text-transform:uppercase;letter-spacing:.09em}
+.result-pdf-meta strong{margin-top:5px;color:#fff;font-size:1rem;overflow-wrap:anywhere}
+.result-pdf-links{display:flex;flex-wrap:wrap;gap:8px 18px;padding-top:12px;border-top:1px solid rgba(255,255,255,.25)}
+.result-pdf-links a{color:#fff;text-decoration:underline;text-underline-offset:3px;font-size:.82rem;overflow-wrap:anywhere}
+@media(max-width:600px){.result-pdf-meta{grid-template-columns:1fr}.result-pdf-links{flex-direction:column;gap:8px}}
+@page{size:A4 portrait;margin:13mm 12mm 15mm}
+@media print{
+  html,body{background:#fff!important;color:#172b43!important;font-size:9pt!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body *{visibility:hidden!important}
+  #result-section,#result-section *{visibility:visible!important}
+  #result-section{display:block!important;position:absolute!important;inset:0!important;width:100%!important;margin:0!important;padding:0!important;background:#fff!important}
+  #result-section .scorecard{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important}
+  #result-section .result-pdf-header{margin:0 0 14px!important;padding:16px 18px!important;border-radius:8px!important;gap:10px!important;background:#12395d!important}
+  #result-section .result-pdf-mark{width:38px;height:38px;flex-basis:38px;font-size:21px}
+  #result-section .result-pdf-brand h1{font-size:19pt!important}
+  #result-section .result-pdf-brand p{font-size:7.5pt!important}
+  #result-section .result-pdf-meta>div{padding:7px 9px!important}
+  #result-section .result-pdf-links{gap:6px 14px;padding-top:8px}
+  #result-section .result-pdf-links a{font-size:7.5pt!important;color:#fff!important;text-decoration:underline!important}
+  #result-section .result-screen-only,#result-section .formula-switch,#result-section .formula-note,#result-section .result-save-status,#result-section button,#result-section a.btn{display:none!important}
+  #result-section h2{font-size:17pt!important;margin:3px 0 8px!important;color:#12395d!important}
+  #result-section .result-intro{font-size:8.5pt!important;margin:0 0 8px!important;color:#526579!important}
+  #result-section .score-status{display:inline-block!important;margin:0 0 10px!important;padding:5px 12px!important;border-radius:20px!important;font-weight:800!important}
+  #result-section .result-metrics{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;margin:9px 0 12px!important;break-inside:avoid}
+  #result-section .result-metric-card{padding:8px 9px!important;border:1px solid #d8e2ec!important;border-radius:7px!important;background:#f6f9fc!important;min-width:0!important;break-inside:avoid}
+  #result-section .result-metric-label{font-size:7pt!important;color:#5b6e82!important}
+  #result-section .result-metric-value{font-size:15pt!important;line-height:1.2!important;color:#12395d!important;overflow-wrap:anywhere}
+  #result-section .result-metric-formula{font-size:6.5pt!important;line-height:1.25!important;color:#6b7d90!important}
+  #result-section .card{padding:11px 12px!important;margin:9px 0!important;border:1px solid #d8e2ec!important;border-radius:7px!important;box-shadow:none!important;background:#fff!important;break-inside:avoid}
+  #result-section .card-title{font-size:11pt!important;margin:0 0 6px!important;color:#12395d!important}
+  #result-section h4{font-size:8.5pt!important;margin:7px 0 4px!important}
+  #result-section .form-help,#result-section .result-analysis-note{font-size:7pt!important;line-height:1.35!important;color:#5b6e82!important}
+  #result-section .result-content{font-size:7.5pt!important;line-height:1.45!important;overflow:visible!important;max-height:none!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;padding:7px!important;border:1px solid #e2e8f0!important;background:#f8fafc!important}
+  #result-section .result-analysis-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px!important}
+  #result-section .result-analysis-grid>div{padding:6px!important;border:1px solid #e0e7ef!important;border-radius:5px!important;background:#f8fafc!important;break-inside:avoid}
+  #result-section .result-analysis-grid span{font-size:6.5pt!important}
+  #result-section .result-analysis-grid strong{font-size:10pt!important;color:#12395d!important}
+  #result-section .result-analysis-note{margin:7px 0 0!important}
+  #result-section .result-legend{font-size:7pt!important}
+  #result-section .result-typed-content,#result-section .typed-result-content{overflow-wrap:anywhere!important}
+  #result-section section,#result-section .result-analysis-card{break-inside:auto}
+  a{color:inherit}
+}
