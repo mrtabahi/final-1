@@ -3,6 +3,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   let drafts = [];
+  function fillExistingFolders() { const select = $('bulk-folder-select'); if (!select) return; supabaseClient.from('folders').select('id,name').order('name').then(({data,error}) => { if (error) { setStatus('Could not load existing folders: '+error.message,true); return; } const current=select.value; select.innerHTML='<option value="">— Create a new folder instead —</option>'+(data||[]).map(f=>'<option value="'+escapeHtml(f.id)+'">'+escapeHtml(f.name)+'</option>').join(''); if (current) select.value=current; }); }
 
   function safeName(value) {
     return String(value || 'Untitled PDF').replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 150) || 'Untitled PDF';
@@ -13,7 +14,8 @@
   }
   function openModal() {
     $('bulk-pdf-modal').style.display = 'flex';
-    $('bulk-folder-name').focus();
+    fillExistingFolders();
+    $('bulk-base-title').focus();
   }
   function closeModal() {
     $('bulk-pdf-modal').style.display = 'none';
