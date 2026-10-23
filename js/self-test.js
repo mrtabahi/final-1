@@ -4,7 +4,10 @@ const $ = id => document.getElementById(id);
 const setup=$('self-setup'), workspace=$('self-workspace'), source=$('source-text'), typed=$('self-typed'), passage=$('self-passage'), passageCard=$('self-passage-card');
 let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, allowBackspace=true, totalElapsed=0;
 const SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
-let scoringFormula='bsf';
+let scoringFormula='bsf', selfFontSize=17.3;
+function applySelfFontSize(){passage.style.fontSize=selfFontSize+'px';typed.style.fontSize=selfFontSize+'px';}
+$('self-font-down')?.addEventListener('click',()=>{selfFontSize=Math.max(14,selfFontSize-1.5);applySelfFontSize()});
+$('self-font-up')?.addEventListener('click',()=>{selfFontSize=Math.min(32,selfFontSize+1.5);applySelfFontSize()});
 function readSaved(){try{const data=JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');return Array.isArray(data)?data.filter(x=>x&&typeof x.text==='string').slice(0,MAX_SAVED):[]}catch(_){return[]}}
 function writeSaved(items){try{localStorage.setItem(SAVED_KEY,JSON.stringify(items.slice(0,MAX_SAVED)));return true}catch(_){$('self-save-message').textContent='Browser storage is unavailable. Check your privacy/storage settings.';return false}}
 function refreshSaved(selected=''){
