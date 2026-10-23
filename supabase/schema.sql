@@ -10,3 +10,28 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;CREATE TRIGGER on_auth
 CREATE OR REPLACE FUNCTION public.touch_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=now();RETURN NEW;END;$$;
 DROP TRIGGER IF EXISTS profiles_touch ON profiles;CREATE TRIGGER profiles_touch BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 DROP TRIGGER IF EXISTS tests_touch ON tests;CREATE TRIGGER tests_touch BEFORE UPDATE ON tests FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+-- Admin-managed manual leaderboard entries (also applied via migration_manual_leaderboard.sql)
+CREATE TABLE IF NOT EXISTS public.manual_leaderboard_entries (
+ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+ candidate_name TEXT NOT NULL,
+ language TEXT NOT NULL DEFAULT '-',
+ test_name TEXT NOT NULL DEFAULT '-',
+ duration_seconds INT,
+ gross_wpm NUMERIC(6,2),
+ net_wpm NUMERIC(6,2) NOT NULL DEFAULT 0,
+ accuracy NUMERIC(5,2),
+ created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+ created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+ is_manual BOOLEAN NOT NULL DEFAULT true
+);
+ALTER TABLE public.manual_leaderboard_entries ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public can read manual leaderboard entries" ON public.manual_leaderboard_entries;
+CREATE POLICY "Public can read manual leaderboard entries" ON public.manual_leaderboard_entries FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admins manage manual leaderboard entries" ON public.manual_leaderboard_entries;
+CREATE POLICY "Admins manage manual leaderboard entries" ON public.manual_leaderboard_entries FOR ALL
+ USING (EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=auth.uid() AND p.role='admin'))
+ WITH CHECK (EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=auth.uid() AND p.role='admin'));
+DROP POLICY IF EXISTS "Admins delete attempts" ON public.attempts;
+CREATE POLICY "Admins delete attempts" ON public.attempts FOR DELETE
+ USING (EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=auth.uid() AND p.role='admin'));
