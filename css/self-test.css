@@ -179,3 +179,7 @@
  #self-result .self-result-print-content .exact-typed-content{background:#fffdf5!important}
  #self-result h3{font-size:11pt!important;color:#12395d!important}
 }
+
+/* Self-test passage wrapping: regular spaces must remain wrap opportunities. */
+#self-passage{white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:normal!important}
+#self-passage .self-word{white-space:normal!important;display:inline}
