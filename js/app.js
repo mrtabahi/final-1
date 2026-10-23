@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
             if(!serverSessionId)throw new Error('Secure typing session is unavailable.');
             const {data,error}=await supabaseClient.auth.getSession();
             if(error||!data?.session?.access_token)throw new Error('Your login session expired. Please sign in again.');
-            const response=await fetch(`${SUPABASE_URL}/functions/v1/typing-result`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${data.session.access_token}`},body:JSON.stringify({action:'submit',session_id:serverSessionId,typed_text:String(res.typedText||textarea.value||'')})});
+            const response=await fetch(`${SUPABASE_URL}/functions/v1/typing-result`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${data.session.access_token}`},body:JSON.stringify({action:'submit',session_id:serverSessionId,typed_text:String(res.typedText||textarea.value||''),mode:mode==='page'?'page':'screen'})});
             const payload=await response.json();
             if(!response.ok||!payload.score)throw new Error(payload.error||'The server could not validate this result.');
             if(payload.scores)resultScores=payload.scores;else if(payload.score)resultScores.bsf=payload.score;
