@@ -83,7 +83,7 @@ const ScoringEngine = {
     const penaltyPerError=Math.max(0,Math.min(100,Number(config.penaltyPerError??config.penalty_per_error??10)));
     // Anti-inflation cap: each typed word contributes at most the character count of the original word at that index; extra words contribute zero. Spaces are capped at the original passage separator count. This prevents long/wrong words and extra text from inflating gross speed.
     const cappedWordKeystrokes=typedWords.reduce((sum,word,i)=>sum+Math.min(word.length,expectedWords[i]?.length??0),0);
-    const cappedSeparatorKeystrokes=Math.min((typedSource.match(/\\s/gu)||[]).length,Math.max(0,expectedWords.length-1));
+    const cappedSeparatorKeystrokes=Math.min((typedSource.match(/\s/gu)||[]).length,Math.max(0,expectedWords.length-1));
     const measuredKeystrokes=cappedWordKeystrokes+cappedSeparatorKeystrokes;
     const equivalentWords=measuredKeystrokes/5,freeErrors=equivalentWords*freePct;
     const excessErrors=Math.max(0,totalErrors-freeErrors),penaltyWords=excessErrors*penaltyPerError;
