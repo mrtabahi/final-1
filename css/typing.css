@@ -315,3 +315,35 @@
 .result-metric-formula{font-size:.74rem;line-height:1.45;color:#64748b}
 @media(max-width:760px){.result-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}.result-metric-card{padding:.8rem}.result-metric-value{font-size:1.4rem}.result-metric-net .result-metric-value{font-size:1.65rem}}
 @media(max-width:380px){.result-metrics{grid-template-columns:1fr}}
+
+/* Compact color-coded result cards */
+.result-metric-card{display:flex;flex-direction:column;justify-content:space-between;min-height:124px;box-shadow:0 2px 8px rgba(15,23,42,.045);border-width:1px}
+.result-metric-net{background:#dcfce7;border-color:#86efac}
+.result-metric-net .result-metric-label,.result-metric-net .result-metric-value{color:#166534}
+.result-metric-gross{background:#fef3c7;border-color:#fcd34d}
+.result-metric-gross .result-metric-label,.result-metric-gross .result-metric-value{color:#92400e}
+.result-metric-allowed{background:#e0f2fe;border-color:#7dd3fc}
+.result-metric-allowed .result-metric-label,.result-metric-allowed .result-metric-value{color:#075985}
+.result-metric-extra,.result-metric-errors{background:#fee2e2;border-color:#fca5a5}
+.result-metric-extra .result-metric-label,.result-metric-extra .result-metric-value,.result-metric-errors .result-metric-label,.result-metric-errors .result-metric-value{color:#991b1b}
+.result-metric-penalty{background:#ffedd5;border-color:#fdba74}
+.result-metric-penalty .result-metric-label,.result-metric-penalty .result-metric-value{color:#9a3412}
+.result-metric-time{background:#ede9fe;border-color:#c4b5fd}
+.result-metric-time .result-metric-label,.result-metric-time .result-metric-value{color:#5b21b6}
+.result-metric-accuracy{background:#ccfbf1;border-color:#5eead4}
+.result-metric-accuracy .result-metric-label,.result-metric-accuracy .result-metric-value{color:#115e59}
+.result-metric-card:not(.result-metric-net):not(.result-metric-gross):not(.result-metric-allowed):not(.result-metric-extra):not(.result-metric-errors):not(.result-metric-penalty):not(.result-metric-time):not(.result-metric-accuracy){background:#f1f5f9;border-color:#cbd5e1}
+.live-metrics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem}
+.live-metrics-grid .stat-box{min-width:0;border:1px solid #dbe3ed;border-radius:12px;padding:.8rem;background:#f8fafc}
+.live-metrics-grid .stat-value{font-size:1.35rem;font-weight:850;font-variant-numeric:tabular-nums}
+.live-metric-net{background:#dcfce7!important;border-color:#86efac!important;color:#166534}
+.live-metric-gross{background:#fef3c7!important;border-color:#fcd34d!important;color:#92400e}
+.live-metric-errors{background:#fee2e2!important;border-color:#fca5a5!important;color:#991b1b}
+.live-metric-extra{background:#fee2e2!important;border-color:#fca5a5!important;color:#991b1b}
+.live-metric-allowed{background:#e0f2fe!important;border-color:#7dd3fc!important;color:#075985}
+.live-metric-penalty{background:#ffedd5!important;border-color:#fdba74!important;color:#9a3412}
+.live-metric-time{background:#ede9fe!important;border-color:#c4b5fd!important;color:#5b21b6}
+.live-metric-accuracy{background:#ccfbf1!important;border-color:#5eead4!important;color:#115e59}
+.live-metrics-grid .stat-value,.live-metrics-grid .stat-label{color:inherit}
+@media(max-width:760px){.live-metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.live-metrics-grid .stat-box{padding:.7rem}.live-metrics-grid .stat-value{font-size:1.2rem}}
+@media(max-width:380px){.live-metrics-grid{grid-template-columns:1fr}}
