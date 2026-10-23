@@ -66,6 +66,15 @@ function finishTest(){
  $('self-penalty').textContent=String(score.penaltyWords);
  $('self-correct').textContent=String(score.correctChars);
  $('self-count').textContent=String(score.totalTypedChars);
+ const bsfScore=ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,'bsf');
+ const crpfScore=ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,'crpf');
+ let compare=$('self-formula-comparison');
+ if(!compare){compare=document.createElement('div');compare.id='self-formula-comparison';compare.className='self-formula-comparison';$('self-result').insertBefore(compare,$('self-analysis-breakdown'));}
+ compare.replaceChildren();
+ const compareTitle=document.createElement('h3');compareTitle.textContent='Compare scoring rules';compare.appendChild(compareTitle);
+ const compareGrid=document.createElement('div');compareGrid.className='self-formula-grid';
+ [['BSF',bsfScore],['CRPF',crpfScore]].forEach(([name,value])=>{const card=document.createElement('div');card.className='self-formula-card'+(name.toLowerCase()===scoringFormula?' is-selected':'');const heading=document.createElement('strong');heading.textContent=name+' formula';card.appendChild(heading);[['Net WPM',value.netWpm.toFixed(2)],['Gross WPM',value.grossWpm.toFixed(2)],['Accuracy',value.accuracy.toFixed(2)+'%'],['Errors',String(value.totalErrors)],['Penalty words',String(value.penaltyWords.toFixed(2))]].forEach(([label,val])=>{const line=document.createElement('p');line.textContent=label+': '+val;card.appendChild(line)});compareGrid.appendChild(card);});
+ compare.appendChild(compareGrid);
  const breakdown=$('self-analysis-breakdown');breakdown.replaceChildren();
  const title=document.createElement('h3');title.textContent='Detailed error analysis';breakdown.appendChild(title);
  const grid=document.createElement('div');grid.className='self-analysis-grid';
@@ -94,7 +103,17 @@ function downloadPDF(){
 }
 $('self-start').addEventListener('click',startTest);
 typed.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!allowBackspace)e.preventDefault()});
-typed.addEventListener('input',()=>{if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive()});
+typed.addEventListener('input',()=>{if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping()});
+function autoScrollTyping(){
+ const style=getComputedStyle(typed),lineHeight=parseFloat(style.lineHeight)||28;
+ const text=typed.value.slice(0,typed.selectionStart||typed.value.length);
+ const explicitLines=text.split('\\n').length;
+ const approxChars=Math.max(18,Math.floor((typed.clientWidth-parseFloat(style.paddingLeft||0)-parseFloat(style.paddingRight||0))/(parseFloat(style.fontSize||16)*.62)));
+ const visualLines=explicitLines+text.split('\\n').reduce((n,line)=>n+Math.max(0,Math.ceil(line.length/approxChars)-1),0);
+ if(visualLines>=3)typed.scrollTop=Math.max(0,(visualLines-2)*lineHeight);
+ const passageLines=original.slice(0,typed.value.length).split('\\n').length;
+ if(passageLines>=3)passage.scrollTop=Math.max(0,(passageLines-2)*parseFloat(getComputedStyle(passage).lineHeight));
+}
 $('self-formula').addEventListener('change',()=>{scoringFormula=$('self-formula').value==='crpf'?'crpf':'bsf';updateLive()});
 $('self-save-passage').addEventListener('click',()=>{const text=source.value.trim();if(!text){$('self-save-message').textContent='Pehle passage paste ya type karein.';source.focus();return}const items=readSaved();if(items.length>=MAX_SAVED){$('self-save-message').textContent='Maximum 5 passages save ho sakte hain. Pehle ek delete karein.';return}const id=Date.now();items.push({id,title:'Passage '+(items.length+1)+' · '+new Date(id).toLocaleDateString(),text});if(writeSaved(items)){refreshSaved(id);$('self-save-message').textContent='Passage saved. Aap ise baad mein select karke load kar sakte hain.'}});
 $('self-load-passage').addEventListener('click',()=>{const item=readSaved().find(x=>String(x.id)===$('self-saved-list').value);if(!item){$('self-save-message').textContent='Load karne ke liye saved passage select karein.';return}source.value=item.text;$('self-save-message').textContent='Saved passage loaded.';source.focus()});
