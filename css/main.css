@@ -371,3 +371,119 @@ button, a, input, select, textarea { -webkit-tap-highlight-color:transparent; }
 .site-social-links a { color:#e2e8f0; text-decoration:none; font-weight:650; }
 .site-social-links a:hover { color:#fff; text-decoration:underline; text-underline-offset:3px; }
 @media(max-width:600px) { .self-test-promo { align-items:flex-start; flex-direction:column; } }
+
+
+/* Home page cards: polished depth and subtle text motion */
+.home-page .card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #d8e4ef;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 58%, #f1f7ff 100%);
+  box-shadow: 0 5px 18px rgba(18, 59, 99, .07);
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+}
+
+.home-page .card::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #60a5fa, #174f7c, #93c5fd);
+  transform: scaleY(.28);
+  transform-origin: center;
+  opacity: .7;
+  transition: transform .3s ease, opacity .3s ease;
+}
+
+.home-page .card:hover {
+  transform: translateY(-4px);
+  border-color: #a9c9e8;
+  box-shadow: 0 14px 32px rgba(18, 59, 99, .13);
+}
+
+.home-page .card:hover::before {
+  transform: scaleY(1);
+  opacity: 1;
+}
+
+.home-page .card h1,
+.home-page .card h2 {
+  color: #123b63;
+  letter-spacing: -.025em;
+  animation: homeTextRise .7s both;
+}
+
+.home-page .card h2 {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 1.15rem;
+  margin-bottom: .6rem;
+}
+
+.home-page .card h2::after {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 3px;
+  margin-top: .4rem;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #2563a6, #93c5fd);
+  transform-origin: left;
+  animation: homeAccentGrow .65s .15s both;
+}
+
+.home-page .card p {
+  color: #43566a;
+  line-height: 1.85;
+  animation: homeTextRise .75s .1s both;
+}
+
+.home-page .card p a {
+  color: #174f7c;
+  font-weight: 700;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color .2s ease;
+}
+
+.home-page .card p a:hover {
+  color: #2563eb;
+}
+
+.home-page .card .btn {
+  box-shadow: 0 3px 8px rgba(23, 79, 124, .08);
+  transition: transform .22s ease, box-shadow .22s ease, background-color .22s ease;
+}
+
+.home-page .card .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 16px rgba(23, 79, 124, .16);
+}
+
+@keyframes homeTextRise {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes homeAccentGrow {
+  from { transform: scaleX(.2); opacity: .35; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page .card,
+  .home-page .card::before,
+  .home-page .card h1,
+  .home-page .card h2,
+  .home-page .card h2::after,
+  .home-page .card p,
+  .home-page .card .btn {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
