@@ -487,3 +487,184 @@ button, a, input, select, textarea { -webkit-tap-highlight-color:transparent; }
     transform: none !important;
   }
 }
+
+
+/* =========================================================
+   MOTION + COLOR SYSTEM · Decoding HCM
+   Subtle, purposeful motion across every page using main.css
+   ========================================================= */
+:root {
+  --motion-ink: #13263f;
+  --motion-blue: #2563eb;
+  --motion-indigo: #635bdb;
+  --motion-teal: #0f9f9a;
+  --motion-coral: #f08b63;
+  --motion-ease: cubic-bezier(.2,.75,.25,1);
+  --motion-shadow: 0 16px 38px rgba(31, 65, 112, .12);
+}
+html { scroll-behavior: smooth; }
+body {
+  background:
+    radial-gradient(ellipse at 4% 0%, rgba(99,91,219,.055), transparent 34rem),
+    radial-gradient(ellipse at 96% 10%, rgba(15,159,154,.055), transparent 30rem),
+    var(--bg-main);
+  color: var(--motion-ink);
+}
+::selection { color: #fff; background: #4f62d7; }
+
+/* Animated, premium gradient navigation */
+.navbar {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(112deg, #102f50 0%, #174f7c 48%, #3e4fa5 100%);
+  background-size: 180% 180%;
+  animation: motionNavGradient 16s ease-in-out infinite alternate;
+  box-shadow: 0 8px 24px rgba(16,47,80,.17);
+}
+.navbar::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #67e8f9, #a5b4fc, #f9a8d4, #67e8f9);
+  background-size: 220% 100%;
+  animation: motionLineFlow 8s linear infinite;
+}
+.brand-logo img {
+  transition: transform .45s var(--motion-ease), box-shadow .3s ease;
+}
+.brand-container:hover .brand-logo img {
+  transform: rotate(-5deg) scale(1.06);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.14), 0 6px 18px rgba(0,0,0,.15);
+}
+.nav-links a {
+  position: relative;
+  transition: color .22s ease, opacity .22s ease, transform .22s var(--motion-ease);
+}
+.nav-links a:not(.btn-nav)::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 100%; bottom: -6px;
+  height: 2px; border-radius: 99px;
+  background: linear-gradient(90deg, #67e8f9, #c4b5fd);
+  transition: right .28s var(--motion-ease);
+}
+.nav-links a:not(.btn-nav):hover { opacity: 1; transform: translateY(-1px); }
+.nav-links a:not(.btn-nav):hover::after,
+.nav-links a[aria-current="page"]:not(.btn-nav)::after { right: 0; }
+
+/* Cards grow gently; content stays visible and readable */
+.card, .category-card, .test-row, .self-test-promo, .loading-card,
+.folder-card, .material-card, .stat-card, .dashboard-card {
+  transition: transform .32s var(--motion-ease), box-shadow .32s ease,
+    border-color .28s ease, background-color .28s ease;
+}
+.card {
+  border-color: rgba(190, 207, 226, .9);
+  border-radius: 16px;
+  box-shadow: 0 5px 20px rgba(22, 52, 88, .055);
+}
+.card:hover {
+  border-color: rgba(99, 126, 219, .42);
+  box-shadow: var(--motion-shadow);
+}
+.card-title {
+  color: #234e83;
+  border-image: linear-gradient(90deg, #5a75e6, #8ddbd5, transparent) 1;
+}
+.category-card:hover, .test-row:hover, .self-test-promo:hover,
+.folder-card:hover, .material-card:hover, .stat-card:hover, .dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--motion-shadow);
+}
+
+/* Gradient buttons with a soft light sweep and satisfying press */
+.btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform .22s var(--motion-ease), box-shadow .25s ease,
+    background-color .25s ease, border-color .25s ease;
+}
+.btn::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -60%; bottom: -60%; left: -70%;
+  width: 42%;
+  transform: rotate(20deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.24), transparent);
+  transition: left .55s var(--motion-ease);
+}
+.btn:hover::after { left: 130%; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 9px 22px rgba(37,99,235,.18); }
+.btn:active { transform: translateY(0) scale(.985); }
+.btn-primary {
+  background: linear-gradient(115deg, #1d63a0, #4659c8);
+  background-size: 150% 150%;
+  border: 1px solid rgba(255,255,255,.12);
+}
+.btn-primary:hover { background: linear-gradient(115deg, #174f7c, #3747ad); }
+
+/* Inputs get a calm focus glow rather than a harsh jump */
+.form-control, input, select, textarea {
+  transition: border-color .22s ease, box-shadow .22s ease, background-color .22s ease;
+}
+.form-control:focus, input:focus, select:focus, textarea:focus {
+  border-color: #6683e8;
+  box-shadow: 0 0 0 4px rgba(99,91,219,.12);
+}
+
+/* Tables and status chips use restrained accent color */
+.data-table th {
+  background: linear-gradient(110deg, #eaf1ff, #e8f8f7);
+  color: #244d82;
+}
+.data-table tbody tr { transition: background-color .2s ease; }
+.data-table tbody tr:hover { background-color: #eef5ff; }
+.badge, .eyebrow {
+  letter-spacing: .035em;
+}
+a:not(.brand-container):not(.nav-links a):not(.site-social-links a) {
+  text-underline-offset: 3px;
+  transition: color .2s ease;
+}
+
+/* Soft entrance for major content blocks; no hidden text / no scroll-jacking */
+main.container > *, .container > .card, .container > section.card {
+  animation: motionContentIn .58s var(--motion-ease) both;
+}
+main.container > *:nth-child(2), .container > .card:nth-child(2) { animation-delay: .06s; }
+main.container > *:nth-child(3), .container > .card:nth-child(3) { animation-delay: .12s; }
+h1, h2, .typing-page-title {
+  text-wrap: balance;
+}
+@keyframes motionNavGradient {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+@keyframes motionLineFlow {
+  from { background-position: 0% 50%; }
+  to { background-position: 220% 50%; }
+}
+@keyframes motionContentIn {
+  from { opacity: .82; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 768px) {
+  .navbar { background-size: 100% 100%; animation: none; }
+  .card:hover, .category-card:hover, .test-row:hover, .self-test-promo:hover,
+  .folder-card:hover, .material-card:hover, .stat-card:hover, .dashboard-card:hover {
+    transform: translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
