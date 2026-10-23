@@ -58,3 +58,7 @@
 #result-section .exact-typed-content{white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;user-select:text;background:#fffdf5;border:1px solid #f2d48a;color:#263449}
 @media(max-width:600px){.result-pdf-meta{grid-template-columns:1fr}}
 @media print{#result-section .result-pdf-meta{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1.45fr)!important}#result-section .result-metric-card{border-top-width:3px!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}#result-section .exact-typed-content{white-space:pre-wrap!important;overflow-wrap:anywhere!important;background:#fffdf5!important}}
+
+/* Use the official brand image in printed/exported scorecards. */
+.result-pdf-mark{display:block;width:64px;height:64px;flex:0 0 64px;object-fit:contain;background:#fff;border-radius:12px;padding:4px;box-shadow:0 3px 12px #02061730}
+@media print{.result-pdf-mark{width:54px;height:54px;flex-basis:54px;object-fit:contain;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
