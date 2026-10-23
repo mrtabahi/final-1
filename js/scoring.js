@@ -7,8 +7,14 @@ const ScoringEngine = {
   tokenize(text) { return String(text ?? "").match(/\S+/gu) || []; },
   countDoubleSpaceErrors(text) { return (String(text ?? "").match(/ {2,}/g) || []).length; },
   alignWords(expectedWords, typedWords) {
+    // Preserve the already-correct prefix by index. Repeated words later in the
+    // passage must never steal a typed word from this prefix.
+    let prefix=0;
+    while(prefix<expectedWords.length&&prefix<typedWords.length&&expectedWords[prefix]===typedWords[prefix])prefix++;
+    const prefixMatches=Array.from({length:prefix},(_,i)=>({type:"match",expected:expectedWords[i],typed:typedWords[i]}));
+    expectedWords=expectedWords.slice(prefix);typedWords=typedWords.slice(prefix);
     const n=expectedWords.length,m=typedWords.length;
-    if((n+1)*(m+1)>2000000) return this.positionalAlignment(expectedWords,typedWords);
+    if((n+1)*(m+1)>2000000) return [...prefixMatches,...this.positionalAlignment(expectedWords,typedWords)];
     // Suffix edit-distance + forward traceback. When duplicate words can match
     // multiple positions, take the earliest expected occurrence that preserves
     // the minimum edit distance, rather than backtracking into a later duplicate
@@ -20,7 +26,7 @@ const ScoringEngine = {
       if(expectedWords[i]===typedWords[j])dp[i][j]=dp[i+1][j+1];
       else dp[i][j]=1+Math.min(dp[i+1][j+1],dp[i+1][j],dp[i][j+1]);
     }
-    const out=[];let i=0,j=0;
+    const out=[...prefixMatches];let i=0,j=0;
     while(i<n||j<m){
       if(i<n&&j<m&&expectedWords[i]===typedWords[j]&&dp[i][j]===dp[i+1][j+1]){
         out.push({type:"match",expected:expectedWords[i],typed:typedWords[j]});i++;j++;continue;
