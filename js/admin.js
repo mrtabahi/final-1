@@ -1147,8 +1147,10 @@ async function loadDashboard() {
         const content =
             $('test-content').value.trim();
 
-        const mode =
-            $('test-mode').value;
+        const selectedMode = $('test-mode').value;
+        // "candidate" is a supported policy: the candidate selects the typing
+        // layout at test start. Keep the database value; do not silently coerce it.
+        const mode = ['screen', 'page', 'candidate'].includes(selectedMode) ? selectedMode : 'screen';
 
         const backspaceMode = $('test-backspace-mode').value;
         const highlightMode = $('test-highlight-mode').value;
@@ -1207,8 +1209,9 @@ async function loadDashboard() {
                 error
             );
 
-            message.textContent =
-                error.message;
+            message.textContent = error.code === '23514' && error.message?.includes('tests_mode_check')
+                ? 'This database is missing support for the “candidate chooses mode” setting. Refresh after the database update, or select Screen → Screen / Page → Screen for now.'
+                : error.message;
 
             return;
         }
