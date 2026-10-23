@@ -158,6 +158,11 @@
             }
             return;
         }
+        if (view === 'analytics') {
+            updatePageHeader(view);
+            renderAnalyticsModule();
+            return;
+        }
 
         updatePageHeader(view);
         if (view === 'dashboard') loadDashboard();
@@ -184,9 +189,55 @@
         const item=data[view]||data.dashboard;
         if(title) title.textContent=item.title;
         if(subtitle) subtitle.textContent=item.subtitle;
-        if(view!=='dashboard'&&view!=='tests'&&view!=='attempts') renderPlannedModule(view,item);
+        if(view!=='dashboard'&&view!=='tests'&&view!=='attempts'&&view!=='analytics') renderPlannedModule(view,item);
     }
 
+
+    async function renderAnalyticsModule() {
+        const heading=$('module-title'), sub=$('module-subtitle'), box=$('module-capabilities');
+        const status=$('module-status-title'), copy=$('module-status-copy');
+        if(heading) heading.textContent='Analytics & Reports';
+        if(sub) sub.textContent='Live performance insights from submitted typing attempts.';
+        if(status) status.textContent='Live analytics';
+        if(copy) copy.textContent='Metrics are calculated from the attempts currently accessible to this administrator. The report is read-only and does not modify candidate records.';
+        if(!box) return;
+        box.innerHTML='<div class="admin-empty">Loading analytics from your database…</div>';
+        try {
+            const {data,error}=await supabaseClient.from('attempts')
+                .select('id,net_wpm,gross_wpm,accuracy,total_errors,created_at,tests(title)')
+                .order('created_at',{ascending:false}).limit(1000);
+            if(error) throw error;
+            const rows=data||[];
+            const validWpm=rows.map(r=>Number(r.net_wpm)).filter(Number.isFinite);
+            const validAcc=rows.map(r=>Number(r.accuracy)).filter(Number.isFinite);
+            const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1):'0.0';
+            const since=Date.now()-7*24*60*60*1000;
+            const recent=rows.filter(r=>r.created_at&&new Date(r.created_at).getTime()>=since);
+            const byTest={};
+            rows.forEach(r=>{const name=r.tests?.title||'Unassigned / deleted test';const s=byTest[name]||(byTest[name]={count:0,wpm:0,accuracy:0,validWpm:0,validAccuracy:0});s.count++;const w=Number(r.net_wpm),a=Number(r.accuracy);if(Number.isFinite(w)){s.wpm+=w;s.validWpm++;}if(Number.isFinite(a)){s.accuracy+=a;s.validAccuracy++;}});
+            const tests=Object.entries(byTest).sort((a,b)=>b[1].count-a[1].count).slice(0,10);
+            const escHtml=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+            box.innerHTML=
+              '<div class="admin-stat-grid">'+
+                '<article class="admin-stat-card"><div class="admin-stat-top"><span>Attempts analysed</span><span class="admin-stat-icon indigo">▤</span></div><strong>'+rows.length+'</strong><small>Most recent 1,000 submitted attempts</small></article>'+
+                '<article class="admin-stat-card"><div class="admin-stat-top"><span>Average net WPM</span><span class="admin-stat-icon blue">⌁</span></div><strong>'+avg(validWpm)+'</strong><small>Across records with WPM values</small></article>'+
+                '<article class="admin-stat-card"><div class="admin-stat-top"><span>Average accuracy</span><span class="admin-stat-icon green">✓</span></div><strong>'+avg(validAcc)+'%</strong><small>Across records with accuracy values</small></article>'+
+                '<article class="admin-stat-card"><div class="admin-stat-top"><span>Last 7 days</span><span class="admin-stat-icon amber">◷</span></div><strong>'+recent.length+'</strong><small>Attempts in the rolling 7-day window</small></article>'+
+              '</div>'+
+              '<section class="admin-panel" style="margin-top:18px"><div class="admin-panel-heading"><div><h2>Test-wise performance</h2><p>Top 10 tests by submitted attempt volume</p></div><button type="button" class="admin-btn admin-btn-secondary" id="analytics-export-csv">↓ Export CSV</button></div>'+
+              (tests.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Test</th><th>Attempts</th><th>Avg net WPM</th><th>Avg accuracy</th></tr></thead><tbody>'+tests.map(([name,s])=>'<tr><td>'+escHtml(name)+'</td><td>'+s.count+'</td><td>'+(s.validWpm?avg(Array.from({length:0},()=>0))==='':(s.wpm/s.validWpm).toFixed(1))+'</td><td>'+(s.validAccuracy?(s.accuracy/s.validAccuracy).toFixed(1)+'%':'—')+'</td></tr>').join('')+'</tbody></table></div>':'<div class="admin-empty">No attempts are available for reporting yet.</div>')+
+              '<p class="admin-field-help" style="margin-top:12px">Privacy note: this overview excludes candidate names and emails. Database access policies determine which records are included.</p></section>';
+            $('analytics-export-csv')?.addEventListener('click',()=>{
+                const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+                const csv=[['Test','Attempts','Average net WPM','Average accuracy (%)'],...tests.map(([name,s])=>[name,s.count,s.validWpm?(s.wpm/s.validWpm).toFixed(1):'',s.validAccuracy?(s.accuracy/s.validAccuracy).toFixed(1):''])].map(row=>row.map(quote).join(',')).join('\r\n');
+                const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+                const a=document.createElement('a');a.href=url;a.download='analytics-report.csv';a.click();URL.revokeObjectURL(url);
+            });
+        } catch(error) {
+            console.error('Analytics report error:',error);
+            box.innerHTML='<div class="admin-error">Analytics could not be loaded. Check the attempts table permissions and database connection, then use Refresh to try again.</div>';
+        }
+    }
 
     function renderPlannedModule(view,item) {
         const configs = {
@@ -1893,7 +1944,7 @@ async function loadDashboard() {
 
         setupAttemptActions();
         $('admin-menu-toggle')?.addEventListener('click', () => $('admin-sidebar')?.classList.toggle('is-open'));
-        $('admin-refresh')?.addEventListener('click', () => { if (currentView === 'dashboard') loadDashboard(); else if (currentView === 'tests') loadManageTests(); else if (currentView === 'attempts') loadAllAttempts(); else if (currentView === 'candidates') $('candidate-refresh')?.click(); else if (currentView === 'content') $('site-content-refresh')?.click(); });
+        $('admin-refresh')?.addEventListener('click', () => { if (currentView === 'dashboard') loadDashboard(); else if (currentView === 'tests') loadManageTests(); else if (currentView === 'attempts') loadAllAttempts(); else if (currentView === 'analytics') renderAnalyticsModule(); else if (currentView === 'candidates') $('candidate-refresh')?.click(); else if (currentView === 'content') $('site-content-refresh')?.click(); });
         if ($('admin-loading')) $('admin-loading').style.display = 'none';
         if ($('admin-app')) $('admin-app').style.display = 'flex';
 
