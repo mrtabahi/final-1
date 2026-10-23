@@ -103,12 +103,13 @@
     if (!drafts.length) { box.innerHTML = ''; $('bulk-pdf-save').disabled = true; return; }
     box.innerHTML = '<div class="admin-bulk-review-heading"><strong>Review drafts (' + drafts.length + ')</strong><small>Check headings, page artefacts and paragraph breaks. Nothing is saved until you confirm.</small></div>' +
       drafts.map((draft, index) => '<article class="admin-bulk-draft" data-draft-index="' + index + '">' +
-        '<div class="admin-bulk-draft-head"><label class="admin-check"><input type="checkbox" data-draft-include="' + index + '" ' + (draft.include ? 'checked' : '') + '> Include</label><span>' + draft.pages + ' page(s) · ' + draft.text.trim().split(/\s+/).filter(Boolean).length.toLocaleString() + ' words</span></div>' +
+        '<div class="admin-bulk-draft-head"><label class="admin-check"><input type="checkbox" data-draft-include="' + index + '" ' + (draft.include ? 'checked' : '') + '> Include</label><label class="admin-check"><input type="checkbox" data-draft-publish="' + index + '" ' + (draft.publish ? 'checked' : '') + '> Publish this test</label><span>' + draft.pages + ' page(s) · ' + draft.text.trim().split(/\s+/).filter(Boolean).length.toLocaleString() + ' words</span></div>' +
         '<div class="admin-form-field"><label>Test title</label><input class="admin-input" data-draft-title="' + index + '" value="' + escapeHtml(draft.title) + '" maxlength="160"></div>' +
         '<div class="admin-form-field"><label>Passage text — editable</label><textarea class="admin-input admin-passage-input" data-draft-text="' + index + '" rows="7">' + escapeHtml(draft.text) + '</textarea></div>' +
         '<small class="admin-field-help">Source: ' + escapeHtml(draft.fileName) + (draft.warning ? ' · <strong class="admin-warning-text">' + escapeHtml(draft.warning) + '</strong>' : '') + '</small>' +
         '</article>').join('');
     box.querySelectorAll('[data-draft-include]').forEach(input => input.addEventListener('change', () => { drafts[Number(input.dataset.draftInclude)].include = input.checked; updateSaveState(); }));
+    box.querySelectorAll('[data-draft-publish]').forEach(input => input.addEventListener('change', () => { drafts[Number(input.dataset.draftPublish)].publish = input.checked; }));
     box.querySelectorAll('[data-draft-title]').forEach(input => input.addEventListener('input', () => { const d=drafts[Number(input.dataset.draftTitle)]; d.title=input.value; d.titleManuallyEdited=true; }));
     box.querySelectorAll('[data-draft-text]').forEach(input => input.addEventListener('input', () => { drafts[Number(input.dataset.draftText)].text = input.value; const d=drafts[Number(input.dataset.draftText)]; const card=input.closest('.admin-bulk-draft'); const words=card?.querySelector('.admin-bulk-draft-head span'); if(words) words.textContent=d.pages+' page(s) · '+d.text.trim().split(/\s+/).filter(Boolean).length.toLocaleString()+' words'; updateSaveState(); }));
     updateSaveState();
@@ -141,7 +142,7 @@
           if ($('bulk-remove-heading').checked) { const lines = result.text.split('\n'); const stripped = lines.slice(1).join('\n').trim(); if (stripped.length >= 20) result.text = stripped; }
           const suspicious = result.text.split('\n').filter(line => line.trim().length < 4 || /^(contents|index|chapter\s+\d+|page\s+\d+)/i.test(line.trim()));
           const title = $('bulk-base-title').value.trim() + ' - ' + (drafts.length + 1);
-          drafts.push({ ...result, title, titleManuallyEdited: false, include: true, warning: suspicious.length ? 'Possible headings/short lines detected — review before saving' : '' });
+          drafts.push({ ...result, title, titleManuallyEdited: false, publish: $('bulk-publish').checked, include: true, warning: suspicious.length ? 'Possible headings/short lines detected — review before saving' : '' });
         } catch (error) {
           drafts.push({ title: safeName(files[i].name), fileName: files[i].name, pages: 0, text: '', include: false, warning: error.message || 'Could not extract this PDF' });
         }
@@ -188,7 +189,7 @@
         min_accuracy: $('bulk-min-accuracy').value === '' ? null : Number($('bulk-min-accuracy').value), free_error_pct: Number($('bulk-errors').value || 0) / 100,
         penalty_per_error: Number($('bulk-penalty').value || 10), passage: d.text.trim(), mode: $('bulk-mode').value,
         allow_backspace: $('bulk-backspace').value === 'on', backspace_mode: $('bulk-backspace').value, highlight_mode: $('bulk-highlight').value,
-        hide_paragraph_mode: $('bulk-hide').value, active: $('bulk-publish').checked, leaderboard_enabled: $('bulk-leaderboard').checked
+        hide_paragraph_mode: $('bulk-hide').value, active: !!d.publish, leaderboard_enabled: $('bulk-leaderboard').checked
       }));
       if (!rows.length) { setStatus('No new tests saved: all selected passages were exact duplicates.'); return; }
       const { data, error } = await supabaseClient.from('tests').insert(rows).select('id,title');
@@ -230,6 +231,7 @@
     $('bulk-pdf-modal')?.addEventListener('click', event => { if (event.target === $('bulk-pdf-modal')) closeModal(); });
     $('bulk-extract-pdfs')?.addEventListener('click', extractAll);
     $('bulk-pdf-save')?.addEventListener('click', saveDrafts);
+    $('bulk-publish')?.addEventListener('change', () => { drafts.forEach(d=>{d.publish=$('bulk-publish').checked}); renderDrafts(); });
     $('bulk-folder-select')?.addEventListener('change', () => { const chosen=!!$('bulk-folder-select').value; $('bulk-folder-name').disabled=chosen; if(chosen)$('bulk-folder-name').value=''; else $('bulk-folder-name').disabled=false; });
     $('bulk-base-title')?.addEventListener('input', () => { const base=$('bulk-base-title').value.trim(); drafts.forEach((d,i)=>{if(!d.titleManuallyEdited)d.title=base ? base+' - '+(i+1) : safeName(d.fileName)}); renderDrafts(); });
   });
