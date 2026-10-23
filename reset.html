@@ -1,1 +1,73 @@
-<!DOCTYPE html><html lang="en"><head><meta name="google-adsense-account" content="ca-pub-2757719583090087"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Set New Password | Decoding HCM</title><link rel="stylesheet" href="css/main.css?v=20261023-motion1"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><div class="container" style="max-width:500px;margin:3rem auto"><div class="card"><h2 class="card-title">Set New Password</h2><form id="reset-form"><input id="pass1" type="password" minlength="8" class="form-control" required placeholder="New password"><input id="pass2" type="password" minlength="8" class="form-control" required placeholder="Confirm password" style="margin-top:.8rem"><button class="btn btn-primary btn-block" style="margin-top:1rem">Change Password</button></form><p id="msg" class="form-help"></p></div></div><script src="js/config.js"></script><script>document.getElementById('reset-form').onsubmit=async e=>{e.preventDefault();const m=document.getElementById('msg');if(pass1.value!==pass2.value){m.textContent='Passwords do not match.';return;}const {error}=await supabaseClient.auth.updateUser({password:pass1.value});m.textContent=error?error.message:'Password changed successfully.';if(!error)setTimeout(()=>location.href='login.html',1000);};</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Choose New Password | Decoding HCM</title>
+  <link rel="stylesheet" href="css/main.css?v=20261023-password-reset">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container" style="max-width:560px;margin:3rem auto">
+    <div class="card">
+      <h2 class="card-title">Choose a New Password</h2>
+      <p class="form-help">Open this page using the password-reset link sent to your email.</p>
+      <form id="new-password-form">
+        <div class="form-group"><label class="form-label" for="new-password">New password</label><input id="new-password" type="password" class="form-control" minlength="8" autocomplete="new-password" required></div>
+        <div class="form-group"><label class="form-label" for="confirm-password">Confirm new password</label><input id="confirm-password" type="password" class="form-control" minlength="8" autocomplete="new-password" required></div>
+        <button id="save-password" class="btn btn-primary btn-block" style="margin-top:1rem">Update Password</button>
+      </form>
+      <p id="reset-status" class="form-help" role="status" style="margin-top:1rem"></p>
+      <a href="login.html">Back to Sign In</a>
+    </div>
+  </div>
+  <script src="js/config.js"></script>
+  <script>
+    const form = document.getElementById('new-password-form');
+    const status = document.getElementById('reset-status');
+    const submit = document.getElementById('save-password');
+    let recoveryReady = false;
+    const showError = message => { status.textContent = message; };
+    if (supabaseClient) {
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY' || (session && session.user)) {
+          recoveryReady = true;
+          status.textContent = 'Reset link verified. You can set your new password.';
+        }
+      });
+      supabaseClient.auth.getSession().then(({data, error}) => {
+        if (error) showError(error.message);
+        if (data && data.session) {
+          recoveryReady = true;
+          status.textContent = 'Reset link verified. You can set your new password.';
+        }
+      });
+    }
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      status.textContent = '';
+      const password = document.getElementById('new-password').value;
+      const confirm = document.getElementById('confirm-password').value;
+      if (password.length < 8) return showError('Password must be at least 8 characters.');
+      if (password !== confirm) return showError('Passwords do not match.');
+      if (!supabaseClient) return showError('Authentication could not load. Refresh and try again.');
+      submit.disabled = true;
+      try {
+        const {data, error: sessionError} = await supabaseClient.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!recoveryReady && !data.session) throw new Error('This reset link is invalid or expired. Request a new password reset email.');
+        const {error} = await supabaseClient.auth.updateUser({password});
+        if (error) throw error;
+        status.textContent = 'Password updated successfully. Redirecting to sign in…';
+        form.reset();
+        await supabaseClient.auth.signOut();
+        setTimeout(() => { window.location.href = 'login.html?passwordReset=success'; }, 1200);
+      } catch (error) {
+        showError(error.message || 'Could not update password. Request a new reset link and try again.');
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
