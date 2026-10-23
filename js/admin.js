@@ -138,12 +138,31 @@
         const activeMap = { dashboard: 'nav-dash', tests: 'nav-tests', attempts: 'nav-attempts' };
         if (activeMap[view] && $(activeMap[view])) $(activeMap[view]).classList.add('active');
         if (!isCore) document.querySelectorAll('.admin-nav-link[data-module]').forEach(link => { if (link.getAttribute('data-module') === view) link.classList.add('active'); });
+        // Active modules own their complete panel markup. Do not let the
+        // generic planning-panel header compete with their renderer.
+        if (view === 'candidates') {
+            if (typeof window.renderCandidatesModule === 'function') {
+                window.renderCandidatesModule();
+            } else {
+                updatePageHeader(view);
+                console.error('Candidate module renderer is not loaded.');
+            }
+            return;
+        }
+        if (view === 'content') {
+            if (typeof window.renderWebsiteContentModule === 'function') {
+                window.renderWebsiteContentModule();
+            } else {
+                updatePageHeader(view);
+                console.error('Website Content renderer is not loaded.');
+            }
+            return;
+        }
+
         updatePageHeader(view);
         if (view === 'dashboard') loadDashboard();
         if (view === 'tests') loadManageTests();
         if (view === 'attempts') loadAllAttempts();
-        if (view === 'candidates' && typeof window.renderCandidatesModule === 'function') window.renderCandidatesModule();
-        if (view === 'content' && typeof window.renderWebsiteContentModule === 'function') window.renderWebsiteContentModule();
     }
 
 
