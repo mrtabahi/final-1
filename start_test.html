@@ -74,6 +74,7 @@
 
             <div class="card typing-controls" aria-label="Typing test controls">
                     <button type="button" id="btn-mode-switch" class="btn btn-primary" aria-live="polite" hidden>Typing mode: On-screen — switch before typing</button>
+                    <button type="button" id="btn-auto-scroll" class="btn btn-secondary" aria-pressed="true">↕ Auto-scroll: On — switch before typing</button>
                     <button type="button" id="btn-sound" class="btn btn-secondary" aria-pressed="true">🔊 Sound: On</button>
                     <button type="button" id="btn-highlight" class="btn btn-secondary" aria-pressed="false">🖍 Highlight: Off</button>
                     <button type="button" id="btn-backspace" class="btn btn-secondary" aria-pressed="false">⌫ Backspace: Off</button>
@@ -154,7 +155,7 @@
                     <p>Total Words Typed: <strong id="res-typed-words">0</strong></p>
                     <p>Permissible Errors (5%): <strong id="res-free-errors">0</strong></p>
                     <p>Excess Penalty Errors: <strong id="res-excess-errors">0</strong></p>
-                    <p>Time Elapsed: <strong id="res-elapsed">0</strong> minutes</p>
+                    <p>Time Elapsed: <strong id="res-elapsed">0</strong> minutes</p><p>Attempting Time (actual time spent): <strong id="res-attempt-time">00:00 (0.0 seconds)</strong></p>
                 </div>
 
                 <div class="card result-analysis-card" style="text-align:left;margin-top:1rem;">
@@ -193,6 +194,6 @@
     <script src="js/scoring.js?v=20261023-analysis2"></script>
     <script src="js/typing-engine.js?v=20261023-controls-fix1"></script>
     <script src="js/auth.js?v=20261023-typing-fix2"></script>
-    <script src="js/app.js?v=20261023-candidate-mode2"></script>
+    <script src="js/app.js?v=20261023-error-scroll3"></script>
 </body>
 </html>
