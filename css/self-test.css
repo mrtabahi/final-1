@@ -183,3 +183,13 @@
 /* Self-test passage wrapping: regular spaces must remain wrap opportunities. */
 #self-passage{white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:normal!important}
 #self-passage .self-word{white-space:normal!important;display:inline}
+
+
+/* Compact self-test toolbar controls; descriptions appear only on hover/focus. */
+.self-toolbar-actions .compact-tip-control{position:relative!important;display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 42px!important;width:42px!important;min-width:42px!important;max-width:42px!important;height:40px!important;min-height:40px!important;padding:0!important;font-size:0!important;line-height:1!important;overflow:visible!important;white-space:nowrap!important}
+.self-toolbar-actions .compact-tip-control::before{content:attr(data-icon);font-size:1.15rem;font-weight:800;line-height:1}
+.self-toolbar-actions .compact-tip-control::after{content:attr(data-tooltip);position:absolute;left:50%;bottom:calc(100% + 9px);z-index:1000;transform:translate(-50%,4px);width:max-content;max-width:min(280px,80vw);white-space:normal;text-align:left;line-height:1.45;font-size:.78rem;font-weight:600;letter-spacing:0;padding:.65rem .75rem;border-radius:8px;background:#0f2742;color:#fff;box-shadow:0 8px 22px rgba(15,23,42,.25);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .14s ease,transform .14s ease}
+.self-toolbar-actions .compact-tip-control:hover::after,.self-toolbar-actions .compact-tip-control:focus-visible::after{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.self-toolbar-actions .compact-tip-control:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+@media(max-width:650px){.self-toolbar-actions .compact-tip-control{flex:0 0 40px!important;width:40px!important;min-width:40px!important;max-width:40px!important}.self-toolbar-actions .compact-tip-control::after{left:auto;right:0;transform:translateY(4px);max-width:min(250px,75vw)}.self-toolbar-actions .compact-tip-control:hover::after,.self-toolbar-actions .compact-tip-control:focus-visible::after{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.self-toolbar-actions .compact-tip-control::after{transition:none}}
