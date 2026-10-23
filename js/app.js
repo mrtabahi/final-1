@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
         }
         display.replaceChildren(fragment);
         display.classList.toggle('no-highlight',!highlightEnabled);
-        if(autoScrollEnabled&&selectedTypingMode==='screen'&&!passageHidden){const current=display.querySelector('.char-current')||display.lastElementChild;if(current){const top=current.offsetTop-display.offsetTop;const lower=display.scrollTop+display.clientHeight;if(top<display.scrollTop||top>lower-48)display.scrollTop=Math.max(0,top-display.clientHeight/3);}}
+        if(autoScrollEnabled&&selectedTypingMode==='screen'&&!passageHidden){const current=display.querySelector('.char-current')||display.lastElementChild;if(current){const top=current.getBoundingClientRect().top-display.getBoundingClientRect().top+display.scrollTop;const lower=display.scrollTop+display.clientHeight;if(top<display.scrollTop||top>lower-48)display.scrollTop=Math.max(0,top-display.clientHeight/3);}}
     }
     lang.onchange=render;passageSelect.onchange=update;await loadTests();const requestedTestId=new URLSearchParams(location.search).get('test');if(requestedTestId){const requestedTest=tests.find(t=>String(t.id)===requestedTestId);if(requestedTest){currentPassage=requestedTest;setup.style.display='none';inst.style.display='none';}else{setup.style.display='block';inst.style.display='none';}}else{setup.style.display='block';inst.style.display='none';}const pageLoader=$('page-loading');if(pageLoader)pageLoader.style.display='none';
     $('btn-back-setup')?.addEventListener('click',()=>{inst.style.display='none';setup.style.display='block';});
