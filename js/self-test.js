@@ -32,9 +32,9 @@ function renderPassage(){
  const input=typed.value; let html='';
  for(let i=0;i<original.length;){
   const ch=original[i];
-  if(ch==='\\n'){html+='<br>';i++;continue}
-  if(/\\s/.test(ch)){html+=ch===' '?'&nbsp;':esc(ch);i++;continue}
-  let end=i+1;while(end<original.length&&original[end]!=='\\n'&&!/\\s/.test(original[end]))end++;
+  if(ch==='\n'){html+='<br>';i++;continue}
+  if(/\s/.test(ch)){html+=ch===' '?'&nbsp;':esc(ch);i++;continue}
+  let end=i+1;while(end<original.length&&original[end]!=='\n'&&!/\s/.test(original[end]))end++;
   html+='<span class="self-word">';
   for(let j=i;j<end;j++){
    const char=original[j],done=j<input.length;
