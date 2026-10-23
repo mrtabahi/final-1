@@ -49,15 +49,16 @@ const ScoringEngine = {
     const doubleSpaceErrors=this.countDoubleSpaceErrors(typedSource);
     let alignment=[],wordErrors=0,correctWords=0;
     if(mode==="crpf"){
-      // Normalize whitespace before positional word comparison. Repeated spaces are a spacing diagnostic, not phantom empty words that shift every later comparison.
-      const normalized=typedSource.trim().replace(/[\r\n\t ]+/gu," ");
-      const slots=normalized.length?normalized.split(" "):[];
+      // CRPF is strictly positional: each literal space creates a slot. A double
+      // space creates an empty slot, and extra/missing words shift later positions.
+      const slots=typedSource.trim().length?typedSource.trim().split(/[ ]/u):[];
       for(let i=0;i<Math.max(expectedWords.length,slots.length);i++){
         const expected=expectedWords[i]??null,typed=slots[i]??null;
-        if(typed===null){alignment.push({type:"delete",expected,typed:null});continue;}
-        if(expected===null){alignment.push({type:"insert",expected:null,typed});wordErrors++;}
-        else if(typed===expected){alignment.push({type:"match",expected,typed});correctWords++;}
-        else{alignment.push({type:typed===""?"delete":"substitute",expected,typed});wordErrors++;}
+        if(expected===null){alignment.push({type:"insert",expected:null,typed});wordErrors++;continue;}
+        if(typed===null){alignment.push({type:"delete",expected,typed:null});wordErrors++;continue;}
+        if(typed===""){alignment.push({type:"delete",expected,typed:null,reason:"double-space"});wordErrors++;continue;}
+        if(typed===expected){alignment.push({type:"match",expected,typed});correctWords++;}
+        else{alignment.push({type:"substitute",expected,typed});wordErrors++;}
       }
     } else {
       alignment=this.alignWords(expectedWords,typedWords);
@@ -93,13 +94,12 @@ const ScoringEngine = {
     const incorrectChars=Math.max(0,typedSource.length-correctChars);
     const accuracy=typedSource.length?Number((correctChars/typedSource.length*100).toFixed(2)):0;
     // Mutually exclusive primary classifications; repeatedWords is a subset of extraWords.
-    const errorBreakdown={omissions:0,substitutions:0,spellingErrors:0,incompleteWords:0,extraWords:0,repeatedWords:0,spacingErrors:doubleSpaceErrors,capitalizationErrors:0,punctuationErrors:0,notReached:0};
+    const errorBreakdown={omissions:0,substitutions:0,spellingErrors:0,incompleteWords:0,extraWords:0,repeatedWords:0,spacingErrors:mode==="bsf"?doubleSpaceErrors:0,capitalizationErrors:0,punctuationErrors:0,notReached:0};
     for(let i=0;i<alignment.length;i++){
       const item=alignment[i];
       if(item.type==="delete"&&item.expected!=null){
         const trailing=!alignment.slice(i+1).some(next=>next.type!=="delete");
-        if(trailing)errorBreakdown.notReached++;
-        else errorBreakdown.omissions++;
+        if(!trailing)errorBreakdown.omissions++;
       } else if(item.type==="insert"){
         errorBreakdown.extraWords++;
         if(i>0&&alignment[i-1].typed!=null&&alignment[i-1].typed===item.typed)errorBreakdown.repeatedWords++;
