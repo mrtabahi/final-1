@@ -347,7 +347,9 @@ async function loadDashboard() {
                     total_errors,
                     created_at,
                     tests (
-                        title
+                        title,
+                        target_wpm,
+                        min_accuracy
                     )
                 `)
                 .order('created_at', {
