@@ -20,6 +20,12 @@ function tokenize(text: string): string[] {
 }
 
 function alignWords(expected: string[], typed: string[]) {
+  // Keep the exact typed prefix tied to the same original positions. A later
+  // duplicate word must not cause an earlier correct sequence to be omitted.
+  let prefix = 0;
+  while (prefix < expected.length && prefix < typed.length && expected[prefix] === typed[prefix]) prefix++;
+  const prefixMatches = Array.from({ length: prefix }, (_, i) => ({ type: "match", expected: expected[i], typed: typed[i] }));
+  expected = expected.slice(prefix); typed = typed.slice(prefix);
   const n = expected.length, m = typed.length;
   if ((n + 1) * (m + 1) > 2_000_000) throw new Error("Passage or typed text is too long to score safely.");
   // Suffix edit-distance + forward traceback: duplicate words bind to the
@@ -32,7 +38,7 @@ function alignWords(expected: string[], typed: string[]) {
     if (expected[i] === typed[j]) dp[i][j] = dp[i + 1][j + 1];
     else dp[i][j] = 1 + Math.min(dp[i + 1][j + 1], dp[i + 1][j], dp[i][j + 1]);
   }
-  const result: Array<{type:string; expected:string|null; typed:string|null}> = [];
+  const result: Array<{type:string; expected:string|null; typed:string|null}> = [...prefixMatches];
   let i = 0, j = 0;
   while (i < n || j < m) {
     if (i < n && j < m && expected[i] === typed[j] && dp[i][j] === dp[i + 1][j + 1]) {
@@ -42,8 +48,8 @@ function alignWords(expected: string[], typed: string[]) {
     const del = i < n ? 1 + dp[i + 1][j] : Infinity;
     const ins = j < m ? 1 + dp[i][j + 1] : Infinity;
     const best = dp[i][j];
-    if (del === best) { result.push({ type: "delete", expected: expected[i], typed: null }); i++; }
-    else if (sub === best) { result.push({ type: "substitute", expected: expected[i], typed: typed[j] }); i++; j++; }
+    if (sub === best) { result.push({ type: "substitute", expected: expected[i], typed: typed[j] }); i++; j++; }
+    else if (del === best) { result.push({ type: "delete", expected: expected[i], typed: null }); i++; }
     else if (ins === best) { result.push({ type: "insert", expected: null, typed: typed[j] }); j++; }
     else throw new Error("Unable to align typed words");
   }
