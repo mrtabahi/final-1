@@ -487,7 +487,7 @@ async function loadDashboard() {
 
                 <div class="admin-list-row">
 
-                    <div class="folder-admin-thumb">\${folder.thumbnail_url ? \`<img src="\${esc(folder.thumbnail_url)}" alt="">\` : \`<span>▦</span>\`}</div>
+                    <div class="folder-admin-thumb">${folder.thumbnail_url ? `<img src="${esc(folder.thumbnail_url)}" alt="">` : `<span>▦</span>`}</div>
                     <div class="list-main">
 
                         <strong>
@@ -979,10 +979,28 @@ async function loadDashboard() {
     ===================================================== */
 
     function openTestModal() {
+        const modal = $('test-modal');
+        const form = $('test-form');
+        const modalTitle = $('test-modal-title');
+        const submitButton = form?.querySelector('[type="submit"]');
+
+        // Fail clearly if the deployed HTML and JS are out of sync instead of
+        // throwing an opaque "Cannot set properties of null" error.
+        if (!modal || !form || !modalTitle || !submitButton) {
+            console.error('Cannot open test modal: required elements are missing.', {
+                modal: !!modal,
+                form: !!form,
+                modalTitle: !!modalTitle,
+                submitButton: !!submitButton
+            });
+            alert('The test form did not load correctly. Refresh the admin page; if the issue continues, clear the site cache and try again.');
+            return;
+        }
+
         editingTestId = null;
-        $('test-modal-title').textContent = 'Create typing test';
-        $('test-form').querySelector('[type="submit"]').textContent = 'Create typing test';
-        $('test-form').reset();
+        modalTitle.textContent = 'Create typing test';
+        submitButton.textContent = 'Create typing test';
+        form.reset();
         $('test-duration').value = '5';
         $('test-target-wpm').value = '0';
         $('test-error-percent').value = '5';
