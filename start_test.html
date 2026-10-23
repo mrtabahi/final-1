@@ -8,7 +8,7 @@
     <meta name="description" content="Professional BSF HCM typing practice platform with English and Hindi typing tests, speed, accuracy, errors, results and performance tracking.">
     <link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix">
     <link rel="stylesheet" href="css/scorecard-print.css?v=20261024-scorecard-fix1">
-    <link rel="stylesheet" href="css/typing.css?v=20261024-compact-controls1">
+    <link rel="stylesheet" href="css/typing.css?v=20261024-font-toolbar2">
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -80,6 +80,8 @@
                     <button type="button" id="btn-highlight" class="btn btn-secondary compact-tip-control" data-icon="✎" data-tooltip="Highlight: show or hide correct and incorrect character colours in the passage." aria-label="Highlight: show or hide correct and incorrect character colours" aria-pressed="false">🖍 Highlight: Off</button>
                     <button type="button" id="btn-backspace" class="btn btn-secondary compact-tip-control" data-icon="⌫" data-tooltip="Backspace: allow or block the Backspace key during this attempt." aria-label="Backspace: allow or block the Backspace key" aria-pressed="false">⌫ Backspace: Off</button>
                     <button type="button" id="btn-hide-passage" class="btn btn-secondary compact-tip-control" data-icon="◉" data-tooltip="Hide passage: hide or reveal the displayed passage." aria-label="Hide passage: hide or reveal the displayed passage" aria-pressed="false">🙈 Hide passage</button>
+                    <button type="button" id="btn-font-down" class="btn btn-secondary compact-tip-control" data-icon="A−" data-tooltip="Decrease passage and typing text size." aria-label="Decrease typing font size">A−</button>
+                    <button type="button" id="btn-font-up" class="btn btn-secondary compact-tip-control" data-icon="A+" data-tooltip="Increase passage and typing text size." aria-label="Increase typing font size">A+</button>
                     <button type="button" id="btn-fullscreen" class="btn btn-secondary compact-tip-control" data-icon="⛶" data-tooltip="Full screen: expand the typing workspace to fill your screen." aria-label="Full screen: expand the typing workspace to fill your screen">⛶ Full screen</button>
                 </div>
                 <div class="card" style="border-top-left-radius: 0; border-top-right-radius: 0;">
@@ -103,7 +105,7 @@
                     <div class="stat-box live-metric-time"><div class="stat-value" id="live-attempting-time">00:00</div><div class="stat-label">Attempt Duration (Seconds)</div></div>
                 </div></div>
 
-                <div class="typing-submit-row" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1rem;"><div class="live-metrics-toolbar"><strong>Live performance</strong><button type="button" id="btn-toggle-live-metrics" class="btn btn-secondary" aria-controls="live-metrics-panel" aria-expanded="true">📊 Hide live calculation</button></div><div style="display:flex;gap:.55rem;flex-wrap:wrap;justify-content:flex-end;"><button id="btn-cancel-test" class="btn btn-secondary" type="button">Cancel</button><button id="btn-submit-early" class="btn btn-danger" style="margin:0;float:none;">Finalize &amp; Submit Test</button></div></div>
+                <div class="typing-submit-row"><div class="live-metrics-toolbar"><strong>Live performance</strong><button type="button" id="btn-toggle-live-metrics" class="btn btn-secondary" aria-controls="live-metrics-panel" aria-expanded="true">📊 Hide live calculation</button></div><div class="typing-submit-actions"><button id="btn-cancel-test" class="btn btn-secondary" type="button">Cancel</button><button id="btn-submit-early" class="btn btn-danger" style="margin:0;float:none;">Finalize &amp; Submit Test</button></div></div>
             </div>
         </div>
 
