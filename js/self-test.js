@@ -30,14 +30,21 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const formatTime=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 function renderPassage(){
  const input=typed.value; let html='';
- for(let i=0;i<original.length;i++){
-  const ch=original[i], isCurrent=i===input.length, isDone=i<input.length;
-  let cls=''; if(highlight&&isDone)cls=input[i]===ch?'self-char-correct':'self-char-wrong';
-  html+=cls?'<span class="'+cls+'">'+(ch===' '?'&nbsp;':ch==='\n'?'<br>':esc(ch))+'</span>':(ch===' '?'&nbsp;':ch==='\n'?'<br>':esc(ch));
+ for(let i=0;i<original.length;){
+  const ch=original[i];
+  if(ch==='\\n'){html+='<br>';i++;continue}
+  if(/\\s/.test(ch)){html+=ch===' '?'&nbsp;':esc(ch);i++;continue}
+  let end=i+1;while(end<original.length&&original[end]!=='\\n'&&!/\\s/.test(original[end]))end++;
+  html+='<span class="self-word">';
+  for(let j=i;j<end;j++){
+   const char=original[j],done=j<input.length;
+   const cls=highlight&&done?(input[j]===char?'self-char-correct':'self-char-wrong'):'';
+   const value=esc(char);
+   html+=cls?'<span class="'+cls+'">'+value+'</span>':value;
+  }
+  html+='</span>';i=end;
  }
  passage.innerHTML=html;
- const current=passage.querySelector('.self-current, .self-current-index');
- if(current){const box=passage.getBoundingClientRect(),item=current.getBoundingClientRect();if(item.top<box.top)passage.scrollTop-=box.top-item.top;else if(item.bottom>box.bottom)passage.scrollTop+=item.bottom-box.bottom;}
 }
 function startClock(){if(startedAt!==null||finished)return;startedAt=Date.now();deadline=startedAt+duration*1000;tick();timerId=window.setInterval(tick,200)}
 function tick(){const remaining=Math.max(0,(deadline-Date.now())/1000);$('self-timer').textContent=formatTime(remaining);updateLive();if(remaining<=0)finishTest()}
