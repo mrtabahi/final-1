@@ -105,3 +105,36 @@ test('allowed errors are an exact 5 percent of capped equivalent words', () => {
   assert.equal(score.allowedErrors, 0.1);
   assert.equal(score.freeErrors, 0.1);
 });
+
+
+test('BSF duplicate words align to the earliest optimal original index', () => {
+  const score = scoring.calculateScore(
+    'start red middle red finish',
+    'start red finish',
+    60,
+    config,
+    null,
+    'bsf'
+  );
+  const redMatches = score.alignment.filter(item => item.type === 'match' && item.expected === 'red');
+  assert.equal(redMatches.length, 1);
+  assert.equal(score.alignment.findIndex(item => item.type === 'match' && item.expected === 'red'), 1);
+  assert.equal(score.errorBreakdown.omissions, 2);
+  assert.equal(score.alignment.filter(item => item.type === 'delete').length, 2);
+});
+
+test('BSF duplicate at end does not make earlier correct words look omitted', () => {
+  const score = scoring.calculateScore(
+    'alpha same beta same gamma',
+    'alpha same beta gamma',
+    60,
+    config,
+    null,
+    'bsf'
+  );
+  assert.deepEqual(
+    score.alignment.filter(item => item.type === 'match').map(item => item.expected),
+    ['alpha', 'same', 'beta', 'gamma']
+  );
+  assert.equal(score.errorBreakdown.omissions, 1);
+});
