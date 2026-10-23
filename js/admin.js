@@ -457,6 +457,9 @@ async function loadDashboard() {
         folderBox?.querySelectorAll('[data-folder-edit]').forEach(button => button.addEventListener('click', () => openEditFolder(button.dataset.folderEdit)));
         folderBox?.querySelectorAll('[data-folder-delete]').forEach(button => button.addEventListener('click', () => deleteFolder(button.dataset.folderDelete)));
         folderBox?.querySelectorAll('[data-folder-toggle]').forEach(button => button.addEventListener('click', () => toggleFolderActive(button.dataset.folderToggle)));
+        folderBox?.querySelectorAll('[data-folder-tests-toggle]').forEach(button => button.addEventListener('click', () => { const panel = document.getElementById('folder-tests-' + button.dataset.folderTestsToggle); if (panel) { const open = panel.hidden; panel.hidden = !open; button.setAttribute('aria-expanded', String(open)); button.textContent = open ? '▴ Hide tests' : '▾ View tests'; } }));
+        folderBox?.querySelectorAll('[data-folder-test-edit]').forEach(button => button.addEventListener('click', () => openEditTest(button.dataset.folderTestEdit)));
+        folderBox?.querySelectorAll('[data-folder-test-delete]').forEach(button => button.addEventListener('click', () => deleteTest(button.dataset.folderTestDelete)));
         return cachedFolders;
     }
 
@@ -506,13 +509,16 @@ async function loadDashboard() {
                     </div>
 
 
-                    <div class="list-meta">
+                    <div class="list-meta folder-action-stack">
                         <span class="status-badge ${folder.active ? 'active' : 'inactive'}">${folder.active ? 'Active' : 'Inactive'}</span>
+                        <button type="button" class="admin-btn admin-btn-secondary" data-folder-tests-toggle="${esc(folder.id)}" aria-expanded="false">▾ View tests (${folderTests.length})</button>
                         <button type="button" class="admin-btn admin-btn-secondary" data-folder-toggle="${esc(folder.id)}">${folder.active ? 'Disable' : 'Enable'}</button>
                         <button type="button" class="admin-btn admin-btn-secondary" data-folder-edit="${esc(folder.id)}">Edit</button>
                         <button type="button" class="admin-btn admin-btn-danger" data-folder-delete="${esc(folder.id)}">Delete</button>
                     </div>
-
+                </div>
+                <div class="folder-test-drawer" id="folder-tests-${esc(folder.id)}" hidden>
+                  ${folderTests.length ? folderTests.map(test => `<div class="folder-test-drawer-row"><div><strong>${esc(test.title)}</strong><small>${esc(test.language || 'English')} · ${Number(test.duration_minutes || 0)} min · ${String(test.passage || '').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words</small></div><span class="status-badge ${test.active ? 'active' : 'inactive'}">${test.active ? 'Published' : 'Draft'}</span><button type="button" class="admin-btn admin-btn-secondary" data-folder-test-edit="${esc(test.id)}">Edit</button><button type="button" class="admin-btn admin-btn-danger" data-folder-test-delete="${esc(test.id)}">Delete</button></div>`).join('') : '<p class="admin-empty">This folder has no tests yet.</p>'}
                 </div>
 
             `;
