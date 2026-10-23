@@ -668,3 +668,16 @@ h1, h2, .typing-page-title {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Active menu: keep only the animated gradient underline, never the browser's white underline. */
+.nav-links a[aria-current="page"],
+.nav-links a.active,
+.nav-links a[aria-current="page"]:hover {
+  text-decoration: none !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+.nav-links a[aria-current="page"]:not(.btn-nav)::after {
+  right: 0;
+}
