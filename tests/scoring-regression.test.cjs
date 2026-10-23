@@ -163,3 +163,15 @@ test('BSF keeps early duplicate-word alignment when later duplicate also exists'
   assert.equal(score.errorBreakdown.omissions, 0);
   assert.equal(score.totalErrors, 0);
 });
+
+
+test('BSF keeps each correct leading word in its original slot with repeated later words', () => {
+  const passage = 'Why the cat comming and why cat dancing';
+  for (const typed of ['Why', 'Why the', 'Why the cat', 'Why the cat comming', 'Why the cat comming and why']) {
+    const score = scoring.calculateScore(passage, typed, 60, config, null, 'bsf');
+    const matched = score.alignment.filter(item => item.type === 'match').map(item => item.expected);
+    assert.deepEqual(matched, typed.split(/\\s+/));
+    assert.equal(score.errorBreakdown.omissions, 0, typed);
+    assert.equal(score.totalErrors, 0, typed);
+  }
+});
