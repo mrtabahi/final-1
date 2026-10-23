@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1220"><title>Ad Controls | Decoding HCM Admin</title>
+<link rel="stylesheet" href="css/main.css?v=20261023-navigation2">
+<link rel="stylesheet" href="css/admin.css?v=20261023-controls-fix2">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+.ads-settings-wrap{max-width:920px;margin:0 auto;padding:28px 18px}.ads-settings-card{background:var(--admin-panel,#fff);border:1px solid #dbe3ee;border-radius:16px;padding:22px;margin:18px 0;color:#142033}.ads-settings-card h2{margin:0 0 8px}.ads-muted{color:#64748b;line-height:1.55}.ads-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px solid #e2e8f0}.ads-toggle-row:last-child{border-bottom:0}.ads-toggle-row strong{display:block}.ads-toggle-row small{display:block;color:#64748b;margin-top:4px}.ads-switch{width:22px;height:22px;flex:0 0 auto}.ads-density{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.ads-density label{display:flex;gap:8px;align-items:center;padding:12px 15px;border:1px solid #cbd5e1;border-radius:10px}.ads-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.ads-status{margin-top:14px;min-height:24px;font-weight:600}.ads-warning{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px;color:#9a3412}.ads-back{display:inline-block;margin:20px 0}.ads-disabled{opacity:.55}
+</style>
+</head>
+<body class="admin-body">
+<div id="ads-admin-loading" class="admin-loading"><div class="admin-loader"></div><strong>Securing your workspace…</strong><span>Verifying administrator access</span></div>
+<main id="ads-admin-app" class="ads-settings-wrap" hidden>
+<a class="ads-back" href="admin.html">← Back to Control Center</a>
+<header><div class="admin-kicker">REVENUE &amp; USER EXPERIENCE</div><h1>AdSense Controls</h1><p class="ads-muted">Turn ads on/off globally, select eligible pages and save your preferred ad density. Active typing and self-test workspaces are always excluded from this loader.</p></header>
+<section class="ads-settings-card">
+<h2>Global control</h2>
+<label class="ads-toggle-row"><span><strong>Enable AdSense on eligible pages</strong><small>Master switch. Turn off to stop this site's page-aware loader from adding the AdSense script.</small></span><input class="ads-switch" type="checkbox" id="ads-global"></label>
+</section>
+<section class="ads-settings-card">
+<h2>Choose where ads can load</h2>
+<p class="ads-muted">Only these content pages are supported. The homepage is off by default because it contains a typing demo.</p>
+<label class="ads-toggle-row"><span><strong>Homepage</strong><small>index.html — includes an interactive typing demo; keep off for the safest experience.</small></span><input class="ads-switch" type="checkbox" id="ads-home"></label>
+<label class="ads-toggle-row"><span><strong>Typing Tests category listing</strong><small>Typing_test.html — category selection only, not the active typing test workspace.</small></span><input class="ads-switch" type="checkbox" id="ads-listing"></label>
+<label class="ads-toggle-row"><span><strong>PDF &amp; Study Materials</strong><small>materials.html — content/library page.</small></span><input class="ads-switch" type="checkbox" id="ads-materials"></label>
+<p class="ads-warning"><strong>Protected:</strong> Active typing runner pages and Self Test (including typing, timer and results workspace) are not eligible in this code. Do not add AdSense scripts to those pages.</p>
+</section>
+<section class="ads-settings-card">
+<h2>Ad quantity preference</h2>
+<p class="ads-muted">Your choice is saved below as an admin preference. Because the current setup uses Google Auto ads and no manual ad-unit slot IDs are available yet, Low / Normal / Max does not directly set the number of ads. Set actual Auto ads density in the AdSense dashboard, or add manual slot IDs later to make quantity fully controlled from this page.</p>
+<div class="ads-density">
+<label><input type="radio" name="ads-density" value="low"> Low <small>Fewer interruptions</small></label>
+<label><input type="radio" name="ads-density" value="normal"> Normal <small>Balanced</small></label>
+<label><input type="radio" name="ads-density" value="max"> Max <small>More placements</small></label>
+</div>
+</section>
+<div class="ads-actions"><button class="admin-btn admin-btn-primary" id="ads-save" type="button">Save ad settings</button><button class="admin-btn admin-btn-secondary" id="ads-refresh" type="button">Reload saved settings</button><a class="admin-btn admin-btn-secondary" href="https://adsense.google.com/" target="_blank" rel="noopener noreferrer">Open AdSense dashboard ↗</a></div>
+<p class="ads-status" id="ads-status" role="status"></p>
+</main>
+<script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/admin-ads.js"></script>
+</body></html>
