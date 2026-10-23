@@ -1492,12 +1492,9 @@ async function loadDashboard() {
 
     function exportAttemptsCSV() {
 
-        if (!cachedAttempts.length) {
-
-            alert(
-                'No attempts available to export.'
-            );
-
+        const exportRows = typeof getFilteredAttempts === 'function' ? getFilteredAttempts() : cachedAttempts;
+        if (!exportRows.length) {
+            alert('No attempts available for the selected filters.');
             return;
         }
 
@@ -1512,10 +1509,11 @@ async function loadDashboard() {
                 'Net WPM',
                 'Accuracy',
                 'Errors',
+                'Result',
                 'Date'
             ],
 
-            ...cachedAttempts.map(a => [
+            ...exportRows.map(a => [
 
                 a.candidate_name || '',
 
@@ -1530,6 +1528,8 @@ async function loadDashboard() {
                 a.accuracy || 0,
 
                 a.total_errors || 0,
+
+                attemptQualified(a) ? 'QUALIFY' : 'FAIL',
 
                 formatDate(a.created_at)
 
