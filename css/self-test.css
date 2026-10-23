@@ -55,3 +55,70 @@
 .self-formula-card p{display:flex;justify-content:space-between;gap:.75rem;margin:.3rem 0;color:#536273;font-size:.85rem}
 .self-formula-card p{font-variant-numeric:tabular-nums}
 @media(max-width:600px){.self-formula-grid{grid-template-columns:1fr}.self-live-metrics{grid-template-columns:repeat(5,minmax(0,1fr));gap:.35rem}.self-live-metrics>div{padding:.45rem .3rem}.self-live-metrics span{font-size:.62rem}.self-live-metrics strong{font-size:.9rem}}
+
+
+/* Keep complete words together and reclaim vertical space in the practice toolbar. */
+.self-passage, .self-result-typed {
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none;
+}
+.self-toolbar {
+  padding: .55rem .85rem !important;
+  min-height: 0;
+  gap: .6rem;
+}
+.self-timer-block strong {
+  font-size: 1.45rem;
+  line-height: 1.15;
+}
+.self-toolbar-actions { gap: .4rem; }
+.self-toolbar-actions .btn {
+  min-height: 34px;
+  padding: .38rem .65rem;
+}
+.self-passage-card, .self-type-card { margin-top: .65rem; }
+.self-analysis-breakdown {
+  margin-top: 1.1rem;
+  padding: 1.1rem;
+  border: 1px solid #d9e4ef;
+  border-radius: 14px;
+  background: linear-gradient(145deg,#f7faff,#fff 75%);
+}
+.self-analysis-breakdown h3 {
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  font-size:1.08rem;
+  margin-bottom:.9rem;
+}
+.self-analysis-grid { gap:.6rem; }
+.self-analysis-grid > div {
+  padding:.85rem;
+  border-radius:12px;
+  background:#fff;
+  border-color:#d6e2ee;
+  box-shadow:0 3px 10px rgba(18,59,99,.045);
+}
+.self-analysis-grid strong { font-size:1.35rem; line-height:1.25; }
+.self-result-comparison {
+  margin-top:1.1rem;
+  padding:1.1rem;
+  border:1px solid #d9e4ef;
+  border-radius:14px;
+  background:#f8fafc;
+}
+.self-result-comparison h3 { margin-bottom:.8rem; }
+.self-result-typed {
+  background:#fff;
+  border-color:#cbd8e5;
+  line-height:1.8;
+}
+@media(max-width:600px) {
+  .self-toolbar { padding:.5rem .65rem !important; }
+  .self-timer-block strong { font-size:1.3rem; }
+  .self-toolbar-actions .btn { min-height:32px; padding:.32rem .48rem; font-size:.78rem; }
+  .self-analysis-breakdown,.self-result-comparison { padding:.75rem; }
+  .self-analysis-grid > div { padding:.65rem; }
+  .self-analysis-grid strong { font-size:1.15rem; }
+}
