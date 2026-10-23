@@ -40,3 +40,19 @@
 #self-highlight[aria-pressed="true"]{background:#e9edff;border-color:#aab8ff;color:#3546a7}
 .self-passage:not(.self-highlight-enabled) .self-current,.self-passage-card:not(.self-highlight-enabled) .self-current{background:transparent;color:inherit;box-shadow:none}
 @media(max-width:760px){.self-saved-tools{grid-template-columns:1fr}.self-setup-grid{grid-template-columns:1fr}.self-saved-actions .btn{flex:1}.self-live-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.self-live-metrics>div:last-child{grid-column:span 2}}
+
+/* Focused, compact typing workspace and readable formula comparison */
+.self-typed{height:calc(3 * 1.75em + 2rem)!important;min-height:0!important;max-height:calc(3 * 1.75em + 2rem)!important;resize:none;overflow-y:auto;scroll-behavior:smooth}
+.self-passage{height:8em!important;max-height:8em!important;line-height:1.9;scroll-behavior:smooth}
+.self-char-correct,.self-char-wrong{color:inherit!important;background:transparent!important;text-decoration:none!important}
+.self-passage-card:not(.self-highlight-enabled) .self-char-correct,
+.self-passage-card:not(.self-highlight-enabled) .self-char-wrong{color:inherit!important;background:transparent!important;text-decoration:none!important}
+.self-formula-comparison{margin:1rem 0;padding:1rem;border:1px solid #dbe5ef;border-radius:14px;background:linear-gradient(135deg,#f5f9ff,#f8fffc)}
+.self-formula-comparison h3{margin:0 0 .75rem;color:#123b63;font-size:1.05rem}
+.self-formula-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+.self-formula-card{padding:1rem;border:1px solid #d6e1ed;border-radius:12px;background:#fff}
+.self-formula-card.is-selected{border-color:#2563eb;box-shadow:0 0 0 2px #dbeafe}
+.self-formula-card>strong{display:block;margin-bottom:.6rem;color:#123b63;font-size:1rem}
+.self-formula-card p{display:flex;justify-content:space-between;gap:.75rem;margin:.3rem 0;color:#536273;font-size:.85rem}
+.self-formula-card p{font-variant-numeric:tabular-nums}
+@media(max-width:600px){.self-formula-grid{grid-template-columns:1fr}.self-live-metrics{grid-template-columns:repeat(5,minmax(0,1fr));gap:.35rem}.self-live-metrics>div{padding:.45rem .3rem}.self-live-metrics span{font-size:.62rem}.self-live-metrics strong{font-size:.9rem}}
