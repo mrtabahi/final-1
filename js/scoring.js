@@ -99,7 +99,7 @@ const ScoringEngine = {
       const item=alignment[i];
       if(item.type==="delete"&&item.expected!=null){
         const trailing=!alignment.slice(i+1).some(next=>next.type!=="delete");
-        if(!trailing)errorBreakdown.omissions++;
+        if(trailing)errorBreakdown.notReached++;else errorBreakdown.omissions++;
       } else if(item.type==="insert"){
         errorBreakdown.extraWords++;
         if(i>0&&alignment[i-1].typed!=null&&alignment[i-1].typed===item.typed)errorBreakdown.repeatedWords++;
