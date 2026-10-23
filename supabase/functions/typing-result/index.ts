@@ -72,9 +72,9 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   let wordErrors = 0, correctWords = 0;
   const doubleSpaceErrors = (typedText.match(/ {2,}/g) || []).length;
   if (mode === "crpf") {
-    const normalized = typedText.replace(/[\r\n\t]+/g, " ");
+    // Normalize whitespace before positional word comparison; spaces must not create phantom empty words and cascade into false errors.
+    const normalized = typedText.trim().replace(/[\r\n\t ]+/gu, " ");
     const slots = normalized.length ? normalized.split(" ") : [];
-    while (slots.length && slots[slots.length - 1] === "") slots.pop();
     for (let i = 0; i < Math.max(expected.length, slots.length); i++) {
       const e = expected[i] ?? null, t = slots[i] ?? null;
       if (t === null) { alignment.push({type:"delete", expected:e, typed:null}); continue; }
