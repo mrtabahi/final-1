@@ -151,8 +151,8 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   return {
     formula: mode, totalTypedWords: typed.length, totalTypedChars: typedText.length, totalKeystrokes: measuredKeystrokes,
     equivalentTypedWords: Number(equivalentTypedWords.toFixed(2)), correctChars, incorrectChars, correctWords,
-    wordErrors, doubleSpaceErrors, totalErrors, freeErrors, excessErrors, penaltyWords,
-    netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes, elapsedSeconds: Math.max(seconds, 1), attemptingTimeSeconds: Math.max(seconds, 1), penaltyWpm: Number((penaltyWords / elapsedMinutes).toFixed(2)), allowedErrors: Number(freeErrors.toFixed(2)),
+    wordErrors, doubleSpaceErrors, totalErrors, freeErrors: Number(freeErrors.toFixed(2)), excessErrors: Number(excessErrors.toFixed(2)), penaltyWords: Number(penaltyWords.toFixed(2)),
+    netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes: Number(elapsedMinutes.toFixed(2)), elapsedSeconds: Math.max(seconds, 1), attemptingTimeSeconds: Math.max(seconds, 1), penaltyWpm: Number((penaltyWords / elapsedMinutes).toFixed(2)), allowedErrors: Number(freeErrors.toFixed(2)),
     alignment: mode === "bsf" ? alignment.filter((item, i) => !(item.type === "delete" && i > lastReachedAlignmentIndex)) : alignment.filter((item, i) => !(item.type === "delete" && item.typed === null && i >= typed.length)), errorBreakdown, minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy,
   };
 }
