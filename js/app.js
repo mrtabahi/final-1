@@ -81,8 +81,38 @@ document.addEventListener('DOMContentLoaded', async()=>{
     if(requestedTestId&&currentPassage){$('btn-start-test').click();}
     $('btn-submit-early').onclick=()=>{if(engine&&!engine.isFinished&&confirm('End this test now and calculate your result?')){engine.handleInput(textarea.value);if(!engine.isActive)engine.start();engine.stop('manual');}};
     $('btn-toggle-live-metrics')?.addEventListener('click',()=>{const panel=$('live-metrics-panel'),button=$('btn-toggle-live-metrics');if(!panel||!button)return;panel.hidden=!panel.hidden;button.textContent=panel.hidden?'📊 Show live calculation':'📊 Hide live calculation';button.setAttribute('aria-expanded',String(!panel.hidden));});
-    function renderComparison(score){$('result-original-content').textContent=currentPassage.passage;const c=$('result-typed-content');c.innerHTML='';score.alignment.forEach((x,i)=>{if(i)c.appendChild(document.createTextNode(' '));const trailingOmission=x.type==='delete'&&!score.alignment.slice(i+1).some(next=>next.type!=='delete');const s=document.createElement('span');s.className=trailingOmission?'result-token':x.type==='match'?'result-token':x.type==='substitute'?'result-token-wrong':x.type==='delete'?'result-token-missing':'result-token-extra';s.textContent=x.type==='match'?x.typed:x.type==='substitute'?`${x.typed} [expected: ${x.expected}]`:trailingOmission?`[not reached: ${x.expected}]`:x.type==='delete'?`[${x.expected} — skipped]`:`${x.typed} [extra]`;c.appendChild(s);});if(score.doubleSpaceErrors){const n=document.createElement('div');n.className='result-legend';n.textContent=`Double-space errors: ${score.doubleSpaceErrors} (each repeated-space run counts once)`;c.appendChild(n);}}
-    function displayResult(s){if(!s)return;$('res-net-wpm').textContent=Number(s.netWpm||0).toFixed(2);$('res-gross-wpm').textContent=Number(s.grossWpm||0).toFixed(2);$('res-accuracy').textContent=`${Number(s.accuracy||0).toFixed(2)}%`;$('res-total-errors').textContent=s.totalErrors??0;$('res-penalty').textContent=s.penaltyWords??0;$('res-typed-words').textContent=s.totalTypedWords??0;$('res-free-errors').textContent=s.freeErrors??0;$('res-excess-errors').textContent=s.excessErrors??0;$('res-elapsed').textContent=Number(s.elapsedMinutes||0).toFixed(2);const eb=s.errorBreakdown||{};const analysisFields={omissions:'omissions',substitutions:'substitutions',spelling:'spellingErrors',incomplete:'incompleteWords',extra:'extraWords',repeated:'repeatedWords',spacing:'spacingErrors',capitalization:'capitalizationErrors',punctuation:'punctuationErrors','not-reached':'notReached'};Object.entries(analysisFields).forEach(([id,key])=>{const node=$('analysis-'+id);if(node)node.textContent=String(eb[key]??0);});const p=ScoringEngine.getPerformanceLabel(s),b=$('result-status-badge');b.textContent=p.text;b.className=`score-status ${p.class}`;const isCrpf=selectedFormula==='crpf';$('formula-bsf')?.classList.toggle('is-active',!isCrpf);$('formula-crpf')?.classList.toggle('is-active',isCrpf);$('formula-bsf')?.setAttribute('aria-pressed',String(!isCrpf));$('formula-crpf')?.setAttribute('aria-pressed',String(isCrpf));$('formula-breakdown-title').textContent=isCrpf?'CRPF Formula Breakdown':'BSF Formula Breakdown';$('formula-note').textContent=isCrpf?'CRPF practice mode: words are compared by original position. A missing interior word can shift subsequent comparisons; an unfinished trailing passage is not penalized.':'BSF practice mode: word-sequence alignment is used; each identified error is counted once, with the configured allowance and deduction applied.';renderComparison(s);}
+    function renderComparison(score){
+      $('result-original-content').textContent=currentPassage.passage;
+      const c=$('result-typed-content');c.replaceChildren();
+      const alignment=score.alignment||[];
+      // Group consecutive errors inside one pair of brackets. Typed mistakes red,
+      // extras orange, and skipped original words blue. Never render trailing words not reached.
+      let i=0;
+      while(i<alignment.length){
+        const item=alignment[i];
+        if(item.type==='match'){
+          if(c.childNodes.length)c.appendChild(document.createTextNode(' '));
+          const s=document.createElement('span');s.className='result-token';s.textContent=item.typed;c.appendChild(s);i++;continue;
+        }
+        const group=[];
+        while(i<alignment.length&&alignment[i].type!=='match'){group.push(alignment[i]);i++;}
+        if(c.childNodes.length)c.appendChild(document.createTextNode(' '));
+        const bracket=document.createElement('span');bracket.className='result-error-group';bracket.appendChild(document.createTextNode('['));
+        group.forEach((x,j)=>{
+          if(j)bracket.appendChild(document.createTextNode(' '));
+          const token=document.createElement('span');
+          if(x.type==='insert'){token.className='result-token-extra';token.textContent=x.typed??'';}
+          else if(x.type==='delete'){token.className='result-token-missing';token.textContent=x.expected??'';}
+          else {token.className='result-token-wrong';token.textContent=x.typed??'';}
+          bracket.appendChild(token);
+        });
+        bracket.appendChild(document.createTextNode(']'));c.appendChild(bracket);
+      }
+      if(score.formula==='bsf'&&score.doubleSpaceErrors){
+        const n=document.createElement('div');n.className='result-legend';n.textContent=`Double-space errors: ${score.doubleSpaceErrors} (each repeated-space run counts once)`;c.appendChild(n);
+      }
+    }
+    function displayResult(s){if(!s)return;$('res-net-wpm').textContent=Number(s.netWpm||0).toFixed(2);$('res-gross-wpm').textContent=Number(s.grossWpm||0).toFixed(2);$('res-accuracy').textContent=`${Number(s.accuracy||0).toFixed(2)}%`;$('res-total-errors').textContent=s.totalErrors??0;$('res-penalty').textContent=s.penaltyWords??0;$('res-typed-words').textContent=s.totalTypedWords??0;$('res-free-errors').textContent=s.freeErrors??0;$('res-excess-errors').textContent=s.excessErrors??0;$('res-elapsed').textContent=Number(s.elapsedMinutes||0).toFixed(2);const eb=s.errorBreakdown||{};const analysisFields={omissions:'omissions',substitutions:'substitutions',spelling:'spellingErrors',incomplete:'incompleteWords',extra:'extraWords',repeated:'repeatedWords',spacing:'spacingErrors',capitalization:'capitalizationErrors',punctuation:'punctuationErrors','not-reached':'notReached'};Object.entries(analysisFields).forEach(([id,key])=>{const node=$('analysis-'+id);if(node)node.textContent=String(eb[key]??0);});const p=ScoringEngine.getPerformanceLabel(s),b=$('result-status-badge');b.textContent=p.text;b.className=`score-status ${p.class}`;const isCrpf=selectedFormula==='crpf';$('formula-bsf')?.classList.toggle('is-active',!isCrpf);$('formula-crpf')?.classList.toggle('is-active',isCrpf);$('formula-bsf')?.setAttribute('aria-pressed',String(!isCrpf));$('formula-crpf')?.setAttribute('aria-pressed',String(isCrpf));$('formula-breakdown-title').textContent=isCrpf?'CRPF Formula Breakdown':'BSF Formula Breakdown';$('formula-note').textContent=isCrpf?'CRPF formula: each typed word/slot is compared only with the original word at the same index. Extra words, omitted words and double spaces can shift later positions; words not reached at the end are not counted or displayed.':'BSF practice mode: word-sequence alignment is used; each identified error is counted once, with the configured allowance and deduction applied.';renderComparison(s);}
     $('formula-bsf')?.addEventListener('click',()=>{selectedFormula='bsf';displayResult(resultScores.bsf);});
     $('formula-crpf')?.addEventListener('click',()=>{selectedFormula='crpf';displayResult(resultScores.crpf);});
     async function startSecureSession(testId){
