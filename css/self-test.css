@@ -126,3 +126,56 @@
 /* Keep every passage word on one line; move the whole word when it does not fit. */
 .self-passage .self-word { white-space: nowrap; word-break: keep-all; overflow-wrap: normal; hyphens: none; }
 .self-passage { word-break: normal; overflow-wrap: normal; hyphens: none; }
+
+/* Self-test scorecard parity with the standard typing result PDF */
+#self-result .result-pdf-header{display:grid;gap:14px;padding:22px 24px;margin:0 0 22px;border-radius:14px;background:linear-gradient(125deg,#102d50,#175783);color:#fff;break-inside:avoid}
+#self-result .result-pdf-brand{display:flex;align-items:center;gap:13px}
+#self-result .result-pdf-mark{display:grid;place-items:center;width:48px;height:48px;flex:0 0 48px;border:2px solid rgba(255,255,255,.72);border-radius:12px;font-size:27px;font-weight:900;color:#fff}
+#self-result .result-pdf-brand h1{margin:0;font-size:clamp(1.2rem,2.6vw,1.8rem);line-height:1.2;color:#fff}
+#self-result .result-pdf-brand p{margin:5px 0 0;color:#d9e8f6;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase}
+#self-result .result-pdf-meta{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1.45fr);gap:12px}
+#self-result .result-pdf-meta>div{min-width:0;padding:11px 13px;border:1px solid rgba(255,255,255,.24);border-radius:9px;background:rgba(255,255,255,.08)}
+#self-result .result-pdf-meta span,#self-result .result-pdf-meta strong{display:block}
+#self-result .result-pdf-meta span{font-size:.72rem;color:#d9e8f6;text-transform:uppercase;letter-spacing:.09em}
+#self-result .result-pdf-meta strong{margin-top:5px;color:#fff;font-size:1rem;overflow-wrap:anywhere}
+#self-result .result-pdf-links{display:flex;flex-wrap:wrap;gap:8px 18px;padding-top:12px;border-top:1px solid rgba(255,255,255,.25)}
+#self-result .result-pdf-links a{color:#fff;text-decoration:underline;text-underline-offset:3px;font-size:.82rem;overflow-wrap:anywhere}
+.self-result-print-content{margin-top:1rem}.self-result-print-content h3{margin:.9rem 0 .4rem;color:#123b63}
+.self-result-print-content .result-content{padding:.75rem;border:1px solid #d8e2ec;border-radius:8px;background:#f8fafc;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;font-size:.86rem;line-height:1.6}
+.self-result-print-content .exact-typed-content{background:#fffdf5;border-color:#f2d48a}
+.self-scorecard-actions{display:flex;justify-content:center;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem}
+@page{size:A4 portrait;margin:13mm 12mm 15mm}
+@media(max-width:600px){#self-result .result-pdf-meta{grid-template-columns:1fr}#self-result .result-pdf-links{flex-direction:column}.self-scorecard-actions{flex-direction:column}}
+@media print{
+ html,body{background:#fff!important;color:#172b43!important;font-size:9pt!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ body *{visibility:hidden!important}
+ #self-result,#self-result *{visibility:visible!important}
+ #self-result{display:block!important;position:absolute!important;inset:0!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important}
+ #self-result .self-result-pdf-header{margin:0 0 12px!important;padding:14px 16px!important;border-radius:8px!important;background:#12395d!important;break-inside:avoid}
+ #self-result .result-pdf-mark{width:38px;height:38px;flex-basis:38px;font-size:21px}
+ #self-result .result-pdf-brand h1{font-size:19pt!important}
+ #self-result .result-pdf-brand p,#self-result .result-pdf-meta span{font-size:7pt!important}
+ #self-result .result-pdf-meta{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1.45fr)!important;gap:7px!important}
+ #self-result .result-pdf-meta>div{padding:6px 8px!important}
+ #self-result .result-pdf-meta strong{font-size:8pt!important}
+ #self-result .result-pdf-links{gap:5px 12px;padding-top:7px}
+ #self-result .result-pdf-links a{font-size:7pt!important;color:#fff!important}
+ #self-result .result-screen-only,#self-result .self-scorecard-actions,#self-result #self-again,#self-result #self-print-scorecard{display:none!important}
+ #self-result .self-result-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;margin:9px 0 12px!important}
+ #self-result .self-result-grid>div{padding:8px!important;border:1px solid #d8e2ec!important;border-top:3px solid #2563eb!important;border-radius:7px!important;background:#f6f9fc!important;break-inside:avoid}
+ #self-result .self-result-grid>div:nth-child(3n+1){border-top-color:#0891b2!important}
+ #self-result .self-result-grid>div:nth-child(3n+2){border-top-color:#16a34a!important}
+ #self-result .self-result-grid span{font-size:7pt!important;color:#5b6e82!important}
+ #self-result .self-result-grid strong{font-size:14pt!important;color:#12395d!important}
+ #self-result .self-analysis-breakdown,#self-result .self-result-comparison,#self-result .self-formula-comparison{padding:9px!important;margin:8px 0!important;background:#fff!important;break-inside:auto!important}
+ #self-result .self-analysis-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px!important}
+ #self-result .self-analysis-grid>div{padding:5px!important;border:1px solid #e0e7ef!important;background:#f8fafc!important;break-inside:avoid}
+ #self-result .self-analysis-grid span{font-size:6.5pt!important}
+ #self-result .self-analysis-grid strong{font-size:10pt!important;color:#12395d!important}
+ #self-result .self-formula-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #self-result .self-formula-card{padding:7px!important;break-inside:avoid}
+ #self-result .self-result-print-content{break-inside:auto!important}
+ #self-result .self-result-print-content .result-content{font-size:7.5pt!important;line-height:1.45!important;padding:7px!important;background:#f8fafc!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important}
+ #self-result .self-result-print-content .exact-typed-content{background:#fffdf5!important}
+ #self-result h3{font-size:11pt!important;color:#12395d!important}
+}
