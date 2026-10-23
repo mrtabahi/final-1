@@ -347,3 +347,46 @@
 .live-metric-accuracy{background:#ccfbf1!important;border-color:#5eead4!important;color:#115e59}
 .live-metrics-grid .stat-value,.live-metrics-grid .stat-label{color:inherit}
 @media(max-width:760px){.live-metrics-grid{grid-template-columns:repeat(8,minmax(112px,1fr))}.live-metrics-grid .stat-box{padding:.55rem}.live-metrics-grid .stat-value{font-size:1.1rem}.live-metrics-grid .stat-label{font-size:.72rem}}
+
+
+/* Prevent words from splitting across lines; compact the exam timer and improve analysis cards. */
+.passage-display {
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none;
+}
+.timer-box {
+  min-height: 0 !important;
+  height: auto;
+  padding: .28rem .72rem !important;
+  font-size: 1.35rem !important;
+  line-height: 1.15;
+  letter-spacing: 1px;
+  border-radius: 9px;
+}
+.result-analysis-grid { gap: .6rem; margin-top: .85rem; }
+.result-analysis-grid > div {
+  padding: .8rem;
+  border-radius: 12px;
+  background: linear-gradient(145deg,#fff,#f4f8fc);
+  box-shadow: 0 3px 10px rgba(15,23,42,.045);
+  border-color: #d7e2ed;
+}
+.result-analysis-grid strong { font-size: 1.45rem; line-height: 1.25; }
+.result-analysis-note {
+  padding: .8rem 1rem;
+  border-left: 3px solid #2563eb;
+  border-radius: 0 9px 9px 0;
+  background: #eff6ff;
+  color: #334155;
+}
+.result-content {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+@media (max-width: 640px) {
+  .timer-box { padding: .22rem .6rem !important; font-size: 1.2rem !important; }
+  .result-analysis-grid > div { padding: .65rem; }
+  .result-analysis-grid strong { font-size: 1.2rem; }
+}
