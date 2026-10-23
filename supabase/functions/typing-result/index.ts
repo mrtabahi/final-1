@@ -73,11 +73,12 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   const doubleSpaceErrors = (typedText.match(/ {2,}/g) || []).length;
   if (mode === "crpf") {
     // Normalize whitespace before positional word comparison; spaces must not create phantom empty words and cascade into false errors.
-    const normalized = typedText.trim().replace(/[\r\n\t ]+/gu, " ");
+    const normalized = typedText.trim();
     const slots = normalized.length ? normalized.split(" ") : [];
     for (let i = 0; i < Math.max(expected.length, slots.length); i++) {
       const e = expected[i] ?? null, t = slots[i] ?? null;
       if (t === null) { alignment.push({type:"delete", expected:e, typed:null}); continue; }
+      if (t === "") { alignment.push({type:"delete", expected:e, typed:null}); wordErrors++; continue; }
       if (e === null) { alignment.push({type:"insert", expected:null, typed:t}); wordErrors++; }
       else if (e === t) { alignment.push({type:"match", expected:e, typed:t}); correctWords++; }
       else { alignment.push({type:t === "" ? "delete" : "substitute", expected:e, typed:t}); wordErrors++; }
@@ -119,12 +120,12 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   const incorrectChars = Math.max(0, typedText.length - correctChars);
   const accuracy = typedText.length ? Number((correctChars / typedText.length * 100).toFixed(2)) : 0;
   // Primary categories are mutually exclusive; repeatedWords is a subset of extraWords.
-  const errorBreakdown = { omissions: 0, substitutions: 0, spellingErrors: 0, incompleteWords: 0, extraWords: 0, repeatedWords: 0, spacingErrors: doubleSpaceErrors, capitalizationErrors: 0, punctuationErrors: 0, notReached: 0 };
+  const errorBreakdown = { omissions: 0, substitutions: 0, spellingErrors: 0, incompleteWords: 0, extraWords: 0, repeatedWords: 0, spacingErrors: mode === "bsf" ? doubleSpaceErrors : 0, capitalizationErrors: 0, punctuationErrors: 0, notReached: 0 };
   for (let i = 0; i < alignment.length; i++) {
     const item = alignment[i];
     if (item.type === "delete" && item.expected !== null) {
       const trailing = !alignment.slice(i + 1).some(next => next.type !== "delete");
-      if (trailing) errorBreakdown.notReached++;
+      if (trailing) { /* trailing untyped passage is not an error */ }
       else errorBreakdown.omissions++;
     } else if (item.type === "insert") {
       errorBreakdown.extraWords++;
@@ -149,7 +150,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
     equivalentTypedWords: Number(equivalentTypedWords.toFixed(2)), correctChars, incorrectChars, correctWords,
     wordErrors, doubleSpaceErrors, totalErrors, freeErrors, excessErrors, penaltyWords,
     netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes,
-    alignment, errorBreakdown, minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy,
+    alignment: mode === "bsf" ? alignment.filter((item, i) => !(item.type === "delete" && !alignment.slice(i + 1).some(next => next.type !== "delete"))) : alignment.filter((item, i) => !(item.type === "delete" && item.typed === null && i >= typed.length)), errorBreakdown, minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy,
   };
 }
 
