@@ -93,6 +93,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
     }
     wordErrors += doubleSpaceErrors;
   }
+  const lastReachedAlignmentIndex = alignment.reduce((last, item, i) => item.type !== "delete" ? i : last, -1);
   const totalErrors = wordErrors;
   const measuredKeystrokes = typedText.length;
   const equivalentTypedWords = measuredKeystrokes / 5;
@@ -108,7 +109,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   let correctChars = 0, alignedPairs = 0, omittedErrorChars = 0;
   for (let i = 0; i < alignment.length; i++) {
     const item = alignment[i];
-    if (item.type === "delete" && item.expected !== null && !alignment.slice(i + 1).some(next => next.type !== "delete")) continue;
+    if (item.type === "delete" && item.expected !== null && i > lastReachedAlignmentIndex) continue;
     if (item.type === "delete" && item.expected !== null) { omittedErrorChars += Math.min(5, item.expected.length); continue; }
     if (item.expected === null || item.typed === null) continue;
     correctChars += Math.max(0, item.typed.length - editDistance(item.expected, item.typed));
@@ -124,7 +125,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   for (let i = 0; i < alignment.length; i++) {
     const item = alignment[i];
     if (item.type === "delete" && item.expected !== null) {
-      const trailing = !alignment.slice(i + 1).some(next => next.type !== "delete");
+      const trailing = i > lastReachedAlignmentIndex;
       if (trailing) errorBreakdown.notReached++;
       else errorBreakdown.omissions++;
     } else if (item.type === "insert") {
@@ -150,7 +151,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
     equivalentTypedWords: Number(equivalentTypedWords.toFixed(2)), correctChars, incorrectChars, correctWords,
     wordErrors, doubleSpaceErrors, totalErrors, freeErrors, excessErrors, penaltyWords,
     netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes,
-    alignment: mode === "bsf" ? alignment.filter((item, i) => !(item.type === "delete" && !alignment.slice(i + 1).some(next => next.type !== "delete"))) : alignment.filter((item, i) => !(item.type === "delete" && item.typed === null && i >= typed.length)), errorBreakdown, minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy,
+    alignment: mode === "bsf" ? alignment.filter((item, i) => !(item.type === "delete" && i > lastReachedAlignmentIndex)) : alignment.filter((item, i) => !(item.type === "delete" && item.typed === null && i >= typed.length)), errorBreakdown, minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy,
   };
 }
 
