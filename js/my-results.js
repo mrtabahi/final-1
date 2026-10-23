@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const body=document.getElementById('history-table-body');if(!body)return;
  const status=await AuthManager.requireCandidateGuard();if(!status?.ok)return;
  document.getElementById('logout-btn')?.addEventListener('click',async e=>{e.preventDefault();try{await AuthManager.logout()}catch(err){console.error(err);alert('Logout failed. Please try again.')}});
+ const fmt=v=>v==null||v===''?'-':(Number.isFinite(Number(v))?Number(v).toFixed(2):String(v));
  const esc=v=>String(v??'-').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
  const sevenDaysAgo=new Date(Date.now()-7*24*60*60*1000).toISOString();
  try{
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
    const minAccuracy=t?.min_accuracy==null||t.min_accuracy===''?null:Number(t.min_accuracy);
    const passed=typeof saved==='boolean'?saved:((!Number.isFinite(target)||a.net_wpm>=target)&&(minAccuracy===null||!Number.isFinite(minAccuracy)||a.accuracy>=minAccuracy));
    const result=passed?'<span class="result-status result-qualified"><span aria-hidden="true">✓</span> Qualify</span>':'<span class="result-status result-retry"><span aria-hidden="true">↻</span> Try again</span>';
-   return `<tr><td><span class="result-date">${esc(date)}</span></td><td><span class="result-test-name">${esc(t?.title||'-')}</span></td><td><span class="result-mode">${esc(a.mode||'-')}</span></td><td>${result}</td><td>${esc(a.duration_seconds??'-')}<span class="result-unit"> sec</span></td><td><span class="result-metric">${esc(a.gross_wpm??'-')}</span></td><td><span class="result-metric result-net">${esc(a.net_wpm??'-')}</span></td><td><span class="result-accuracy">${a.accuracy==null?'-':esc(a.accuracy)+'%'}</span></td><td><span class="result-errors">${esc(a.total_errors??'-')}</span></td></tr>`;
+   return `<tr><td><span class="result-date">${esc(date)}</span></td><td><span class="result-test-name">${esc(t?.title||'-')}</span></td><td><span class="result-mode">${esc(a.mode||'-')}</span></td><td>${result}</td><td>${esc(a.duration_seconds??'-')}<span class="result-unit"> sec</span></td><td><span class="result-metric">${esc(fmt(a.gross_wpm))}</span></td><td><span class="result-metric result-net">${esc(fmt(a.net_wpm))}</span></td><td><span class="result-accuracy">${a.accuracy==null?'-':esc(fmt(a.accuracy))+'%'}</span></td><td><span class="result-errors">${esc(a.total_errors??'-')}</span></td></tr>`;
   }).join('');
  }catch(err){console.error(err);body.innerHTML='<tr><td colspan="9" class="results-empty">Unable to load history. Please refresh and try again.</td></tr>'}
 });
