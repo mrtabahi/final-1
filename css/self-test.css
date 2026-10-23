@@ -193,3 +193,11 @@
 .self-toolbar-actions .compact-tip-control:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
 @media(max-width:650px){.self-toolbar-actions .compact-tip-control{flex:0 0 40px!important;width:40px!important;min-width:40px!important;max-width:40px!important}.self-toolbar-actions .compact-tip-control::after{left:auto;right:0;transform:translateY(4px);max-width:min(250px,75vw)}.self-toolbar-actions .compact-tip-control:hover::after,.self-toolbar-actions .compact-tip-control:focus-visible::after{transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.self-toolbar-actions .compact-tip-control::after{transition:none}}
+
+/* Clear, accessible hover/focus descriptions and compact controls */
+.self-toolbar-actions .compact-tip-control::after{background:#071827!important;color:#fff!important;border:2px solid #60a5fa!important;box-shadow:0 10px 28px rgba(2,8,23,.48)!important;font-size:.82rem!important;font-weight:750!important;text-shadow:none!important;}
+.self-toolbar-actions .compact-tip-control:disabled{opacity:.72!important;filter:none!important;}
+.self-toolbar{padding: .9rem 1rem;border:1px solid #d7e2ec;box-shadow:0 4px 14px rgba(15,40,70,.06);}
+.self-toolbar-actions{gap:.55rem;justify-content:flex-end;}
+.self-toolbar-actions .compact-tip-control{border:1px solid #9bb2c8!important;background:#fff!important;color:#173b5e!important;box-shadow:0 2px 0 rgba(15,40,70,.08);}
+.self-toolbar-actions .compact-tip-control:hover,.self-toolbar-actions .compact-tip-control:focus-visible{background:#e8f2ff!important;border-color:#2563eb!important;color:#123b63!important;}
