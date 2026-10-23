@@ -35,3 +35,14 @@ CREATE POLICY "Admins manage manual leaderboard entries" ON public.manual_leader
 DROP POLICY IF EXISTS "Admins delete attempts" ON public.attempts;
 CREATE POLICY "Admins delete attempts" ON public.attempts FOR DELETE
  USING (EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=auth.uid() AND p.role='admin'));
+
+
+-- Public leaderboard projection: expose only fields intended for public ranking.
+-- The view deliberately omits user IDs, typed content, anti-cheat events, and result snapshots.
+CREATE OR REPLACE VIEW public.public_leaderboard_attempts WITH (security_barrier = true) AS
+SELECT a.id, a.candidate_name, a.language, a.duration_seconds, a.created_at,
+       a.gross_wpm, a.net_wpm, a.accuracy, COALESCE(t.title, '-') AS test_name
+FROM public.attempts AS a
+LEFT JOIN public.tests AS t ON t.id = a.test_id
+WHERE COALESCE(t.leaderboard_enabled, true) = true;
+GRANT SELECT ON public.public_leaderboard_attempts TO anon, authenticated;
