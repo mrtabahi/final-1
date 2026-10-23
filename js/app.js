@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
             const span=document.createElement('span');
             span.className='passage-char';
             if(i<typedChars.length)span.classList.add(typedChars[i]===passageChars[i]?'char-correct':'char-incorrect');
-            else if(i===typedChars.length&&highlightEnabled)span.classList.add('char-current');
+            
             span.textContent=passageChars[i];
             fragment.appendChild(span);
         }
