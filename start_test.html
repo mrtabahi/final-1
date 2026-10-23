@@ -8,7 +8,7 @@
     <meta name="description" content="Professional BSF HCM typing practice platform with English and Hindi typing tests, speed, accuracy, errors, results and performance tracking.">
     <link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix">
     <link rel="stylesheet" href="css/scorecard-print.css?v=20261024-scorecard-fix1">
-    <link rel="stylesheet" href="css/typing.css?v=20261023-wordwrap-analysis1">
+    <link rel="stylesheet" href="css/typing.css?v=20261024-compact-controls1">
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -74,13 +74,13 @@
             </div>
 
             <div class="card typing-controls" aria-label="Typing test controls">
-                    <button type="button" id="btn-mode-switch" class="btn btn-primary" aria-live="polite" hidden>Typing mode: On-screen — switch before typing</button>
-                    <button type="button" id="btn-auto-scroll" class="btn btn-secondary" aria-pressed="true">↕ Auto-scroll: On — switch before typing</button>
-                    <button type="button" id="btn-sound" class="btn btn-secondary" aria-pressed="true">🔊 Sound: On</button>
-                    <button type="button" id="btn-highlight" class="btn btn-secondary" aria-pressed="false">🖍 Highlight: Off</button>
-                    <button type="button" id="btn-backspace" class="btn btn-secondary" aria-pressed="false">⌫ Backspace: Off</button>
-                    <button type="button" id="btn-hide-passage" class="btn btn-secondary" aria-pressed="false">🙈 Hide passage</button>
-                    <button type="button" id="btn-fullscreen" class="btn btn-secondary">⛶ Full screen</button>
+                    <button type="button" id="btn-mode-switch" class="btn btn-primary compact-tip-control" data-icon="⇄" data-tooltip="Typing mode: switch between on-screen and off-screen typing before you begin." aria-label="Typing mode: switch between on-screen and off-screen typing before you begin" aria-live="polite" hidden>Typing mode: On-screen — switch before typing</button>
+                    <button type="button" id="btn-auto-scroll" class="btn btn-secondary compact-tip-control" data-icon="↕" data-tooltip="Auto-scroll: automatically keep the current passage line in view. Locks after typing starts." aria-label="Auto-scroll: automatically keep the current passage line in view" aria-pressed="true">↕ Auto-scroll: On — switch before typing</button>
+                    <button type="button" id="btn-sound" class="btn btn-secondary compact-tip-control" data-icon="♫" data-tooltip="Keyboard sound: toggle typing sound effects on or off." aria-label="Keyboard sound: toggle typing sound effects on or off" aria-pressed="true">🔊 Sound: On</button>
+                    <button type="button" id="btn-highlight" class="btn btn-secondary compact-tip-control" data-icon="✎" data-tooltip="Highlight: show or hide correct and incorrect character colours in the passage." aria-label="Highlight: show or hide correct and incorrect character colours" aria-pressed="false">🖍 Highlight: Off</button>
+                    <button type="button" id="btn-backspace" class="btn btn-secondary compact-tip-control" data-icon="⌫" data-tooltip="Backspace: allow or block the Backspace key during this attempt." aria-label="Backspace: allow or block the Backspace key" aria-pressed="false">⌫ Backspace: Off</button>
+                    <button type="button" id="btn-hide-passage" class="btn btn-secondary compact-tip-control" data-icon="◉" data-tooltip="Hide passage: hide or reveal the displayed passage." aria-label="Hide passage: hide or reveal the displayed passage" aria-pressed="false">🙈 Hide passage</button>
+                    <button type="button" id="btn-fullscreen" class="btn btn-secondary compact-tip-control" data-icon="⛶" data-tooltip="Full screen: expand the typing workspace to fill your screen." aria-label="Full screen: expand the typing workspace to fill your screen">⛶ Full screen</button>
                 </div>
                 <div class="card" style="border-top-left-radius: 0; border-top-right-radius: 0;">
                 <div id="offscreen-alert" class="offscreen-notice" style="display: none;">
