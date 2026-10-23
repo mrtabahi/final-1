@@ -49,10 +49,9 @@ const ScoringEngine = {
     const doubleSpaceErrors=this.countDoubleSpaceErrors(typedSource);
     let alignment=[],wordErrors=0,correctWords=0;
     if(mode==="crpf"){
-      // Keep empty interior slots so a missing/repeated space affects original positions.
-      const normalized=typedSource.replace(/[\r\n\t]+/g," ");
+      // Normalize whitespace before positional word comparison. Repeated spaces are a spacing diagnostic, not phantom empty words that shift every later comparison.
+      const normalized=typedSource.trim().replace(/[\r\n\t ]+/gu," ");
       const slots=normalized.length?normalized.split(" "):[];
-      while(slots.length&&slots[slots.length-1]==="")slots.pop();
       for(let i=0;i<Math.max(expectedWords.length,slots.length);i++){
         const expected=expectedWords[i]??null,typed=slots[i]??null;
         if(typed===null){alignment.push({type:"delete",expected,typed:null});continue;}
