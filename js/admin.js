@@ -483,7 +483,10 @@ async function loadDashboard() {
 
 
         box.innerHTML =
-            folders.map(folder => `
+            folders.map(folder => {
+                const folderTests = cachedTests.filter(test => String(test.folder_id || '') === String(folder.id));
+                const activeCount = folderTests.filter(test => test.active).length;
+                return `
 
                 <div class="admin-list-row">
 
@@ -495,9 +498,7 @@ async function loadDashboard() {
                         </strong>
 
                         <small>
-                            ${esc(
-                                folder.description || ''
-                            )}
+                            ${esc(folder.description || 'No description')} · ${folderTests.length} test(s) · ${activeCount} active · ${folderTests.reduce((sum, test) => sum + String(test.passage || '').trim().split(/\\s+/).filter(Boolean).length, 0).toLocaleString()} total words
                         </small>
 
                     </div>
@@ -512,7 +513,8 @@ async function loadDashboard() {
 
                 </div>
 
-            `).join('');
+            `;
+            }).join('');
     }
 
 
@@ -618,11 +620,9 @@ async function loadDashboard() {
 
         cachedTests = data || [];
 
-
-        renderTests(
-            cachedTests
-        );
-
+        renderFolders(cachedFolders);
+        renderLibraryFolderFilter();
+        renderFilteredLibraryTests();
 
         populateTestFilter(cachedTests);
         testBox?.querySelectorAll('[data-test-edit]').forEach(button => button.addEventListener('click', () => openEditTest(button.dataset.testEdit)));
@@ -666,6 +666,7 @@ async function loadDashboard() {
                         <th>Folder</th>
                         <th>Language</th>
                         <th>Duration</th>
+                        <th>Words</th>
                         <th>Target WPM</th>
                         <th>Accuracy</th>
                         <th>Status</th>
@@ -683,9 +684,7 @@ async function loadDashboard() {
                         <tr>
 
                             <td>
-                                <strong>
-                                    ${esc(test.title)}
-                                </strong>
+                                <strong>${esc(test.title)}</strong>
                             </td>
 
 
@@ -712,11 +711,8 @@ async function loadDashboard() {
                             </td>
 
 
-                            <td>
-                                ${Number(
-                                    test.target_wpm || 0
-                                )}
-                            </td>
+                            <td>${String(test.passage || '').trim().split(/\\s+/).filter(Boolean).length.toLocaleString()}</td>
+                            <td>${Number(test.target_wpm || 0)}</td>
 
 
                             <td>
@@ -764,6 +760,37 @@ async function loadDashboard() {
         `;
     }
 
+
+    function renderLibraryFolderFilter() {
+        const select = $('library-folder-filter');
+        if (!select) return;
+        const current = select.value;
+        select.innerHTML = '<option value="">All folders</option>' + cachedFolders.map(folder =>
+            '<option value="' + esc(folder.id) + '">' + esc(folder.name) + ' (' +
+            cachedTests.filter(test => String(test.folder_id || '') === String(folder.id)).length + ')</option>'
+        ).join('');
+        if (current && cachedFolders.some(folder => String(folder.id) === current)) select.value = current;
+    }
+
+    function renderFilteredLibraryTests() {
+        const query = String($('library-test-search')?.value || '').trim().toLowerCase();
+        const folderId = String($('library-folder-filter')?.value || '');
+        const status = String($('library-status-filter')?.value || '');
+        const filtered = cachedTests.filter(test => {
+            const haystack = [test.title, test.folders?.name, test.language, test.passage].join(' ').toLowerCase();
+            return (!query || haystack.includes(query)) &&
+                (!folderId || String(test.folder_id || '') === folderId) &&
+                (!status || (status === 'active' ? Boolean(test.active) : !test.active));
+        });
+        const count = $('library-test-count');
+        if (count) count.textContent = filtered.length + ' of ' + cachedTests.length + ' tests · ' +
+            filtered.reduce((sum, test) => sum + String(test.passage || '').trim().split(/\\s+/).filter(Boolean).length, 0).toLocaleString() + ' words';
+        renderTests(filtered);
+        const testBox = $('manage-tests-list');
+        testBox?.querySelectorAll('[data-test-edit]').forEach(button => button.addEventListener('click', () => openEditTest(button.dataset.testEdit)));
+        testBox?.querySelectorAll('[data-test-delete]').forEach(button => button.addEventListener('click', () => deleteTest(button.dataset.testDelete)));
+        testBox?.querySelectorAll('[data-test-toggle]').forEach(button => button.addEventListener('click', () => toggleTestActive(button.dataset.testToggle)));
+    }
 
     function populateTestFilter(tests) {
 
@@ -1807,11 +1834,10 @@ async function loadDashboard() {
             );
 
 
-        $('refresh-tests')
-            ?.addEventListener(
-                'click',
-                loadManageTests
-            );
+        $('refresh-tests')?.addEventListener('click', loadManageTests);
+        $('library-test-search')?.addEventListener('input', renderFilteredLibraryTests);
+        $('library-folder-filter')?.addEventListener('change', renderFilteredLibraryTests);
+        $('library-status-filter')?.addEventListener('change', renderFilteredLibraryTests);
     }
 
 
