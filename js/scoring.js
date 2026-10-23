@@ -55,7 +55,7 @@ const ScoringEngine = {
       for(let i=0;i<Math.max(expectedWords.length,slots.length);i++){
         const expected=expectedWords[i]??null,typed=slots[i]??null;
         if(expected===null){alignment.push({type:"insert",expected:null,typed});wordErrors++;continue;}
-        if(typed===null){alignment.push({type:"delete",expected,typed:null});wordErrors++;continue;}
+        if(typed===null){alignment.push({type:"delete",expected,typed:null});continue;}
         if(typed===""){alignment.push({type:"delete",expected,typed:null,reason:"double-space"});wordErrors++;continue;}
         if(typed===expected){alignment.push({type:"match",expected,typed});correctWords++;}
         else{alignment.push({type:"substitute",expected,typed});wordErrors++;}
@@ -120,7 +120,7 @@ const ScoringEngine = {
     return {formula:mode,totalTypedWords:typedWords.length,totalTypedChars:typedSource.length,totalKeystrokes:measuredKeystrokes,
       equivalentTypedWords:Number(equivalentWords.toFixed(2)),correctChars,incorrectChars,correctWords,wordErrors,doubleSpaceErrors,totalErrors,
       freeErrors,excessErrors,penaltyWords,netWords:Number(netWords.toFixed(2)),grossWpm,netWpm,accuracy,elapsedMinutes,elapsedSeconds,
-      alignment,errorBreakdown,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
+      alignment:mode==="bsf"?alignment.filter((item,i)=>!(item.type==="delete"&&!alignment.slice(i+1).some(next=>next.type!=="delete"))):alignment.filter((item,i)=>!(item.type==="delete"&&item.typed===null&&i>=typedWords.length)),errorBreakdown,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
   },
   getPerformanceLabel(score){return score.passed?{text:"TARGET ACHIEVED",class:"badge-success"}:{text:"KEEP PRACTISING",class:"badge-danger"};}
 };
