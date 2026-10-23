@@ -304,3 +304,14 @@
 .result-token-wrong{color:#dc2626;font-weight:700}
 .result-token-extra{color:#ea580c;font-weight:700}
 .result-token-missing{color:#2563eb;font-weight:700}
+
+/* Organized result formula dashboard */
+.result-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem;margin:1.25rem 0 2rem;text-align:left}
+.result-metric-card{min-width:0;padding:1rem;border:1px solid #dbe3ed;border-radius:13px;background:#f8fafc}
+.result-metric-net{background:#eff6ff;border-color:#93c5fd}
+.result-metric-label{font-size:.82rem;font-weight:800;line-height:1.4;color:#475569}
+.result-metric-value{font-size:1.65rem;font-weight:850;line-height:1.35;margin:.25rem 0;color:#123b63;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.result-metric-net .result-metric-value{font-size:1.9rem;color:#1d4ed8}
+.result-metric-formula{font-size:.74rem;line-height:1.45;color:#64748b}
+@media(max-width:760px){.result-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}.result-metric-card{padding:.8rem}.result-metric-value{font-size:1.4rem}.result-metric-net .result-metric-value{font-size:1.65rem}}
+@media(max-width:380px){.result-metrics{grid-template-columns:1fr}}
