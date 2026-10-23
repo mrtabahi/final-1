@@ -142,6 +142,8 @@
         if (view === 'dashboard') loadDashboard();
         if (view === 'tests') loadManageTests();
         if (view === 'attempts') loadAllAttempts();
+        if (view === 'candidates' && typeof window.renderCandidatesModule === 'function') window.renderCandidatesModule();
+        if (view === 'content' && typeof window.renderWebsiteContentModule === 'function') window.renderWebsiteContentModule();
     }
 
 
