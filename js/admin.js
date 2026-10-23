@@ -1872,7 +1872,7 @@ async function loadDashboard() {
 
         setupAttemptActions();
         $('admin-menu-toggle')?.addEventListener('click', () => $('admin-sidebar')?.classList.toggle('is-open'));
-        $('admin-refresh')?.addEventListener('click', () => { if (currentView === 'dashboard') loadDashboard(); else if (currentView === 'tests') loadManageTests(); else if (currentView === 'attempts') loadAllAttempts(); });
+        $('admin-refresh')?.addEventListener('click', () => { if (currentView === 'dashboard') loadDashboard(); else if (currentView === 'tests') loadManageTests(); else if (currentView === 'attempts') loadAllAttempts(); else if (currentView === 'candidates') $('candidate-refresh')?.click(); else if (currentView === 'content') $('site-content-refresh')?.click(); });
         if ($('admin-loading')) $('admin-loading').style.display = 'none';
         if ($('admin-app')) $('admin-app').style.display = 'flex';
 
