@@ -190,7 +190,9 @@ Deno.serve(async (req) => {
     if (body.action === "submit") {
       const sessionId = body.session_id;
       const typedText = body.typed_text;
+      const requestedMode = body.mode;
       if (typeof sessionId !== "string" || typeof typedText !== "string") return reply(400, { error: "session_id and typed_text are required" });
+      if (requestedMode !== undefined && requestedMode !== "screen" && requestedMode !== "page") return reply(400, { error: "mode must be screen or page" });
       if (typedText.length > 50000) return reply(413, { error: "Typed text is too long" });
       const { data: session, error: sessionError } = await db.from("typing_exam_sessions").select("id,user_id,test_id,started_at,submitted_at").eq("id", sessionId).eq("user_id", user.id).maybeSingle();
       if (sessionError || !session) return reply(404, { error: "Typing session not found" });
@@ -209,7 +211,7 @@ Deno.serve(async (req) => {
       const score = scoreBsf;
       const { data: attempt, error: insertError } = await db.from("attempts").insert({
         session_id: session.id, user_id: user.id, candidate_name: profile.full_name || "Candidate",
-        candidate_id: user.id, test_id: test.id, language: test.language, mode: test.mode || "screen",
+        candidate_id: user.id, test_id: test.id, language: test.language, mode: requestedMode || (test.mode === "page" ? "page" : "screen"),
         duration_seconds: durationSeconds, typed_words: score.totalTypedWords,
         typed_characters: score.totalTypedChars, correct_characters: score.correctChars,
         incorrect_characters: score.incorrectChars, total_errors: score.totalErrors,
