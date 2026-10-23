@@ -8,7 +8,7 @@
   function activeNow(item,now){return item.is_active&&item.is_public&&(!item.starts_at||new Date(item.starts_at)<=now)&&(!item.ends_at||new Date(item.ends_at)>now);}
   function countdown(end){if(!end)return 'No end time';const ms=new Date(end).getTime()-Date.now();if(ms<=0)return 'Ended';const d=Math.floor(ms/86400000),h=Math.floor(ms%86400000/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return (d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
   async function loadAnnouncements(){
-    const nav=document.querySelector('.navbar');if(!nav||!window.supabaseClient)return;
+    const nav=document.querySelector('.navbar');if(!nav||typeof supabaseClient==='undefined'||!supabaseClient)return;
     let result;try{result=await supabaseClient.from('site_announcements').select('id,title,body,content_type,theme,cta_label,cta_url,starts_at,ends_at,sort_order,is_active,is_public').eq('is_active',true).eq('is_public',true).order('sort_order',{ascending:true}).limit(20);}catch(e){return;}
     if(result?.error||!result?.data?.length)return;
     const now=new Date(),items=result.data.filter(x=>activeNow(x,now));if(!items.length)return;
