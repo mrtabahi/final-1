@@ -7,7 +7,7 @@
     <title>Decoding HCM Typing Test Lab | BSF HCM Typing Practice</title>
     <meta name="description" content="Professional BSF HCM typing practice platform with English and Hindi typing tests, speed, accuracy, errors, results and performance tracking.">
     <link rel="stylesheet" href="css/main.css?v=20261023-navigation3">
-    <link rel="stylesheet" href="css/typing.css?v=20261023-analysis1">
+    <link rel="stylesheet" href="css/typing.css?v=20261023-result-grid1">
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -120,30 +120,17 @@
                 <span class="eyebrow">ATTEMPT COMPLETE</span><h2>Typing test results</h2><p class="result-intro">Choose a scoring formula to compare your performance. Your measured attempt time is used for both calculations.</p><div id="result-save-status" class="result-save-status" role="status" aria-live="polite" hidden></div><div class="formula-switch" role="group" aria-label="Choose result scoring formula"><button type="button" id="formula-bsf" class="formula-option is-active" aria-pressed="true"><span>01</span><strong>BSF Typing Formula</strong><small>Sequence-based error review</small></button><button type="button" id="formula-crpf" class="formula-option" aria-pressed="false"><span>02</span><strong>CRPF Typing Formula</strong><small>Position-based error review</small></button></div><p id="formula-note" class="formula-note">BSF practice mode selected. Verify the latest recruitment notice for official assessment rules.</p>
                 <div id="result-status-badge" class="score-status badge-success">QUALIFIED</div>
                 
-                <div class="score-main"><span id="res-net-wpm">0</span> <span style="font-size: 1.5rem; color: var(--text-muted);">NET WPM</span></div>
-
-                <div class="grid-4" style="margin-bottom: 2rem;">
-                    <div class="stat-box">
-                        <div class="stat-value" id="res-gross-wpm">0</div>
-                        <div class="stat-label">Gross WPM</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="res-accuracy">0%</div>
-                        <div class="stat-label">Accuracy</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="res-total-errors">0</div>
-                        <div class="stat-label">Total Errors</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="res-penalty">0</div>
-                        <div class="stat-label">Penalty Words</div>
-                    </div>
-                    <div class="stat-box"><div class="stat-value" id="res-attempting-time">00:00</div><div class="stat-label">Attempting Time</div></div>
-                    <div class="stat-box"><div class="stat-value" id="res-allowed-errors">0</div><div class="stat-label">Allowed Errors (5%)</div></div>
-                    <div class="stat-box"><div class="stat-value" id="res-extra-errors">0</div><div class="stat-label">Extra Errors</div></div>
-                    <div class="stat-box"><div class="stat-value" id="res-penalty-speed">0</div><div class="stat-label">Penalty Speed (WPM)</div></div>
-                </div>
+                <section class="result-metrics" aria-label="Typing result calculations">
+                    <div class="result-metric-card result-metric-net"><div class="result-metric-label">Net Speed (WPM)</div><div class="result-metric-value" id="res-net-wpm">0</div><div class="result-metric-formula">Gross speed − penalty speed</div></div>
+                    <div class="result-metric-card"><div class="result-metric-label">Gross Speed (WPM)</div><div class="result-metric-value" id="res-gross-wpm">0</div><div class="result-metric-formula">Typed keystrokes ÷ (5 × time in minutes)</div></div>
+                    <div class="result-metric-card"><div class="result-metric-label">Rebate / Allowed Errors (5%)</div><div class="result-metric-value" id="res-allowed-errors">0</div><div class="result-metric-formula">Typed keystrokes ÷ 5 × 1/20</div></div>
+                    <div class="result-metric-card"><div class="result-metric-label">Extra Errors</div><div class="result-metric-value" id="res-extra-errors">0</div><div class="result-metric-formula">Total errors − allowed errors</div></div>
+                    <div class="result-metric-card"><div class="result-metric-label">Penalty Speed (WPM)</div><div class="result-metric-value" id="res-penalty-speed">0</div><div class="result-metric-formula">Penalty words ÷ time in minutes</div></div>
+                    <div class="result-metric-card"><div class="result-metric-label">Attempting Time</div><div class="result-metric-value" id="res-attempting-time">00:00</div><div class="result-metric-formula">Actual time spent typing</div></div>
+                    <div class="result-metric-card"><div class="result-metric-label">Accuracy</div><div class="result-metric-value" id="res-accuracy">0%</div><div class="result-metric-formula">Based on typed characters</div></div>
+                    <div class="result-metric-card"><div class="result-metric-label">Total Errors</div><div class="result-metric-value" id="res-total-errors">0</div><div class="result-metric-formula">Errors counted by selected formula</div></div>
+                    <div class="result-metric-card"><div class="result-metric-label">Penalty Words</div><div class="result-metric-value" id="res-penalty">0</div><div class="result-metric-formula">Extra errors × penalty per error</div></div>
+                </section>
 
                 <div class="card" style="text-align: left; margin-top: 1.5rem;">
                     <h3 class="card-title">Typing Comparison</h3>
@@ -198,6 +185,6 @@
     <script src="js/scoring.js?v=20261023-bsf-duplicate-align1"></script>
     <script src="js/typing-engine.js?v=20261023-controls-fix1"></script>
     <script src="js/auth.js?v=20261023-typing-fix2"></script>
-    <script src="js/app.js?v=20261023-speedcap2"></script>
+    <script src="js/app.js?v=20261023-result-grid1"></script>
 </body>
 </html>
