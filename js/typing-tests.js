@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tests = testsResult.data || [];
     const folders = (foldersResult.data || []).map(folder => ({...folder, count:tests.filter(test => test.folder_id === folder.id).length})).filter(folder => folder.count > 0);
     const selfTestCard = `<a class="category-card category-card-self" href="self-test.html">
-      <div class="category-thumb"><span class="category-symbol">✎</span></div>
+      <div class="category-thumb"><img src="self-test-thumbnail.jpg" alt="" loading="lazy"></div>
       <div class="category-copy"><h2>Self Test</h2><p>Paste your own passage, set a timer and practise with your preferred controls.</p>
       <div class="category-foot"><span>Start personal practice <span aria-hidden="true">→</span></span><span class="category-count">Custom text</span></div></div>
     </a>`;
