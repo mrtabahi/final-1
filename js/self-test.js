@@ -2,7 +2,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const setup=$('self-setup'), workspace=$('self-workspace'), source=$('source-text'), typed=$('self-typed'), passage=$('self-passage'), passageCard=$('self-passage-card');
-let original='', duration=300, startedAt=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, allowBackspace=true, totalElapsed=0;
+let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, allowBackspace=true, totalElapsed=0;
 const SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
 let scoringFormula='bsf';
 function readSaved(){try{const data=JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');return Array.isArray(data)?data.filter(x=>x&&typeof x.text==='string').slice(0,MAX_SAVED):[]}catch(_){return[]}}
@@ -46,7 +46,7 @@ function renderPassage(){
  }
  passage.innerHTML=html;
 }
-function startClock(){if(startedAt!==null||finished)return;startedAt=Date.now();deadline=startedAt+duration*1000;tick();timerId=window.setInterval(tick,200)}
+function startClock(){if(startedAt!==null||finished)return;startedAt=Date.now();attemptDate=new Date(startedAt);deadline=startedAt+duration*1000;tick();timerId=window.setInterval(tick,200)}
 function tick(){const remaining=Math.max(0,(deadline-Date.now())/1000);$('self-timer').textContent=formatTime(remaining);updateLive();if(remaining<=0)finishTest()}
 function setHighlight(on){highlight=on;$('self-highlight').textContent='Highlight: '+(on?'On':'Off');$('self-highlight').setAttribute('aria-pressed',String(on));passageCard.classList.toggle('self-highlight-enabled',on);renderPassage()}
 function setHidden(on){hidden=on;passageCard.hidden=on;$('self-hide').textContent=on?'Show passage':'Hide passage';$('self-hide').setAttribute('aria-pressed',String(on));$('self-pdf-row').hidden=!on}
@@ -54,7 +54,7 @@ function startTest(){
  original=source.value.replace(/\r\n?/g,'\n');
  if(!original.trim()){$('self-message').textContent='Paste a passage before starting.';source.focus();return}
  duration=Number($('self-duration').value)*60;allowBackspace=$('self-backspace').checked;scoringFormula=$('self-formula').value==='crpf'?'crpf':'bsf';
- typed.value='';startedAt=null;deadline=null;finished=false;totalElapsed=0;
+ typed.value='';startedAt=null;attemptDate=null;deadline=null;finished=false;totalElapsed=0;
  $('self-message').textContent='';setup.hidden=true;workspace.hidden=false;$('self-result').hidden=true;
  passageCard.hidden=false;setHidden(false);setHighlight(false);renderPassage();$('self-timer').textContent=formatTime(duration);
  typed.disabled=false;typed.placeholder='Start typing here…';typed.focus();updateLive();
@@ -93,7 +93,7 @@ function finishTest(){
  score.alignment.forEach((item,i)=>{if(i)comparison.appendChild(document.createTextNode(' '));const span=document.createElement('span');const trailing=item.type==='delete'&&!score.alignment.slice(i+1).some(next=>next.type!=='delete');
  span.className=item.type==='match'?'self-token-match':item.type==='substitute'?'self-token-wrong':item.type==='delete'&&!trailing?'self-token-missing':item.type==='insert'?'self-token-extra':'self-token-unreached';
  span.textContent=item.type==='match'?item.typed:item.type==='substitute'?item.typed+' [expected: '+item.expected+']':trailing?'[not reached: '+item.expected+']':item.type==='delete'?'['+item.expected+' — skipped]':item.typed+' [extra]';comparison.appendChild(span);});
- updateLive();$('self-result').hidden=false;$('self-result').scrollIntoView({behavior:'smooth',block:'start'});
+ updateLive();const stamp=$('self-report-date');if(stamp)stamp.textContent=(attemptDate||new Date()).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});const originalReport=$('self-report-original');if(originalReport)originalReport.textContent=original;const exactReport=$('self-report-typed-exact');if(exactReport)exactReport.textContent=input;$('self-result').hidden=false;$('self-result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function downloadPDF(){
  if(!hidden){$('self-message').textContent='Hide the passage first to enable the PDF download.';return}
@@ -131,8 +131,8 @@ $('self-delete-passage').addEventListener('click',()=>{const id=$('self-saved-li
 $('self-highlight').addEventListener('click',()=>setHighlight(!highlight));
 $('self-hide').addEventListener('click',()=>setHidden(!hidden));
 $('self-end').addEventListener('click',()=>{if(startedAt===null&&typed.value.length===0){finishTest();return}finishTest()});
-$('self-pdf').addEventListener('click',downloadPDF);
+$('self-pdf').addEventListener('click',downloadPDF);$('self-print-scorecard').addEventListener('click',()=>window.print());
 $('self-again').addEventListener('click',()=>{if(timerId)window.clearInterval(timerId);workspace.hidden=true;setup.hidden=false;source.focus();$('self-message').textContent='You can prepare a new passage or change the duration.'});
-$('self-cancel').addEventListener('click',()=>{if(!confirm('Cancel this attempt and reset the self test? Your current typing will be cleared.'))return;if(timerId)window.clearInterval(timerId);timerId=null;startedAt=null;deadline=null;finished=false;totalElapsed=0;typed.value='';typed.disabled=false;workspace.hidden=true;setup.hidden=false;$('self-result').hidden=true;passageCard.hidden=false;setHidden(false);setHighlight(false);$('self-message').textContent='Test reset. Press “Start self test” to begin again.';source.focus();updateLive();});
+$('self-cancel').addEventListener('click',()=>{if(!confirm('Cancel this attempt and reset the self test? Your current typing will be cleared.'))return;if(timerId)window.clearInterval(timerId);timerId=null;startedAt=null;attemptDate=null;deadline=null;finished=false;totalElapsed=0;typed.value='';typed.disabled=false;workspace.hidden=true;setup.hidden=false;$('self-result').hidden=true;passageCard.hidden=false;setHidden(false);setHighlight(false);$('self-message').textContent='Test reset. Press “Start self test” to begin again.';source.focus();updateLive();});
 refreshSaved();
 })();
