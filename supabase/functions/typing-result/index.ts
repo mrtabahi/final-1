@@ -22,31 +22,30 @@ function tokenize(text: string): string[] {
 function alignWords(expected: string[], typed: string[]) {
   const n = expected.length, m = typed.length;
   if ((n + 1) * (m + 1) > 2_000_000) throw new Error("Passage or typed text is too long to score safely.");
+  // Suffix edit-distance + forward traceback: duplicate words bind to the
+  // earliest expected occurrence on an equally optimal alignment, preventing
+  // later duplicates from making intervening words look omitted.
   const dp: number[][] = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
-  const op: string[][] = Array.from({ length: n + 1 }, () => Array(m + 1).fill(""));
-  for (let i = 1; i <= n; i++) { dp[i][0] = i; op[i][0] = "delete"; }
-  for (let j = 1; j <= m; j++) { dp[0][j] = j; op[0][j] = "insert"; }
-  for (let i = 1; i <= n; i++) {
-    for (let j = 1; j <= m; j++) {
-      if (expected[i - 1] === typed[j - 1]) { dp[i][j] = dp[i - 1][j - 1]; op[i][j] = "match"; continue; }
-      const sub = dp[i - 1][j - 1] + 1, del = dp[i - 1][j] + 1, ins = dp[i][j - 1] + 1;
-      const best = Math.min(sub, del, ins);
-      if (best === sub) { dp[i][j] = sub; op[i][j] = "substitute"; }
-      else if (best === del) { dp[i][j] = del; op[i][j] = "delete"; }
-      else { dp[i][j] = ins; op[i][j] = "insert"; }
-    }
+  for (let i = n; i >= 0; i--) dp[i][m] = n - i;
+  for (let j = m; j >= 0; j--) dp[n][j] = m - j;
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) {
+    if (expected[i] === typed[j]) dp[i][j] = dp[i + 1][j + 1];
+    else dp[i][j] = 1 + Math.min(dp[i + 1][j + 1], dp[i + 1][j], dp[i][j + 1]);
   }
   const result: Array<{type:string; expected:string|null; typed:string|null}> = [];
-  let i = n, j = m;
-  while (i > 0 || j > 0) {
-    const action = i === 0 ? "insert" : j === 0 ? "delete" : op[i][j];
-    if (action === "match" || action === "substitute") {
-      result.unshift({ type: action, expected: expected[i - 1], typed: typed[j - 1] }); i--; j--;
-    } else if (action === "delete") {
-      result.unshift({ type: "delete", expected: expected[i - 1], typed: null }); i--;
-    } else {
-      result.unshift({ type: "insert", expected: null, typed: typed[j - 1] }); j--;
+  let i = 0, j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && expected[i] === typed[j] && dp[i][j] === dp[i + 1][j + 1]) {
+      result.push({ type: "match", expected: expected[i], typed: typed[j] }); i++; j++; continue;
     }
+    const sub = i < n && j < m ? 1 + dp[i + 1][j + 1] : Infinity;
+    const del = i < n ? 1 + dp[i + 1][j] : Infinity;
+    const ins = j < m ? 1 + dp[i][j + 1] : Infinity;
+    const best = dp[i][j];
+    if (del === best) { result.push({ type: "delete", expected: expected[i], typed: null }); i++; }
+    else if (sub === best) { result.push({ type: "substitute", expected: expected[i], typed: typed[j] }); i++; j++; }
+    else if (ins === best) { result.push({ type: "insert", expected: null, typed: typed[j] }); j++; }
+    else throw new Error("Unable to align typed words");
   }
   return result;
 }
