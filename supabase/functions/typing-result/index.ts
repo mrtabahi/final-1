@@ -125,7 +125,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
     const item = alignment[i];
     if (item.type === "delete" && item.expected !== null) {
       const trailing = !alignment.slice(i + 1).some(next => next.type !== "delete");
-      if (trailing) { /* trailing untyped passage is not an error */ }
+      if (trailing) errorBreakdown.notReached++;
       else errorBreakdown.omissions++;
     } else if (item.type === "insert") {
       errorBreakdown.extraWords++;
