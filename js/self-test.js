@@ -31,8 +31,8 @@ const formatTime=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).
 function renderPassage(){
  const input=typed.value;
  const statuses=new Array(original.length).fill('');
- const expectedTokens=[...original.matchAll(/\\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
- const typedTokens=[...input.matchAll(/\\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
+ const expectedTokens=[...original.matchAll(/\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
+ const typedTokens=[...input.matchAll(/\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
  const alignment=ScoringEngine.alignWords(expectedTokens.map(x=>x.text),typedTokens.map(x=>x.text));
  function mapWordChars(expected,typedWord,start){
   const n=expected.length,m=typedWord.length;
@@ -64,10 +64,10 @@ function renderPassage(){
  let html='';
  for(let i=0;i<original.length;){
   const ch=original[i];
-  if(ch==='\\n'){html+='<br>';i++;continue}
-  if(ch==='\\r'){i++;continue}
-  if(/\\s/u.test(ch)){html+=ch===' '?' ':'<br>';i++;continue}
-  let end=i+1;while(end<original.length&&original[end]!=='\\n'&&original[end]!=='\\r'&&!/\\s/u.test(original[end]))end++;
+  if(ch==='\n'){html+='<br>';i++;continue}
+  if(ch==='\r'){i++;continue}
+  if(/\s/u.test(ch)){html+=ch===' '?' ':'<br>';i++;continue}
+  let end=i+1;while(end<original.length&&original[end]!=='\n'&&original[end]!=='\r'&&!/\s/u.test(original[end]))end++;
   html+='<span class="self-word">';
   for(let j=i;j<end;j++){
    const cls=highlight?statuses[j]:'';
