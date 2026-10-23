@@ -32,7 +32,7 @@ function renderPassage(){
  const input=typed.value; let html='';
  for(let i=0;i<original.length;i++){
   const ch=original[i], isCurrent=i===input.length, isDone=i<input.length;
-  let cls=''; if(isCurrent)cls=highlight?'self-current':'self-current-index'; else if(highlight&&isDone)cls=input[i]===ch?'self-char-correct':'self-char-wrong';
+  let cls=''; if(isCurrent&&highlight)cls='self-current'; else if(highlight&&isDone)cls=input[i]===ch?'self-char-correct':'self-char-wrong';
   html+=cls?'<span class="'+cls+'">'+(ch===' '?'&nbsp;':ch==='\n'?'<br>':esc(ch))+'</span>':(ch===' '?'&nbsp;':ch==='\n'?'<br>':esc(ch));
  }
  passage.innerHTML=html;
@@ -126,5 +126,6 @@ $('self-hide').addEventListener('click',()=>setHidden(!hidden));
 $('self-end').addEventListener('click',()=>{if(startedAt===null&&typed.value.length===0){finishTest();return}finishTest()});
 $('self-pdf').addEventListener('click',downloadPDF);
 $('self-again').addEventListener('click',()=>{if(timerId)window.clearInterval(timerId);workspace.hidden=true;setup.hidden=false;source.focus();$('self-message').textContent='You can prepare a new passage or change the duration.'});
+$('self-cancel').addEventListener('click',()=>{if(!confirm('Cancel this attempt and reset the self test? Your current typing will be cleared.'))return;if(timerId)window.clearInterval(timerId);timerId=null;startedAt=null;deadline=null;finished=false;totalElapsed=0;typed.value='';typed.disabled=false;workspace.hidden=true;setup.hidden=false;$('self-result').hidden=true;passageCard.hidden=false;setHidden(false);setHighlight(false);$('self-message').textContent='Test reset. Press “Start self test” to begin again.';source.focus();updateLive();});
 refreshSaved();
 })();
