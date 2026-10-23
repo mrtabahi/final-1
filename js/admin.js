@@ -1262,157 +1262,135 @@ async function loadDashboard() {
        ALL ATTEMPTS
     ===================================================== */
 
-    async function loadAllAttempts() {
+    function attemptQualified(attempt) {
+        const test = attempt.tests || {};
+        const netWpm = Number(attempt.net_wpm || 0);
+        const accuracy = Number(attempt.accuracy || 0);
+        const target = test.target_wpm === null || test.target_wpm === undefined || test.target_wpm === '' ? null : Number(test.target_wpm);
+        const minimum = test.min_accuracy === null || test.min_accuracy === undefined || test.min_accuracy === '' ? null : Number(test.min_accuracy);
+        return (target === null || netWpm >= target) && (minimum === null || accuracy >= minimum);
+    }
 
-        const box =
-            $('all-attempts-list');
+    function localDateKey(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    }
 
-
-        if (box) {
-
-            box.innerHTML =
-                '<div class="admin-empty">Loading attempts...</div>';
-        }
-
-
-        const { data, error } =
-            await supabaseClient
-                .from('attempts')
-                .select(`
-                    id,
-                    candidate_name,
-                    candidate_id,
-                    language,
-                    duration_seconds,
-                    typed_words,
-                    total_errors,
-                    gross_wpm,
-                    net_wpm,
-                    accuracy,
-                    suspicious_events,
-                    created_at,
-                    tests (
-                        id,
-                        title
-                    )
-                `)
-                .order('created_at', {
-                    ascending: false
-                })
-                .limit(500);
-
-
+    async function loadReportTestOptions() {
+        const select = $('report-test-filter');
+        if (!select) return;
+        const { data, error } = await supabaseClient.from('tests').select('id,title').order('title', { ascending: true });
         if (error) {
-
-            console.error(
-                'Attempts error:',
-                error
-            );
-
-
-            if (box) {
-
-                box.innerHTML = `
-                    <div class="admin-error">
-                        ${esc(error.message)}
-                    </div>
-                `;
-            }
-
+            select.innerHTML = '<option value="">Could not load tests</option>';
+            console.error('Report test list error:', error);
             return;
         }
+        select.innerHTML = (data || []).map(test => '<option value="' + esc(test.id) + '">' + esc(test.title) + '</option>').join('');
+    }
 
-
-        cachedAttempts =
-            data || [];
-
-
+    async function loadAllAttempts() {
+        const box = $('all-attempts-list');
+        if (box) box.innerHTML = '<div class="admin-empty">Loading attempts…</div>';
+        const pageSize = 1000;
+        const all = [];
+        let offset = 0;
+        let failed = null;
+        while (true) {
+            const { data, error } = await supabaseClient
+                .from('attempts')
+                .select('id,candidate_name,candidate_id,language,duration_seconds,typed_words,total_errors,gross_wpm,net_wpm,accuracy,suspicious_events,created_at,tests(id,title,target_wpm,min_accuracy)')
+                .order('created_at', { ascending: false })
+                .range(offset, offset + pageSize - 1);
+            if (error) { failed = error; break; }
+            const rows = data || [];
+            all.push(...rows);
+            if (rows.length < pageSize) break;
+            offset += pageSize;
+            if (offset >= 50000) break;
+        }
+        if (failed) {
+            console.error('Attempts error:', failed);
+            if (box) box.innerHTML = '<div class="admin-error">' + esc(failed.message) + '</div>';
+            return;
+        }
+        cachedAttempts = all;
+        await loadReportTestOptions();
         renderFilteredAttempts();
     }
 
-
-    function renderFilteredAttempts() {
-
-        const search =
-            (
-                $('attempt-search')?.value ||
-                ''
-            )
-                .trim()
-                .toLowerCase();
-
-
-        const testId =
-            $('attempt-test-filter')?.value ||
-            '';
-
-
-        const language =
-            $('attempt-language-filter')?.value ||
-            '';
-
-
-        const filtered =
-            cachedAttempts.filter(attempt => {
-
-                const candidate =
-                    String(
-                        attempt.candidate_name || ''
-                    )
-                        .toLowerCase();
-
-
-                const matchesSearch =
-                    !search ||
-                    candidate.includes(search);
-
-
-                const matchesTest =
-                    !testId ||
-                    attempt.tests?.id === testId;
-
-
-                const matchesLanguage =
-                    !language ||
-                    attempt.language === language;
-
-
-                return (
-                    matchesSearch &&
-                    matchesTest &&
-                    matchesLanguage
-                );
-            });
-
-
-        const box =
-            $('all-attempts-list');
-
-
-        if (!box) {
-            return;
-        }
-
-
-        if (!filtered.length) {
-
-            box.innerHTML = `
-                <div class="admin-empty">
-                    No matching attempts found.
-                </div>
-            `;
-
-            return;
-        }
-
-
-        box.innerHTML =
-            createAttemptsTable(
-                filtered,
-                false
-            );
+    function getFilteredAttempts() {
+        const search = String($('attempt-search')?.value || '').trim().toLowerCase();
+        const language = $('attempt-language-filter')?.value || '';
+        const resultType = $('report-result-filter')?.value || '';
+        const dateFrom = $('report-date-from')?.value || '';
+        const dateTo = $('report-date-to')?.value || '';
+        const testSelect = $('report-test-filter');
+        const selectedTestIds = testSelect ? [...testSelect.selectedOptions].map(option => option.value).filter(Boolean) : [];
+        return cachedAttempts.filter(attempt => {
+            const candidate = String(attempt.candidate_name || '').toLowerCase();
+            const matchesSearch = !search || candidate.includes(search);
+            const matchesLanguage = !language || attempt.language === language;
+            const matchesTest = !selectedTestIds.length || selectedTestIds.includes(String(attempt.tests?.id || ''));
+            const dateKey = localDateKey(attempt.created_at);
+            const matchesFrom = !dateFrom || dateKey >= dateFrom;
+            const matchesTo = !dateTo || dateKey <= dateTo;
+            const qualified = attemptQualified(attempt);
+            const matchesResult = !resultType || (resultType === 'qualify' ? qualified : !qualified);
+            return matchesSearch && matchesLanguage && matchesTest && matchesFrom && matchesTo && matchesResult;
+        });
     }
 
+    function renderFilteredAttempts() {
+        const filtered = getFilteredAttempts();
+        const box = $('all-attempts-list');
+        if (box) {
+            if (!filtered.length) box.innerHTML = '<div class="admin-empty">No matching attempts found for these filters.</div>';
+            else box.innerHTML = createAttemptsTable(filtered, false);
+        }
+        const candidates = new Set(filtered.map(a => String(a.candidate_id || a.candidate_name || 'Unknown')));
+        const qualified = filtered.filter(attemptQualified).length;
+        const failed = filtered.length - qualified;
+        const percentage = filtered.length ? (qualified / filtered.length * 100).toFixed(2) : '0.00';
+        const summary = $('report-filter-summary');
+        if (summary) summary.textContent = filtered.length.toLocaleString() + ' attempts · ' + candidates.size.toLocaleString() + ' candidates · ' + qualified + ' qualify · ' + failed + ' fail · ' + percentage + '% qualifying';
+    }
+
+    function escapeReportHtml(value) {
+        return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function exportResultsPDF() {
+        const attempts = getFilteredAttempts();
+        if (!attempts.length) { alert('No results match the selected filters. Adjust the dates or filters and try again.'); return; }
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) { alert('The PDF report window was blocked. Allow pop-ups for this website, then try again.'); return; }
+        const sorted = [...attempts].sort((a, b) => {
+            const candidate = String(a.candidate_name || '').localeCompare(String(b.candidate_name || ''));
+            return candidate || new Date(a.created_at) - new Date(b.created_at);
+        });
+        const qualified = sorted.filter(attemptQualified).length;
+        const failed = sorted.length - qualified;
+        const candidateCount = new Set(sorted.map(a => String(a.candidate_id || a.candidate_name || 'Unknown'))).size;
+        const percentage = sorted.length ? (qualified / sorted.length * 100).toFixed(2) : '0.00';
+        const from = $('report-date-from')?.value || 'Any';
+        const to = $('report-date-to')?.value || 'Any';
+        const selectedTests = $('report-test-filter');
+        const selectedNames = selectedTests ? [...selectedTests.selectedOptions].map(o => o.textContent) : [];
+        const testLabel = selectedNames.length ? selectedNames.join(', ') : 'All tests';
+        const rows = sorted.map((attempt, index) => {
+            const status = attemptQualified(attempt);
+            const seconds = Number(attempt.duration_seconds || 0);
+            const duration = Math.floor(seconds / 60) + ':' + String(Math.floor(seconds % 60)).padStart(2, '0');
+            return '<tr><td class="serial">' + (index + 1) + '</td><td class="candidate">' + escapeReportHtml(attempt.candidate_name || 'Unknown') + '<small>ID: ' + escapeReportHtml(attempt.candidate_id || '—') + '</small></td><td>' + escapeReportHtml(attempt.tests?.title || 'Untitled test') + '</td><td>' + escapeReportHtml(attempt.language || '—') + '</td><td class="num">' + Number(attempt.gross_wpm || 0).toFixed(2) + '</td><td class="num">' + Number(attempt.net_wpm || 0).toFixed(2) + '</td><td class="num">' + Number(attempt.accuracy || 0).toFixed(2) + '%</td><td class="num">' + Number(attempt.total_errors || 0) + '</td><td class="num">' + duration + '</td><td>' + escapeReportHtml(new Date(attempt.created_at).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true })) + '</td><td><span class="status ' + (status ? 'pass' : 'fail') + '">' + (status ? 'QUALIFY' : 'FAIL') + '</span></td></tr>';
+        }).join('');
+        const reportHtml = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Decoding HCM — Result Report</title><style>' +
+        '@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#172033;margin:0;font-size:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.masthead{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #263b82;padding:0 0 12px;margin-bottom:14px}.brand{display:flex;align-items:center;gap:10px}.logo{width:42px;height:42px;border-radius:10px;background:#263b82;color:#fff;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:800}.brand h1{font-size:20px;margin:0 0 4px;color:#1e2b55}.brand p{margin:0;color:#64708a;font-size:10px}.report-meta{text-align:right;color:#59657b;line-height:1.7}.report-title{display:flex;justify-content:space-between;align-items:end;margin:12px 0}.report-title h2{font-size:16px;margin:0;color:#172b65}.report-title p{margin:4px 0 0;color:#65718a}.filter-note{max-width:45%;text-align:right;color:#5d6980;overflow-wrap:anywhere}.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0 15px}.metric{border:1px solid #d7deeb;border-top:3px solid #4055a4;border-radius:6px;padding:9px 10px;background:#f7f9fe}.metric strong{display:block;font-size:18px;color:#1e2b55;margin-top:4px}.metric span{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#65718a}.metric.qualify{border-top-color:#17834c}.metric.qualify strong{color:#137342}.metric.fail{border-top-color:#c33745}.metric.fail strong{color:#b42332}.metric.rate{border-top-color:#087f8c}.table-wrap{width:100%}table{width:100%;border-collapse:collapse;table-layout:auto}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}th{background:#263b82;color:#fff;text-align:left;font-size:8.5px;text-transform:uppercase;letter-spacing:.25px;padding:8px 6px;border:1px solid #1d2d66}td{padding:7px 6px;border:1px solid #d7deea;vertical-align:top;font-size:9px}tbody tr:nth-child(even){background:#f5f7fc}td.serial,td.num{text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}td.serial{font-weight:700;color:#46557b}td.candidate{font-weight:700;min-width:100px}td.candidate small{display:block;font-weight:400;color:#6d7890;margin-top:3px;font-size:8px}.status{display:inline-block;border-radius:4px;padding:4px 6px;font-size:8px;font-weight:800;letter-spacing:.4px;white-space:nowrap}.status.pass{background:#dcfce7;color:#166534;border:1px solid #86d6a3}.status.fail{background:#fee2e2;color:#991b1b;border:1px solid #f2a2a2}.report-footer{border-top:2px solid #263b82;margin-top:16px;padding-top:10px;display:flex;justify-content:space-between;gap:20px;color:#65718a;font-size:9px}.links{display:flex;gap:12px;flex-wrap:wrap}.links a{color:#263b82;text-decoration:none;font-weight:700}.disclaimer{margin-top:8px;color:#7b8497;font-size:8px}@media screen{body{padding:22px;background:#eef1f8}.paper{max-width:1500px;margin:0 auto;background:#fff;padding:25px;box-shadow:0 8px 35px #1b2d5218;border-radius:10px}}@media print{.paper{padding:0}.report-footer{break-inside:avoid}}' +
+        '</style></head><body><main class="paper"><header class="masthead"><div class="brand"><div class="logo">D</div><div><h1>Decoding HCM</h1><p>HCM Typing Test &amp; Practice Platform</p></div></div><div class="report-meta"><strong>OFFICIAL PERFORMANCE SUMMARY</strong><br>Generated: ' + escapeReportHtml(new Date().toLocaleString('en-IN')) + '<br>Website: decoding-hcm.vercel.app</div></header><section class="report-title"><div><h2>Candidate Result &amp; Attempt Report</h2><p>Attempt-wise performance • Qualification evaluated against each test’s configured target</p></div><div class="filter-note"><strong>Period:</strong> ' + escapeReportHtml(from) + ' to ' + escapeReportHtml(to) + '<br><strong>Tests:</strong> ' + escapeReportHtml(testLabel) + '</div></section><section class="summary"><div class="metric"><span>Total candidates</span><strong>' + candidateCount + '</strong></div><div class="metric"><span>Total attempts</span><strong>' + sorted.length + '</strong></div><div class="metric qualify"><span>Total qualify</span><strong>' + qualified + '</strong></div><div class="metric fail"><span>Total fail</span><strong>' + failed + '</strong></div><div class="metric rate"><span>Qualifying percentage</span><strong>' + percentage + '%</strong></div></section><div class="table-wrap"><table><thead><tr><th>Sr. No.</th><th>Candidate name / ID</th><th>Test name</th><th>Language</th><th>Gross WPM</th><th>Net WPM</th><th>Accuracy</th><th>Total errors</th><th>Time</th><th>Attempt date &amp; time</th><th>Result</th></tr></thead><tbody>' + rows + '</tbody></table></div><footer class="report-footer"><div><strong>Decoding HCM</strong><br>Typing practice and performance tracking</div><div class="links"><a href="https://decoding-hcm.vercel.app/">Website</a><a href="https://www.youtube.com/@decoding_hcm">YouTube</a><a href="https://t.me/decoding_hcm">Telegram Group</a><a href="https://t.me/defense_aspirants">PDF &amp; Study Material</a></div></footer><p class="disclaimer">Qualification is calculated using the selected test’s configured target net WPM and minimum accuracy. If a test has no configured threshold for a metric, that metric is not used as a pass condition. This is a practice report and does not replace official recruitment criteria.</p></main><script>window.addEventListener("load",function(){setTimeout(function(){window.focus();window.print()},450)});<\/script></body></html>';
+        printWindow.document.open();
+        printWindow.document.write(reportHtml);
+        printWindow.document.close();
+    }
 
     function createAttemptsTable(
         attempts,
@@ -1435,6 +1413,7 @@ async function loadDashboard() {
                             <th>Net WPM</th>
                             <th>Accuracy</th>
                             <th>Errors</th>
+                            <th>Result</th>
                             <th>Date</th>
 
                         </tr>
@@ -1489,18 +1468,9 @@ async function loadDashboard() {
                                 </td>
 
 
-                                <td>
-                                    ${Number(
-                                        attempt.total_errors || 0
-                                    )}
-                                </td>
-
-
-                                <td>
-                                    ${formatDate(
-                                        attempt.created_at
-                                    )}
-                                </td>
+                                <td>${Number(attempt.total_errors || 0)}</td>
+                                <td><span class="status-badge ${attemptQualified(attempt) ? 'active' : 'inactive'}">${attemptQualified(attempt) ? 'QUALIFY' : 'FAIL'}</span></td>
+                                <td>${formatDate(attempt.created_at)}</td>
 
                             </tr>
 
@@ -1842,41 +1812,30 @@ async function loadDashboard() {
 
 
     function setupAttemptActions() {
-
-
-        $('refresh-attempts')
-            ?.addEventListener(
-                'click',
-                loadAllAttempts
-            );
-
-
-        $('export-attempts')
-            ?.addEventListener(
-                'click',
-                exportAttemptsCSV
-            );
-
-
-        $('attempt-search')
-            ?.addEventListener(
-                'input',
-                renderFilteredAttempts
-            );
-
-
-        $('attempt-test-filter')
-            ?.addEventListener(
-                'change',
-                renderFilteredAttempts
-            );
-
-
-        $('attempt-language-filter')
-            ?.addEventListener(
-                'change',
-                renderFilteredAttempts
-            );
+        $('refresh-attempts')?.addEventListener('click', loadAllAttempts);
+        $('export-attempts')?.addEventListener('click', exportAttemptsCSV);
+        $('export-results-pdf')?.addEventListener('click', exportResultsPDF);
+        ['attempt-search','attempt-language-filter','report-result-filter','report-date-from','report-date-to','report-test-filter'].forEach(id => {
+            $(id)?.addEventListener('input', renderFilteredAttempts);
+            $(id)?.addEventListener('change', renderFilteredAttempts);
+        });
+        $('report-select-all-tests')?.addEventListener('click', () => {
+            const select = $('report-test-filter');
+            if (select) [...select.options].forEach(option => option.selected = true);
+            renderFilteredAttempts();
+        });
+        $('report-clear-tests')?.addEventListener('click', () => {
+            const select = $('report-test-filter');
+            if (select) [...select.options].forEach(option => option.selected = false);
+            renderFilteredAttempts();
+        });
+        $('report-reset-filters')?.addEventListener('click', () => {
+            ['report-date-from','report-date-to','attempt-search'].forEach(id => { if ($(id)) $(id).value = ''; });
+            ['report-result-filter','attempt-language-filter'].forEach(id => { if ($(id)) $(id).value = ''; });
+            const select = $('report-test-filter');
+            if (select) [...select.options].forEach(option => option.selected = false);
+            renderFilteredAttempts();
+        });
     }
 
 
