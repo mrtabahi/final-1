@@ -7,6 +7,7 @@
     <title>Decoding HCM Typing Test Lab | BSF HCM Typing Practice</title>
     <meta name="description" content="Professional BSF HCM typing practice platform with English and Hindi typing tests, speed, accuracy, errors, results and performance tracking.">
     <link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix">
+    <link rel="stylesheet" href="css/scorecard-print.css?v=20261023-professional-pdf">
     <link rel="stylesheet" href="css/typing.css?v=20261023-wordwrap-analysis1">
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -109,7 +110,16 @@
         <!-- STEP 4: RESULT SCORECARD -->
         <div id="result-section" style="display: none;">
             <div class="scorecard">
-                <span class="eyebrow">ATTEMPT COMPLETE</span><h2>Typing test results</h2><p class="result-intro">Choose a scoring formula to compare your performance. Your measured attempt time is used for both calculations.</p><div id="result-save-status" class="result-save-status" role="status" aria-live="polite" hidden></div><div class="formula-switch" role="group" aria-label="Choose result scoring formula"><button type="button" id="formula-bsf" class="formula-option is-active" aria-pressed="true"><span>01</span><strong>BSF Typing Formula</strong><small>Sequence-based error review</small></button><button type="button" id="formula-crpf" class="formula-option" aria-pressed="false"><span>02</span><strong>CRPF Typing Formula</strong><small>Position-based error review</small></button></div><p id="formula-note" class="formula-note">BSF practice mode selected. Verify the latest recruitment notice for official assessment rules.</p>
+                <header class="result-pdf-header">
+                    <div class="result-pdf-brand"><span class="result-pdf-mark">D</span><div><h1>Decoding HCM Typing Platform</h1><p>Typing Performance Report</p></div></div>
+                    <div class="result-pdf-meta"><div><span>Candidate Name</span><strong id="res-candidate-name">—</strong></div><div><span>Report Date</span><strong id="res-report-date">—</strong></div></div>
+                    <nav class="result-pdf-links" aria-label="Decoding HCM links">
+                        <a href="https://decoding-hcm.vercel.app/" target="_blank" rel="noopener noreferrer">Website: decoding-hcm.vercel.app</a>
+                        <a href="https://www.youtube.com/@decoding_hcm" target="_blank" rel="noopener noreferrer">YouTube: Decoding HCM</a>
+                        <a href="https://t.me/decoding_hcm" target="_blank" rel="noopener noreferrer">Telegram Group: @decoding_hcm</a>
+                    </nav>
+                </header>
+                <span class="eyebrow result-screen-only">ATTEMPT COMPLETE</span><h2>Typing test results</h2><p class="result-intro">Choose a scoring formula to compare your performance. Your measured attempt time is used for both calculations.</p><div id="result-save-status" class="result-save-status" role="status" aria-live="polite" hidden></div><div class="formula-switch" role="group" aria-label="Choose result scoring formula"><button type="button" id="formula-bsf" class="formula-option is-active" aria-pressed="true"><span>01</span><strong>BSF Typing Formula</strong><small>Sequence-based error review</small></button><button type="button" id="formula-crpf" class="formula-option" aria-pressed="false"><span>02</span><strong>CRPF Typing Formula</strong><small>Position-based error review</small></button></div><p id="formula-note" class="formula-note">BSF practice mode selected. Verify the latest recruitment notice for official assessment rules.</p>
                 <div id="result-status-badge" class="score-status badge-success">QUALIFIED</div>
                 
                 <section class="result-metrics" aria-label="Typing result calculations">
