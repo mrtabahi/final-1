@@ -298,3 +298,9 @@
 /* Keep the passage viewport stable while auto-scrolling the current character. */
 .passage-display{scroll-behavior:auto;scroll-padding-block:35%;}
 #btn-auto-scroll:disabled{opacity:.78;cursor:not-allowed;}
+
+/* Error comparison: one bracket for a consecutive run of errors. */
+.result-error-group{display:inline;border-radius:4px;padding:0 .12em}
+.result-token-wrong{color:#dc2626;font-weight:700}
+.result-token-extra{color:#ea580c;font-weight:700}
+.result-token-missing{color:#2563eb;font-weight:700}
