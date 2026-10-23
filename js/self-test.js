@@ -111,8 +111,11 @@ function autoScrollTyping(){
  const approxChars=Math.max(18,Math.floor((typed.clientWidth-parseFloat(style.paddingLeft||0)-parseFloat(style.paddingRight||0))/(parseFloat(style.fontSize||16)*.62)));
  const visualLines=explicitLines+text.split('\\n').reduce((n,line)=>n+Math.max(0,Math.ceil(line.length/approxChars)-1),0);
  if(visualLines>=3)typed.scrollTop=Math.max(0,(visualLines-2)*lineHeight);
- const passageLines=original.slice(0,typed.value.length).split('\\n').length;
- if(passageLines>=3)passage.scrollTop=Math.max(0,(passageLines-2)*parseFloat(getComputedStyle(passage).lineHeight));
+ const passageStyle=getComputedStyle(passage),passageFont=parseFloat(passageStyle.fontSize)||17;
+ const passageCharsPerLine=Math.max(20,Math.floor(passage.clientWidth/(passageFont*.62)));
+ const reachedText=original.slice(0,typed.value.length);
+ const passageVisualLines=reachedText.split('\\n').reduce((n,line)=>n+Math.max(1,Math.ceil(line.length/passageCharsPerLine)),0);
+ if(passageVisualLines>=3)passage.scrollTop=Math.max(0,(passageVisualLines-2)*(parseFloat(passageStyle.lineHeight)||32));
 }
 $('self-formula').addEventListener('change',()=>{scoringFormula=$('self-formula').value==='crpf'?'crpf':'bsf';updateLive()});
 $('self-save-passage').addEventListener('click',()=>{const text=source.value.trim();if(!text){$('self-save-message').textContent='Pehle passage paste ya type karein.';source.focus();return}const items=readSaved();if(items.length>=MAX_SAVED){$('self-save-message').textContent='Maximum 5 passages save ho sakte hain. Pehle ek delete karein.';return}const id=Date.now();items.push({id,title:'Passage '+(items.length+1)+' · '+new Date(id).toLocaleDateString(),text});if(writeSaved(items)){refreshSaved(id);$('self-save-message').textContent='Passage saved. Aap ise baad mein select karke load kar sakte hain.'}});
