@@ -29,10 +29,13 @@ const ScoringEngine = {
       const del=i<n?1+dp[i+1][j]:Infinity;
       const ins=j<m?1+dp[i][j+1]:Infinity;
       const best=dp[i][j];
-      // Prefer deletion over substitution/insertion on ties, preserving the
-      // earliest plausible typed-to-original position after a missing word.
-      if(del===best){out.push({type:"delete",expected:expectedWords[i],typed:null});i++;}
-      else if(sub===best){out.push({type:"substitute",expected:expectedWords[i],typed:typedWords[j]});i++;j++;}
+      // Prefer a substitution over delete+insert when the edit distance ties.
+      // This keeps a misspelled/incomplete word (e.g. "th" for "the") attached
+      // to its intended slot, instead of shifting all later words by one.
+      // Exact matches are still consumed from left to right, so repeated words
+      // do not jump to a later duplicate and mark the intervening words omitted.
+      if(sub===best){out.push({type:"substitute",expected:expectedWords[i],typed:typedWords[j]});i++;j++;}
+      else if(del===best){out.push({type:"delete",expected:expectedWords[i],typed:null});i++;}
       else if(ins===best){out.push({type:"insert",expected:null,typed:typedWords[j]});j++;}
       else throw new Error("Unable to align typed words");
     }
