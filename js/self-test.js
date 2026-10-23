@@ -29,17 +29,49 @@ function updateLive(){
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const formatTime=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 function renderPassage(){
- const input=typed.value; let html='';
+ const input=typed.value;
+ const statuses=new Array(original.length).fill('');
+ const expectedTokens=[...original.matchAll(/\\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
+ const typedTokens=[...input.matchAll(/\\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
+ const alignment=ScoringEngine.alignWords(expectedTokens.map(x=>x.text),typedTokens.map(x=>x.text));
+ function mapWordChars(expected,typedWord,start){
+  const n=expected.length,m=typedWord.length;
+  const dp=Array.from({length:n+1},()=>Array(m+1).fill(0));
+  for(let i=0;i<=n;i++)dp[i][0]=i;
+  for(let j=0;j<=m;j++)dp[0][j]=j;
+  for(let i=1;i<=n;i++)for(let j=1;j<=m;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(expected[i-1]===typedWord[j-1]?0:1));
+  let i=n,j=m;
+  while(i>0||j>0){
+   if(i>0&&j>0&&expected[i-1]===typedWord[j-1]&&dp[i][j]===dp[i-1][j-1]){statuses[start+i-1]='self-char-correct';i--;j--;}
+   else if(i>0&&j>0&&dp[i][j]===dp[i-1][j-1]+1){statuses[start+i-1]='self-char-wrong';i--;j--;}
+   else if(i>0&&dp[i][j]===dp[i-1][j]+1){statuses[start+i-1]='self-char-wrong';i--;}
+   else {if(i>0)statuses[start+i-1]='self-char-wrong';j--;}
+  }
+ }
+ let expectedIndex=0,typedIndex=0;
+ for(const item of alignment){
+  if(item.type==='match'||item.type==='substitute'){
+   const e=expectedTokens[expectedIndex],t=typedTokens[typedIndex];
+   if(e&&t)mapWordChars(e.text,t.text,e.start);
+   expectedIndex++;typedIndex++;
+  }else if(item.type==='delete'){
+   const e=expectedTokens[expectedIndex];
+   const hasTypedAfter=typedIndex<typedTokens.length;
+   if(e&&hasTypedAfter)for(let p=e.start;p<e.end;p++)statuses[p]='self-char-wrong';
+   expectedIndex++;
+  }else if(item.type==='insert'){typedIndex++;}
+ }
+ let html='';
  for(let i=0;i<original.length;){
   const ch=original[i];
-  if(ch==='\n'){html+='<br>';i++;continue}
-  if(/\s/.test(ch)){html+=ch===' '?'&nbsp;':esc(ch);i++;continue}
-  let end=i+1;while(end<original.length&&original[end]!=='\n'&&!/\s/.test(original[end]))end++;
+  if(ch==='\\n'){html+='<br>';i++;continue}
+  if(ch==='\\r'){i++;continue}
+  if(/\\s/u.test(ch)){html+=ch===' '?' ':'<br>';i++;continue}
+  let end=i+1;while(end<original.length&&original[end]!=='\\n'&&original[end]!=='\\r'&&!/\\s/u.test(original[end]))end++;
   html+='<span class="self-word">';
   for(let j=i;j<end;j++){
-   const char=original[j],done=j<input.length;
-   const cls=highlight&&done?(input[j]===char?'self-char-correct':'self-char-wrong'):'';
-   const value=esc(char);
+   const cls=highlight?statuses[j]:'';
+   const value=esc(original[j]);
    html+=cls?'<span class="'+cls+'">'+value+'</span>':value;
   }
   html+='</span>';i=end;
