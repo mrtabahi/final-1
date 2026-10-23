@@ -498,7 +498,7 @@ async function loadDashboard() {
                         </strong>
 
                         <small>
-                            ${esc(folder.description || 'No description')} · ${folderTests.length} test(s) · ${activeCount} active · ${folderTests.reduce((sum, test) => sum + String(test.passage || '').trim().split(/\\s+/).filter(Boolean).length, 0).toLocaleString()} total words
+                            ${esc(folder.description || 'No description')} · ${folderTests.length} test(s) · ${activeCount} active · ${folderTests.reduce((sum, test) => sum + String(test.passage || '').trim().split(/\s+/).filter(Boolean).length, 0).toLocaleString()} total words
                         </small>
 
                     </div>
@@ -711,7 +711,7 @@ async function loadDashboard() {
                             </td>
 
 
-                            <td>${String(test.passage || '').trim().split(/\\s+/).filter(Boolean).length.toLocaleString()}</td>
+                            <td>${String(test.passage || '').trim().split(/\s+/).filter(Boolean).length.toLocaleString()}</td>
                             <td>${Number(test.target_wpm || 0)}</td>
 
 
@@ -784,7 +784,7 @@ async function loadDashboard() {
         });
         const count = $('library-test-count');
         if (count) count.textContent = filtered.length + ' of ' + cachedTests.length + ' tests · ' +
-            filtered.reduce((sum, test) => sum + String(test.passage || '').trim().split(/\\s+/).filter(Boolean).length, 0).toLocaleString() + ' words';
+            filtered.reduce((sum, test) => sum + String(test.passage || '').trim().split(/\s+/).filter(Boolean).length, 0).toLocaleString() + ' words';
         renderTests(filtered);
         const testBox = $('manage-tests-list');
         testBox?.querySelectorAll('[data-test-edit]').forEach(button => button.addEventListener('click', () => openEditTest(button.dataset.testEdit)));
