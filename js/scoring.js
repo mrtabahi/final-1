@@ -9,22 +9,32 @@ const ScoringEngine = {
   alignWords(expectedWords, typedWords) {
     const n=expectedWords.length,m=typedWords.length;
     if((n+1)*(m+1)>2000000) return this.positionalAlignment(expectedWords,typedWords);
+    // Suffix edit-distance + forward traceback. When duplicate words can match
+    // multiple positions, take the earliest expected occurrence that preserves
+    // the minimum edit distance, rather than backtracking into a later duplicate
+    // and falsely marking all intervening words as omitted.
     const dp=Array.from({length:n+1},()=>Array(m+1).fill(0));
-    const op=Array.from({length:n+1},()=>Array(m+1).fill(""));
-    for(let i=1;i<=n;i++){dp[i][0]=i;op[i][0]="delete";}
-    for(let j=1;j<=m;j++){dp[0][j]=j;op[0][j]="insert";}
-    for(let i=1;i<=n;i++)for(let j=1;j<=m;j++){
-      if(expectedWords[i-1]===typedWords[j-1]){dp[i][j]=dp[i-1][j-1];op[i][j]="match";continue;}
-      const sub=dp[i-1][j-1]+1,del=dp[i-1][j]+1,ins=dp[i][j-1]+1,best=Math.min(sub,del,ins);
-      if(best===sub){dp[i][j]=sub;op[i][j]="substitute";}
-      else if(best===del){dp[i][j]=del;op[i][j]="delete";}
-      else{dp[i][j]=ins;op[i][j]="insert";}
+    for(let i=n;i>=0;i--)dp[i][m]=n-i;
+    for(let j=m;j>=0;j--)dp[n][j]=m-j;
+    for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--){
+      if(expectedWords[i]===typedWords[j])dp[i][j]=dp[i+1][j+1];
+      else dp[i][j]=1+Math.min(dp[i+1][j+1],dp[i+1][j],dp[i][j+1]);
     }
-    const out=[];let i=n,j=m;
-    while(i>0||j>0){const a=i===0?"insert":j===0?"delete":op[i][j];
-      if(a==="match"||a==="substitute"){out.unshift({type:a,expected:expectedWords[i-1],typed:typedWords[j-1]});i--;j--;}
-      else if(a==="delete"){out.unshift({type:"delete",expected:expectedWords[i-1],typed:null});i--;}
-      else{out.unshift({type:"insert",expected:null,typed:typedWords[j-1]});j--;}
+    const out=[];let i=0,j=0;
+    while(i<n||j<m){
+      if(i<n&&j<m&&expectedWords[i]===typedWords[j]&&dp[i][j]===dp[i+1][j+1]){
+        out.push({type:"match",expected:expectedWords[i],typed:typedWords[j]});i++;j++;continue;
+      }
+      const sub=i<n&&j<m?1+dp[i+1][j+1]:Infinity;
+      const del=i<n?1+dp[i+1][j]:Infinity;
+      const ins=j<m?1+dp[i][j+1]:Infinity;
+      const best=dp[i][j];
+      // Prefer deletion over substitution/insertion on ties, preserving the
+      // earliest plausible typed-to-original position after a missing word.
+      if(del===best){out.push({type:"delete",expected:expectedWords[i],typed:null});i++;}
+      else if(sub===best){out.push({type:"substitute",expected:expectedWords[i],typed:typedWords[j]});i++;j++;}
+      else if(ins===best){out.push({type:"insert",expected:null,typed:typedWords[j]});j++;}
+      else throw new Error("Unable to align typed words");
     }
     return out;
   },
