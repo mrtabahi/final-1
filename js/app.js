@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
             modeSwitchButton.textContent='Typing mode: '+(mode==='page'?'Off-screen':'On-screen')+(modeLocked?' — locked':' — switch before typing');
             modeSwitchButton.disabled=modeLocked;
         }
+        if(autoScrollButton)autoScrollButton.hidden=mode!=='screen';
         if(engine)engine.mode=mode;
     }
     function lockTypingMode(){
