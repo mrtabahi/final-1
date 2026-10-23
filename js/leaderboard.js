@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", async () => {
  const body=document.getElementById("leaderboard-body"), message=document.getElementById("leaderboard-message");
  if(!supabaseClient||!body)return;
  const esc=v=>String(v??"-").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+ const fmt=v=>v==null||v===""?"-":(Number.isFinite(Number(v))?Number(v).toFixed(2):String(v));
  const date=v=>{if(!v)return "-";const d=new Date(v);return Number.isNaN(d.getTime())?"-":d.toLocaleString()};
  const compareField=(a,b,key,direction)=>{
   const av=a[key]==null?null:Number(a[key]),bv=b[key]==null?null:Number(b[key]);
@@ -28,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
    String(a.id||"").localeCompare(String(b.id||""))
   ).slice(0,50);
   if(!all.length){body.innerHTML='<tr><td colspan="9">No entries found on leaderboard.</td></tr>';if(message)message.textContent="";return;}
-  body.innerHTML=all.map((a,i)=>`<tr><td><strong>#${i+1}</strong></td><td>${esc(a.candidate_name)}${a.manual?' <small>(Admin entry)</small>':''}</td><td>${esc(a.language)}</td><td>${esc(a.test_name)}</td><td>${esc(a.duration_seconds)}</td><td>${esc(date(a.created_at))}</td><td>${esc(a.gross_wpm)}</td><td><strong style="color:var(--primary-blue)">${esc(a.net_wpm)} WPM</strong></td><td>${a.accuracy==null?"-":esc(a.accuracy)+"%"}</td></tr>`).join("");
+  body.innerHTML=all.map((a,i)=>`<tr><td><strong>#${i+1}</strong></td><td>${esc(a.candidate_name)}${a.manual?' <small>(Admin entry)</small>':''}</td><td>${esc(a.language)}</td><td>${esc(a.test_name)}</td><td>${esc(a.duration_seconds)}</td><td>${esc(date(a.created_at))}</td><td>${esc(fmt(a.gross_wpm))}</td><td><strong style="color:var(--primary-blue)">${esc(fmt(a.net_wpm))} WPM</strong></td><td>${a.accuracy==null?"-":esc(fmt(a.accuracy))+"%"}</td></tr>`).join("");
   if(message)message.textContent="";
  }catch(error){
   console.error("Leaderboard load failed",error);
