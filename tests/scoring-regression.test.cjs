@@ -88,3 +88,20 @@ test('capitalization and punctuation are reported as separate primary categories
   assert.equal(caps.errorBreakdown.capitalizationErrors, 1);
   assert.equal(punct.errorBreakdown.punctuationErrors, 1);
 });
+
+
+test('gross-speed keystrokes are capped by original word lengths and separators', () => {
+  const passage = 'cat dog';
+  const normal = scoring.calculateScore(passage, 'cat dog', 60, config, null, 'bsf');
+  const inflated = scoring.calculateScore(passage, 'cat extraordinarilylongword dog', 60, config, null, 'bsf');
+  assert.equal(normal.totalKeystrokes, 7);
+  assert.equal(inflated.totalKeystrokes, 7);
+  assert.equal(inflated.grossWpm, normal.grossWpm);
+});
+
+test('allowed errors are an exact 5 percent of capped equivalent words', () => {
+  const score = scoring.calculateScore('abcdefghij', 'abcdefghij', 60, config, null, 'bsf');
+  assert.equal(score.totalKeystrokes, 10);
+  assert.equal(score.allowedErrors, 0.1);
+  assert.equal(score.freeErrors, 0.1);
+});
