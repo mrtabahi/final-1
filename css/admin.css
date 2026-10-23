@@ -67,3 +67,13 @@
 .folder-action-stack{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}.folder-test-drawer{margin:-.25rem 0 .8rem 56px;padding:.7rem;border:1px solid #d9e4f1;border-radius:12px;background:#f6f9fe;display:grid;gap:.5rem}.folder-test-drawer[hidden]{display:none}
 .folder-test-drawer-row{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;padding:.65rem .75rem;background:#fff;border:1px solid #e0e8f2;border-radius:9px}.folder-test-drawer-row>div{flex:1;min-width:160px}.folder-test-drawer-row strong,.folder-test-drawer-row small{display:block}.folder-test-drawer-row strong{font-size:.8rem;color:#203956}.folder-test-drawer-row small{font-size:.68rem;color:#52647c;margin-top:.2rem}.folder-test-drawer-row .admin-btn{padding:.42rem .65rem;font-size:.7rem}
 @media(max-width:650px){.folder-test-drawer{margin-left:0}.folder-test-drawer-row{align-items:flex-start}.folder-action-stack{justify-content:flex-start}}
+
+
+/* High-visibility feature descriptions: warm yellow glow on deep, blurred glass-black tooltip. */
+.admin-body [data-tooltip]{position:relative}
+.admin-body [data-tooltip]::after{content:attr(data-tooltip);position:absolute;left:50%;bottom:calc(100% + 10px);z-index:9999;width:max-content;max-width:min(320px,82vw);white-space:normal;text-align:left;line-height:1.5;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:.82rem;font-weight:800;letter-spacing:.01em;padding:.72rem .9rem;border:1px solid rgba(250,204,21,.85);border-radius:10px;background:rgba(2,5,12,.94);color:#ffe96a;text-shadow:0 0 7px rgba(250,204,21,.7),0 0 16px rgba(250,204,21,.28);box-shadow:0 10px 30px rgba(0,0,0,.58),0 0 0 1px rgba(250,204,21,.12),0 0 22px rgba(250,204,21,.22);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,5px);transition:opacity .16s ease,transform .16s ease,visibility .16s}
+.admin-body [data-tooltip]:hover::after,.admin-body [data-tooltip]:focus-visible::after{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.admin-body .admin-module-grid button:hover strong,.admin-body .admin-quick-actions button:hover strong{color:#b45309;text-shadow:0 0 8px rgba(250,204,21,.75),0 1px 12px rgba(250,204,21,.35)}
+.admin-body .admin-nav-link:hover{color:#ffed78;text-shadow:0 0 9px rgba(250,204,21,.48)}
+@media(max-width:600px){.admin-body [data-tooltip]::after{left:auto;right:0;transform:translateY(5px);max-width:min(270px,78vw)}.admin-body [data-tooltip]:hover::after,.admin-body [data-tooltip]:focus-visible::after{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.admin-body [data-tooltip]::after{transition:none}}
