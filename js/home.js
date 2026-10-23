@@ -1,7 +1,7 @@
 /* Public landing page: homepage stays open; tools require candidate login. */
 (function(){
   const protectedTargets = new Set(['Typing_test.html','self-test.html','materials.html','my_results.html','leaderboard.html','my_account.html','start_test.html']);
-  function localTarget(url){return url.pathname.replace(/^\\//,'') + url.search + url.hash;}
+  function localTarget(url){return url.pathname.split('/').filter(Boolean).join('/') + url.search + url.hash;}
   function addHomeStyles(){document.body.classList.add('home-public');}
   function escapeText(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function prettyType(type){return ({offer:'Limited-time offer',notice:'Notice',announcement:'Announcement',event:'Upcoming event',maintenance:'Service update',featured:'Featured update'})[type]||'Update';}
