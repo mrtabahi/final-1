@@ -65,7 +65,50 @@
       attempts=data||[];
       const avg=attempts.length?attempts.reduce((s,a)=>s+Number(a.net_wpm||0),0)/attempts.length:0;
       body.innerHTML=`<div class="candidate-profile-summary"><div class="candidate-avatar large">${esc(initials(selected.full_name))}</div><div><h3>${esc(selected.full_name||'Unnamed candidate')}</h3><p>${esc(selected.email||'No email')} · ${esc(selected.phone||'No phone')}</p><small>Joined ${esc(date(selected.created_at))} · ${selected.phone_verified?'Phone verified':'Phone not verified'}</small></div></div><div class="candidate-detail-stats"><article><span>Attempts loaded</span><strong>${attempts.length}</strong></article><article><span>Average net WPM</span><strong>${avg.toFixed(2)}</strong></article><article><span>Average accuracy</span><strong>${attempts.length?(attempts.reduce((s,a)=>s+Number(a.accuracy||0),0)/attempts.length).toFixed(2)+'%':'—'}</strong></article></div><div class="candidate-history-heading"><h3>Recent typing attempts</h3><span>Latest 50 records</span></div>${attempts.length?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>Date</th><th>Test</th><th>Language</th><th>Net WPM</th><th>Accuracy</th><th>Errors</th></tr></thead><tbody>'+attempts.map(a=>'<tr><td>'+esc(date(a.created_at))+'</td><td>'+esc(a.tests?.title||'Practice test')+'</td><td>'+esc(a.language||'—')+'</td><td>'+Number(a.net_wpm||0).toFixed(2)+'</td><td>'+Number(a.accuracy||0).toFixed(2)+'%</td><td>'+Number(a.total_errors||0)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="admin-empty">No submitted attempts found for this candidate.</div>'}`;
+      await renderCandidatePermissions(selected);
     } catch(e) { body.innerHTML='<div class="admin-error">Could not load attempt history: '+esc(e.message)+'</div>'; }
+  }
+  const permissionDefinitions = [
+    ['folder_tests','Folders & Tests','Create and manage folders and typing tests.'],
+    ['results_attempts','Results & Attempts','Read candidate test results and attempts.'],
+    ['study_materials','PDF & Study Material','Create and manage study material links.'],
+    ['website_content','Website Content','Manage public announcements and content cards.'],
+    ['website_settings','Website Settings','Change supported website visibility and ad settings.']
+  ];
+  async function renderCandidatePermissions(candidate) {
+    const body=$('candidate-detail-content'); if(!body)return;
+    const section=document.createElement('section');
+    section.className='candidate-permissions-panel admin-panel';
+    section.innerHTML='<div class="admin-panel-heading"><div><h2>Permissions &amp; staff access</h2><p>Grant selected management features without promoting this account to admin.</p></div><span class="candidate-permission-badge">Limited role</span></div><div class="candidate-permission-list"><div class="admin-empty">Loading saved permissions…</div></div><div class="candidate-permission-footer"><span class="candidate-permission-status" role="status">Permissions are not changed until saved.</span><button type="button" class="admin-btn admin-btn-primary" data-permissions-save>Save permissions</button></div>';
+    body.appendChild(section);
+    const list=section.querySelector('.candidate-permission-list'),status=section.querySelector('.candidate-permission-status'),save=section.querySelector('[data-permissions-save]');
+    let current={};
+    try {
+      const {data,error}=await supabaseClient.from('candidate_permissions').select('permissions').eq('user_id',candidate.id).maybeSingle();
+      if(error)throw error;
+      current=data?.permissions||{};
+      list.innerHTML=permissionDefinitions.map(([key,label,description])=>'<label class="candidate-permission-row"><span class="candidate-permission-copy"><strong>'+esc(label)+'</strong><small>'+esc(description)+'</small></span><input type="checkbox" data-permission="'+key+'" '+(current[key]===true?'checked':'')+'><span class="candidate-permission-switch" aria-hidden="true"></span></label>').join('');
+      status.textContent='Current permissions loaded · '+permissionDefinitions.filter(([key])=>current[key]===true).length+' enabled';
+    } catch(error) {
+      list.innerHTML='<div class="admin-error">Could not load permissions: '+esc(error.message||'database request failed')+'</div>';
+      save.disabled=true; return;
+    }
+    save.addEventListener('click',async()=>{
+      const permissions={};
+      list.querySelectorAll('[data-permission]').forEach(input=>permissions[input.dataset.permission]=input.checked);
+      save.disabled=true;save.textContent='Saving…';status.textContent='Saving permissions…';
+      try {
+        const user=await supabaseClient.auth.getUser();
+        if(user.error||!user.data?.user)throw new Error('Admin session is no longer valid. Please sign in again.');
+        const {error}=await supabaseClient.from('candidate_permissions').upsert({user_id:candidate.id,permissions,granted_by:user.data.user.id,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+        if(error)throw error;
+        status.textContent='Saved successfully · '+permissionDefinitions.filter(([key])=>permissions[key]).length+' permissions enabled';
+        status.classList.add('is-saved');
+      } catch(error) {
+        status.textContent='Save failed: '+(error.message||'database request failed');
+        status.classList.remove('is-saved');
+      } finally {save.disabled=false;save.textContent='Save permissions';}
+    });
   }
   window.renderCandidatesModule = renderShell;
 })();
