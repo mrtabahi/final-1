@@ -63,6 +63,7 @@
     ===================================================== */
 
     let currentView = 'dashboard';
+    let viewRenderSequence = 0;
 
     let cachedAttempts = [];
 
@@ -128,6 +129,7 @@
     ===================================================== */
 
     function showAdminView(view) {
+        const renderSequence = ++viewRenderSequence;
         const views = { dashboard: $('view-dashboard'), tests: $('view-tests'), attempts: $('view-attempts'), module: $('view-module') };
         const isCore = ['dashboard', 'tests', 'attempts'].includes(view);
         const target = isCore ? views[view] : views.module;
@@ -169,17 +171,17 @@
         }
         if (view === 'analytics') {
             updatePageHeader(view);
-            renderAnalyticsModule();
+            renderAnalyticsModule(renderSequence);
             return;
         }
         if (view === 'security') {
             updatePageHeader(view);
-            renderSecurityAuditModule();
+            renderSecurityAuditModule(renderSequence);
             return;
         }
         if (view === 'settings') {
             updatePageHeader(view);
-            renderWebsiteSettingsModule();
+            renderWebsiteSettingsModule(renderSequence);
             return;
         }
 
@@ -215,7 +217,7 @@
     }
 
 
-    async function renderAnalyticsModule() {
+    async function renderAnalyticsModule(renderSequence = viewRenderSequence) {
         const heading=$('module-title'), sub=$('module-subtitle'), box=$('module-capabilities');
         const status=$('module-status-title'), copy=$('module-status-copy');
         if(heading) heading.textContent='Analytics & Reports';
@@ -229,6 +231,7 @@
                 .select('id,net_wpm,gross_wpm,accuracy,total_errors,created_at,tests(title)')
                 .order('created_at',{ascending:false}).limit(1000);
             if(error) throw error;
+            if (renderSequence !== viewRenderSequence || currentView !== 'analytics') return;
             const rows=data||[];
             const validWpm=rows.map(r=>Number(r.net_wpm)).filter(Number.isFinite);
             const validAcc=rows.map(r=>Number(r.accuracy)).filter(Number.isFinite);
@@ -256,12 +259,13 @@
                 const a=document.createElement('a');a.href=url;a.download='analytics-report.csv';a.click();URL.revokeObjectURL(url);
             });
         } catch(error) {
+            if (renderSequence !== viewRenderSequence || currentView !== 'analytics') return;
             console.error('Analytics report error:',error);
             box.innerHTML='<div class="admin-error">Analytics could not be loaded. Check the attempts table permissions and database connection, then use Refresh to try again.</div>';
         }
     }
 
-    async function renderSecurityAuditModule() {
+    async function renderSecurityAuditModule(renderSequence = viewRenderSequence) {
         const heading=$('module-title'), sub=$('module-subtitle'), box=$('module-capabilities');
         if(heading) heading.textContent='Security & Audit';
         if(sub) sub.textContent='Review recorded admin actions and recent suspicious activity.';
@@ -274,11 +278,13 @@
                 supabaseClient.from('attempts').select('id,suspicious_events,created_at').order('created_at',{ascending:false}).limit(500),
                 supabaseClient.from('profiles').select('id,role,email,full_name').order('created_at',{ascending:false})
             ]);
+            if (renderSequence !== viewRenderSequence || currentView !== 'security') return;
             const auditError=auditResult.error, rows=auditResult.data||[];
             const suspicious=(suspiciousResult.data||[]).filter(r=>Array.isArray(r.suspicious_events)&&r.suspicious_events.length>0);
             const allProfiles=profileResult.data||[];
             const admins=allProfiles.filter(p=>p.role==='admin');
             const {data:authData}=await supabaseClient.auth.getUser();
+            if (renderSequence !== viewRenderSequence || currentView !== 'security') return;
             const currentEmail=String(authData?.user?.email||'').toLowerCase();
             const isHeadAdmin=currentEmail==='decodinghcm@gmail.com';
             const dateFmt=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString();};
@@ -319,12 +325,13 @@
             $('security-audit-refresh')?.addEventListener('click',renderSecurityAuditModule);
             $('security-audit-search')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();box.querySelectorAll('[data-audit-row]').forEach(row=>row.hidden=!row.dataset.search.includes(q));});
         } catch(error) {
+            if (renderSequence !== viewRenderSequence || currentView !== 'security') return;
             console.error('Security audit load failed:',error);
             box.innerHTML='<div class="admin-error">Security data could not be loaded. Check database connection and read policies.</div>';
         }
     }
 
-    async function renderWebsiteSettingsModule() {
+    async function renderWebsiteSettingsModule(renderSequence = viewRenderSequence) {
         const heading=$('module-title'), sub=$('module-subtitle'), box=$('module-capabilities');
         if(heading) heading.textContent='Website Settings';
         if(sub) sub.textContent='Control the public sections and ad display options stored in your website database.';
@@ -334,6 +341,7 @@
         try {
             const {data,error}=await supabaseClient.from('ad_settings').select('id,ads_enabled,home_enabled,typing_listing_enabled,materials_enabled,density,updated_at').eq('id',1).maybeSingle();
             if(error) throw error;
+            if (renderSequence !== viewRenderSequence || currentView !== 'settings') return;
             if(!data) throw new Error('The singleton ad_settings row (id=1) does not exist.');
             const toggle=(key,label,desc)=>'<label class="admin-setting-row"><span><strong>'+label+'</strong><small>'+desc+'</small></span><input type="checkbox" name="'+key+'" '+(data[key]?'checked':'')+'><span class="admin-switch" aria-hidden="true"></span></label>';
             box.innerHTML=
@@ -365,6 +373,7 @@
                 } finally { save.disabled=false;save.textContent='Save settings'; }
             });
         } catch(error) {
+            if (renderSequence !== viewRenderSequence || currentView !== 'settings') return;
             console.error('Website settings load failed:',error);
             box.innerHTML='<div class="admin-error">Website settings could not be loaded: '+escHtml(error.message||'database request failed')+'</div>';
         }
