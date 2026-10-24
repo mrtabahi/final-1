@@ -12,7 +12,7 @@ const labels={
 let user=null,profile=null,permissions={},activeKey=null,editingId=null,folders=[],tests=[],materials=[],content=[];
 function alertMsg(message,error=false){const el=$('cw-alert');el.hidden=false;el.textContent=message;el.classList.toggle('is-error',error);window.scrollTo({top:0,behavior:'smooth'});}
 async function init(){
- if(!window.supabaseClient||!window.AuthManager){location.href='login.html';return;}
+ if(typeof supabaseClient === 'undefined' || !supabaseClient || typeof AuthManager === 'undefined'){ $('cw-view').innerHTML='<section class="cw-panel"><h2>Workspace loading issue</h2><p>Authentication helpers are not ready. Please refresh this page.</p></section>';return;}
  try{
   const auth=await AuthManager.isVerifiedCandidate();if(!auth.ok){location.href='login.html';return;}user=auth.user;profile=auth.profile;
   $('cw-user-name').textContent=profile.full_name||profile.email||'Candidate';
