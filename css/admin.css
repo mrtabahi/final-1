@@ -94,3 +94,5 @@
 .module-ready{font-style:normal;font-size:.64rem;color:#047857!important;background:#d1fae5;border-radius:5px;padding:.25rem .4rem;margin-top:auto}
 .candidate-row,.site-content-item,.admin-module-grid button{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
 @media(prefers-reduced-motion:reduce){.admin-body *, .admin-body *::before, .admin-body *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+.folder-test-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;padding:.25rem .15rem .45rem;color:#203956}.folder-test-drawer-head strong{font-size:.82rem;font-weight:800}.folder-test-drawer-head .admin-btn{white-space:nowrap}
