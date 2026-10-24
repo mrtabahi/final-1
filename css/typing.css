@@ -494,3 +494,38 @@
   .compact-tip-control::after,
   .self-toolbar-actions .compact-tip-control::after { transition:none!important; }
 }
+
+
+/* Final tooltip polish: high contrast, predictable placement, no neon glow. */
+.compact-tip-control,
+.self-toolbar-actions .compact-tip-control { position:relative!important; isolation:isolate!important; }
+.compact-tip-control:hover,
+.compact-tip-control:focus-visible,
+.self-toolbar-actions .compact-tip-control:hover,
+.self-toolbar-actions .compact-tip-control:focus-visible { z-index:10020!important; filter:none!important; }
+.compact-tip-control::after,
+.self-toolbar-actions .compact-tip-control::after {
+  left:50%!important; right:auto!important; top:calc(100% + 10px)!important; bottom:auto!important;
+  width: min(300px, calc(100vw - 32px))!important; max-width:calc(100vw - 32px)!important;
+  padding:12px 14px!important; border-radius:10px!important;
+  background:#102b46!important; color:#f8fafc!important; border:1px solid #54718d!important;
+  box-shadow:0 10px 26px rgba(15,23,42,.24),0 3px 8px rgba(15,23,42,.12)!important;
+  text-shadow:none!important; backdrop-filter:none!important; -webkit-backdrop-filter:none!important;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif!important;
+  font-size:13px!important; font-weight:500!important; line-height:1.5!important; letter-spacing:0!important;
+  text-align:left!important; white-space:normal!important; overflow-wrap:anywhere!important; word-break:normal!important;
+  box-sizing:border-box!important; transform:translate(-50%,-3px)!important;
+}
+.compact-tip-control:hover::after,
+.compact-tip-control:focus-visible::after,
+.self-toolbar-actions .compact-tip-control:hover::after,
+.self-toolbar-actions .compact-tip-control:focus-visible::after { transform:translate(-50%,0)!important; }
+@media(max-width:600px) {
+  .compact-tip-control::after,.self-toolbar-actions .compact-tip-control::after {
+    left:0!important; right:auto!important; width:min(280px,calc(100vw - 32px))!important;
+    max-width:calc(100vw - 32px)!important; transform:translate(0,-3px)!important;
+  }
+  .compact-tip-control:hover::after,.compact-tip-control:focus-visible::after,
+  .self-toolbar-actions .compact-tip-control:hover::after,.self-toolbar-actions .compact-tip-control:focus-visible::after { transform:translate(0,0)!important; }
+}
+@media(prefers-reduced-motion:reduce){.compact-tip-control::after,.self-toolbar-actions .compact-tip-control::after{transition:none!important}}
