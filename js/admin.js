@@ -2087,7 +2087,34 @@ async function loadDashboard() {
 
         setupAttemptActions();
         $('admin-menu-toggle')?.addEventListener('click', () => $('admin-sidebar')?.classList.toggle('is-open'));
-        $('admin-refresh')?.addEventListener('click', () => { if (currentView === 'dashboard') loadDashboard(); else if (currentView === 'tests') loadManageTests(); else if (currentView === 'attempts') loadAllAttempts(); else if (currentView === 'analytics') renderAnalyticsModule(); else if (currentView === 'security') renderSecurityAuditModule(); else if (currentView === 'settings') renderWebsiteSettingsModule(); else if (currentView === 'candidates') $('candidate-refresh')?.click(); else if (currentView === 'content') $('site-content-refresh')?.click(); });
+        $('admin-refresh')?.addEventListener('click', async () => {
+            const button = $('admin-refresh');
+            if (button?.disabled) return;
+            if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); }
+            try {
+                if (currentView === 'dashboard') await loadDashboard();
+                else if (currentView === 'tests') await loadManageTests();
+                else if (currentView === 'attempts') await loadAllAttempts();
+                else if (currentView === 'analytics') await renderAnalyticsModule();
+                else if (currentView === 'security') await renderSecurityAuditModule();
+                else if (currentView === 'settings') await renderWebsiteSettingsModule();
+                else if (currentView === 'candidates') {
+                    if (typeof window.renderCandidatesModule === 'function') await window.renderCandidatesModule();
+                    else $('candidate-refresh')?.click();
+                } else if (currentView === 'content') {
+                    if (typeof window.renderWebsiteContentModule === 'function') await window.renderWebsiteContentModule();
+                    else $('site-content-refresh')?.click();
+                } else {
+                    // Planned/future modules also get a visible refresh instead of a silent no-op.
+                    showAdminView(currentView);
+                }
+            } catch (error) {
+                console.error('Admin view refresh failed:', error);
+                window.alert('Refresh failed. Please try again. If this continues, check your connection and admin session.');
+            } finally {
+                if (button) { button.disabled = false; button.removeAttribute('aria-busy'); }
+            }
+        });
         if ($('admin-loading')) $('admin-loading').style.display = 'none';
         if ($('admin-app')) $('admin-app').style.display = 'flex';
 
