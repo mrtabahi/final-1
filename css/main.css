@@ -737,3 +737,19 @@ h1, h2, .typing-page-title {
 @keyframes homeCardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.home-announcements:before,.home-announcement-card{animation:none!important}.home-announcement-cta{transition:none}}
 @media(max-width:600px){.home-announcements{margin:.8rem .75rem 1rem;padding:1.15rem;border-radius:18px}.home-announcement-cta{width:100%}}
+
+/* Professional announcement cards: restrained sizing, balanced copy and aligned graphics */
+.home-announcements{max-width:1080px;padding:clamp(1rem,2.4vw,1.6rem);border-radius:20px;box-shadow:0 14px 38px #02061720}
+.home-announcement-kicker{font-size:.68rem;letter-spacing:.12em;margin-bottom:.7rem}
+.home-announcement-card{display:grid;grid-template-columns:minmax(0,1fr);align-items:center;gap:clamp(1rem,2.4vw,1.75rem);min-height:0}
+.home-announcement-card:has(.home-announcement-visual){grid-template-columns:minmax(220px,.78fr) minmax(0,1.22fr)}
+.home-announcement-visual{min-width:0;display:flex;align-items:center;justify-content:center;max-height:260px;overflow:hidden;border-radius:15px;background:#ffffff0b;border:1px solid #ffffff1a}
+.home-announcement-visual img{display:block;width:100%;height:clamp(150px,20vw,260px);object-fit:contain;object-position:center}
+.home-announcement-copy{min-width:0}
+.home-announcement-card h2{font-size:clamp(1.2rem,2.2vw,1.75rem);line-height:1.24;letter-spacing:-.025em;margin:.55rem 0 .6rem;max-width:32ch}
+.home-announcement-card p{font-size:clamp(.92rem,1.15vw,1rem);line-height:1.65;margin:.4rem 0 .9rem;max-width:70ch}
+.home-announcement-pill{font-size:.67rem;padding:.3rem .62rem}
+.home-announcement-cta{padding:.65rem .95rem;border-radius:10px;font-size:.9rem}
+.home-announcement-meta{font-size:.78rem;gap:.55rem;margin-top:.7rem}
+.home-announcement-controls{margin-top:.85rem}
+@media(max-width:680px){.home-announcement-card:has(.home-announcement-visual){grid-template-columns:minmax(0,1fr)}.home-announcement-visual{max-height:210px}.home-announcement-visual img{height:clamp(140px,48vw,210px)}.home-announcement-card h2{max-width:none}.home-announcements{margin:.7rem .7rem .9rem;padding:1rem;border-radius:16px}}
