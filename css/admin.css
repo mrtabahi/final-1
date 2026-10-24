@@ -109,3 +109,9 @@
 
 /* Admin account management */
 .account-admin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:1rem 0}.account-admin-card{display:flex;flex-direction:column;gap:.85rem;padding:1rem;border:1px solid var(--admin-border,#e3e8ef);border-radius:14px;background:var(--admin-card,#fff);min-width:0}.account-admin-card h3{margin:0;font-size:1rem}.account-admin-card p{margin:0;color:var(--admin-muted,#687789);font-size:.83rem;line-height:1.5}.account-admin-card label{display:flex;flex-direction:column;gap:.38rem;font-size:.82rem;font-weight:700}.account-admin-card input{width:100%;min-width:0;padding:.7rem .75rem;border:1px solid var(--admin-border,#d9e0e8);border-radius:9px;background:transparent;color:inherit;font:inherit}.account-admin-card button{margin-top:auto;align-self:flex-start}.account-admin-status{padding:.8rem 1rem;border-radius:10px;background:#f0f4f8;color:#41556b;font-size:.86rem}.account-admin-status.is-success{background:#e8f7ee;color:#146c3b}.account-admin-status.is-error{background:#fff0ef;color:#a12828}@media(max-width:1000px){.account-admin-grid{grid-template-columns:1fr 1fr}}@media(max-width:640px){.account-admin-grid{grid-template-columns:1fr}}
+
+/* Homepage announcement graphic management */
+.site-content-image-preview{margin-top:.65rem;padding:.5rem;border:1px solid var(--admin-border,#dbe3ef);border-radius:12px;background:var(--admin-surface,#f8fafc);max-width:440px}
+.site-content-image-preview img{display:block;width:100%;max-height:190px;object-fit:contain;border-radius:8px}
+.site-content-item-image{display:block;width:100%;max-height:170px;object-fit:contain;object-position:left center;border-radius:10px;margin:0 0 .8rem;background:#f1f5f9}
+.site-content-item p{overflow-wrap:anywhere;line-height:1.6}
