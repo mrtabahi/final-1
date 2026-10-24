@@ -50,7 +50,7 @@ GRANT SELECT ON public.public_leaderboard_attempts TO anon, authenticated;
 
 -- Homepage notices, timed offers and admin-managed promotional content
 CREATE TABLE IF NOT EXISTS public.site_announcements (
- id UUID PRIMARY KEY DEFAULT gen_random_uuid(), title TEXT NOT NULL, body TEXT NOT NULL DEFAULT '',
+ id UUID PRIMARY KEY DEFAULT gen_random_uuid(), title TEXT NOT NULL, body TEXT NOT NULL DEFAULT '', image_url TEXT,
  content_type TEXT NOT NULL DEFAULT 'notice' CHECK (content_type IN ('notice','offer','announcement','event','maintenance','featured')),
  theme TEXT NOT NULL DEFAULT 'aurora' CHECK (theme IN ('aurora','gold','blue','rose','green')),
  cta_label TEXT, cta_url TEXT, starts_at TIMESTAMPTZ, ends_at TIMESTAMPTZ,
