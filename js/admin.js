@@ -694,7 +694,7 @@ async function loadDashboard() {
 
         box.innerHTML =
             folders.map(folder => {
-                const folderTests = cachedTests.filter(test => String(test.folder_id || '') === String(folder.id));
+                const folderTests = cachedTests.filter(test => String(test.folder_id || '') === String(folder.id)).sort((a,b) => Number(a.sort_order ?? 999999) - Number(b.sort_order ?? 999999) || String(b.created_at || '').localeCompare(String(a.created_at || '')));
                 const activeCount = folderTests.filter(test => test.active).length;
                 return `
 
@@ -715,6 +715,8 @@ async function loadDashboard() {
 
 
                     <div class="list-meta folder-action-stack">
+                        <button type="button" class="admin-btn admin-btn-secondary" data-folder-move="${esc(folder.id)}" data-direction="up" title="Move folder up" aria-label="Move folder up">↑</button>
+                        <button type="button" class="admin-btn admin-btn-secondary" data-folder-move="${esc(folder.id)}" data-direction="down" title="Move folder down" aria-label="Move folder down">↓</button>
                         <span class="status-badge ${folder.active ? 'active' : 'inactive'}">${folder.active ? 'Active' : 'Inactive'}</span>
                         <button type="button" class="admin-btn admin-btn-secondary" data-folder-tests-toggle="${esc(folder.id)}" aria-expanded="false">▾ View tests (${folderTests.length})</button>
                         <button type="button" class="admin-btn admin-btn-secondary" data-folder-toggle="${esc(folder.id)}">${folder.active ? 'Disable' : 'Enable'}</button>
@@ -724,7 +726,7 @@ async function loadDashboard() {
                 </div>
                 <div class="folder-test-drawer" id="folder-tests-${esc(folder.id)}" hidden>
                   <div class="folder-test-drawer-head"><strong>Tests in ${esc(folder.name)}</strong><button type="button" class="admin-btn admin-btn-primary" data-folder-add-test="${esc(folder.id)}">＋ Add test to folder</button></div>
-                  ${folderTests.length ? folderTests.map(test => `<div class="folder-test-drawer-row"><div><strong>${esc(test.title)}</strong><small>${esc(test.language || 'English')} · ${Number(test.duration_minutes || 0)} min · ${String(test.passage || '').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words</small></div><span class="status-badge ${test.active ? 'active' : 'inactive'}">${test.active ? 'Active' : 'Inactive'}</span><button type="button" class="admin-btn admin-btn-secondary" data-folder-test-toggle="${esc(test.id)}">${test.active ? 'Disable' : 'Enable'}</button><button type="button" class="admin-btn admin-btn-secondary" data-folder-test-edit="${esc(test.id)}">View / Edit</button><button type="button" class="admin-btn admin-btn-danger" data-folder-test-delete="${esc(test.id)}">Delete</button></div>`).join('') : '<p class="admin-empty">This folder has no tests yet. Use “Add test to folder” to create one.</p>'}
+                  ${folderTests.length ? folderTests.map((test, index) => `<div class="folder-test-drawer-row"><div class="folder-test-order"><button type="button" class="admin-btn admin-btn-secondary" data-test-move="${esc(test.id)}" data-direction="up" title="Move test up" ${index===0 ? "disabled" : ""}>↑</button><button type="button" class="admin-btn admin-btn-secondary" data-test-move="${esc(test.id)}" data-direction="down" title="Move test down" ${index===folderTests.length-1 ? "disabled" : ""}>↓</button></div><div><strong>${esc(test.title)}</strong><small>${esc(test.language || 'English')} · ${Number(test.duration_minutes || 0)} min · ${String(test.passage || '').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words</small></div><span class="status-badge ${test.active ? 'active' : 'inactive'}">${test.active ? 'Active' : 'Inactive'}</span><button type="button" class="admin-btn admin-btn-secondary" data-folder-test-toggle="${esc(test.id)}">${test.active ? 'Disable' : 'Enable'}</button><button type="button" class="admin-btn admin-btn-secondary" data-folder-test-edit="${esc(test.id)}">View / Edit</button><button type="button" class="admin-btn admin-btn-danger" data-folder-test-delete="${esc(test.id)}">Delete</button></div>`).join('') : '<p class="admin-empty">This folder has no tests yet. Use “Add test to folder” to create one.</p>'}
                 </div>
 
             `;
@@ -734,6 +736,8 @@ async function loadDashboard() {
 
     function bindFolderActions() {
         const folderBox = $('manage-folders-list');
+        folderBox?.querySelectorAll('[data-folder-move]').forEach(button => button.addEventListener('click', () => moveFolder(button.dataset.folderMove, button.dataset.direction)));
+        folderBox?.querySelectorAll('[data-test-move]').forEach(button => button.addEventListener('click', () => moveTest(button.dataset.testMove, button.dataset.direction)));
         folderBox?.querySelectorAll('[data-folder-edit]').forEach(button => button.addEventListener('click', () => openEditFolder(button.dataset.folderEdit)));
         folderBox?.querySelectorAll('[data-folder-delete]').forEach(button => button.addEventListener('click', () => deleteFolder(button.dataset.folderDelete)));
         folderBox?.querySelectorAll('[data-folder-toggle]').forEach(button => button.addEventListener('click', () => toggleFolderActive(button.dataset.folderToggle)));
@@ -751,6 +755,40 @@ async function loadDashboard() {
         folderBox?.querySelectorAll('[data-folder-test-delete]').forEach(button => button.addEventListener('click', () => deleteTest(button.dataset.folderTestDelete)));
     }
 
+
+    async function moveFolder(folderId, direction) {
+        const ordered = [...cachedFolders].sort((a,b) => Number(a.sort_order ?? 999999) - Number(b.sort_order ?? 999999) || String(a.created_at || '').localeCompare(String(b.created_at || '')));
+        const index = ordered.findIndex(folder => String(folder.id) === String(folderId));
+        const targetIndex = index + (direction === 'up' ? -1 : 1);
+        if (index < 0 || targetIndex < 0 || targetIndex >= ordered.length) return;
+        const first = ordered[index], second = ordered[targetIndex];
+        const firstOrder = Number(first.sort_order ?? index), secondOrder = Number(second.sort_order ?? targetIndex);
+        const a = await supabaseClient.from('folders').update({sort_order: secondOrder}).eq('id', first.id);
+        if (a.error) { alert('Folder order save nahi hua: ' + a.error.message); return; }
+        const b = await supabaseClient.from('folders').update({sort_order: firstOrder}).eq('id', second.id);
+        if (b.error) { alert('Folder order partially save hua. Refresh karke dobara try karein.'); }
+        await loadFolders();
+    }
+
+    async function moveTest(testId, direction) {
+        const current = cachedTests.find(test => String(test.id) === String(testId));
+        if (!current) return;
+        const group = cachedTests.filter(test => String(test.folder_id || '') === String(current.folder_id || ''))
+          .sort((a,b) => Number(a.sort_order ?? 999999) - Number(b.sort_order ?? 999999) || String(b.created_at || '').localeCompare(String(a.created_at || '')));
+        const index = group.findIndex(test => String(test.id) === String(testId));
+        const targetIndex = index + (direction === 'up' ? -1 : 1);
+        if (index < 0 || targetIndex < 0 || targetIndex >= group.length) return;
+        const first = group[index], second = group[targetIndex];
+        const firstOrder = Number(first.sort_order ?? index), secondOrder = Number(second.sort_order ?? targetIndex);
+        const a = await supabaseClient.from('tests').update({sort_order: secondOrder}).eq('id', first.id);
+        if (a.error) { alert('Test order save nahi hua: ' + a.error.message); return; }
+        const b = await supabaseClient.from('tests').update({sort_order: firstOrder}).eq('id', second.id);
+        if (b.error) { alert('Test order partially save hua. Refresh karke dobara try karein.'); }
+        await loadManageTests();
+        const folderId = current.folder_id || '';
+        const drawer = document.getElementById('folder-tests-' + folderId);
+        if (drawer) { drawer.hidden = false; const toggle = document.querySelector('[data-folder-tests-toggle="' + folderId + '"]'); toggle?.setAttribute('aria-expanded','true'); if (toggle) toggle.textContent='▴ Hide tests'; }
+    }
 
     function populateFolderSelect(folders) {
 
@@ -826,9 +864,8 @@ async function loadDashboard() {
                         name
                     )
                 `)
-                .order('created_at', {
-                    ascending: false
-                });
+                .order('sort_order', { ascending: true, nullsFirst: false })
+                .order('created_at', { ascending: false });
 
 
         if (error) {

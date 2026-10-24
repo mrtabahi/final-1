@@ -115,3 +115,6 @@
 .site-content-image-preview img{display:block;width:100%;max-height:190px;object-fit:contain;border-radius:8px}
 .site-content-item-image{display:block;width:100%;max-height:170px;object-fit:contain;object-position:left center;border-radius:10px;margin:0 0 .8rem;background:#f1f5f9}
 .site-content-item p{overflow-wrap:anywhere;line-height:1.6}
+
+/* Manual folder/test ordering controls */
+.folder-test-order{display:flex;flex-direction:column;gap:4px;flex-shrink:0}.folder-test-order .admin-btn{min-width:34px;padding:4px 8px;line-height:1.1}.folder-test-drawer-row{align-items:center}.folder-action-stack [data-folder-move]{min-width:34px;padding:5px 9px}@media(max-width:640px){.folder-test-drawer-row{flex-wrap:wrap}.folder-test-order{flex-direction:row}.folder-test-drawer-row>div:nth-child(2){flex:1;min-width:160px}}
