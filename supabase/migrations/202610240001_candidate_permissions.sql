@@ -14,7 +14,6 @@ create policy candidate_permissions_admin_all on public.candidate_permissions fo
 drop policy if exists candidate_permissions_self_select on public.candidate_permissions;
 create policy candidate_permissions_self_select on public.candidate_permissions for select to authenticated
   using (user_id = (select auth.uid()));
-revoke all on function public.has_candidate_permission(text) from public;
 create or replace function public.has_candidate_permission(permission_key text)
 returns boolean language sql stable security definer set search_path = public, auth
 as $$
@@ -25,6 +24,7 @@ as $$
       and coalesce(cp.permissions ->> permission_key, 'false') = 'true'
   );
 $$;
+revoke all on function public.has_candidate_permission(text) from public;
 grant execute on function public.has_candidate_permission(text) to authenticated;
 grant select, insert, update, delete on public.candidate_permissions to authenticated;
 drop policy if exists folders_staff_manage on public.folders;
