@@ -272,12 +272,21 @@
             const [auditResult, suspiciousResult, profileResult] = await Promise.all([
                 supabaseClient.from('admin_audit_logs').select('id,action,target_type,target_id,details,created_at,actor_id,profiles(full_name,email)').order('created_at',{ascending:false}).limit(100),
                 supabaseClient.from('attempts').select('id,suspicious_events,created_at').order('created_at',{ascending:false}).limit(500),
-                supabaseClient.from('profiles').select('id,role').eq('role','admin')
+                supabaseClient.from('profiles').select('id,role,email,full_name').order('created_at',{ascending:false})
             ]);
             const auditError=auditResult.error, rows=auditResult.data||[];
             const suspicious=(suspiciousResult.data||[]).filter(r=>Array.isArray(r.suspicious_events)&&r.suspicious_events.length>0);
-            const admins=profileResult.data||[];
+            const allProfiles=profileResult.data||[];
+            const admins=allProfiles.filter(p=>p.role==='admin');
+            const {data:authData}=await supabaseClient.auth.getUser();
+            const currentEmail=String(authData?.user?.email||'').toLowerCase();
+            const isHeadAdmin=currentEmail==='decodinghcm@gmail.com';
             const dateFmt=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString();};
+            const roleRows=allProfiles.map(p=>{
+              const isHead=String(p.email||'').toLowerCase()==='decodinghcm@gmail.com';
+              const roleAction=isHead?'<span class="admin-role-protected">HEAD ADMIN · Protected</span>':(isHeadAdmin?'<button type="button" class="admin-btn '+(p.role==='admin'?'admin-btn-secondary':'admin-btn-primary')+'" data-role-target="'+escHtml(p.id)+'" data-role-next="'+(p.role==='admin'?'candidate':'admin')+'">'+(p.role==='admin'?'Remove admin':'Make admin')+'</button>':'<span class="admin-role-protected">'+(p.role==='admin'?'Admin':'Candidate')+'</span>');
+              return '<tr><td><strong>'+escHtml(p.full_name||p.email||'Unnamed account')+'</strong><small>'+escHtml(p.email||p.id)+'</small></td><td><span class="admin-role-pill '+(p.role==='admin'?'is-admin':'is-candidate')+'">'+(p.role==='admin'?'Admin':'Candidate')+'</span></td><td>'+roleAction+'</td></tr>';
+            }).join('');
             const rowMarkup=rows.map(r=>'<tr data-audit-row data-search="'+escHtml([r.action,r.target_type,r.target_id,r.profiles?.full_name,r.profiles?.email].join(' ').toLowerCase())+'"><td><strong>'+escHtml(r.action||'Action')+'</strong><small>'+escHtml(r.target_type||'—')+(r.target_id?' · '+escHtml(r.target_id):'')+'</small></td><td>'+escHtml(r.profiles?.full_name||r.profiles?.email||'Admin '+String(r.actor_id||'').slice(0,8))+'</td><td>'+escHtml(dateFmt(r.created_at))+'</td><td><details><summary>Details</summary><pre>'+escHtml(JSON.stringify(r.details||{},null,2))+'</pre></details></td></tr>').join('');
             box.innerHTML=
               '<div class="admin-stat-grid">'+
@@ -285,10 +294,28 @@
               '<article class="admin-stat-card"><div class="admin-stat-top"><span>Admin accounts</span><span class="admin-stat-icon indigo">♙</span></div><strong>'+(profileResult.error?'—':admins.length)+'</strong><small>Profiles currently assigned admin role</small></article>'+
               '<article class="admin-stat-card"><div class="admin-stat-top"><span>Attempts flagged</span><span class="admin-stat-icon amber">⚑</span></div><strong>'+(suspiciousResult.error?'—':suspicious.length)+'</strong><small>Among latest 500 accessible attempts</small></article>'+
               '<article class="admin-stat-card"><div class="admin-stat-top"><span>Audit access</span><span class="admin-stat-icon '+(auditError?'amber':'green')+'">'+(auditError?'!':'✓')+'</span></div><strong style="font-size:1.2rem">'+(auditError?'Restricted':'Connected')+'</strong><small>'+(auditError?'Check database read policy':'Read-only audit viewer')+'</small></article></div>'+
+              '<section class="admin-panel admin-feature-panel"><div class="admin-panel-heading"><div><h2>Administrator access</h2><p>'+(isHeadAdmin?'Head admin controls: promote candidates to admin or remove admin access.':'Only the head admin can promote or remove administrator roles.')+'</p></div><span class="admin-role-protected">'+(isHeadAdmin?'HEAD ADMIN':'ROLE VIEW')+'</span></div>'+
+              (profileResult.error?'<div class="admin-error">Accounts could not be loaded.</div>':('<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Account</th><th>Role</th><th>Access control</th></tr></thead><tbody>'+roleRows+'</tbody></table></div>'))+
+              '<p class="admin-field-help">Only '+ 'decodinghcm@gmail.com' +' can change account roles. The head administrator cannot be demoted. Admins can still assign/revoke candidate feature permissions from Candidates → View Profile.</p></section>'+
               '<section class="admin-panel admin-feature-panel"><div class="admin-panel-heading"><div><h2>Admin activity log</h2><p>Newest events first · sensitive actions should be logged server-side</p></div><button type="button" class="admin-btn admin-btn-secondary" id="security-audit-refresh">↻ Refresh</button></div>'+
               '<div class="admin-filter-bar"><input id="security-audit-search" class="admin-search" type="search" placeholder="Search action, target or admin…"></div>'+
               (auditError?'<div class="admin-error">Audit records could not be loaded. The database denied access or the request failed. No logs have been fabricated.</div>':rows.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Action / target</th><th>Actor</th><th>Time</th><th>Details</th></tr></thead><tbody>'+rowMarkup+'</tbody></table></div>':'<div class="admin-empty">No audit entries recorded yet. Existing admin actions will only appear when they are written to admin_audit_logs.</div>')+
-              '<p class="admin-field-help">Security boundary: this page is read-only. It does not ban accounts, change roles, revoke sessions, or modify database permissions.</p></section>';
+              '</section>';
+            box.querySelectorAll('[data-role-target]').forEach(button=>button.addEventListener('click',async()=>{
+              const nextRole=button.dataset.roleNext;
+              const targetId=button.dataset.roleTarget;
+              const label=nextRole==='admin'?'promote this candidate to admin':'remove this account’s admin access';
+              if(!isHeadAdmin){alert('Only the head admin can change administrator roles.');return;}
+              if(!confirm('Are you sure you want to '+label+'?'))return;
+              button.disabled=true;
+              try{
+                const {data:updated,error}=await supabaseClient.from('profiles').update({role:nextRole}).eq('id',targetId).select('id,role').maybeSingle();
+                if(error)throw error;
+                if(!updated)throw new Error('No role was changed. Check database access and try again.');
+                alert('Account role updated to '+nextRole+'.');
+                await renderSecurityAuditModule();
+              }catch(err){alert(err.message||'Role update failed.');button.disabled=false;}
+            }));
             $('security-audit-refresh')?.addEventListener('click',renderSecurityAuditModule);
             $('security-audit-search')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();box.querySelectorAll('[data-audit-row]').forEach(row=>row.hidden=!row.dataset.search.includes(q));});
         } catch(error) {
