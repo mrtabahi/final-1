@@ -64,6 +64,23 @@
       const {data,error}=await supabaseClient.from('profiles').select('id,full_name,email,phone,phone_verified,role,created_at').eq('role','candidate').order('created_at',{ascending:false}).limit(2000);
       if(error) throw error;
       candidates=data||[];
+      // The profile email can be empty for older/imported accounts. Resolve the
+      // authoritative email from Auth by profile UUID through an admin-only RPC.
+      if (candidates.length) {
+        const { data: authEmails, error: emailError } = await supabaseClient.rpc(
+          'admin_get_candidate_emails',
+          { p_user_ids: candidates.map(candidate => candidate.id) }
+        );
+        if (emailError) {
+          console.warn('Could not resolve candidate Auth emails:', emailError);
+        } else {
+          const emailById = new Map((authEmails || []).map(row => [String(row.user_id), row.email || '']));
+          candidates = candidates.map(candidate => ({
+            ...candidate,
+            email: candidate.email || emailById.get(String(candidate.id)) || ''
+          }));
+        }
+      }
       $('candidate-total').textContent=candidates.length.toLocaleString();
       $('candidate-email-total').textContent=candidates.filter(x=>x.email).length.toLocaleString();
       $('candidate-verified-total').textContent=candidates.filter(x=>x.phone_verified).length.toLocaleString();
