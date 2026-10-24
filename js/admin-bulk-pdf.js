@@ -95,8 +95,8 @@
       return paragraphs.join('\n\n');
     });
     const text = outputPages.filter(Boolean).join('\n\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-    if (text.length < 20) throw new Error('No usable text found. This may be a scanned/image-only PDF; OCR is not included.');
-    return { text, pages: pdf.numPages, title: safeName(file.name), fileName: file.name };
+    if (!outputPages.some(pageText => pageText.trim().length >= 1)) throw new Error('No usable text found. This may be a scanned/image-only PDF; OCR is not included.');
+    return { text, pageTexts: outputPages, pages: pdf.numPages, title: safeName(file.name), fileName: file.name };
   }
 
   function renderDrafts() {
@@ -120,7 +120,7 @@
     return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
   function updateSaveState() {
-    const included = drafts.filter(d => d.include && d.title.trim() && d.text.trim().length >= 20);
+    const included = drafts.filter(d => d.include && d.title.trim() && d.text.trim().length >= 1);
     $('bulk-pdf-save').disabled = !included.length;
     $('bulk-pdf-save').textContent = included.length ? 'Save ' + included.length + ' reviewed test(s)' : 'Save all reviewed tests';
   }
@@ -141,17 +141,23 @@
         setStatus('Reading PDF ' + (i + 1) + ' of ' + files.length + ': ' + files[i].name);
         try {
           const result = await extractPdf(files[i]);
-          if ($('bulk-remove-heading').checked) { const lines = result.text.split('\n'); const stripped = lines.slice(1).join('\n').trim(); if (stripped.length >= 20) result.text = stripped; }
-          const suspicious = result.text.split('\n').filter(line => line.trim().length < 4 || /^(contents|index|chapter\s+\d+|page\s+\d+)/i.test(line.trim()));
-          const title = $('bulk-base-title').value.trim() + ' - ' + (drafts.length + 1);
-          drafts.push({ ...result, title, titleManuallyEdited: false, publish: $('bulk-publish').checked, include: true, warning: suspicious.length ? 'Possible headings/short lines detected — review before saving' : '' });
+          const pageTexts = [...(result.pageTexts || [])];
+          if ($('bulk-remove-heading').checked && pageTexts.length) {
+            const lines = pageTexts[0].split('\n');
+            if (lines.length > 1 && lines.slice(1).join('\n').trim().length >= 1) pageTexts[0] = lines.slice(1).join('\n').trim();
+          }
+          pageTexts.forEach((pageText, pageIndex) => {
+            const suspicious = pageText.split('\n').filter(line => line.trim().length < 4 || /^(contents|index|chapter\s+\d+|page\s+\d+)/i.test(line.trim()));
+            const title = $('bulk-base-title').value.trim() + ' - ' + (drafts.length + 1);
+            drafts.push({ title, titleManuallyEdited: false, text: pageText, pages: 1, pageNumber: pageIndex + 1, totalPdfPages: result.pages, fileName: result.fileName, sourceTitle: result.title, publish: $('bulk-publish').checked, include: true, warning: !pageText.trim() ? 'No text was extracted from this page — enter or paste content before saving' : (suspicious.length ? 'Possible headings/short lines detected — review before saving' : '') });
+          });
         } catch (error) {
           drafts.push({ title: safeName(files[i].name), fileName: files[i].name, pages: 0, text: '', include: false, warning: error.message || 'Could not extract this PDF' });
         }
         renderDrafts();
       }
-      const good = drafts.filter(d => d.text.length >= 20).length;
-      setStatus('Extraction finished: ' + good + ' of ' + files.length + ' PDF(s) ready. Review and edit each passage; repeated page headers/footers and page numbers are filtered conservatively.');
+      const good = drafts.filter(d => d.text.trim().length >= 1).length;
+      setStatus('Extraction finished: ' + drafts.length + ' page-wise test draft(s) created from ' + files.length + ' PDF(s). Review and edit each page; all drafts remain unpublished until you enable them.');
     } finally {
       $('bulk-extract-pdfs').disabled = false;
       updateSaveState();
@@ -161,8 +167,8 @@
   async function saveDrafts() {
     const folderName = $('bulk-folder-name').value.trim();
     const selectedFolderId = $('bulk-folder-select').value;
-    const included = drafts.filter(d => d.include && d.title.trim() && d.text.trim().length >= 20);
-    if ((!selectedFolderId && !folderName) || !included.length) { setStatus('Choose a folder and at least one valid reviewed test.', true); return; }
+    const included = drafts.filter(d => d.include && d.title.trim() && d.text.trim().length >= 1);
+    if ((!selectedFolderId && !folderName) || !included.length) { setStatus('Choose a folder and at least one non-empty reviewed test.', true); return; }
     const duplicateTitles = included.map(d => d.title.trim().toLowerCase());
     if (new Set(duplicateTitles).size !== duplicateTitles.length && !confirm('Some selected PDFs have duplicate test titles. Save them anyway?')) return;
     const saveButton = $('bulk-pdf-save');
