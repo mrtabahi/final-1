@@ -1,12 +1,60 @@
 /* Candidate Pro access + responsive navigation enhancement. */
 (() => {
   'use strict';
-  const init = async () => {
+  const permissionKeys = ['folder_tests','results_attempts','study_materials','website_content','website_settings'];
+  let refreshInProgress = false;
+
+  const syncProMenu = async () => {
+    if (refreshInProgress) return;
+    if (typeof supabaseClient === 'undefined' || !supabaseClient || typeof AuthManager === 'undefined') return;
+    refreshInProgress = true;
+    try {
+      const auth = await AuthManager.isVerifiedCandidate();
+      const nav = document.querySelector('.navbar');
+      const links = nav?.querySelector('.nav-links');
+      if (!links) return;
+      if (!auth?.ok) {
+        links.querySelector('.pro-nav-item')?.remove();
+        return;
+      }
+      const { data, error } = await supabaseClient
+        .from('candidate_permissions')
+        .select('permissions')
+        .eq('user_id', auth.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      const permissions = data?.permissions || {};
+      const granted = permissionKeys.some(key => permissions[key] === true);
+      let item = links.querySelector('.pro-nav-item');
+      if (!granted) {
+        item?.remove();
+        return;
+      }
+      if (!item) {
+        item = document.createElement('li');
+        item.className = 'pro-nav-item';
+        const link = document.createElement('a');
+        link.href = 'candidate-workspace.html';
+        link.className = 'pro-nav-link';
+        link.innerHTML = '<span aria-hidden="true">✦</span><span>Pro</span><span class="pro-nav-badge">ACCESS</span>';
+        link.setAttribute('aria-label', 'Pro workspace — your assigned permissions');
+        item.appendChild(link);
+        const account = links.querySelector('.account-nav-item');
+        if (account) links.insertBefore(item, account);
+        else links.appendChild(item);
+      }
+    } catch (err) {
+      console.warn('Could not refresh Pro navigation permissions:', err);
+    } finally {
+      refreshInProgress = false;
+    }
+  };
+
+  const init = () => {
     const nav = document.querySelector('.navbar');
     const links = nav?.querySelector('.nav-links');
     if (!nav || !links) return;
 
-    // Add an accessible mobile menu toggle without changing desktop navigation.
     if (!nav.querySelector('.nav-menu-toggle')) {
       const toggle = document.createElement('button');
       toggle.type = 'button';
@@ -34,35 +82,14 @@
       });
     }
 
-    // Pro is only shown when the signed-in candidate has at least one granted feature.
-    try {
-      if (!window.supabaseClient || !window.AuthManager) return;
-      const auth = await AuthManager.isVerifiedCandidate();
-      if (!auth?.ok) return;
-      const { data, error } = await supabaseClient
-        .from('candidate_permissions')
-        .select('permissions')
-        .eq('user_id', auth.user.id)
-        .maybeSingle();
-      if (error) throw error;
-      const p = data?.permissions || {};
-      const granted = ['folder_tests','results_attempts','study_materials','website_content','website_settings']
-        .some(key => p[key] === true);
-      if (!granted || links.querySelector('.pro-nav-item')) return;
-      const item = document.createElement('li');
-      item.className = 'pro-nav-item';
-      const link = document.createElement('a');
-      link.href = 'candidate-workspace.html';
-      link.className = 'pro-nav-link';
-      link.innerHTML = '<span aria-hidden="true">✦</span><span>Pro</span><span class="pro-nav-badge">ACCESS</span>';
-      link.setAttribute('aria-label', 'Pro workspace — your assigned permissions');
-      item.appendChild(link);
-      const account = links.querySelector('.account-nav-item');
-      if (account) links.insertBefore(item, account);
-      else links.appendChild(item);
-    } catch (err) {
-      console.warn('Could not load Pro navigation permissions:', err);
-    }
+    // Initial load, return-to-tab, and periodic sync ensure newly granted/revoked access appears promptly.
+    syncProMenu();
+    window.addEventListener('focus', syncProMenu);
+    window.addEventListener('pageshow', syncProMenu);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') syncProMenu();
+    });
+    window.setInterval(syncProMenu, 30000);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
