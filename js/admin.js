@@ -315,9 +315,8 @@
               if(!confirm('Are you sure you want to '+label+'?'))return;
               button.disabled=true;
               try{
-                const {data:updated,error}=await supabaseClient.from('profiles').update({role:nextRole}).eq('id',targetId).select('id,role').maybeSingle();
+                const {error}=await supabaseClient.rpc('admin_set_user_role',{p_user_id:targetId,p_role:nextRole});
                 if(error)throw error;
-                if(!updated)throw new Error('No role was changed. Check database access and try again.');
                 alert('Account role updated to '+nextRole+'.');
                 await renderSecurityAuditModule();
               }catch(err){alert(err.message||'Role update failed.');button.disabled=false;}
