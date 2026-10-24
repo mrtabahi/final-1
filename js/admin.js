@@ -163,6 +163,16 @@
             renderAnalyticsModule();
             return;
         }
+        if (view === 'security') {
+            updatePageHeader(view);
+            renderSecurityAuditModule();
+            return;
+        }
+        if (view === 'settings') {
+            updatePageHeader(view);
+            renderWebsiteSettingsModule();
+            return;
+        }
 
         updatePageHeader(view);
         if (view === 'dashboard') loadDashboard();
@@ -236,6 +246,88 @@
         } catch(error) {
             console.error('Analytics report error:',error);
             box.innerHTML='<div class="admin-error">Analytics could not be loaded. Check the attempts table permissions and database connection, then use Refresh to try again.</div>';
+        }
+    }
+
+    async function renderSecurityAuditModule() {
+        const heading=$('module-title'), sub=$('module-subtitle'), box=$('module-capabilities');
+        if(heading) heading.textContent='Security & Audit';
+        if(sub) sub.textContent='Review recorded admin actions and recent suspicious activity.';
+        if(!box) return;
+        box.innerHTML='<div class="admin-empty">Loading audit activity…</div>';
+        const escHtml=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        try {
+            const [auditResult, suspiciousResult, profileResult] = await Promise.all([
+                supabaseClient.from('admin_audit_logs').select('id,action,target_type,target_id,details,created_at,actor_id,profiles(full_name,email)').order('created_at',{ascending:false}).limit(100),
+                supabaseClient.from('attempts').select('id,suspicious_events,created_at').order('created_at',{ascending:false}).limit(500),
+                supabaseClient.from('profiles').select('id,role').eq('role','admin')
+            ]);
+            const auditError=auditResult.error, rows=auditResult.data||[];
+            const suspicious=(suspiciousResult.data||[]).filter(r=>Array.isArray(r.suspicious_events)&&r.suspicious_events.length>0);
+            const admins=profileResult.data||[];
+            const dateFmt=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString();};
+            const rowMarkup=rows.map(r=>'<tr data-audit-row data-search="'+escHtml([r.action,r.target_type,r.target_id,r.profiles?.full_name,r.profiles?.email].join(' ').toLowerCase())+'"><td><strong>'+escHtml(r.action||'Action')+'</strong><small>'+escHtml(r.target_type||'—')+(r.target_id?' · '+escHtml(r.target_id):'')+'</small></td><td>'+escHtml(r.profiles?.full_name||r.profiles?.email||'Admin '+String(r.actor_id||'').slice(0,8))+'</td><td>'+escHtml(dateFmt(r.created_at))+'</td><td><details><summary>Details</summary><pre>'+escHtml(JSON.stringify(r.details||{},null,2))+'</pre></details></td></tr>').join('');
+            box.innerHTML=
+              '<div class="admin-stat-grid">'+
+              '<article class="admin-stat-card"><div class="admin-stat-top"><span>Recorded admin actions</span><span class="admin-stat-icon blue">▤</span></div><strong>'+rows.length+'</strong><small>Latest 100 available audit entries</small></article>'+
+              '<article class="admin-stat-card"><div class="admin-stat-top"><span>Admin accounts</span><span class="admin-stat-icon indigo">♙</span></div><strong>'+(profileResult.error?'—':admins.length)+'</strong><small>Profiles currently assigned admin role</small></article>'+
+              '<article class="admin-stat-card"><div class="admin-stat-top"><span>Attempts flagged</span><span class="admin-stat-icon amber">⚑</span></div><strong>'+(suspiciousResult.error?'—':suspicious.length)+'</strong><small>Among latest 500 accessible attempts</small></article>'+
+              '<article class="admin-stat-card"><div class="admin-stat-top"><span>Audit access</span><span class="admin-stat-icon '+(auditError?'amber':'green')+'">'+(auditError?'!':'✓')+'</span></div><strong style="font-size:1.2rem">'+(auditError?'Restricted':'Connected')+'</strong><small>'+(auditError?'Check database read policy':'Read-only audit viewer')+'</small></article></div>'+
+              '<section class="admin-panel admin-feature-panel"><div class="admin-panel-heading"><div><h2>Admin activity log</h2><p>Newest events first · sensitive actions should be logged server-side</p></div><button type="button" class="admin-btn admin-btn-secondary" id="security-audit-refresh">↻ Refresh</button></div>'+
+              '<div class="admin-filter-bar"><input id="security-audit-search" class="admin-search" type="search" placeholder="Search action, target or admin…"></div>'+
+              (auditError?'<div class="admin-error">Audit records could not be loaded. The database denied access or the request failed. No logs have been fabricated.</div>':rows.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Action / target</th><th>Actor</th><th>Time</th><th>Details</th></tr></thead><tbody>'+rowMarkup+'</tbody></table></div>':'<div class="admin-empty">No audit entries recorded yet. Existing admin actions will only appear when they are written to admin_audit_logs.</div>')+
+              '<p class="admin-field-help">Security boundary: this page is read-only. It does not ban accounts, change roles, revoke sessions, or modify database permissions.</p></section>';
+            $('security-audit-refresh')?.addEventListener('click',renderSecurityAuditModule);
+            $('security-audit-search')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();box.querySelectorAll('[data-audit-row]').forEach(row=>row.hidden=!row.dataset.search.includes(q));});
+        } catch(error) {
+            console.error('Security audit load failed:',error);
+            box.innerHTML='<div class="admin-error">Security data could not be loaded. Check database connection and read policies.</div>';
+        }
+    }
+
+    async function renderWebsiteSettingsModule() {
+        const heading=$('module-title'), sub=$('module-subtitle'), box=$('module-capabilities');
+        if(heading) heading.textContent='Website Settings';
+        if(sub) sub.textContent='Control the public sections and ad display options stored in your website database.';
+        if(!box) return;
+        box.innerHTML='<div class="admin-empty">Loading saved website settings…</div>';
+        const escHtml=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        try {
+            const {data,error}=await supabaseClient.from('ad_settings').select('id,ads_enabled,home_enabled,typing_listing_enabled,materials_enabled,density,updated_at').eq('id',1).maybeSingle();
+            if(error) throw error;
+            if(!data) throw new Error('The singleton ad_settings row (id=1) does not exist.');
+            const toggle=(key,label,desc)=>'<label class="admin-setting-row"><span><strong>'+label+'</strong><small>'+desc+'</small></span><input type="checkbox" name="'+key+'" '+(data[key]?'checked':'')+'><span class="admin-switch" aria-hidden="true"></span></label>';
+            box.innerHTML=
+              '<section class="admin-settings-hero"><div><span class="admin-settings-eyebrow">SITE CONTROL CENTER</span><h2>Website configuration</h2><p>Changes are saved to the connected Supabase settings row.</p></div><span class="admin-settings-live"><i></i> Connected</span></section>'+
+              '<div class="admin-settings-grid"><section class="admin-panel admin-settings-card"><div class="admin-settings-card-title"><span class="admin-settings-icon">◈</span><div><h2>Public page visibility</h2><p>Choose which site sections are available.</p></div></div>'+
+              toggle('home_enabled','Homepage','Show the main homepage entry point.')+
+              toggle('typing_listing_enabled','Typing test listing','Show the public typing test catalogue.')+
+              toggle('materials_enabled','Study materials','Show the study materials section.')+
+              '</section><section class="admin-panel admin-settings-card"><div class="admin-settings-card-title"><span class="admin-settings-icon ads">▧</span><div><h2>Advertisement display</h2><p>Control ad availability and display density.</p></div></div>'+
+              toggle('ads_enabled','Advertisements','Enable or disable ad placements site-wide where supported.')+
+              '<label class="admin-form-field admin-density-field"><span>Ad display density</span><select id="settings-density" class="admin-input"><option value="low" '+(data.density==='low'?'selected':'')+'>Low · less frequent</option><option value="normal" '+(data.density==='normal'?'selected':'')+'>Normal · balanced</option><option value="max" '+(data.density==='max'?'selected':'')+'>Maximum · most frequent</option></select><small>Density applies only to placements that read this setting.</small></label></section></div>'+
+              '<div class="admin-settings-footer"><p id="settings-save-status" role="status">Last saved: '+escHtml(data.updated_at?new Date(data.updated_at).toLocaleString():'not available')+'</p><div><button type="button" class="admin-btn admin-btn-secondary" id="settings-reload">Discard changes</button> <button type="button" class="admin-btn admin-btn-primary" id="settings-save">Save settings</button></div></div>'+
+              '<div class="admin-settings-note"><strong>Important</strong><span>These controls update the existing ad_settings table. Logo, theme, SEO, maintenance mode and email/payment integrations are not configured here because no backing settings fields are currently wired up.</span></div>';
+            $('settings-reload')?.addEventListener('click',renderWebsiteSettingsModule);
+            $('settings-save')?.addEventListener('click',async()=>{
+                const save=$('settings-save'),status=$('settings-save-status');
+                const values={ads_enabled:Boolean(box.querySelector('[name="ads_enabled"]')?.checked),home_enabled:Boolean(box.querySelector('[name="home_enabled"]')?.checked),typing_listing_enabled:Boolean(box.querySelector('[name="typing_listing_enabled"]')?.checked),materials_enabled:Boolean(box.querySelector('[name="materials_enabled"]')?.checked),density:$('settings-density')?.value||'normal',updated_at:new Date().toISOString()};
+                save.disabled=true;save.textContent='Saving…';status.textContent='Saving settings…';
+                try {
+                    const result=await supabaseClient.from('ad_settings').update(values).eq('id',1).select('id,updated_at').maybeSingle();
+                    if(result.error) throw result.error;
+                    if(!result.data) throw new Error('No row was updated. Check the current admin session and update policy.');
+                    status.textContent='Saved successfully · '+new Date(result.data.updated_at||Date.now()).toLocaleString();
+                    status.className='admin-save-success';
+                } catch(error) {
+                    console.error('Website settings save failed:',error);
+                    status.textContent='Save failed: '+(error.message||'database request failed');
+                    status.className='admin-save-error';
+                } finally { save.disabled=false;save.textContent='Save settings'; }
+            });
+        } catch(error) {
+            console.error('Website settings load failed:',error);
+            box.innerHTML='<div class="admin-error">Website settings could not be loaded: '+escHtml(error.message||'database request failed')+'</div>';
         }
     }
 
@@ -1956,7 +2048,7 @@ async function loadDashboard() {
 
         setupAttemptActions();
         $('admin-menu-toggle')?.addEventListener('click', () => $('admin-sidebar')?.classList.toggle('is-open'));
-        $('admin-refresh')?.addEventListener('click', () => { if (currentView === 'dashboard') loadDashboard(); else if (currentView === 'tests') loadManageTests(); else if (currentView === 'attempts') loadAllAttempts(); else if (currentView === 'analytics') renderAnalyticsModule(); else if (currentView === 'candidates') $('candidate-refresh')?.click(); else if (currentView === 'content') $('site-content-refresh')?.click(); });
+        $('admin-refresh')?.addEventListener('click', () => { if (currentView === 'dashboard') loadDashboard(); else if (currentView === 'tests') loadManageTests(); else if (currentView === 'attempts') loadAllAttempts(); else if (currentView === 'analytics') renderAnalyticsModule(); else if (currentView === 'security') renderSecurityAuditModule(); else if (currentView === 'settings') renderWebsiteSettingsModule(); else if (currentView === 'candidates') $('candidate-refresh')?.click(); else if (currentView === 'content') $('site-content-refresh')?.click(); });
         if ($('admin-loading')) $('admin-loading').style.display = 'none';
         if ($('admin-app')) $('admin-app').style.display = 'flex';
 
