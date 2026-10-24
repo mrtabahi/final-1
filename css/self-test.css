@@ -324,3 +324,28 @@
   .self-toolbar-actions .compact-tip-control:hover::after,.self-toolbar-actions .compact-tip-control:focus-visible::after { transform:translate(0,0)!important; }
 }
 @media(prefers-reduced-motion:reduce){.compact-tip-control::after,.self-toolbar-actions .compact-tip-control::after{transition:none!important}}
+
+
+/* Clear ON/OFF state for toolbar toggles: pressed = active green, unpressed = neutral. */
+.compact-tip-control[aria-pressed="true"],
+.self-toolbar-actions .compact-tip-control[aria-pressed="true"] {
+  background:#15803d!important;
+  color:#fff!important;
+  border-color:#166534!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 2px 5px rgba(21,128,61,.22)!important;
+}
+.compact-tip-control[aria-pressed="true"]::before,
+.self-toolbar-actions .compact-tip-control[aria-pressed="true"]::before { color:#fff!important; }
+.compact-tip-control[aria-pressed="false"],
+.self-toolbar-actions .compact-tip-control[aria-pressed="false"] {
+  background:#fff!important;
+  color:#234b70!important;
+  border-color:#b7c8d8!important;
+  box-shadow:0 1px 2px rgba(15,40,70,.08)!important;
+}
+.compact-tip-control[aria-pressed="false"]::before,
+.self-toolbar-actions .compact-tip-control[aria-pressed="false"]::before { color:#234b70!important; }
+.compact-tip-control[aria-pressed="true"]:hover,
+.compact-tip-control[aria-pressed="true"]:focus-visible,
+.self-toolbar-actions .compact-tip-control[aria-pressed="true"]:hover,
+.self-toolbar-actions .compact-tip-control[aria-pressed="true"]:focus-visible { background:#166534!important; border-color:#14532d!important; }
