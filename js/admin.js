@@ -526,12 +526,6 @@ async function loadDashboard() {
 
 
         populateFolderSelect(cachedFolders);
-        folderBox?.querySelectorAll('[data-folder-edit]').forEach(button => button.addEventListener('click', () => openEditFolder(button.dataset.folderEdit)));
-        folderBox?.querySelectorAll('[data-folder-delete]').forEach(button => button.addEventListener('click', () => deleteFolder(button.dataset.folderDelete)));
-        folderBox?.querySelectorAll('[data-folder-toggle]').forEach(button => button.addEventListener('click', () => toggleFolderActive(button.dataset.folderToggle)));
-        folderBox?.querySelectorAll('[data-folder-tests-toggle]').forEach(button => button.addEventListener('click', () => { const panel = document.getElementById('folder-tests-' + button.dataset.folderTestsToggle); if (panel) { const open = panel.hidden; panel.hidden = !open; button.setAttribute('aria-expanded', String(open)); button.textContent = open ? '▴ Hide tests' : '▾ View tests'; } }));
-        folderBox?.querySelectorAll('[data-folder-test-edit]').forEach(button => button.addEventListener('click', () => openEditTest(button.dataset.folderTestEdit)));
-        folderBox?.querySelectorAll('[data-folder-test-delete]').forEach(button => button.addEventListener('click', () => deleteTest(button.dataset.folderTestDelete)));
         return cachedFolders;
     }
 
@@ -590,11 +584,32 @@ async function loadDashboard() {
                     </div>
                 </div>
                 <div class="folder-test-drawer" id="folder-tests-${esc(folder.id)}" hidden>
-                  ${folderTests.length ? folderTests.map(test => `<div class="folder-test-drawer-row"><div><strong>${esc(test.title)}</strong><small>${esc(test.language || 'English')} · ${Number(test.duration_minutes || 0)} min · ${String(test.passage || '').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words</small></div><span class="status-badge ${test.active ? 'active' : 'inactive'}">${test.active ? 'Published' : 'Draft'}</span><button type="button" class="admin-btn admin-btn-secondary" data-folder-test-edit="${esc(test.id)}">Edit</button><button type="button" class="admin-btn admin-btn-danger" data-folder-test-delete="${esc(test.id)}">Delete</button></div>`).join('') : '<p class="admin-empty">This folder has no tests yet.</p>'}
+                  <div class="folder-test-drawer-head"><strong>Tests in ${esc(folder.name)}</strong><button type="button" class="admin-btn admin-btn-primary" data-folder-add-test="${esc(folder.id)}">＋ Add test to folder</button></div>
+                  ${folderTests.length ? folderTests.map(test => `<div class="folder-test-drawer-row"><div><strong>${esc(test.title)}</strong><small>${esc(test.language || 'English')} · ${Number(test.duration_minutes || 0)} min · ${String(test.passage || '').trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words</small></div><span class="status-badge ${test.active ? 'active' : 'inactive'}">${test.active ? 'Active' : 'Inactive'}</span><button type="button" class="admin-btn admin-btn-secondary" data-folder-test-toggle="${esc(test.id)}">${test.active ? 'Disable' : 'Enable'}</button><button type="button" class="admin-btn admin-btn-secondary" data-folder-test-edit="${esc(test.id)}">View / Edit</button><button type="button" class="admin-btn admin-btn-danger" data-folder-test-delete="${esc(test.id)}">Delete</button></div>`).join('') : '<p class="admin-empty">This folder has no tests yet. Use “Add test to folder” to create one.</p>'}
                 </div>
 
             `;
             }).join('');
+        bindFolderActions();
+    }
+
+    function bindFolderActions() {
+        const folderBox = $('manage-folders-list');
+        folderBox?.querySelectorAll('[data-folder-edit]').forEach(button => button.addEventListener('click', () => openEditFolder(button.dataset.folderEdit)));
+        folderBox?.querySelectorAll('[data-folder-delete]').forEach(button => button.addEventListener('click', () => deleteFolder(button.dataset.folderDelete)));
+        folderBox?.querySelectorAll('[data-folder-toggle]').forEach(button => button.addEventListener('click', () => toggleFolderActive(button.dataset.folderToggle)));
+        folderBox?.querySelectorAll('[data-folder-tests-toggle]').forEach(button => button.addEventListener('click', () => {
+            const panel = document.getElementById('folder-tests-' + button.dataset.folderTestsToggle);
+            if (!panel) return;
+            const open = panel.hidden;
+            panel.hidden = !open;
+            button.setAttribute('aria-expanded', String(open));
+            button.textContent = open ? '▴ Hide tests' : '▾ View tests';
+        }));
+        folderBox?.querySelectorAll('[data-folder-add-test]').forEach(button => button.addEventListener('click', () => openTestModal(button.dataset.folderAddTest)));
+        folderBox?.querySelectorAll('[data-folder-test-toggle]').forEach(button => button.addEventListener('click', () => toggleTestActive(button.dataset.folderTestToggle)));
+        folderBox?.querySelectorAll('[data-folder-test-edit]').forEach(button => button.addEventListener('click', () => openEditTest(button.dataset.folderTestEdit)));
+        folderBox?.querySelectorAll('[data-folder-test-delete]').forEach(button => button.addEventListener('click', () => deleteTest(button.dataset.folderTestDelete)));
     }
 
 
@@ -705,9 +720,6 @@ async function loadDashboard() {
         renderFilteredLibraryTests();
 
         populateTestFilter(cachedTests);
-        testBox?.querySelectorAll('[data-test-edit]').forEach(button => button.addEventListener('click', () => openEditTest(button.dataset.testEdit)));
-        testBox?.querySelectorAll('[data-test-delete]').forEach(button => button.addEventListener('click', () => deleteTest(button.dataset.testDelete)));
-        testBox?.querySelectorAll('[data-test-toggle]').forEach(button => button.addEventListener('click', () => toggleTestActive(button.dataset.testToggle)));
     }
 
 
@@ -1085,7 +1097,7 @@ async function loadDashboard() {
        CREATE TEST
     ===================================================== */
 
-    function openTestModal() {
+    function openTestModal(folderId = null) {
         const modal = $('test-modal');
         const form = $('test-form');
         const modalTitle = $('test-modal-title');
@@ -1129,10 +1141,10 @@ async function loadDashboard() {
         }
 
 
-        populateFolderSelect(
-            cachedFolders
-        );
-
+        populateFolderSelect(cachedFolders);
+        if (folderId && cachedFolders.some(folder => String(folder.id) === String(folderId))) {
+            $('test-folder').value = String(folderId);
+        }
 
         $('test-modal').style.display =
             'flex';
