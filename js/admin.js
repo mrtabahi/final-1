@@ -129,10 +129,19 @@
 
     function showAdminView(view) {
         const views = { dashboard: $('view-dashboard'), tests: $('view-tests'), attempts: $('view-attempts'), module: $('view-module') };
-        Object.values(views).forEach(element => { if (element) element.style.display = 'none'; });
         const isCore = ['dashboard', 'tests', 'attempts'].includes(view);
         const target = isCore ? views[view] : views.module;
-        if (target) target.style.display = 'block';
+
+        // Own visibility explicitly on every navigation. Some feature renderers
+        // update shared module markup asynchronously; hidden + important display
+        // prevents a previous module from visually covering the selected view.
+        Object.entries(views).forEach(([key, element]) => {
+            if (!element) return;
+            const visible = element === target;
+            element.hidden = !visible;
+            element.setAttribute('aria-hidden', String(!visible));
+            element.style.setProperty('display', visible ? 'block' : 'none', 'important');
+        });
         currentView = view;
         document.querySelectorAll('.admin-nav-link').forEach(link => link.classList.remove('active'));
         const activeMap = { dashboard: 'nav-dash', tests: 'nav-tests', attempts: 'nav-attempts' };
@@ -199,7 +208,10 @@
         const item=data[view]||data.dashboard;
         if(title) title.textContent=item.title;
         if(subtitle) subtitle.textContent=item.subtitle;
-        if(view!=='dashboard'&&view!=='tests'&&view!=='attempts'&&view!=='analytics') renderPlannedModule(view,item);
+        // These modules render their own complete interface. Never replace
+        // their content with the generic roadmap panel during navigation.
+        const ownsRenderer = ['dashboard','tests','attempts','candidates','content','analytics','security','settings'].includes(view);
+        if (!ownsRenderer) renderPlannedModule(view,item);
     }
 
 
