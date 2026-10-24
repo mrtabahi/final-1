@@ -1,8 +1,8 @@
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
-const setup=$('self-setup'), workspace=$('self-workspace'), source=$('source-text'), typed=$('self-typed'), passage=$('self-passage'), passageCard=$('self-passage-card');
-let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, allowBackspace=true, totalElapsed=0;
+const setup=$('self-setup'), workspace=$('self-workspace'), source=$('source-text'), typed=$('self-typed'), passage=$('self-passage'), passageCard=$('self-passage-card'), typeCard=$('self-type-card');
+let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, inputHidden=false, allowBackspace=true, totalElapsed=0;
 const SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
 let scoringFormula='bsf', selfFontSize=17.3;
 function applySelfFontSize(){passage.style.fontSize=selfFontSize+'px';typed.style.fontSize=selfFontSize+'px';}
@@ -84,14 +84,15 @@ function renderPassage(){
 function startClock(){if(startedAt!==null||finished)return;startedAt=Date.now();attemptDate=new Date(startedAt);deadline=startedAt+duration*1000;tick();timerId=window.setInterval(tick,200)}
 function tick(){const remaining=Math.max(0,(deadline-Date.now())/1000);$('self-timer').textContent=formatTime(remaining);updateLive();if(remaining<=0)finishTest()}
 function setHighlight(on){highlight=on;$('self-highlight').textContent='Highlight: '+(on?'On':'Off');$('self-highlight').setAttribute('aria-pressed',String(on));passageCard.classList.toggle('self-highlight-enabled',on);renderPassage()}
-function setHidden(on){hidden=on;passageCard.hidden=on;$('self-hide').textContent=on?'Show passage':'Hide passage';$('self-hide').setAttribute('aria-pressed',String(on));$('self-pdf-row').hidden=!on}
+function setHidden(on){hidden=on;passageCard.hidden=on;$('self-hide').textContent=on?'👁 Show passage':'🙈 Hide passage';$('self-hide').setAttribute('aria-pressed',String(on));$('self-pdf-row').hidden=!on}
+function setInputHidden(on){inputHidden=on;typeCard.hidden=on;$('self-hide-input').textContent=on?'👁 Show typing box':'🙈 Hide typing box';$('self-hide-input').setAttribute('aria-pressed',String(on));}
 function startTest(){
  original=source.value.replace(/\r\n?/g,'\n');
  if(!original.trim()){$('self-message').textContent='Paste a passage before starting.';source.focus();return}
  duration=Number($('self-duration').value)*60;allowBackspace=$('self-backspace').checked;scoringFormula=$('self-formula').value==='crpf'?'crpf':'bsf';
  typed.value='';startedAt=null;attemptDate=null;deadline=null;finished=false;totalElapsed=0;
  $('self-message').textContent='';setup.hidden=true;workspace.hidden=false;$('self-result').hidden=true;
- passageCard.hidden=false;setHidden(false);setHighlight(false);renderPassage();$('self-timer').textContent=formatTime(duration);
+ passageCard.hidden=false;setHidden(false);setInputHidden(false);setHighlight(false);renderPassage();$('self-timer').textContent=formatTime(duration);
  typed.disabled=false;typed.placeholder='Start typing here…';typed.focus();updateLive();
 }
 function finishTest(){
@@ -165,9 +166,10 @@ $('self-load-passage').addEventListener('click',()=>{const item=readSaved().find
 $('self-delete-passage').addEventListener('click',()=>{const id=$('self-saved-list').value;if(!id){$('self-save-message').textContent='Delete karne ke liye saved passage select karein.';return}const items=readSaved().filter(x=>String(x.id)!==id);if(writeSaved(items)){refreshSaved();$('self-save-message').textContent='Saved passage deleted.'}});
 $('self-highlight').addEventListener('click',()=>setHighlight(!highlight));
 $('self-hide').addEventListener('click',()=>setHidden(!hidden));
+$('self-hide-input').addEventListener('click',()=>setInputHidden(!inputHidden));
 $('self-end').addEventListener('click',()=>{if(startedAt===null&&typed.value.length===0){finishTest();return}finishTest()});
 $('self-pdf').addEventListener('click',downloadPDF);$('self-print-scorecard').addEventListener('click',()=>window.print());
 $('self-again').addEventListener('click',()=>{if(timerId)window.clearInterval(timerId);workspace.hidden=true;setup.hidden=false;source.focus();$('self-message').textContent='You can prepare a new passage or change the duration.'});
-$('self-cancel').addEventListener('click',()=>{if(!confirm('Cancel this attempt and reset the self test? Your current typing will be cleared.'))return;if(timerId)window.clearInterval(timerId);timerId=null;startedAt=null;attemptDate=null;deadline=null;finished=false;totalElapsed=0;typed.value='';typed.disabled=false;workspace.hidden=true;setup.hidden=false;$('self-result').hidden=true;passageCard.hidden=false;setHidden(false);setHighlight(false);$('self-message').textContent='Test reset. Press “Start self test” to begin again.';source.focus();updateLive();});
+$('self-cancel').addEventListener('click',()=>{if(!confirm('Cancel this attempt and reset the self test? Your current typing will be cleared.'))return;if(timerId)window.clearInterval(timerId);timerId=null;startedAt=null;attemptDate=null;deadline=null;finished=false;totalElapsed=0;typed.value='';typed.disabled=false;workspace.hidden=true;setup.hidden=false;$('self-result').hidden=true;passageCard.hidden=false;setHidden(false);setInputHidden(false);setHighlight(false);$('self-message').textContent='Test reset. Press “Start self test” to begin again.';source.focus();updateLive();});
 refreshSaved();
 })();
