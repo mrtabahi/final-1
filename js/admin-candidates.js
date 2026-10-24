@@ -11,11 +11,20 @@
     view.innerHTML = `
       <div class="admin-page-heading"><div><div class="admin-kicker">PEOPLE &amp; ACCOUNTS</div><h1>Candidate directory</h1><p>Search registered candidates, review account details and inspect submitted typing performance.</p></div><button class="admin-btn admin-btn-secondary" id="candidate-refresh">↻ Refresh directory</button></div>
       <div class="candidate-hero"><div class="candidate-hero-copy"><span class="candidate-eyebrow">CANDIDATE OPERATIONS</span><h2>Every candidate, one clear view.</h2><p>Find accounts quickly and review their activity without exposing authentication secrets.</p></div><div class="candidate-hero-mark">♙</div></div>
+      <section class="admin-panel account-admin-panel"><div class="admin-panel-heading"><div><h2>Account management</h2><p>Create candidate accounts, change passwords, and verify email addresses.</p></div><span class="candidate-permission-badge">Admin tools</span></div>
+      <div class="account-admin-grid">
+        <form class="account-admin-card" id="account-create-form"><h3>Create candidate ID</h3><p>Creates a candidate login. Email remains unverified until confirmed.</p><label>Full name<input name="full_name" required maxlength="120" autocomplete="name" placeholder="Candidate full name"></label><label>Email address<input name="email" type="email" required autocomplete="email" placeholder="candidate@example.com"></label><label>Temporary password<input name="password" type="password" required minlength="10" autocomplete="new-password" placeholder="At least 10 characters"></label><button class="admin-btn admin-btn-primary" type="submit">Create candidate account</button></form>
+        <form class="account-admin-card" id="account-password-form"><h3>Change / reset password</h3><p>You cannot view a user's current password. Set a new one instead.</p><label>User email<input name="email" type="email" required autocomplete="email" placeholder="user@example.com"></label><label>New password<input name="password" type="password" required minlength="10" autocomplete="new-password" placeholder="At least 10 characters"></label><button class="admin-btn admin-btn-secondary" type="submit">Set new password</button></form>
+        <form class="account-admin-card" id="account-verify-form"><h3>Verify user email</h3><p>Use only after you have independently confirmed the email address belongs to the user.</p><label>User email<input name="email" type="email" required autocomplete="email" placeholder="user@example.com"></label><button class="admin-btn admin-btn-secondary" type="submit">Mark email verified</button></form>
+      </div><p class="account-admin-status" id="account-admin-status" role="status" aria-live="polite">Account actions are securely checked by the server. Passwords are never displayed.</p></section>
       <div class="candidate-stats"><article><span>Registered candidates</span><strong id="candidate-total">—</strong><small>Candidate-role profiles</small></article><article><span>Profiles with email</span><strong id="candidate-email-total">—</strong><small>Contact coverage</small></article><article><span>Phone verified</span><strong id="candidate-verified-total">—</strong><small>Based on profile verification flag</small></article></div>
       <section class="admin-panel candidate-directory-panel"><div class="admin-panel-heading"><div><h2>Candidate accounts</h2><p>Search by name, email, phone or profile ID.</p></div><span class="site-content-count" id="candidate-result-count">Loading…</span></div><div class="candidate-toolbar"><label class="admin-search">⌕ <input id="candidate-search" type="search" placeholder="Search candidates…"></label><select class="admin-select" id="candidate-verification-filter" aria-label="Phone verification filter"><option value="">All verification states</option><option value="verified">Phone verified</option><option value="unverified">Not verified</option></select><button class="admin-btn admin-btn-secondary" id="candidate-clear-search" type="button">Clear</button></div><div id="candidate-list" class="candidate-list"><div class="admin-empty">Loading candidate directory…</div></div><div class="candidate-pagination"><span id="candidate-page-label">—</span><div><button class="admin-btn admin-btn-secondary" id="candidate-prev" type="button" disabled>← Previous</button><button class="admin-btn admin-btn-secondary" id="candidate-next" type="button" disabled>Next →</button></div></div></section>
       <section class="admin-panel candidate-detail-panel" id="candidate-detail" hidden><div class="admin-panel-heading"><div><h2>Candidate overview</h2><p>Profile and submitted test history</p></div><button class="admin-btn admin-btn-secondary" id="candidate-close-detail" type="button">Close details</button></div><div id="candidate-detail-content"></div></section>
       <p class="candidate-security-footnote"><span>🔒</span><span><strong>Privacy-first controls</strong><br>Passwords and authentication tokens are never displayed. Suspend/ban controls are intentionally not shown until a secure server-side workflow is implemented.</span></p>`;
     $('candidate-refresh').addEventListener('click', load);
+    bindAccountForm('account-create-form','create_candidate');
+    bindAccountForm('account-password-form','reset_password');
+    bindAccountForm('account-verify-form','verify_email');
     $('candidate-search').addEventListener('input', () => { page = 0; applyFilters(); });
     $('candidate-verification-filter').addEventListener('change', () => { page = 0; applyFilters(); });
     $('candidate-clear-search').addEventListener('click', () => { $('candidate-search').value=''; $('candidate-verification-filter').value=''; page=0; applyFilters(); });
@@ -24,6 +33,28 @@
     $('candidate-list').addEventListener('click', e => { const b=e.target.closest('[data-candidate-view]'); if(b) showDetail(b.dataset.candidateView); });
     $('candidate-close-detail').addEventListener('click', () => { $('candidate-detail').hidden=true; selected=null; });
     page=0; load();
+  }
+  function bindAccountForm(formId, action) {
+    const form=$(formId); if(!form)return;
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();
+      const status=$('account-admin-status'),button=form.querySelector('button[type="submit"]');
+      const fields=Object.fromEntries(new FormData(form).entries());
+      const actionLabel=action==='create_candidate'?'create this candidate account':action==='reset_password'?'change this account password':'mark this email as verified';
+      if(!confirm('Confirm: '+actionLabel+'?'))return;
+      button.disabled=true;status.className='account-admin-status';status.textContent='Processing request securely…';
+      try{
+        const {data,error}=await supabaseClient.functions.invoke('admin-account-management',{body:{action,...fields}});
+        if(error)throw new Error(data?.error||error.message||'Request failed.');
+        if(data?.error)throw new Error(data.error);
+        status.className='account-admin-status is-success';status.textContent=data?.message||'Account action completed successfully.';
+        form.reset();
+        if(action==='create_candidate')load();
+      }catch(error){
+        status.className='account-admin-status is-error';
+        status.textContent=error.message||'Account action failed. Check your admin session and try again.';
+      }finally{button.disabled=false;}
+    });
   }
   const pageSize = 8; let page = 0;
   async function load() {
