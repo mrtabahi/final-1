@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const [folderResult, testsResult] = await Promise.all([
       supabaseClient.from('folders').select('id,name,description').eq('id', folderId).eq('active', true).single(),
-      supabaseClient.from('tests').select('id,title,language,duration_minutes,target_wpm,min_accuracy,folder_id,mode').eq('folder_id', folderId).eq('active', true).order('created_at', {ascending:false})
+      supabaseClient.from('tests').select('id,title,language,duration_minutes,target_wpm,min_accuracy,folder_id,mode').eq('folder_id', folderId).eq('active', true).order('sort_order', {ascending:true, nullsFirst:false}).order('created_at', {ascending:false})
     ]);
     if (folderResult.error) throw folderResult.error;
     if (testsResult.error) throw testsResult.error;
