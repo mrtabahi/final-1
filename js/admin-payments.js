@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       for (const result of [couponRes, planRes, orderRes, transactionRes]) if (result.error) throw result.error;
       coupons = couponRes.data || []; plans = planRes.data || []; orders = orderRes.data || []; transactions = transactionRes.data || [];
       renderCoupons(); renderOrders(); renderTransactions();
-      setStatus('Coupon, order and transaction records loaded. Checkout is not connected.', 'success');
+      setStatus('Coupon, order and transaction records loaded. Razorpay checkout is wired; staging verification is pending.', 'success');
     } catch (error) {
       console.error('Coupon load failed', error);
       $('payments-list').innerHTML = '<div class="admin-empty">Could not load coupons. Confirm the foundation migration is applied to staging and admin RPC permissions are configured.</div>';
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         p_max_redemptions_per_user: perUser, p_is_active: $('payments-active').checked, p_plan_ids: planIds
       });
       if (result.error) throw result.error;
-      closeForm(); await load(); setStatus('Coupon saved. It will not be redeemable until a verified checkout flow is implemented.', 'success');
+      closeForm(); await load(); setStatus('Coupon saved. Coupon redemption is enforced by the server-priced checkout order flow.', 'success');
     } catch (error) { console.error('Coupon save failed', error); setStatus(error.message || 'Unable to save coupon.', 'error'); }
     finally { saving = false; $('payments-save').disabled = false; $('payments-save').textContent = 'Save coupon'; }
   }
