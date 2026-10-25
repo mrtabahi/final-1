@@ -4,6 +4,8 @@ This checklist is for a **non-production Supabase project only**. Do not run the
 
 ## 1. Preflight
 
+**Current blocker:** no verified staging project/branch is available as of 2026-10-26. Do not use the production project, and do not assume the unrelated inactive Supabase project is staging. Create/identify a dedicated staging target before applying the migration or deploying the function.
+
 - Confirm the staging project has a recent schema/data snapshot and a rollback plan.
 - Compare the staging `supabase_migrations.schema_migrations` history with the repository migration files before applying anything.
 - Apply `supabase/migrations/20261026000100_access_monetization_foundation.sql` to staging.
@@ -24,8 +26,8 @@ order by tablename, policyname;
 
 Expected:
 - `tests_candidate_select` contains `active = true AND public.can_access_test(id, auth.uid())`; the migration explicitly drops and recreates this policy.
-- The current production policy inventory (read-only inspection) contains `tests_admin_all`, `tests_candidate_select`, and `tests_staff_manage` on `tests`, plus `folders_admin_all`, `folders_candidate_select`, and `folders_staff_manage` on `folders`. Verify the same names and predicates in staging before release.
-- `tests_admin_all` remains admin-only, and `tests_staff_manage` remains scoped to the existing `has_candidate_permission('folder_tests')` capability. Confirm the staff capability is intentional and does not grant access to ordinary candidates.
+- Read-only production inspection on 2026-10-26 confirmed these exact predicates: `tests_admin_all` = `is_current_user_admin()` (ALL); `tests_candidate_select` = `(active = true)` (SELECT); `tests_staff_manage` = `has_candidate_permission('folder_tests'::text)` (ALL). On folders: `folders_admin_all` = `is_current_user_admin()` (ALL); `folders_candidate_select` = `(active = true)` (SELECT); `folders_staff_manage` = `has_candidate_permission('folder_tests'::text)` (ALL). Verify the same names and predicates in staging before release.
+- `tests_admin_all` remains admin-only, and `tests_staff_manage` remains scoped to the existing `has_candidate_permission('folder_tests')` capability. These are permissive `ALL` policies and therefore can grant SELECT to users who qualify; confirm that this staff access is intentional and that ordinary candidates cannot satisfy the staff capability.
 - No other permissive candidate-facing SELECT policy on `tests` may grant every active test without an entitlement check; PostgreSQL permissive policies combine with OR, so one leftover broad policy would bypass the new gate.
 - Folder listing may expose folder metadata, but not passage content; passage text lives on `tests` and must remain protected by the test SELECT policy.
 
