@@ -28,7 +28,7 @@
   $('workspace-banner-reset')?.addEventListener('click',()=>{$('workspace-banner-lines').value='Your Pro tools. One workspace.';});
   $('workspace-banner-form')?.addEventListener('submit',async e=>{
    e.preventDefault();const btn=$('workspace-banner-save'),msg=$('workspace-banner-message');
-   const next=$('workspace-banner-lines').value.split(/\\r?\n/).map(v=>v.trim()).filter(Boolean);
+   const next=$('workspace-banner-lines').value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
    if(!next.length){msg.textContent='Add at least one non-empty text line.';msg.className='admin-form-message error';return;}
    btn.disabled=true;msg.textContent='Saving…';msg.className='admin-form-message';
    try{const {error:saveError}=await supabaseClient.from('ad_settings').update({workspace_banner_lines:next,updated_at:new Date().toISOString()}).eq('id',1);if(saveError)throw saveError;msg.textContent='Workspace banner text saved. Refresh the Pro workspace to see the changes.';msg.className='admin-form-message success';}
