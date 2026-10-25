@@ -178,6 +178,7 @@ test('subscription operations UI uses admin RPCs and does not write subscription
   assert.match(page, /Manual grants immediately grant paid access/i);
   assert.match(js, /rpc\('admin_list_user_subscriptions'\)/);
   assert.match(js, /rpc\('admin_grant_user_subscription'/);
+  assert.match(js, /confirm\('This will immediately grant this candidate/);
   assert.match(js, /rpc\('admin_cancel_user_subscription'/);
   assert.doesNotMatch(js, /from\(['"]user_subscriptions['"]\)/);
   assert.match(adminPage, /href="admin-subscriptions\.html"/);
