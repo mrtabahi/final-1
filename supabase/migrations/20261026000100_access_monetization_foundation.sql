@@ -457,6 +457,41 @@ BEGIN
 END;
 $function$;
 
+CREATE OR REPLACE FUNCTION public.admin_save_subscription_plan(
+  p_id uuid,
+  p_name text,
+  p_description text,
+  p_price_minor bigint,
+  p_currency text,
+  p_duration_days integer,
+  p_is_active boolean,
+  p_entitlements jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_plan jsonb;
+  v_plan_id uuid;
+  v_entitlement_count integer;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  v_plan := public.admin_upsert_subscription_plan(
+    p_id, p_name, p_description, p_price_minor, p_currency, p_duration_days, p_is_active
+  );
+  v_plan_id := (v_plan->>'id')::uuid;
+  v_entitlement_count := public.admin_set_plan_entitlements(v_plan_id, p_entitlements);
+  RETURN v_plan || jsonb_build_object('entitlements_count', v_entitlement_count);
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_save_subscription_plan(uuid, text, text, bigint, text, integer, boolean, jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_save_subscription_plan(uuid, text, text, bigint, text, integer, boolean, jsonb) TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.admin_list_subscription_plans()
 RETURNS SETOF public.subscription_plans
 LANGUAGE plpgsql
