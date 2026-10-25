@@ -50,3 +50,25 @@ test('access policy changes are written to a server-managed audit trail', () => 
   assert.match(migration, /CREATE TRIGGER tests_access_mode_audit/);
   assert.match(migration, /REVOKE ALL ON TABLE public\.%I FROM anon, authenticated/);
 });
+
+test('migration replaces only the candidate test-read policy and preserves staff/admin policies', () => {
+  assert.match(migration, /DROP POLICY IF EXISTS tests_candidate_select ON public\.tests/);
+  assert.doesNotMatch(migration, /DROP POLICY IF EXISTS tests_(admin_all|staff_manage) ON public\.tests/);
+  assert.match(migration, /CREATE POLICY tests_candidate_select ON public\.tests/);
+  assert.match(migration, /has_candidate_permission\('folder_tests'::text\)/);
+});
+
+test('subscription and payment tables are server-managed behind RLS', () => {
+  assert.match(migration, /ALTER TABLE public\.%I ENABLE ROW LEVEL SECURITY/);
+  assert.match(migration, /REVOKE ALL ON TABLE public\.%I FROM anon, authenticated/);
+  assert.match(migration, /GRANT ALL ON TABLE public\.%I TO service_role/);
+  for (const table of ['subscription_plans', 'plan_entitlements', 'user_subscriptions', 'user_entitlement_overrides', 'coupons', 'orders', 'payment_transactions', 'coupon_redemptions', 'access_policies', 'access_policy_audit']) {
+    assert.match(migration, new RegExp("'" + table + "'"));
+  }
+});
+
+test('the access check fails closed when the entitlement RPC errors', () => {
+  assert.match(edge, /if \(accessError\) \{[\s\S]*?return reply\(503/);
+  assert.match(edge, /if \(accessAllowed !== true\) return reply\(403/);
+  assert.match(edge, /if \(accessError\) \{[\s\S]*?return reply\(503/);
+});
