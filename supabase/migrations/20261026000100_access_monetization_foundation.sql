@@ -1187,7 +1187,7 @@ GRANT EXECUTE ON FUNCTION public.get_my_subscription_overview() TO authenticated
 
 CREATE OR REPLACE FUNCTION public.admin_list_orders()
 RETURNS TABLE(
-  id uuid, user_id uuid, user_name text, user_email text, plan_name text, currency text,
+  id uuid, user_id uuid, user_name text, user_email text, plan_name text, provider text, provider_order_id text, currency text,
   subtotal_minor bigint, discount_minor bigint, total_minor bigint, status text,
   expires_at timestamptz, created_at timestamptz
 )
@@ -1200,7 +1200,7 @@ BEGIN
     RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
   END IF;
   RETURN QUERY
-  SELECT o.id, o.user_id, p.full_name::text, p.email::text, sp.name::text, o.currency,
+  SELECT o.id, o.user_id, p.full_name::text, p.email::text, sp.name::text, o.provider, o.provider_order_id, o.currency,
          o.subtotal_minor, o.discount_minor, o.total_minor, o.status, o.expires_at, o.created_at
   FROM public.orders o
   JOIN public.profiles p ON p.id = o.user_id
