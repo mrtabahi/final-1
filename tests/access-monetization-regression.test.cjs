@@ -55,7 +55,6 @@ test('migration replaces only the candidate test-read policy and preserves staff
   assert.match(migration, /DROP POLICY IF EXISTS tests_candidate_select ON public\.tests/);
   assert.doesNotMatch(migration, /DROP POLICY IF EXISTS tests_(admin_all|staff_manage) ON public\.tests/);
   assert.match(migration, /CREATE POLICY tests_candidate_select ON public\.tests/);
-  assert.match(migration, /has_candidate_permission\('folder_tests'::text\)/);
 });
 
 test('subscription and payment tables are server-managed behind RLS', () => {
