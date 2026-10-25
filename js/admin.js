@@ -151,6 +151,12 @@
         if (!isCore) document.querySelectorAll('.admin-nav-link[data-module]').forEach(link => { if (link.getAttribute('data-module') === view) link.classList.add('active'); });
         // Active modules own their complete panel markup. Do not let the
         // generic planning-panel header compete with their renderer.
+        if (view === 'logins') {
+            updatePageHeader(view);
+            if (typeof window.renderLoginsModule === 'function') window.renderLoginsModule();
+            else console.error('Logins module renderer is not loaded.');
+            return;
+        }
         if (view === 'candidates') {
             if (typeof window.renderCandidatesModule === 'function') {
                 window.renderCandidatesModule();
@@ -204,7 +210,7 @@
             dashboard:{title:'Overview',subtitle:'Manage your typing practice platform.'},
             tests:{title:'Folders & Tests',subtitle:'Create, organize and control typing tests.'},
             attempts:{title:'Results & Attempts',subtitle:'Review candidate typing performance.'},
-            candidates:{title:'Candidate Management',subtitle:'Review accounts, account history and candidate status.'},
+            candidates:{title:'Candidate Management',subtitle:'Review accounts, login history and online sessions.'},\n            logins:{title:'Logins & Registration',subtitle:'Manage account creation and personalized login messages.'},
             content:{title:'Website Content',subtitle:'Manage public-facing pages, banners and announcements.'},
             'workspace-banner':{title:'Workspace Banner Text',subtitle:'Edit the Pro workspace heading and supporting lines.'},
             subscriptions:{title:'Plans & Subscriptions',subtitle:'Plan paid tiers, renewals and premium access.'},
@@ -219,7 +225,7 @@
         if(subtitle) subtitle.textContent=item.subtitle;
         // These modules render their own complete interface. Never replace
         // their content with the generic roadmap panel during navigation.
-        const ownsRenderer = ['dashboard','tests','attempts','candidates','content','analytics','security','settings'].includes(view);
+        const ownsRenderer = ['dashboard','tests','attempts','candidates','logins','content','analytics','security','settings'].includes(view);
         if (!ownsRenderer) renderPlannedModule(view,item);
     }
 
