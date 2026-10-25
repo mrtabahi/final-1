@@ -160,6 +160,12 @@
             }
             return;
         }
+        if (view === 'workspace-banner') {
+            updatePageHeader(view);
+            if (typeof window.renderWorkspaceBannerModule === 'function') window.renderWorkspaceBannerModule();
+            else console.error('Workspace banner editor is not loaded.');
+            return;
+        }
         if (view === 'content') {
             if (typeof window.renderWebsiteContentModule === 'function') {
                 window.renderWebsiteContentModule();
@@ -200,6 +206,7 @@
             attempts:{title:'Results & Attempts',subtitle:'Review candidate typing performance.'},
             candidates:{title:'Candidate Management',subtitle:'Review accounts, account history and candidate status.'},
             content:{title:'Website Content',subtitle:'Manage public-facing pages, banners and announcements.'},
+            'workspace-banner':{title:'Workspace Banner Text',subtitle:'Edit the Pro workspace heading and supporting lines.'},
             subscriptions:{title:'Plans & Subscriptions',subtitle:'Plan paid tiers, renewals and premium access.'},
             payments:{title:'Payments & Coupons',subtitle:'Payment ledger, invoices, coupons and refunds.'},
             roles:{title:'Roles & Permissions',subtitle:'Define least-privilege access for administrators.'},
@@ -2153,33 +2160,14 @@ async function loadDashboard() {
 
         setupAttemptActions();
         $('admin-menu-toggle')?.addEventListener('click', () => $('admin-sidebar')?.classList.toggle('is-open'));
-        $('admin-refresh')?.addEventListener('click', async () => {
+        $('admin-refresh')?.addEventListener('click', () => {
             const button = $('admin-refresh');
             if (button?.disabled) return;
-            if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); }
-            try {
-                if (currentView === 'dashboard') await loadDashboard();
-                else if (currentView === 'tests') await loadManageTests();
-                else if (currentView === 'attempts') await loadAllAttempts();
-                else if (currentView === 'analytics') await renderAnalyticsModule();
-                else if (currentView === 'security') await renderSecurityAuditModule();
-                else if (currentView === 'settings') await renderWebsiteSettingsModule();
-                else if (currentView === 'candidates') {
-                    if (typeof window.renderCandidatesModule === 'function') await window.renderCandidatesModule();
-                    else $('candidate-refresh')?.click();
-                } else if (currentView === 'content') {
-                    if (typeof window.renderWebsiteContentModule === 'function') await window.renderWebsiteContentModule();
-                    else $('site-content-refresh')?.click();
-                } else {
-                    // Planned/future modules also get a visible refresh instead of a silent no-op.
-                    showAdminView(currentView);
-                }
-            } catch (error) {
-                console.error('Admin view refresh failed:', error);
-                window.alert('Refresh failed. Please try again. If this continues, check your connection and admin session.');
-            } finally {
-                if (button) { button.disabled = false; button.removeAttribute('aria-busy'); }
-            }
+            if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); button.textContent = 'Reloading…'; }
+            // A fresh document URL bypasses document cache; Supabase session stays in local storage.
+            const url = new URL(window.location.href);
+            url.searchParams.set('__admin_reload', String(Date.now()));
+            window.location.replace(url.toString());
         });
         if ($('admin-loading')) $('admin-loading').style.display = 'none';
         if ($('admin-app')) $('admin-app').style.display = 'flex';

@@ -790,3 +790,5 @@ h1, h2, .typing-page-title {
 .home-pro-benefits small{font-size:.76rem;line-height:1.55;color:#d4e1f3}
 @media(max-width:760px){.home-pro-hero{grid-template-columns:1fr}.home-pro-copy h1{max-width:22ch}.home-pro-benefits{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.home-pro-benefits{grid-template-columns:1fr}}
+
+.site-history-back{position:fixed;left:16px;bottom:16px;z-index:999;display:inline-flex;align-items:center;gap:6px;padding:10px 15px;border:1px solid #d9e2ef;border-radius:999px;background:rgba(255,255,255,.96);color:#172033;font:700 13px/1.2 inherit;box-shadow:0 5px 18px rgba(16,35,62,.15);cursor:pointer;backdrop-filter:blur(8px)}.site-history-back:hover{background:#eef5ff;border-color:#9bb9df}.site-history-back:focus-visible{outline:3px solid #72a9f5;outline-offset:3px}@media(max-width:600px){.site-history-back{left:10px;bottom:10px;padding:9px 12px}}

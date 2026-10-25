@@ -16,6 +16,7 @@ async function init(){
  try{
   const auth=await AuthManager.isVerifiedCandidate();if(!auth.ok){location.href='login.html';return;}user=auth.user;profile=auth.profile;
   $('cw-user-name').textContent=profile.full_name||profile.email||'Candidate';
+  try{const {data:banner}=await supabaseClient.from('workspace_banner_settings').select('lines').eq('id',1).maybeSingle();const lines=(banner?.lines||[]).map(v=>String(v||'').trim()).filter(Boolean);if(lines.length){$('cw-banner-title').textContent=lines[0];$('cw-banner-extra').innerHTML=lines.slice(1).map(line=>'<p class="cw-banner-extra-line">'+esc(line)+'</p>').join('');}}catch(error){console.warn('Workspace banner settings unavailable; using defaults.',error);}
   const {data,error}=await supabaseClient.from('candidate_permissions').select('permissions').eq('user_id',user.id).maybeSingle();if(error)throw error;
   permissions=data?.permissions||{};
   const granted=Object.keys(labels).filter(k=>permissions[k]===true);
