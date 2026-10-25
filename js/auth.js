@@ -80,7 +80,7 @@ const AuthManager = {
 
   async sendMagicLink(email) {
     const value = String(email || '').trim().toLowerCase();
-    if (!value || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value)) {
+    if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       throw new Error('Enter the email address linked to your existing account.');
     }
     const { error } = await supabaseClient.auth.signInWithOtp({
@@ -96,7 +96,7 @@ const AuthManager = {
 
   async resendConfirmation(email) {
     const value = String(email || '').trim().toLowerCase();
-    if (!value || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value)) {
+    if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       throw new Error('Enter a valid email address first.');
     }
     const { error } = await supabaseClient.auth.resend({
