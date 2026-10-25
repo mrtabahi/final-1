@@ -135,6 +135,11 @@ Existing functional modules should be preserved and moved into a clearer informa
 - Free plans can be activated through server-priced order creation; paid plan buttons remain disabled until the payment provider and verified checkout are implemented.
 - Regression tests cover account scoping and RPC-only data access. Staging integration and UI browser testing are still required.
 
+## Order and transaction operations increment (2026-10-26)
+
+- Extended the admin Payments & Coupons page with read-only order and payment-transaction history through role-checked RPCs.
+- The UI intentionally does not expose raw provider payloads or offer a manual “mark paid” control. Payment finalization remains restricted to the service-role verifier path.
+
 ## Decisions intentionally left open
 
 - Payment gateway/provider and supported currencies.
