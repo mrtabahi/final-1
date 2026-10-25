@@ -307,7 +307,7 @@ test('Razorpay checkout and verification remain server-authoritative', () => {
   assert.match(createCheckout, /create_checkout_order/);
   assert.match(createCheckout, /RAZORPAY_KEY_SECRET/);
   assert.match(createCheckout, /Number\(providerOrder\.amount\) !== Number\(order\.total_minor\)/);
-  assert.match(verifyPayment, /hmacHex\(keySecret, providerOrderId \+ "\\|" \+ paymentId\)/);
+  assert.ok(verifyPayment.includes('hmacHex(keySecret, providerOrderId + "|" + paymentId)'));
   assert.match(verifyPayment, /payment\.status !== "captured" \|\| payment\.captured !== true/);
   assert.match(verifyPayment, /service_mark_order_paid/);
   assert.match(webhook, /x-razorpay-signature/);
