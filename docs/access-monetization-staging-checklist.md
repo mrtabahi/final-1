@@ -122,6 +122,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Paid orders remain pending until a provider-specific verifier confirms the signed payment and calls the service-role-only finalization RPC.
 - Only service_role can finalize a paid order; amount/currency must match exactly; duplicate provider transaction callbacks are idempotent; mismatched or duplicate transactions cannot create extra subscriptions.
 - Staging tests must cover concurrent coupon redemption limits and failed/late payment callbacks. A real provider integration is still required before production checkout.
+- Admin order and transaction views return only the approved summary fields; verify non-admin callers cannot invoke either list RPC and raw provider payloads are never exposed.
 
 ## 11. Edge Function scenarios
 
