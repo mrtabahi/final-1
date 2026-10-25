@@ -128,6 +128,13 @@ Existing functional modules should be preserved and moved into a clearer informa
 - Added a service-role-only `service_mark_order_paid` RPC that checks order amount/currency, rejects expired orders, creates a payment transaction, activates a subscription from the order's duration snapshot, and handles duplicate callbacks idempotently.
 - This is a provider-neutral database foundation only. No payment provider SDK, signed webhook verifier, checkout UI, refunds or production payment activation are deployed. Do not call the finalization RPC except from a provider-specific verifier after signature verification.
 
+## Customer subscription overview increment (2026-10-26)
+
+- Added `my-subscription.html`, linked from the public site, account and results navigation.
+- Added a public-safe active-plan catalog RPC and an authenticated self-only subscription/order history RPC. The browser never directly queries server-managed subscription/order tables.
+- Free plans can be activated through server-priced order creation; paid plan buttons remain disabled until the payment provider and verified checkout are implemented.
+- Regression tests cover account scoping and RPC-only data access. Staging integration and UI browser testing are still required.
+
 ## Decisions intentionally left open
 
 - Payment gateway/provider and supported currencies.
