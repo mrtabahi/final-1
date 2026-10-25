@@ -77,6 +77,8 @@ Deno.serve(async (req: Request) => {
         return json(400, { error: "Malformed order.paid payload." });
       }
       eventEntityId = payment.id;
+      const providerCreatedAt = Number(payment.created_at);
+      if (!Number.isFinite(providerCreatedAt)) return json(503, { error: "Provider payment timestamp is unavailable." });
       if (payment.status !== "captured" && payment.captured !== true) {
         console.warn("Ignoring order.paid notification without captured payment state.");
       } else {
@@ -89,7 +91,7 @@ Deno.serve(async (req: Request) => {
         } else if (Number(payment.amount) !== Number(order.total_minor) || payment.currency !== order.currency) {
           console.error("Razorpay webhook amount/currency mismatch.", order.id, payment.id);
           return json(400, { error: "Payment amount or currency mismatch." });
-        } else if (order.expires_at && new Date(order.expires_at).getTime() <= Date.now() && order.status === "pending") {
+        } else if (order.expires_at && providerCreatedAt * 1000 > new Date(order.expires_at).getTime() && order.status === "pending") {
           console.error("Captured payment arrived after local order expiry; manual refund reconciliation required.", order.id, payment.id);
           outcome = "ignored";
         } else {
@@ -99,6 +101,7 @@ Deno.serve(async (req: Request) => {
             p_provider_transaction_id: payment.id,
             p_amount_minor: Number(payment.amount),
             p_currency: payment.currency,
+            p_provider_created_at: new Date(providerCreatedAt * 1000).toISOString(),
             p_verified_payload: {
               source: "razorpay_signed_webhook",
               event: event.event,
