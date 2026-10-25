@@ -68,6 +68,15 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Changing access mode writes an audit row with resource, old/new mode, actor, and timestamp.
 
 
+## 5. Manual entitlement override scenarios
+
+- Admin can list, create, edit and revoke test/folder overrides through role-checked RPCs; non-admin calls fail.
+- Candidate, resource UUID, resource type, access mode, reason length, and validity window are validated server-side.
+- Every insert/update/revocation adds a server-managed audit row with before/after state, actor and timestamp.
+- A grant/free override affects only the selected user and matching resource; a paid override does not grant paid access by itself.
+- Revoking an override immediately ends its validity without deleting its audit history.
+- Inactive tests and inactive parent folders remain inaccessible even if an override exists.
+
 ## 5. Plan catalog admin RPC scenarios
 
 - Admin can list plans and read a plan's entitlements through the role-checked RPCs.
