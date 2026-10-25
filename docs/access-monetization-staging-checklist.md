@@ -7,6 +7,7 @@ This checklist is for a **non-production Supabase project only**. Do not run the
 **Current blocker:** no verified staging project/branch is available as of 2026-10-26. Do not use the production project, and do not assume the unrelated inactive Supabase project is staging. Create/identify a dedicated staging target before applying the migration or deploying the function.
 
 - Confirm the staging project has a recent schema/data snapshot and a rollback plan.
+- Review docs/access-monetization-rollback.md and decide whether the test target is functional rollback or security-incident rollback before applying the migration.
 - Compare the staging `supabase_migrations.schema_migrations` history with the repository migration files before applying anything.
 - Apply `supabase/migrations/20261026000100_access_monetization_foundation.sql` to staging.
 - Deploy the branch version of `supabase/functions/typing-result/index.ts` to staging only.
