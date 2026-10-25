@@ -1,6 +1,6 @@
 # Payment Provider Integration Contract
 
-Status: provider-neutral database foundation is implemented; no provider is selected or deployed. This document is the acceptance contract for the next provider-specific implementation.
+Status: Razorpay selected; code is implemented in the feature branch but not deployed. Staging configuration and provider sandbox verification remain required.
 
 ## Required flow
 
@@ -31,6 +31,47 @@ Status: provider-neutral database foundation is implemented; no provider is sele
 - Admin order/transaction display of provider session/payment/refund identifiers.
 - Staging evidence for paid, failed, expired, duplicate, mismatched amount, refund and webhook retry scenarios.
 
+
+## Razorpay implementation status (staging only)
+
+Razorpay is the selected provider. The repository now includes:
+
+- `create-checkout`: validates the signed-in candidate, creates a server-priced local order, creates a Razorpay order using server-only credentials, and persists the provider order ID.
+- `verify-razorpay-payment`: verifies the checkout HMAC against the server-stored provider order ID, fetches payment status from Razorpay, and only finalizes captured payments with matching amount/currency.
+- `razorpay-webhook`: validates the HMAC signature over the exact raw body; handles `order.paid`, `payment.failed`, and `refund.processed`; deduplicates provider event IDs; and records only minimized verification metadata.
+- Late captured payments created after the local checkout expiry are recorded without granting subscription access and trigger a server-side full-refund request. If prior partial/multiple refunds make automatic full refund unsafe, the webhook logs the case for manual reconciliation.
+- Delayed webhook delivery is accepted when the provider's payment creation timestamp is within the original checkout window; a payment created after expiry is not granted access.
+
+### Staging secrets
+
+Configure these as Supabase Edge Function secrets only. Use Razorpay **Test Mode** credentials.
+
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- `RAZORPAY_WEBHOOK_SECRET`
+
+Supabase supplies `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` to deployed Edge Functions. Never add the service-role key or Razorpay secret to browser config, HTML, repository files, or Vercel public environment variables.
+
+### Razorpay dashboard webhook
+
+After the staging Edge Function is deployed, configure the staging function URL as the webhook endpoint and set the same random webhook secret as `RAZORPAY_WEBHOOK_SECRET`. Subscribe to:
+
+- `order.paid`
+- `payment.failed`
+- `refund.processed`
+
+Keep the endpoint URL and webhook secret specific to staging. Do not configure the live Razorpay webhook until staging evidence is reviewed.
+
+### Required staging tests
+
+- Successful captured payment activates exactly one subscription and is idempotent under callback/webhook replay.
+- Invalid checkout signature, invalid webhook signature, wrong provider order ID, wrong amount, wrong currency, and non-captured payment never activate access.
+- Failed and abandoned payments do not activate access.
+- A delayed webhook for a payment created before checkout expiry still finalizes safely.
+- A captured payment created after expiry does not activate access and initiates one full refund; repeated webhook delivery must not create duplicate refunds.
+- A full refund revokes active subscription access. Partial or multiple pre-existing refunds are logged for manual reconciliation instead of issuing an unsafe additional refund.
+- A provider API timeout after refund initiation can be retried after the lease expires and reconciled against the provider refund list.
+
 ## Selection required before implementation
 
-Choose the provider and account mode before the provider-specific work starts. For an India/INR-first checkout, likely candidates are Razorpay or Cashfree; Stripe may be appropriate if the merchant account and intended currencies/regions are supported. This is a business/account decision, not something the code should guess.
+Use Razorpay Test Mode for staging. Live Mode activation remains a separate release decision after the staging checklist passes.
