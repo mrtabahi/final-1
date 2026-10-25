@@ -211,6 +211,9 @@ test('only trusted service role can mark an order paid and activate a subscripti
   assert.match(migration, /current_setting\('request\.jwt\.claim\.role', true\).*service_role/s);
   assert.match(migration, /p_amount_minor <> v_order\.total_minor OR p_currency <> v_order\.currency/);
   assert.match(migration, /v_order\.expires_at <= now\(\)/);
+  const paymentStart = migration.indexOf('CREATE OR REPLACE FUNCTION public.service_mark_order_paid');
+  const paymentBody = migration.slice(paymentStart, migration.indexOf('REVOKE ALL ON FUNCTION public.service_mark_order_paid', paymentStart));
+  assert.ok(paymentBody.indexOf('IF p_amount_minor <> v_order.total_minor') < paymentBody.indexOf("IF v_order.status = 'paid'"), 'amount/currency validation must precede idempotent success');
   assert.match(migration, /UPDATE public\.orders SET status = 'paid'/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.service_mark_order_paid\([\s\S]*?FROM PUBLIC, anon, authenticated/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.service_mark_order_paid\([\s\S]*?TO service_role/);
