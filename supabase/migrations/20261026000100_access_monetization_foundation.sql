@@ -155,6 +155,18 @@ CREATE TABLE IF NOT EXISTS public.access_policy_audit (
 );
 CREATE INDEX IF NOT EXISTS access_policy_audit_resource_lookup
   ON public.access_policy_audit(resource_type, resource_id, changed_at DESC);
+CREATE TABLE IF NOT EXISTS public.user_entitlement_override_audit (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  override_id uuid REFERENCES public.user_entitlement_overrides(id) ON DELETE SET NULL,
+  event_type text NOT NULL CHECK (event_type IN ('created', 'updated', 'revoked')),
+  before_state jsonb,
+  after_state jsonb,
+  actor_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  changed_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS user_override_audit_lookup
+  ON public.user_entitlement_override_audit(override_id, changed_at DESC);
+
 
 CREATE OR REPLACE FUNCTION public.audit_access_mode_change()
 RETURNS trigger
@@ -190,6 +202,45 @@ FOR EACH ROW EXECUTE FUNCTION public.audit_access_mode_change();
 
 REVOKE ALL ON FUNCTION public.audit_access_mode_change() FROM PUBLIC, anon, authenticated;
 
+CREATE OR REPLACE FUNCTION public.audit_user_entitlement_override_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_event text := CASE WHEN TG_OP = 'INSERT' THEN 'created' ELSE 'updated' END;
+BEGIN
+  IF TG_OP = 'UPDATE' AND NEW.ends_at IS NOT NULL AND NEW.ends_at <= now()
+     AND (OLD.ends_at IS NULL OR OLD.ends_at > now()) THEN
+    v_event := 'revoked';
+  END IF;
+  INSERT INTO public.user_entitlement_override_audit(
+    override_id, event_type, before_state, after_state, actor_user_id
+  ) VALUES (
+    NEW.id,
+    v_event,
+    CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE jsonb_build_object(
+      'user_id', OLD.user_id, 'resource_type', OLD.resource_type, 'resource_key', OLD.resource_key,
+      'access_mode', OLD.access_mode, 'starts_at', OLD.starts_at, 'ends_at', OLD.ends_at, 'reason', OLD.reason
+    ) END,
+    jsonb_build_object(
+      'user_id', NEW.user_id, 'resource_type', NEW.resource_type, 'resource_key', NEW.resource_key,
+      'access_mode', NEW.access_mode, 'starts_at', NEW.starts_at, 'ends_at', NEW.ends_at, 'reason', NEW.reason
+    ),
+    auth.uid()
+  );
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS user_entitlement_override_audit_trigger ON public.user_entitlement_overrides;
+CREATE TRIGGER user_entitlement_override_audit_trigger
+AFTER INSERT OR UPDATE ON public.user_entitlement_overrides
+FOR EACH ROW EXECUTE FUNCTION public.audit_user_entitlement_override_change();
+REVOKE ALL ON FUNCTION public.audit_user_entitlement_override_change() FROM PUBLIC, anon, authenticated;
+
+
 CREATE INDEX IF NOT EXISTS user_subscriptions_active_lookup
   ON public.user_subscriptions(user_id, status, starts_at, ends_at);
 CREATE INDEX IF NOT EXISTS plan_entitlements_resource_lookup
@@ -207,7 +258,7 @@ DECLARE t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'subscription_plans','plan_entitlements','user_subscriptions',
-    'user_entitlement_overrides','coupons','coupon_plan_eligibility',
+    'user_entitlement_overrides','user_entitlement_override_audit','coupons','coupon_plan_eligibility',
     'orders','payment_transactions','coupon_redemptions','access_policies','access_policy_audit'
   ] LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
@@ -565,6 +616,127 @@ REVOKE ALL ON FUNCTION public.admin_save_coupon(uuid, text, text, text, bigint, 
 GRANT EXECUTE ON FUNCTION public.admin_list_coupons() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_get_coupon_plan_eligibility(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_save_coupon(uuid, text, text, text, bigint, text, text, timestamptz, timestamptz, integer, integer, boolean, jsonb) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.admin_list_user_entitlement_overrides()
+RETURNS TABLE(
+  id uuid, user_id uuid, user_name text, user_email text, resource_type text,
+  resource_key text, access_mode text, starts_at timestamptz, ends_at timestamptz,
+  reason text, created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  RETURN QUERY
+  SELECT o.id, o.user_id, p.full_name::text, p.email::text, o.resource_type, o.resource_key,
+         o.access_mode, o.starts_at, o.ends_at, o.reason, o.created_at
+  FROM public.user_entitlement_overrides o
+  LEFT JOIN public.profiles p ON p.id = o.user_id
+  ORDER BY o.created_at DESC;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_save_user_entitlement_override(
+  p_id uuid,
+  p_user_id uuid,
+  p_resource_type text,
+  p_resource_key text,
+  p_access_mode text,
+  p_starts_at timestamptz,
+  p_ends_at timestamptz,
+  p_reason text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_id uuid;
+  v_resource_id uuid;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  IF p_user_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id) THEN
+    RAISE EXCEPTION 'Candidate profile not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_resource_type IS NULL OR p_resource_type NOT IN ('test', 'folder') THEN
+    RAISE EXCEPTION 'Only test and folder overrides are currently supported' USING ERRCODE = '22023';
+  END IF;
+  IF p_resource_key IS NULL OR length(btrim(p_resource_key)) = 0 OR length(p_resource_key) > 200 THEN
+    RAISE EXCEPTION 'Resource key is required' USING ERRCODE = '22023';
+  END IF;
+  BEGIN
+    v_resource_id := p_resource_key::uuid;
+  EXCEPTION WHEN invalid_text_representation THEN
+    RAISE EXCEPTION 'Resource key must be a valid resource UUID' USING ERRCODE = '22023';
+  END;
+  IF p_resource_type = 'test' AND NOT EXISTS (SELECT 1 FROM public.tests WHERE id = v_resource_id) THEN
+    RAISE EXCEPTION 'Test not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_resource_type = 'folder' AND NOT EXISTS (SELECT 1 FROM public.folders WHERE id = v_resource_id) THEN
+    RAISE EXCEPTION 'Folder not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_access_mode IS NULL OR p_access_mode NOT IN ('free', 'paid', 'grant') THEN
+    RAISE EXCEPTION 'Invalid override access mode' USING ERRCODE = '22023';
+  END IF;
+  IF p_ends_at IS NOT NULL AND p_starts_at IS NOT NULL AND p_ends_at <= p_starts_at THEN
+    RAISE EXCEPTION 'Override end time must be after its start time' USING ERRCODE = '22023';
+  END IF;
+  IF p_reason IS NULL OR length(p_reason) > 500 THEN
+    RAISE EXCEPTION 'Reason must be 500 characters or fewer' USING ERRCODE = '22023';
+  END IF;
+
+  IF p_id IS NULL THEN
+    INSERT INTO public.user_entitlement_overrides(
+      user_id, resource_type, resource_key, access_mode, starts_at, ends_at, reason, created_by
+    ) VALUES (
+      p_user_id, p_resource_type, v_resource_id::text, p_access_mode, p_starts_at, p_ends_at, btrim(p_reason), auth.uid()
+    ) RETURNING id INTO v_id;
+  ELSE
+    UPDATE public.user_entitlement_overrides
+    SET user_id = p_user_id, resource_type = p_resource_type, resource_key = v_resource_id::text,
+        access_mode = p_access_mode, starts_at = p_starts_at, ends_at = p_ends_at, reason = btrim(p_reason)
+    WHERE id = p_id
+    RETURNING id INTO v_id;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Entitlement override not found' USING ERRCODE = 'P0002'; END IF;
+  END IF;
+  RETURN jsonb_build_object('id', v_id, 'user_id', p_user_id, 'resource_type', p_resource_type,
+    'resource_key', v_resource_id::text, 'access_mode', p_access_mode, 'starts_at', p_starts_at,
+    'ends_at', p_ends_at, 'reason', btrim(p_reason));
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_revoke_user_entitlement_override(p_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  UPDATE public.user_entitlement_overrides
+  SET starts_at = CASE WHEN starts_at IS NULL OR starts_at >= now() THEN now() - interval '1 second' ELSE starts_at END,
+      ends_at = now()
+  WHERE id = p_id AND (ends_at IS NULL OR ends_at > now());
+  IF NOT FOUND THEN RAISE EXCEPTION 'Active entitlement override not found' USING ERRCODE = 'P0002'; END IF;
+  RETURN true;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_list_user_entitlement_overrides() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_save_user_entitlement_override(uuid, uuid, text, text, text, timestamptz, timestamptz, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_revoke_user_entitlement_override(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_list_user_entitlement_overrides() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_save_user_entitlement_override(uuid, uuid, text, text, text, timestamptz, timestamptz, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_revoke_user_entitlement_override(uuid) TO authenticated;
 
 -- Resolve effective access on the server. This function is also used by the
 -- typing-result Edge Function; callers must fail closed if it errors.
