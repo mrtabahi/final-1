@@ -238,7 +238,7 @@ test('customer subscription page only uses safe catalog and own-account overview
   assert.match(js, /rpc\('get_active_subscription_plans'\)/);
   assert.match(js, /rpc\('get_my_subscription_overview'\)/);
   assert.match(js, /rpc\('create_checkout_order'/);
-  assert.match(js, /Paid checkout coming soon/);
+  assert.match(js, /Pay securely with Razorpay/);
   assert.doesNotMatch(js, /from\(['"]user_subscriptions['"]\)/);
   assert.doesNotMatch(js, /from\(['"]orders['"]\)/);
   assert.match(page, /My Subscription/);
