@@ -215,3 +215,27 @@ test('only trusted service role can mark an order paid and activate a subscripti
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.service_mark_order_paid\([\s\S]*?FROM PUBLIC, anon, authenticated/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.service_mark_order_paid\([\s\S]*?TO service_role/);
 });
+
+test('customer subscription page only uses safe catalog and own-account overview RPCs', () => {
+  const page = read('my-subscription.html');
+  const js = read('js/my-subscription.js');
+  const index = read('index.html');
+  assert.match(js, /rpc\('get_active_subscription_plans'\)/);
+  assert.match(js, /rpc\('get_my_subscription_overview'\)/);
+  assert.match(js, /rpc\('create_checkout_order'/);
+  assert.match(js, /Paid checkout coming soon/);
+  assert.doesNotMatch(js, /from\(['"]user_subscriptions['"]\)/);
+  assert.doesNotMatch(js, /from\(['"]orders['"]\)/);
+  assert.match(page, /My Subscription/);
+  assert.match(index, /href="my-subscription\.html"/);
+});
+
+test('customer overview exposes only active plan catalog publicly and scopes account history to auth.uid', () => {
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.get_active_subscription_plans\(\)/);
+  assert.match(migration, /WHERE sp\.is_active = true/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.get_active_subscription_plans\(\) TO anon, authenticated/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.get_my_subscription_overview\(\)/);
+  assert.match(migration, /WHERE us\.user_id = v_user_id/);
+  assert.match(migration, /WHERE o\.user_id = v_user_id/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.get_my_subscription_overview\(\) TO authenticated/);
+});
