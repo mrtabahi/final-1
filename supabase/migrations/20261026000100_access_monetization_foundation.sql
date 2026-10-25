@@ -304,6 +304,8 @@ CREATE INDEX IF NOT EXISTS user_overrides_resource_lookup
   ON public.user_entitlement_overrides(user_id, resource_type, resource_key, starts_at, ends_at);
 CREATE INDEX IF NOT EXISTS orders_user_created_lookup
   ON public.orders(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS orders_pending_coupon_reservation_lookup
+  ON public.orders(coupon_id, expires_at, user_id) WHERE status = 'pending';
 CREATE INDEX IF NOT EXISTS coupon_redemptions_user_lookup
   ON public.coupon_redemptions(coupon_id, user_id);
 
