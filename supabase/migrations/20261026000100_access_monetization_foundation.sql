@@ -1065,6 +1065,7 @@ CREATE OR REPLACE FUNCTION public.service_mark_order_paid(
   p_provider_transaction_id text,
   p_amount_minor bigint,
   p_currency text,
+  p_provider_created_at timestamptz,
   p_verified_payload jsonb
 )
 RETURNS jsonb
@@ -1082,7 +1083,7 @@ BEGIN
   END IF;
   IF p_provider IS NULL OR length(btrim(p_provider)) = 0 OR length(p_provider) > 80
      OR p_provider_transaction_id IS NULL OR length(btrim(p_provider_transaction_id)) = 0
-     OR p_amount_minor IS NULL OR p_amount_minor < 0 OR p_currency IS NULL OR p_verified_payload IS NULL THEN
+     OR p_amount_minor IS NULL OR p_amount_minor < 0 OR p_currency IS NULL OR p_provider_created_at IS NULL OR p_verified_payload IS NULL THEN
     RAISE EXCEPTION 'Invalid verified payment payload' USING ERRCODE = '22023';
   END IF;
   SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
@@ -1097,8 +1098,8 @@ BEGIN
     RAISE EXCEPTION 'Order is already paid by another transaction' USING ERRCODE = '23505';
   END IF;
   IF v_order.status <> 'pending' THEN RAISE EXCEPTION 'Order is not awaiting payment' USING ERRCODE = '22023'; END IF;
-  IF v_order.expires_at IS NOT NULL AND v_order.expires_at <= now() THEN
-    RAISE EXCEPTION 'Checkout order expired; verified payment must be refunded' USING ERRCODE = '22023';
+  IF v_order.expires_at IS NOT NULL AND p_provider_created_at > v_order.expires_at THEN
+    RAISE EXCEPTION 'Provider payment was created after checkout expiry; verified payment must be refunded' USING ERRCODE = '22023';
   END IF;
   INSERT INTO public.payment_transactions(
     order_id, provider, provider_transaction_id, status, amount_minor, currency, verified_at, provider_payload
@@ -1122,8 +1123,8 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.create_checkout_order(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.create_checkout_order(uuid, text) TO authenticated;
-REVOKE ALL ON FUNCTION public.service_mark_order_paid(uuid, text, text, bigint, text, jsonb) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.service_mark_order_paid(uuid, text, text, bigint, text, jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.service_mark_order_paid(uuid, text, text, bigint, text, timestamptz, jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.service_mark_order_paid(uuid, text, text, bigint, text, timestamptz, jsonb) TO service_role;
 
 -- Safe customer-facing catalog and self-service subscription/order overview.
 CREATE OR REPLACE FUNCTION public.get_active_subscription_plans()
