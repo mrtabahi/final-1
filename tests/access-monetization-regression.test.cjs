@@ -71,3 +71,14 @@ test('session submission is bound to the authenticated owner and server-measured
   assert.match(edge, /const actualElapsed = Math\.max\(1, Math\.floor\(\(now - startedAt\) \/ 1000\)\)/);
   assert.match(edge, /if \(accessAllowed !== true\) return reply\(403/);
 });
+
+test('inactive parent folders deny access before the admin bypass', () => {
+  const folderCheck = migration.indexOf('SELECT * INTO v_folder FROM public.folders WHERE id = v_test.folder_id AND active = true;');
+  const adminBypass = migration.indexOf("role IN ('admin', 'head_admin') THEN\\n    RETURN true;");
+  assert.ok(folderCheck >= 0 && adminBypass > folderCheck, 'folder active check must precede admin bypass');
+});
+
+test('submission revalidates that the test and parent folder remain active', () => {
+  assert.match(edge, /select\("id,title,language,mode,duration_minutes,passage,target_wpm,min_accuracy,free_error_pct,penalty_per_error,active,folder_id"\)\.eq\("id", session\.test_id\)\.eq\("active", true\)/);
+  assert.match(edge, /if \(test\.folder_id\)[\s\S]*?from\("folders"\)[\s\S]*?eq\("active", true\)/);
+});
