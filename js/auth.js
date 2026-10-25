@@ -132,6 +132,10 @@ const AuthManager = {
     const normalizedEmail = String(email || '').trim().toLowerCase();
     const normalizedName = String(fullName || '').trim();
     const normalizedPhone = String(phone || '').trim();
+    const accessSettings = await this.getAccessSettings();
+    if (!accessSettings.registration_enabled) {
+      throw new Error(accessSettings.registration_paused_message || 'New account creation is temporarily paused. Please try again later.');
+    }
 
     if (!normalizedEmail || !normalizedName || !password) {
       throw new Error('Name, email and password are required.');
