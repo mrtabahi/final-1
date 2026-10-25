@@ -24,7 +24,7 @@ Illustrative staging-only SQL (review IDs/project before running):
 ```sql
 BEGIN;
 UPDATE public.user_entitlement_overrides
-SET starts_at = COALESCE(starts_at, now() - interval '1 second'),
+SET starts_at = CASE WHEN starts_at IS NULL OR starts_at >= now() THEN now() - interval '1 second' ELSE starts_at END,
     ends_at = now()
 WHERE ends_at IS NULL OR ends_at > now();
 
