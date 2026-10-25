@@ -136,7 +136,7 @@
     style.textContent=`
       .compact-tip-control.admin-feature-forced-off{color:#c62828!important;border-color:#ef9a9a!important;position:relative}
       .compact-tip-control.admin-feature-forced-off::before{color:#c62828!important;filter:none!important}
-      .compact-tip-control.admin-feature-forced-off::after{content:'';position:absolute;left:50%;top:50%;width:1.45em;height:2px;background:#c62828;transform:translate(-50%,-50%) rotate(-45deg);border-radius:2px;pointer-events:none;box-shadow:0 0 0 1px #fff8}
+      .compact-tip-control.admin-feature-forced-off::after{content:'';position:absolute;left:7px;top:50%;width:22px;height:2px;background:#c62828;transform:translateY(-50%) rotate(-45deg);border-radius:2px;pointer-events:none;box-shadow:0 0 0 1px #fff8}
       .compact-tip-control.admin-feature-forced-off:disabled{opacity:1!important;cursor:not-allowed}
     `;
     document.head.append(style);
