@@ -3,9 +3,9 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let candidates = [], filtered = [], selected = null, attempts = [];
+  let candidates = [], filtered = [], selected = null, attempts = [], activityById = new Map();
   const date = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); };
-  const initials = v => String(v || 'C').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+  const dateTime = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString(); };\n  const durationLabel = seconds => { const s=Math.max(0,Number(seconds)||0), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), r=s%60; return (h?h+'h ':'')+(m?m+'m ':'')+(!h&&!m?r+'s':'').trim() || '0s'; };\n  const initials = v => String(v || 'C').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
   function renderShell() {
     const view = $('view-module'); if (!view) return;
     view.innerHTML = `
@@ -64,6 +64,19 @@
       const {data,error}=await supabaseClient.from('profiles').select('id,full_name,email,phone,phone_verified,role,created_at').eq('role','candidate').order('created_at',{ascending:false}).limit(2000);
       if(error) throw error;
       candidates=data||[];
+      activityById = new Map();
+      if (candidates.length) {
+        const { data: activityRows, error: activityError } = await supabaseClient
+          .from('candidate_activity_sessions')
+          .select('id,user_id,started_at,last_seen_at,ended_at,duration_seconds')
+          .in('user_id', candidates.map(candidate => candidate.id))
+          .order('started_at', { ascending: false }).limit(5000);
+        if (activityError) console.warn('Could not load candidate activity:', activityError);
+        else for (const row of activityRows || []) {
+          const key = String(row.user_id);
+          if (!activityById.has(key)) activityById.set(key, row);
+        }
+      }
       // The profile email can be empty for older/imported accounts. Resolve the
       // authoritative email from Auth by profile UUID through an admin-only RPC.
       if (candidates.length) {
@@ -100,7 +113,7 @@
     $('candidate-result-count').textContent=filtered.length+' candidate'+(filtered.length===1?'':'s');
     const pages=Math.max(1,Math.ceil(filtered.length/pageSize)); page=Math.min(page,pages-1);
     const shown=filtered.slice(page*pageSize,(page+1)*pageSize);
-    list.innerHTML=shown.length?shown.map(x=>`<article class="candidate-row"><div class="candidate-avatar">${esc(initials(x.full_name))}</div><div class="candidate-main"><strong>${esc(x.full_name||'Unnamed candidate')}</strong><span>${esc(x.email||'No email on profile')}</span><small>Joined ${esc(date(x.created_at))} · ID ${esc(String(x.id).slice(0,8))}…</small></div><div class="candidate-row-meta"><span class="candidate-status ${x.phone_verified?'is-verified':'is-pending'}">${x.phone_verified?'✓ Phone verified':'Phone not verified'}</span><small>${esc(x.phone||'No phone provided')}</small></div><button class="admin-btn admin-btn-secondary candidate-view-btn" type="button" data-candidate-view="${esc(x.id)}">View profile ↗</button></article>`).join(''):'<div class="admin-empty">No candidates match these filters.</div>';
+    list.innerHTML=shown.length?shown.map(x=>`<article class="candidate-row"><div class="candidate-avatar">${esc(initials(x.full_name))}</div><div class="candidate-main"><strong>${esc(x.full_name||'Unnamed candidate')}</strong><span>${esc(x.email||'No email on profile')}</span><small>Joined ${esc(date(x.created_at))} · ID ${esc(String(x.id).slice(0,8))}…</small></div><div class="candidate-row-meta"><span class="candidate-status ${x.phone_verified?'is-verified':'is-pending'}">${x.phone_verified?'✓ Phone verified':'Phone not verified'}</span><small>${esc(x.phone||'No phone provided')}</small><small>${(activityById.get(String(x.id)) && !activityById.get(String(x.id)).ended_at && Date.now()-new Date(activityById.get(String(x.id)).last_seen_at).getTime()<180000)?'🟢 Online now':'⚪ Offline'} · Online time ${esc(durationLabel(activityById.get(String(x.id))?.duration_seconds))}</small></div><button class="admin-btn admin-btn-secondary candidate-view-btn" type="button" data-candidate-view="${esc(x.id)}">View profile ↗</button></article>`).join(''):'<div class="admin-empty">No candidates match these filters.</div>';
     $('candidate-page-label').textContent=filtered.length?'Showing '+(page*pageSize+1)+'–'+Math.min((page+1)*pageSize,filtered.length)+' of '+filtered.length:'No results';
     $('candidate-prev').disabled=page===0;$('candidate-next').disabled=page>=pages-1;
   }
@@ -112,7 +125,7 @@
       if(error) throw error;
       attempts=data||[];
       const avg=attempts.length?attempts.reduce((s,a)=>s+Number(a.net_wpm||0),0)/attempts.length:0;
-      body.innerHTML=`<div class="candidate-profile-summary"><div class="candidate-avatar large">${esc(initials(selected.full_name))}</div><div><h3>${esc(selected.full_name||'Unnamed candidate')}</h3><p>${esc(selected.email||'No email')} · ${esc(selected.phone||'No phone')}</p><small>Joined ${esc(date(selected.created_at))} · ${selected.phone_verified?'Phone verified':'Phone not verified'}</small></div></div><div class="candidate-detail-stats"><article><span>Attempts loaded</span><strong>${attempts.length}</strong></article><article><span>Average net WPM</span><strong>${avg.toFixed(2)}</strong></article><article><span>Average accuracy</span><strong>${attempts.length?(attempts.reduce((s,a)=>s+Number(a.accuracy||0),0)/attempts.length).toFixed(2)+'%':'—'}</strong></article></div><div class="candidate-history-heading"><h3>Recent typing attempts</h3><span>Latest 50 records</span></div>${attempts.length?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>Date</th><th>Test</th><th>Language</th><th>Net WPM</th><th>Accuracy</th><th>Errors</th></tr></thead><tbody>'+attempts.map(a=>'<tr><td>'+esc(date(a.created_at))+'</td><td>'+esc(a.tests?.title||'Practice test')+'</td><td>'+esc(a.language||'—')+'</td><td>'+Number(a.net_wpm||0).toFixed(2)+'</td><td>'+Number(a.accuracy||0).toFixed(2)+'%</td><td>'+Number(a.total_errors||0)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="admin-empty">No submitted attempts found for this candidate.</div>'}`;
+      body.innerHTML=`<div class="candidate-profile-summary"><div class="candidate-avatar large">${esc(initials(selected.full_name))}</div><div><h3>${esc(selected.full_name||'Unnamed candidate')}</h3><p>${esc(selected.email||'No email')} · ${esc(selected.phone||'No phone')}</p><small>Joined ${esc(date(selected.created_at))} · ${selected.phone_verified?'Phone verified':'Phone not verified'}</small></div></div><div class="candidate-detail-stats"><article><span>Attempts loaded</span><strong>${attempts.length}</strong></article><article><span>Average net WPM</span><strong>${avg.toFixed(2)}</strong></article><article><span>Average accuracy</span><strong>${attempts.length?(attempts.reduce((s,a)=>s+Number(a.accuracy||0),0)/attempts.length).toFixed(2)+'%':'—'}</strong></article></div><div class="candidate-history-heading"><h3>Recent typing attempts</h3><span>Latest 50 records</span></div>${attempts.length?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>Date</th><th>Test</th><th>Language</th><th>Net WPM</th><th>Accuracy</th><th>Errors</th></tr></thead><tbody>'+attempts.map(a=>'<tr><td>'+esc(date(a.created_at))+'</td><td>'+esc(a.tests?.title||'Practice test')+'</td><td>'+esc(a.language||'—')+'</td><td>'+Number(a.net_wpm||0).toFixed(2)+'</td><td>'+Number(a.accuracy||0).toFixed(2)+'%</td><td>'+Number(a.total_errors||0)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="admin-empty">No submitted attempts found for this candidate.</div>'}${activityHtml}`;
       await renderCandidatePermissions(selected);
     } catch(e) { body.innerHTML='<div class="admin-error">Could not load attempt history: '+esc(e.message)+'</div>'; }
   }
