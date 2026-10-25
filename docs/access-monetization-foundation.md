@@ -103,6 +103,12 @@ Existing functional modules should be preserved and moved into a clearer informa
 - Added regression assertions for admin-only RPC boundaries, field validation, atomic save structure, and UI use of RPCs instead of direct billing-table access.
 - Checkout, payment provider/webhook verification, subscription activation/expiry operations, and real staging database validation are not implemented/verified yet. The page explicitly warns that checkout is not connected; do not enable a paid launch based on the plan editor alone.
 
+## Coupon catalog increment (2026-10-26)
+
+- Added `admin-payments.html` for coupon creation/editing, percentage/fixed discounts, selected-plan or all-plan scope, validity windows, and redemption limits.
+- Coupon listing, eligibility lookup, and save operations use admin-only SECURITY DEFINER RPCs; coupon fields and plan eligibility are written atomically.
+- Regression tests cover RPC-only browser access and server-side validation. No checkout, coupon redemption, payment capture, refund, or subscription activation flow is enabled.
+
 ## Decisions intentionally left open
 
 - Payment gateway/provider and supported currencies.
