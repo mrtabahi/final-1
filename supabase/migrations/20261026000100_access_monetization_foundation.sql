@@ -429,6 +429,143 @@ GRANT EXECUTE ON FUNCTION public.admin_save_subscription_plan(uuid, text, text, 
 GRANT EXECUTE ON FUNCTION public.admin_list_subscription_plans() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_get_plan_entitlements(uuid) TO authenticated;
 
+-- Coupon catalog management is also exposed only through role-checked RPCs.
+CREATE OR REPLACE FUNCTION public.admin_list_coupons()
+RETURNS SETOF public.coupons
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  RETURN QUERY SELECT * FROM public.coupons ORDER BY created_at DESC;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_get_coupon_plan_eligibility(p_coupon_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  IF p_coupon_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.coupons WHERE id = p_coupon_id) THEN
+    RAISE EXCEPTION 'Coupon not found' USING ERRCODE = 'P0002';
+  END IF;
+  RETURN COALESCE((
+    SELECT jsonb_agg(jsonb_build_object('plan_id', cpe.plan_id) ORDER BY cpe.plan_id)
+    FROM public.coupon_plan_eligibility cpe WHERE cpe.coupon_id = p_coupon_id
+  ), '[]'::jsonb);
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_save_coupon(
+  p_id uuid,
+  p_code text,
+  p_description text,
+  p_discount_type text,
+  p_discount_value bigint,
+  p_currency text,
+  p_applies_to text,
+  p_starts_at timestamptz,
+  p_ends_at timestamptz,
+  p_max_redemptions integer,
+  p_max_redemptions_per_user integer,
+  p_is_active boolean,
+  p_plan_ids jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_coupon public.coupons%ROWTYPE;
+  v_code text := upper(btrim(p_code));
+  v_plan_count integer;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  IF v_code IS NULL OR length(v_code) < 3 OR length(v_code) > 40 OR v_code ~ '[^A-Z0-9_-]' THEN
+    RAISE EXCEPTION 'Coupon code must be 3-40 letters, digits, hyphens or underscores' USING ERRCODE = '22023';
+  END IF;
+  IF p_description IS NULL OR length(p_description) > 2000 THEN
+    RAISE EXCEPTION 'Coupon description is too long' USING ERRCODE = '22023';
+  END IF;
+  IF p_discount_type NOT IN ('percent', 'fixed') OR p_discount_value IS NULL OR p_discount_value <= 0 THEN
+    RAISE EXCEPTION 'Invalid coupon discount' USING ERRCODE = '22023';
+  END IF;
+  IF p_discount_type = 'percent' AND p_discount_value > 100 THEN
+    RAISE EXCEPTION 'Percentage discount cannot exceed 100' USING ERRCODE = '22023';
+  END IF;
+  IF p_currency IS NULL OR p_currency !~ '^[A-Z][A-Z][A-Z]' OR length(p_currency) <> 3 THEN
+    RAISE EXCEPTION 'Currency must be a three-letter uppercase code' USING ERRCODE = '22023';
+  END IF;
+  IF p_applies_to NOT IN ('selected_plans', 'all_plans') THEN
+    RAISE EXCEPTION 'Invalid coupon plan scope' USING ERRCODE = '22023';
+  END IF;
+  IF p_starts_at IS NOT NULL AND p_ends_at IS NOT NULL AND p_ends_at <= p_starts_at THEN
+    RAISE EXCEPTION 'Coupon end time must be after its start time' USING ERRCODE = '22023';
+  END IF;
+  IF p_max_redemptions IS NOT NULL AND p_max_redemptions < 1 THEN
+    RAISE EXCEPTION 'Maximum redemptions must be positive' USING ERRCODE = '22023';
+  END IF;
+  IF p_max_redemptions_per_user IS NULL OR p_max_redemptions_per_user < 1 THEN
+    RAISE EXCEPTION 'Per-user redemption limit must be positive' USING ERRCODE = '22023';
+  END IF;
+  IF p_is_active IS NULL OR p_plan_ids IS NULL OR jsonb_typeof(p_plan_ids) <> 'array' OR jsonb_array_length(p_plan_ids) > 500 THEN
+    RAISE EXCEPTION 'Invalid coupon status or plan list' USING ERRCODE = '22023';
+  END IF;
+  IF p_applies_to = 'selected_plans' AND jsonb_array_length(p_plan_ids) = 0 THEN
+    RAISE EXCEPTION 'Choose at least one eligible plan' USING ERRCODE = '22023';
+  END IF;
+  SELECT count(DISTINCT x.plan_id) INTO v_plan_count
+  FROM (SELECT value::uuid AS plan_id FROM jsonb_array_elements_text(p_plan_ids)) x
+  JOIN public.subscription_plans sp ON sp.id = x.plan_id;
+  IF p_applies_to = 'selected_plans' AND v_plan_count <> jsonb_array_length(p_plan_ids) THEN
+    RAISE EXCEPTION 'One or more selected plans do not exist' USING ERRCODE = '22023';
+  END IF;
+
+  IF p_id IS NULL THEN
+    INSERT INTO public.coupons(code, description, discount_type, discount_value, currency, applies_to,
+      starts_at, ends_at, max_redemptions, max_redemptions_per_user, is_active, created_by)
+    VALUES (v_code, p_description, p_discount_type, p_discount_value, p_currency, p_applies_to,
+      p_starts_at, p_ends_at, p_max_redemptions, p_max_redemptions_per_user, p_is_active, auth.uid())
+    RETURNING * INTO v_coupon;
+  ELSE
+    UPDATE public.coupons SET code = v_code, description = p_description, discount_type = p_discount_type,
+      discount_value = p_discount_value, currency = p_currency, applies_to = p_applies_to,
+      starts_at = p_starts_at, ends_at = p_ends_at, max_redemptions = p_max_redemptions,
+      max_redemptions_per_user = p_max_redemptions_per_user, is_active = p_is_active
+    WHERE id = p_id RETURNING * INTO v_coupon;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Coupon not found' USING ERRCODE = 'P0002'; END IF;
+  END IF;
+
+  DELETE FROM public.coupon_plan_eligibility WHERE coupon_id = v_coupon.id;
+  IF p_applies_to = 'selected_plans' THEN
+    INSERT INTO public.coupon_plan_eligibility(coupon_id, plan_id)
+    SELECT v_coupon.id, value::uuid FROM jsonb_array_elements_text(p_plan_ids);
+  END IF;
+  RETURN jsonb_build_object('id', v_coupon.id, 'code', v_coupon.code,
+    'discount_type', v_coupon.discount_type, 'discount_value', v_coupon.discount_value,
+    'currency', v_coupon.currency, 'applies_to', v_coupon.applies_to,
+    'is_active', v_coupon.is_active);
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_list_coupons() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_get_coupon_plan_eligibility(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_save_coupon(uuid, text, text, text, bigint, text, text, timestamptz, timestamptz, integer, integer, boolean, jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_list_coupons() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_get_coupon_plan_eligibility(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_save_coupon(uuid, text, text, text, bigint, text, text, timestamptz, timestamptz, integer, integer, boolean, jsonb) TO authenticated;
+
 -- Resolve effective access on the server. This function is also used by the
 -- typing-result Edge Function; callers must fail closed if it errors.
 CREATE OR REPLACE FUNCTION public.can_access_test(p_test_id uuid, p_user_id uuid DEFAULT auth.uid())
