@@ -9,6 +9,13 @@ const edge = read('supabase/functions/typing-result/index.ts');
 const adminAccess = read('js/admin-access.js');
 const auth = read('js/auth.js');
 
+test('all SQL function bodies use valid dollar-quoted delimiters', () => {
+  assert.doesNotMatch(migration, /AS \$\nDECLARE/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.can_access_test\([\s\S]*?AS \$function\$/);
+  assert.match(migration, /END;\n\$function\$;\n\nREVOKE ALL ON FUNCTION public\.can_access_test/);
+  assert.equal((migration.match(/\$function\$/g) || []).length % 2, 0);
+});
+
 test('legacy content is backfilled Free while future content defaults Paid', () => {
   assert.match(migration, /ADD COLUMN IF NOT EXISTS access_mode text NOT NULL DEFAULT 'free'/);
   assert.match(migration, /ALTER TABLE public\.folders ALTER COLUMN access_mode SET DEFAULT 'paid'/);
