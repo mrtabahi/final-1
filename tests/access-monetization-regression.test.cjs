@@ -272,6 +272,7 @@ test('refund finalization is service-role-only, full-amount checked and idempote
   assert.match(migration, /refunded_at timestamptz/);
   assert.match(migration, /UPDATE public\.orders SET status = 'refunded'/);
   assert.match(migration, /SET status = 'refunded', admin_note/);
+  assert.match(migration, /ELSIF NEW\.status = 'refunded' AND OLD\.status <> 'refunded' THEN v_event := 'refunded'/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.service_mark_order_refunded\([\s\S]*?FROM PUBLIC, anon, authenticated/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.service_mark_order_refunded\([\s\S]*?TO service_role/);
   assert.ok(read('js/admin-payments.js').includes("t.provider_refund_id ? '<p>Refund '"));
