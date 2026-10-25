@@ -1,12 +1,12 @@
 # Payment Provider Integration Contract
 
-Status: Razorpay selected; code is implemented in the feature branch but not deployed. Staging configuration and provider sandbox verification remain required.
+Status: Razorpay selected; checkout, verification, webhook, and late-payment refund code are deployed to staging project `lhuqykxddwdkwksdzqth` in Mumbai. Razorpay Test Mode secrets/webhook configuration and end-to-end sandbox verification remain pending. Production has not been deployed.
 
 ## Required flow
 
 1. Authenticated candidate requests a checkout through a server Edge Function. The function calls create_checkout_order; the browser never submits a price, discount amount, or final total.
 2. If the order total is zero, the database function creates the free order, coupon redemption (when applicable), and subscription atomically. No gateway call is needed.
-3. If the order total is positive, the Edge Function creates a hosted checkout/session with the selected provider, stores the provider/session identifiers on the order, and returns only the hosted checkout URL plus public display fields.
+3. If the order total is positive, the Edge Function creates a Razorpay order, stores the provider order ID on the local order, and returns the public key, provider order ID, amount, currency, and display fields for Razorpay Checkout. The secret key never reaches the browser.
 4. The provider webhook endpoint verifies the raw request body/signature with the provider secret, validates event type, order mapping, amount, currency, and transaction identifier, then calls service_mark_order_paid using a service-role client.
 5. Duplicate payment webhooks are idempotent. The browser return URL is never proof of payment and must not activate access.
 6. Refunds are initiated server-side through the provider API. A signed refund webhook is verified before service_mark_order_refunded is called. The current foundation supports full refunds only.
@@ -20,16 +20,13 @@ Status: Razorpay selected; code is implemented in the feature branch but not dep
 - Keep provider mode (test/live) explicit and use test credentials in staging.
 - Restrict webhook handling to the expected provider and event types; reject unsigned or malformed requests.
 
-## Required provider-specific implementation
+## Implementation status (staging)
 
-- Edge Function to create a hosted checkout session and persist its provider session ID.
-- Webhook Edge Function for payment success/failure and full refund events, including raw-body signature verification.
-- Provider API timeout/retry strategy and idempotency key per order.
-- A reconciliation path for provider-success/database-failure situations.
-- Integration tests using the provider's sandbox/test mode.
-- Customer page integration that redirects to hosted checkout only after the session has been created.
-- Admin order/transaction display of provider session/payment/refund identifiers.
-- Staging evidence for paid, failed, expired, duplicate, mismatched amount, refund and webhook retry scenarios.
+- Implemented and deployed to staging: `create-checkout`, `verify-razorpay-payment`, and `razorpay-webhook`; `typing-result` is also deployed.
+- Implemented: server-priced local orders, Razorpay order creation, callback HMAC and provider API verification, signed raw-body webhook validation, event deduplication, and full-refund processing for late captures.
+- Implemented: service-role-only payment finalization, transaction/order idempotency, and reconciliation before issuing a late-payment refund.
+- Pending: configure Test Mode secrets and the staging webhook, run sandbox scenarios, and record evidence for paid, failed, expired, duplicate, mismatched amount, refund and webhook retry cases.
+- Production deployment and live Razorpay activation remain separate release decisions.
 
 
 ## Razorpay implementation status (staging only)
