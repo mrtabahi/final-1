@@ -270,6 +270,42 @@ AFTER INSERT OR UPDATE ON public.user_entitlement_overrides
 FOR EACH ROW EXECUTE FUNCTION public.audit_user_entitlement_override_change();
 REVOKE ALL ON FUNCTION public.audit_user_entitlement_override_change() FROM PUBLIC, anon, authenticated;
 
+CREATE OR REPLACE FUNCTION public.audit_order_status_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_event text := CASE WHEN TG_OP = 'INSERT' THEN 'created' ELSE 'status_changed' END;
+  v_before jsonb;
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    IF OLD.status IS NOT DISTINCT FROM NEW.status THEN RETURN NEW; END IF;
+    v_before := jsonb_build_object(
+      'status', OLD.status, 'total_minor', OLD.total_minor, 'currency', OLD.currency,
+      'coupon_id', OLD.coupon_id, 'expires_at', OLD.expires_at
+    );
+  END IF;
+  INSERT INTO public.order_status_audit(order_id, event_type, old_state, new_state, actor_user_id)
+  VALUES (
+    NEW.id, v_event, v_before,
+    jsonb_build_object(
+      'status', NEW.status, 'total_minor', NEW.total_minor, 'currency', NEW.currency,
+      'coupon_id', NEW.coupon_id, 'expires_at', NEW.expires_at
+    ),
+    auth.uid()
+  );
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS order_status_audit_trigger ON public.orders;
+CREATE TRIGGER order_status_audit_trigger
+AFTER INSERT OR UPDATE ON public.orders
+FOR EACH ROW EXECUTE FUNCTION public.audit_order_status_change();
+REVOKE ALL ON FUNCTION public.audit_order_status_change() FROM PUBLIC, anon, authenticated;
+
 CREATE OR REPLACE FUNCTION public.audit_user_subscription_change()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -320,6 +356,18 @@ CREATE INDEX IF NOT EXISTS orders_user_created_lookup
   ON public.orders(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS orders_pending_coupon_reservation_lookup
   ON public.orders(coupon_id, expires_at, user_id) WHERE status = 'pending';
+CREATE TABLE IF NOT EXISTS public.order_status_audit (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  order_id uuid REFERENCES public.orders(id) ON DELETE SET NULL,
+  event_type text NOT NULL CHECK (event_type IN ('created', 'status_changed')),
+  old_state jsonb,
+  new_state jsonb NOT NULL,
+  actor_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  changed_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS order_status_audit_lookup
+  ON public.order_status_audit(order_id, changed_at DESC);
+
 CREATE INDEX IF NOT EXISTS coupon_redemptions_user_lookup
   ON public.coupon_redemptions(coupon_id, user_id);
 
@@ -329,7 +377,7 @@ DECLARE t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'subscription_plans','plan_entitlements','user_subscriptions',
-    'user_entitlement_overrides','user_entitlement_override_audit','user_subscription_audit','coupons','coupon_plan_eligibility',
+    'user_entitlement_overrides','user_entitlement_override_audit','user_subscription_audit','order_status_audit','coupons','coupon_plan_eligibility',
     'orders','payment_transactions','coupon_redemptions','access_policies','access_policy_audit'
   ] LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
