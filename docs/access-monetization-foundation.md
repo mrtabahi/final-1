@@ -75,7 +75,7 @@ Existing functional modules should be preserved and moved into a clearer informa
 6. **Coupons and checkout**: support one plan, selected plans, or universal eligibility; percentage/fixed discounts; validity and usage limits; zero-total checkout without opening a payment gateway.
 7. **Payment gateway integration**: select a provider first; verify payment server-side using signed callbacks/webhooks before activating paid entitlements.
 8. **User subscription page and operations**: show active plan, start/end date, remaining validity, purchase history, renew/extend, and admin-granted access.
-9. **QA and rollout**: run the Node regression suite, apply the migration to a staging project, test expired, revoked, zero-price, refunded, overlapping-plan, and parent/child override cases, and use a reversible rollout. GitHub Actions regression workflow is now configured; successful CI has not yet been confirmed.
+9. **QA and rollout**: run the Node regression suite, apply the migration to a staging project, test expired, revoked, zero-price, refunded, overlapping-plan, and parent/child override cases, and use a reversible rollout. GitHub Actions regression workflow is configured; the latest branch run passed all 28 tests. This is static/regression validation only, not a substitute for Postgres/RLS/Edge Function integration tests.
 
 ## Non-negotiable security checks
 
@@ -87,6 +87,14 @@ Existing functional modules should be preserved and moved into a clearer informa
 - Log policy changes, manual entitlements, coupon changes, refunds, and role changes.
 - Reconcile repository migrations with the deployed migration history before applying any migration; do not run `db push` until duplicate/out-of-order migration filenames are resolved.
 - Test changes against a staging project first. Do not deploy this foundation to production until the full access path is enforced and regression tests pass.
+
+## Latest validation snapshot (2026-10-26)
+
+- Latest feature-branch regression run passed 28/28 tests.
+- Read-only production migration inventory ends at version `20261025181440`; the proposed migration version `20261026000100` sorts after it. The migration has not been applied.
+- Read-only production policy inspection confirmed `tests_candidate_select` currently permits every active test, while `tests_admin_all` and `tests_staff_manage` are separate permissive policies. The migration replaces only the candidate SELECT policy. Because PostgreSQL permissive policies combine with OR, staging must verify the exact predicates and role membership; do not weaken the admin/staff scopes or leave any broad candidate-facing SELECT policy.
+- No Supabase development branches were found for the production project or the other active project inspected. The inactive project is not presumed to be staging. No staging target is currently verified, so no migration or function deployment is safe yet.
+- The Vercel deployment check is rate-limited; no deployment was performed.
 
 ## Decisions intentionally left open
 
