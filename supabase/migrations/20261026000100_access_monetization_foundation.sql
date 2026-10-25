@@ -1134,8 +1134,8 @@ $function$;
 
 CREATE OR REPLACE FUNCTION public.admin_list_payment_transactions()
 RETURNS TABLE(
-  id uuid, order_id uuid, provider text, provider_transaction_id text, status text,
-  amount_minor bigint, currency text, verified_at timestamptz, created_at timestamptz
+  id uuid, order_id uuid, provider text, provider_transaction_id text, provider_refund_id text, status text,
+  amount_minor bigint, currency text, verified_at timestamptz, refunded_at timestamptz, created_at timestamptz
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -1146,8 +1146,8 @@ BEGIN
     RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
   END IF;
   RETURN QUERY
-  SELECT pt.id, pt.order_id, pt.provider, pt.provider_transaction_id, pt.status,
-         pt.amount_minor, pt.currency, pt.verified_at, pt.created_at
+  SELECT pt.id, pt.order_id, pt.provider, pt.provider_transaction_id, pt.provider_refund_id, pt.status,
+         pt.amount_minor, pt.currency, pt.verified_at, pt.refunded_at, pt.created_at
   FROM public.payment_transactions pt
   ORDER BY pt.created_at DESC LIMIT 1000;
 END;
