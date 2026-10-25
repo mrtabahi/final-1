@@ -77,7 +77,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Revoking an override immediately ends its validity without deleting its audit history.
 - Inactive tests and inactive parent folders remain inaccessible even if an override exists.
 
-## 5. Plan catalog admin RPC scenarios
+## 6. Plan catalog admin RPC scenarios
 
 - Admin can list plans and read a plan's entitlements through the role-checked RPCs.
 - Candidate/non-admin calls to every `admin_*subscription_plan*` and `admin_*plan_entitlements*` RPC fail with insufficient privilege.
@@ -86,7 +86,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Direct browser SELECT/INSERT/UPDATE/DELETE against billing tables remains denied; the admin page only calls the approved RPCs.
 - The plan page clearly indicates checkout is not connected; no active plan is purchasable until server-side payment verification is implemented.
 
-## 6. Subscription operations scenarios
+## 7. Subscription operations scenarios
 
 - Admin can list subscription records and grant an active plan only to a candidate profile through the approved RPC.
 - Manual grants require an explicit reason, enforce plan duration/default end time, and require a confirmation in the UI.
@@ -95,7 +95,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Non-admin callers cannot list, grant or cancel subscriptions; direct browser writes to `user_subscriptions` remain denied.
 - Manual subscription grants are an administrative exception path, not evidence of payment. Do not treat them as checkout completion.
 
-## 6. Coupon catalog RPC scenarios
+## 8. Coupon catalog RPC scenarios
 
 - Admin can list coupons, read selected-plan eligibility, and save coupon configuration through the approved RPCs.
 - Non-admin callers cannot invoke coupon management RPCs successfully.
@@ -104,7 +104,26 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Coupon settings alone never create orders, redeem a code, mark a payment successful, or activate a subscription.
 - Verify coupon currency matches the selected plan during checkout integration; checkout must calculate discounts server-side and enforce total/per-user limits transactionally.
 
-## 6. Edge Function scenarios
+## 9. Customer subscription overview scenarios
+
+- Anonymous visitors can read only active plan catalog fields; they cannot read subscription/order history.
+- Authenticated users see only their own subscription/order history; test with two separate candidate accounts and verify IDs and amounts never cross.
+- Free plans activate through `create_checkout_order` and create an active subscription only when total is zero.
+- Paid plan buttons remain disabled until provider checkout and signed webhook verification are deployed.
+- No browser code directly queries `user_subscriptions`, `orders`, or `payment_transactions`.
+
+## 10. Checkout order and payment-finalization RPC scenarios
+
+- Candidate can create a pending order for an active plan; client-submitted prices are never accepted.
+- Invalid/inactive plans, ineligible/expired coupons, currency mismatches, and exhausted coupon limits are rejected.
+- Percentage/fixed discounts are computed server-side, capped at the order subtotal, and the final total is persisted with a duration snapshot.
+- Pending orders reserve coupon capacity until their 15-minute expiry; expired orders cannot be finalized as paid.
+- Zero-total orders create a `free` order, an active subscription with the snapshotted duration, and a coupon redemption atomically.
+- Paid orders remain pending until a provider-specific verifier confirms the signed payment and calls the service-role-only finalization RPC.
+- Only service_role can finalize a paid order; amount/currency must match exactly; duplicate provider transaction callbacks are idempotent; mismatched or duplicate transactions cannot create extra subscriptions.
+- Staging tests must cover concurrent coupon redemption limits and failed/late payment callbacks. A real provider integration is still required before production checkout.
+
+## 11. Edge Function scenarios
 
 - `start` rejects missing/invalid auth, unknown/inactive tests, unauthorized Paid tests, and inactive parent folders.
 - `submit` rejects sessions owned by another user, duplicate submissions, and access revoked after session start.
@@ -112,7 +131,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - The function does not return passage content in its start response.
 - Run the repository Node regression suite with `node --test tests/*.test.cjs`.
 
-## 10. Release gate
+## 12. Release gate
 
 Do not merge/deploy or enable Paid policies until:
 - all scenarios above pass in staging;
