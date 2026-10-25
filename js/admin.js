@@ -162,7 +162,7 @@
         }
         if (view === 'workspace-banner') {
             updatePageHeader(view);
-            if (typeof window.renderWorkspaceBannerModule === 'function') await window.renderWorkspaceBannerModule();
+            if (typeof window.renderWorkspaceBannerModule === 'function') window.renderWorkspaceBannerModule();
             else console.error('Workspace banner editor is not loaded.');
             return;
         }
