@@ -1052,6 +1052,66 @@ GRANT EXECUTE ON FUNCTION public.create_checkout_order(uuid, text) TO authentica
 REVOKE ALL ON FUNCTION public.service_mark_order_paid(uuid, text, text, bigint, text, jsonb) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.service_mark_order_paid(uuid, text, text, bigint, text, jsonb) TO service_role;
 
+-- Safe customer-facing catalog and self-service subscription/order overview.
+CREATE OR REPLACE FUNCTION public.get_active_subscription_plans()
+RETURNS TABLE(id uuid, name text, description text, price_minor bigint, currency text, duration_days integer)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+  SELECT sp.id, sp.name, sp.description, sp.price_minor, sp.currency, sp.duration_days
+  FROM public.subscription_plans sp
+  WHERE sp.is_active = true
+  ORDER BY sp.price_minor, sp.duration_days, sp.name;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.get_my_subscription_overview()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_user_id uuid := auth.uid();
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Sign-in required' USING ERRCODE = '42501';
+  END IF;
+  RETURN jsonb_build_object(
+    'subscriptions', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+        'id', us.id, 'plan_id', us.plan_id, 'plan_name', sp.name, 'status', us.status,
+        'starts_at', us.starts_at, 'ends_at', us.ends_at, 'created_at', us.created_at,
+        'is_current', us.status = 'active' AND (us.starts_at IS NULL OR us.starts_at <= now())
+          AND (us.ends_at IS NULL OR us.ends_at > now())
+      ) ORDER BY us.created_at DESC)
+      FROM public.user_subscriptions us
+      JOIN public.subscription_plans sp ON sp.id = us.plan_id
+      WHERE us.user_id = v_user_id
+    ), '[]'::jsonb),
+    'orders', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+        'id', o.id, 'plan_id', o.plan_id, 'plan_name', sp.name, 'currency', o.currency,
+        'subtotal_minor', o.subtotal_minor, 'discount_minor', o.discount_minor,
+        'total_minor', o.total_minor, 'status', o.status, 'created_at', o.created_at,
+        'expires_at', o.expires_at,
+        'checkout_expired', o.status = 'pending' AND o.expires_at IS NOT NULL AND o.expires_at <= now()
+      ) ORDER BY o.created_at DESC)
+      FROM public.orders o
+      JOIN public.subscription_plans sp ON sp.id = o.plan_id
+      WHERE o.user_id = v_user_id
+    ), '[]'::jsonb)
+  );
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_active_subscription_plans() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_my_subscription_overview() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_active_subscription_plans() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_my_subscription_overview() TO authenticated;
+
 -- Resolve effective access on the server. This function is also used by the
 -- typing-result Edge Function; callers must fail closed if it errors.
 CREATE OR REPLACE FUNCTION public.can_access_test(p_test_id uuid, p_user_id uuid DEFAULT auth.uid())
