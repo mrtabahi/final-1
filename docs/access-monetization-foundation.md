@@ -116,6 +116,12 @@ Existing functional modules should be preserved and moved into a clearer informa
 - The UI explicitly limits this first version to test/folder overrides; disabled tests and disabled parent folders remain blocked by the access resolver.
 - Automated regression checks cover the RPC boundary and audit hooks; database behavior still requires staging integration tests.
 
+## Subscription operations increment (2026-10-26)
+
+- Added `admin-subscriptions.html` for reviewing subscription records and issuing/cancelling documented manual grants.
+- Added admin-only RPCs for listing subscriptions, granting an active plan to a candidate, and cancelling active/pending subscriptions. Manual grants require a reason and an explicit confirmation.
+- Added a server-managed subscription audit table/trigger that records before/after state and actor. Manual grants are not a payment flow; payment verification remains a separate required phase.
+
 ## Decisions intentionally left open
 
 - Payment gateway/provider and supported currencies.
