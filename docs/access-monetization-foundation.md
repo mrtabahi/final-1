@@ -71,7 +71,7 @@ Existing functional modules should be preserved and moved into a clearer informa
 2. **Central access model**: add normalized policy/plan/entitlement primitives with RLS, indexes, audit events, and server-side resolution.
 3. **Safe content delivery**: change candidate read paths so paid passage data is only returned after an entitlement check; test direct Data API and Edge Function access. The current branch adds an entitlement-aware `tests` SELECT policy and start/submit checks.
 4. **Folders & Tests UI**: add an Access & Pricing panel with Free/Paid/Inherit, default Paid, clear inherited-state labels, bulk edits, and an impact preview.
-5. **Plan builder and entitlements**: configure duration, price/currency, included folders/tests, activation/expiry, renewal/extension, and upgrade/downgrade rules.
+5. **Plan builder and entitlements**: admin plan editor now supports duration, price/currency, active/inactive catalog state, site/folder/test entitlements, and a transaction-safe admin RPC. Subscription lifecycle, renewal/extension, and upgrade/downgrade operations remain future work.
 6. **Coupons and checkout**: support one plan, selected plans, or universal eligibility; percentage/fixed discounts; validity and usage limits; zero-total checkout without opening a payment gateway.
 7. **Payment gateway integration**: select a provider first; verify payment server-side using signed callbacks/webhooks before activating paid entitlements.
 8. **User subscription page and operations**: show active plan, start/end date, remaining validity, purchase history, renew/extend, and admin-granted access.
@@ -95,6 +95,13 @@ Existing functional modules should be preserved and moved into a clearer informa
 - Read-only production policy inspection confirmed `tests_candidate_select` currently permits every active test, while `tests_admin_all` and `tests_staff_manage` are separate permissive policies. The migration replaces only the candidate SELECT policy. Because PostgreSQL permissive policies combine with OR, staging must verify the exact predicates and role membership; do not weaken the admin/staff scopes or leave any broad candidate-facing SELECT policy.
 - No Supabase development branches were found for the production project or the other active project inspected. The inactive project is not presumed to be staging. No staging target is currently verified, so no migration or function deployment is safe yet.
 - The Vercel deployment check is rate-limited; no deployment was performed.
+
+## Latest development increment (2026-10-26)
+
+- Added `admin-plans.html` with a responsive subscription plan catalog/editor, linked from the main admin navigation.
+- Added admin-only SECURITY DEFINER RPCs to list plans, read plan entitlements, validate plan fields, and save plan plus entitlements in one database transaction. Billing tables remain inaccessible to browser clients directly.
+- Added regression assertions for admin-only RPC boundaries, field validation, atomic save structure, and UI use of RPCs instead of direct billing-table access.
+- Checkout, payment provider/webhook verification, subscription activation/expiry operations, and real staging database validation are not implemented/verified yet. The page explicitly warns that checkout is not connected; do not enable a paid launch based on the plan editor alone.
 
 ## Decisions intentionally left open
 
