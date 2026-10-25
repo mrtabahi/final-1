@@ -40,6 +40,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="home-page">
+    <button type="button" class="site-history-back" id="site-history-back" aria-label="Go back to the previous page" title="Back to previous page">← Back</button>
 
     <nav class="navbar">
         <a href="index.html" class="brand-container">
@@ -887,6 +888,7 @@
 
 <script src="js/auth.js"></script>
 <script defer src="js/pro-menu.js?v=20261025-pro-home1"></script>
+<script>document.getElementById("site-history-back")?.addEventListener("click",()=>{if(window.history.length>1)window.history.back();else window.location.href="index.html";});</script>
 </body>
 </html>
 
