@@ -219,8 +219,12 @@ Deno.serve(async (req) => {
         return reply(503, { error: "Unable to verify test access. Please try again." });
       }
       if (accessAllowed !== true) return reply(403, { error: "Access to this test is no longer active." });
-      const { data: test, error: testError } = await db.from("tests").select("id,title,language,mode,duration_minutes,passage,target_wpm,min_accuracy,free_error_pct,penalty_per_error,active").eq("id", session.test_id).maybeSingle();
-      if (testError || !test) return reply(404, { error: "Test not found" });
+      const { data: test, error: testError } = await db.from("tests").select("id,title,language,mode,duration_minutes,passage,target_wpm,min_accuracy,free_error_pct,penalty_per_error,active,folder_id").eq("id", session.test_id).eq("active", true).maybeSingle();
+      if (testError || !test) return reply(404, { error: "Active test not found" });
+      if (test.folder_id) {
+        const { data: folder, error: folderError } = await db.from("folders").select("id").eq("id", test.folder_id).eq("active", true).maybeSingle();
+        if (folderError || !folder) return reply(404, { error: "This test is currently unavailable because its folder is disabled." });
+      }
       const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name").eq("id", user.id).maybeSingle();
       if (profileError || !profile) return reply(403, { error: "Candidate profile not found" });
       const now = Date.now();
