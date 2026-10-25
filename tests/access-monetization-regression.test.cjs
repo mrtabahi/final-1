@@ -267,3 +267,18 @@ test('refund finalization is service-role-only, full-amount checked and idempote
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.service_mark_order_refunded\([\s\S]*?TO service_role/);
   assert.ok(read('js/admin-payments.js').includes("t.provider_refund_id ? '<p>Refund '"));
 });
+
+test('new monetization pages have unique element IDs and existing local assets', () => {
+  const pages = ['admin-plans.html','admin-payments.html','admin-entitlements.html','admin-subscriptions.html','my-subscription.html'];
+  for (const page of pages) {
+    const html = read(page);
+    const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
+    assert.equal(ids.length, new Set(ids).size, page + ' contains duplicate IDs');
+    const localAssets = [
+      ...[...html.matchAll(/href=["'](css\/[^"']+)["']/g)].map(match => match[1]),
+      ...[...html.matchAll(/src=["'](js\/[^"']+)["']/g)].map(match => match[1])
+    ];
+    assert.ok(localAssets.length > 0, page + ' should load local styles/scripts');
+    for (const asset of localAssets) assert.ok(fs.existsSync(path.join(__dirname, '..', asset)), page + ' references missing asset ' + asset);
+  }
+});
