@@ -210,20 +210,22 @@ SET search_path = public, pg_temp
 AS $function$
 DECLARE
   v_event text := CASE WHEN TG_OP = 'INSERT' THEN 'created' ELSE 'updated' END;
+  v_before jsonb;
 BEGIN
-  IF TG_OP = 'UPDATE' AND NEW.ends_at IS NOT NULL AND NEW.ends_at <= now()
-     AND (OLD.ends_at IS NULL OR OLD.ends_at > now()) THEN
-    v_event := 'revoked';
+  IF TG_OP = 'UPDATE' THEN
+    v_before := jsonb_build_object(
+      'user_id', OLD.user_id, 'resource_type', OLD.resource_type, 'resource_key', OLD.resource_key,
+      'access_mode', OLD.access_mode, 'starts_at', OLD.starts_at, 'ends_at', OLD.ends_at, 'reason', OLD.reason
+    );
+    IF NEW.ends_at IS NOT NULL AND NEW.ends_at <= now()
+       AND (OLD.ends_at IS NULL OR OLD.ends_at > now()) THEN
+      v_event := 'revoked';
+    END IF;
   END IF;
   INSERT INTO public.user_entitlement_override_audit(
     override_id, event_type, before_state, after_state, actor_user_id
   ) VALUES (
-    NEW.id,
-    v_event,
-    CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE jsonb_build_object(
-      'user_id', OLD.user_id, 'resource_type', OLD.resource_type, 'resource_key', OLD.resource_key,
-      'access_mode', OLD.access_mode, 'starts_at', OLD.starts_at, 'ends_at', OLD.ends_at, 'reason', OLD.reason
-    ) END,
+    NEW.id, v_event, v_before,
     jsonb_build_object(
       'user_id', NEW.user_id, 'resource_type', NEW.resource_type, 'resource_key', NEW.resource_key,
       'access_mode', NEW.access_mode, 'starts_at', NEW.starts_at, 'ends_at', NEW.ends_at, 'reason', NEW.reason
