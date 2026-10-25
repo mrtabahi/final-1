@@ -4,12 +4,14 @@ BEGIN;
 
 -- Existing content remains accessible during rollout. New content defaults to paid.
 ALTER TABLE public.folders
-  ADD COLUMN IF NOT EXISTS access_mode text NOT NULL DEFAULT 'paid';
+  ADD COLUMN IF NOT EXISTS access_mode text NOT NULL DEFAULT 'free';
 ALTER TABLE public.tests
-  ADD COLUMN IF NOT EXISTS access_mode text NOT NULL DEFAULT 'paid';
+  ADD COLUMN IF NOT EXISTS access_mode text NOT NULL DEFAULT 'free';
 
-UPDATE public.folders SET access_mode = 'free' WHERE access_mode IS NULL OR access_mode = 'paid';
-UPDATE public.tests SET access_mode = 'free' WHERE access_mode IS NULL OR access_mode = 'paid';
+-- Backfill legacy content as Free to avoid disrupting current users.
+-- New rows created after this migration default to Paid.
+ALTER TABLE public.folders ALTER COLUMN access_mode SET DEFAULT 'paid';
+ALTER TABLE public.tests ALTER COLUMN access_mode SET DEFAULT 'paid';
 
 ALTER TABLE public.folders DROP CONSTRAINT IF EXISTS folders_access_mode_check;
 ALTER TABLE public.folders ADD CONSTRAINT folders_access_mode_check
