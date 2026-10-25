@@ -113,9 +113,19 @@ CREATE TABLE IF NOT EXISTS public.orders (
   CHECK (total_minor = subtotal_minor - discount_minor)
 );
 
-ALTER TABLE public.user_subscriptions
-  ADD CONSTRAINT user_subscriptions_order_id_fkey
-  FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE SET NULL;
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'user_subscriptions_order_id_fkey'
+      AND conrelid = 'public.user_subscriptions'::regclass
+  ) THEN
+    ALTER TABLE public.user_subscriptions
+      ADD CONSTRAINT user_subscriptions_order_id_fkey
+      FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE SET NULL;
+  END IF;
+END;
+$do$;
 CREATE INDEX IF NOT EXISTS user_subscriptions_order_lookup
   ON public.user_subscriptions(order_id);
 
