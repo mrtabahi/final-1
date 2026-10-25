@@ -1112,6 +1112,56 @@ REVOKE ALL ON FUNCTION public.get_my_subscription_overview() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_active_subscription_plans() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_my_subscription_overview() TO authenticated;
 
+CREATE OR REPLACE FUNCTION public.admin_list_orders()
+RETURNS TABLE(
+  id uuid, user_id uuid, user_name text, user_email text, plan_name text, currency text,
+  subtotal_minor bigint, discount_minor bigint, total_minor bigint, status text,
+  expires_at timestamptz, created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  RETURN QUERY
+  SELECT o.id, o.user_id, p.full_name::text, p.email::text, sp.name::text, o.currency,
+         o.subtotal_minor, o.discount_minor, o.total_minor, o.status, o.expires_at, o.created_at
+  FROM public.orders o
+  JOIN public.profiles p ON p.id = o.user_id
+  JOIN public.subscription_plans sp ON sp.id = o.plan_id
+  ORDER BY o.created_at DESC LIMIT 1000;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_list_payment_transactions()
+RETURNS TABLE(
+  id uuid, order_id uuid, provider text, provider_transaction_id text, status text,
+  amount_minor bigint, currency text, verified_at timestamptz, created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  RETURN QUERY
+  SELECT pt.id, pt.order_id, pt.provider, pt.provider_transaction_id, pt.status,
+         pt.amount_minor, pt.currency, pt.verified_at, pt.created_at
+  FROM public.payment_transactions pt
+  ORDER BY pt.created_at DESC LIMIT 1000;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_list_orders() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_list_payment_transactions() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_list_orders() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_list_payment_transactions() TO authenticated;
+
 -- Resolve effective access on the server. This function is also used by the
 -- typing-result Edge Function; callers must fail closed if it errors.
 CREATE OR REPLACE FUNCTION public.can_access_test(p_test_id uuid, p_user_id uuid DEFAULT auth.uid())
