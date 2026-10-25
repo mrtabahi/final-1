@@ -1019,6 +1019,9 @@ BEGIN
     RAISE EXCEPTION 'Order is already paid by another transaction' USING ERRCODE = '23505';
   END IF;
   IF v_order.status <> 'pending' THEN RAISE EXCEPTION 'Order is not awaiting payment' USING ERRCODE = '22023'; END IF;
+  IF v_order.expires_at IS NOT NULL AND v_order.expires_at <= now() THEN
+    RAISE EXCEPTION 'Checkout order expired; verified payment must be refunded' USING ERRCODE = '22023';
+  END IF;
   IF p_amount_minor <> v_order.total_minor OR p_currency <> v_order.currency THEN
     RAISE EXCEPTION 'Verified payment amount or currency does not match order' USING ERRCODE = '22023';
   END IF;
