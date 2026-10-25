@@ -140,6 +140,12 @@ Existing functional modules should be preserved and moved into a clearer informa
 - Extended the admin Payments & Coupons page with read-only order and payment-transaction history through role-checked RPCs.
 - The UI intentionally does not expose raw provider payloads or offer a manual “mark paid” control. Payment finalization remains restricted to the service-role verifier path.
 
+## Refund lifecycle foundation (2026-10-26)
+
+- Added a service-role-only full-refund finalization RPC that validates the refunded amount/currency, stores provider refund metadata, marks the order and payment transaction refunded, and revokes any active subscription tied to the order.
+- Duplicate verified refund callbacks are idempotent. Partial refunds and provider-specific refund initiation remain out of scope until the payment provider is selected.
+- The admin transaction view shows refund identifiers/timestamps but has no manual refund or status-forcing control.
+
 ## Decisions intentionally left open
 
 - Payment gateway/provider and supported currencies.
