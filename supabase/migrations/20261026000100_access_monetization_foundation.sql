@@ -185,7 +185,7 @@ CREATE INDEX IF NOT EXISTS user_override_audit_lookup
 CREATE TABLE IF NOT EXISTS public.user_subscription_audit (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   subscription_id uuid REFERENCES public.user_subscriptions(id) ON DELETE SET NULL,
-  event_type text NOT NULL CHECK (event_type IN ('created', 'updated', 'cancelled')),
+  event_type text NOT NULL CHECK (event_type IN ('created', 'updated', 'cancelled', 'refunded')),
   before_state jsonb,
   after_state jsonb,
   actor_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -285,7 +285,9 @@ BEGIN
       'user_id', OLD.user_id, 'plan_id', OLD.plan_id, 'status', OLD.status,
       'starts_at', OLD.starts_at, 'ends_at', OLD.ends_at, 'admin_note', OLD.admin_note
     );
-    IF NEW.status = 'cancelled' AND OLD.status <> 'cancelled' THEN v_event := 'cancelled'; END IF;
+    IF NEW.status = 'cancelled' AND OLD.status <> 'cancelled' THEN v_event := 'cancelled';
+    ELSIF NEW.status = 'refunded' AND OLD.status <> 'refunded' THEN v_event := 'refunded';
+    END IF;
   END IF;
   INSERT INTO public.user_subscription_audit(subscription_id, event_type, before_state, after_state, actor_user_id)
   VALUES (
