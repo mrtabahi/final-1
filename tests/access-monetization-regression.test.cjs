@@ -146,3 +146,26 @@ test('coupon RPCs are admin-only and validate discount, date and redemption limi
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_save_coupon\([\s\S]*?FROM PUBLIC, anon/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.admin_save_coupon\([\s\S]*?TO authenticated/);
 });
+
+test('manual entitlement overrides use audited, role-checked server RPCs', () => {
+  const page = read('admin-entitlements.html');
+  const js = read('js/admin-entitlements.js');
+  const adminPage = read('admin.html');
+  assert.match(page, /Changes are audited/i);
+  assert.match(js, /rpc\('admin_list_user_entitlement_overrides'\)/);
+  assert.match(js, /rpc\('admin_save_user_entitlement_override'/);
+  assert.match(js, /rpc\('admin_revoke_user_entitlement_override'/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.user_entitlement_override_audit/);
+  assert.match(migration, /CREATE TRIGGER user_entitlement_override_audit_trigger/);
+  assert.match(migration, /'user_entitlement_override_audit'/);
+  assert.match(adminPage, /href="admin-entitlements\.html"/);
+});
+
+test('manual override RPC limits resources and modes to what can_access_test enforces', () => {
+  assert.match(migration, /p_resource_type NOT IN \('test', 'folder'\)/);
+  assert.match(migration, /p_access_mode NOT IN \('free', 'paid', 'grant'\)/);
+  assert.match(migration, /p_ends_at <= p_starts_at/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_revoke_user_entitlement_override\(/);
+  assert.match(migration, /ends_at = now\(\)/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_save_user_entitlement_override\([\s\S]*?FROM PUBLIC, anon/);
+});
