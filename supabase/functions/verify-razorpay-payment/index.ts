@@ -64,7 +64,8 @@ Deno.serve(async (req: Request) => {
     global: { headers: { Authorization: authorization } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: userResult, error: userError } = await userClient.auth.getUser();
+  const accessToken = authorization.slice("Bearer ".length);
+  const { data: userResult, error: userError } = await userClient.auth.getUser(accessToken);
   if (userError || !userResult.user) return json(401, { error: "Your session is invalid. Please sign in again." });
 
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
