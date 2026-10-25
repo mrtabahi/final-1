@@ -84,3 +84,21 @@ test('submission revalidates that the test and parent folder remain active', () 
   assert.match(edge, /select\("id,title,language,mode,duration_minutes,passage,target_wpm,min_accuracy,free_error_pct,penalty_per_error,active,folder_id"\)\.eq\("id", session\.test_id\)\.eq\("active", true\)/);
   assert.match(edge, /if \(test\.folder_id\)[\s\S]*?from\("folders"\)[\s\S]*?eq\("active", true\)/);
 });
+
+test('plan management writes go through admin-only SECURITY DEFINER RPCs', () => {
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_upsert_subscription_plan\(/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_set_plan_entitlements\(/);
+  assert.match(migration, /auth\.uid\(\) IS NULL OR NOT public\.is_current_user_admin\(\)/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_upsert_subscription_plan\([\s\S]*?FROM PUBLIC, anon/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_set_plan_entitlements\(uuid, jsonb\) FROM PUBLIC, anon/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.admin_upsert_subscription_plan\([\s\S]*?TO authenticated/);
+});
+
+test('plan management validates prices, duration, currency and entitlement payloads', () => {
+  assert.match(migration, /p_price_minor < 0/);
+  assert.match(migration, /p_currency !~ '\^\[A-Z\]\{3\}\$'/);
+  assert.match(migration, /p_duration_days < 1 OR p_duration_days > 3650/);
+  assert.match(migration, /jsonb_array_length\(p_entitlements\) > 500/);
+  assert.match(migration, /e\.resource_type NOT IN \('site', 'menu', 'submenu', 'folder', 'test', 'materials'\)/);
+  assert.match(migration, /DELETE FROM public\.plan_entitlements WHERE plan_id = p_plan_id/);
+});
