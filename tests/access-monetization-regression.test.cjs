@@ -295,3 +295,26 @@ test('new monetization pages have unique element IDs and existing local assets',
     for (const asset of localAssets) assert.ok(fs.existsSync(path.join(__dirname, '..', asset)), page + ' references missing asset ' + asset);
   }
 });
+
+test('Razorpay checkout and verification remain server-authoritative', () => {
+  const createCheckout = read('supabase/functions/create-checkout/index.ts');
+  const verifyPayment = read('supabase/functions/verify-razorpay-payment/index.ts');
+  const webhook = read('supabase/functions/razorpay-webhook/index.ts');
+  const config = read('supabase/config.toml');
+  assert.match(migration, /provider_order_id text/);
+  assert.match(migration, /orders_provider_order_unique/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.provider_webhook_events/);
+  assert.match(createCheckout, /create_checkout_order/);
+  assert.match(createCheckout, /RAZORPAY_KEY_SECRET/);
+  assert.match(createCheckout, /Number\(providerOrder\.amount\) !== Number\(order\.total_minor\)/);
+  assert.match(verifyPayment, /hmacHex\(keySecret, providerOrderId \+ "\\|" \+ paymentId\)/);
+  assert.match(verifyPayment, /payment\.status !== "captured" \|\| payment\.captured !== true/);
+  assert.match(verifyPayment, /service_mark_order_paid/);
+  assert.match(webhook, /x-razorpay-signature/);
+  assert.match(webhook, /await req\.text\(\)/);
+  assert.match(webhook, /service_mark_order_paid/);
+  assert.match(webhook, /service_mark_order_refunded/);
+  assert.match(webhook, /provider_webhook_events/);
+  assert.match(config, /\[functions\.razorpay-webhook\]\nverify_jwt = false/);
+  assert.doesNotMatch(createCheckout + verifyPayment + webhook, /RAZORPAY_KEY_SECRET\s*[:=]\s*["'][^"']+["']/);
+});
