@@ -127,6 +127,11 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Admin order and transaction views return only the approved summary fields; verify non-admin callers cannot invoke either list RPC and raw provider payloads are never exposed.
 - Order creation and status transitions write before/after state to the server-managed order audit table; direct browser reads/writes to that audit table remain denied.
 - Refund finalization must be called only after a provider-signed refund is verified; only full refunds are supported initially, the order and transaction become refunded, active subscription access is revoked, and duplicate refund callbacks are idempotent.
+- Configure only Razorpay Test Mode secrets for the staging Edge Functions; never commit keys or place the secret/service-role key in browser configuration.
+- Verify the `create-checkout`, `verify-razorpay-payment`, and `razorpay-webhook` functions against the provider sandbox, including raw-body HMAC failures and duplicate event IDs.
+- Verify a delayed webhook whose provider payment timestamp predates checkout expiry succeeds, while a payment created after expiry never grants access and triggers one full-refund request.
+- Simulate a provider timeout after refund initiation and verify retry reconciles against the Razorpay refund list without issuing a duplicate refund.
+- Confirm partial/multiple prior refunds are not followed by an unsafe additional full refund and are visible in logs for manual reconciliation.
 
 ## 11. Edge Function scenarios
 
