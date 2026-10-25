@@ -29,7 +29,7 @@
       body.ei-exam-mode .ei-tool{min-height:36px;padding:.4rem .65rem;border:1px solid #cbd8e5;border-radius:8px;background:#f8fafc;color:#16324f;font-weight:700;cursor:pointer}
       body.ei-exam-mode .ei-clock{font-size:1.12rem;font-variant-numeric:tabular-nums;font-weight:850;padding:.4rem .75rem;border-radius:8px;background:#102a43;color:#fff}
       body.ei-exam-mode #typing-section,body.ei-exam-mode .selftest-container{max-width:none!important;width:100%!important;padding-left:clamp(.4rem,1.4vw,1.2rem)!important;padding-right:clamp(.4rem,1.4vw,1.2rem)!important}
-      body.ei-exam-mode .typing-controls,body.ei-exam-mode .self-toolbar-actions{display:none!important}
+      body.ei-exam-mode .typing-controls,body.ei-exam-mode .self-toolbar-actions{display:none!important}\n      body.ei-exam-mode #offscreen-alert,body.ei-exam-mode #live-metrics-panel{display:none!important}
       body.ei-exam-mode #typing-section .card{margin-top:.35rem}
       body.ei-exam-mode #passage-container{height:clamp(160px,27vh,280px);min-height:160px;max-height:32vh;overflow:auto;margin:0 0 .55rem;padding:.8rem 1rem;font-size:1.1rem;line-height:1.55}
       body.ei-exam-mode #typing-textarea{width:100%;height:clamp(220px,38vh,430px);min-height:220px;max-height:48vh;resize:vertical;font-size:1.1rem;line-height:1.55;margin:0}
