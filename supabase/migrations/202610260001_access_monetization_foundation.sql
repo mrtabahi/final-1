@@ -173,4 +173,106 @@ END $$;
 -- Keep existing table-level policies intact during the first rollout; access enforcement must
 -- be completed in the passage-delivery path before any paid item is switched to Paid in production.
 
+
+-- Resolve effective access on the server. This function is also used by the
+-- typing-result Edge Function; callers must fail closed if it errors.
+CREATE OR REPLACE FUNCTION public.can_access_test(p_test_id uuid, p_user_id uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $
+DECLARE
+  v_test public.tests%ROWTYPE;
+  v_folder public.folders%ROWTYPE;
+  v_mode text;
+  v_override text;
+  v_plan_ids uuid[];
+  v_now timestamptz := now();
+BEGIN
+  IF p_user_id IS NULL THEN RETURN false; END IF;
+  SELECT * INTO v_test FROM public.tests WHERE id = p_test_id AND active = true;
+  IF NOT FOUND THEN RETURN false; END IF;
+
+  IF EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = p_user_id AND p.role IN ('admin', 'head_admin')) THEN
+    RETURN true;
+  END IF;
+
+  IF v_test.folder_id IS NOT NULL THEN
+    SELECT * INTO v_folder FROM public.folders WHERE id = v_test.folder_id AND active = true;
+    IF NOT FOUND THEN RETURN false; END IF;
+  END IF;
+
+  v_mode := CASE
+    WHEN v_test.access_mode <> 'inherit' THEN v_test.access_mode
+    ELSE COALESCE(v_folder.access_mode, 'inherit')
+  END;
+  IF v_mode = 'inherit' THEN
+    SELECT ap.access_mode INTO v_mode
+    FROM public.access_policies ap
+    WHERE ap.resource_type = 'site' AND ap.resource_key = 'site';
+    v_mode := COALESCE(v_mode, 'free');
+    IF v_mode = 'mixed' OR v_mode = 'inherit' THEN v_mode := 'free'; END IF;
+  END IF;
+
+  -- A test-specific override takes precedence over a folder-level override.
+  SELECT o.access_mode INTO v_override
+  FROM public.user_entitlement_overrides o
+  WHERE o.user_id = p_user_id
+    AND o.resource_type = 'test'
+    AND o.resource_key = p_test_id::text
+    AND (o.starts_at IS NULL OR o.starts_at <= v_now)
+    AND (o.ends_at IS NULL OR o.ends_at > v_now)
+  ORDER BY o.created_at DESC LIMIT 1;
+  IF FOUND THEN
+    IF v_override IN ('free', 'grant') THEN RETURN true; END IF;
+    IF v_override = 'paid' THEN v_mode := 'paid'; END IF;
+  ELSIF v_test.folder_id IS NOT NULL THEN
+    SELECT o.access_mode INTO v_override
+    FROM public.user_entitlement_overrides o
+    WHERE o.user_id = p_user_id
+      AND o.resource_type = 'folder'
+      AND o.resource_key = v_test.folder_id::text
+      AND (o.starts_at IS NULL OR o.starts_at <= v_now)
+      AND (o.ends_at IS NULL OR o.ends_at > v_now)
+    ORDER BY o.created_at DESC LIMIT 1;
+    IF FOUND THEN
+      IF v_override IN ('free', 'grant') THEN RETURN true; END IF;
+      IF v_override = 'paid' THEN v_mode := 'paid'; END IF;
+    END IF;
+  END IF;
+
+  IF v_mode = 'free' THEN RETURN true; END IF;
+  IF v_mode <> 'paid' THEN RETURN false; END IF;
+
+  SELECT array_agg(us.plan_id) INTO v_plan_ids
+  FROM public.user_subscriptions us
+  WHERE us.user_id = p_user_id
+    AND us.status = 'active'
+    AND (us.starts_at IS NULL OR us.starts_at <= v_now)
+    AND (us.ends_at IS NULL OR us.ends_at > v_now);
+
+  IF v_plan_ids IS NULL THEN RETURN false; END IF;
+  RETURN EXISTS (
+    SELECT 1 FROM public.plan_entitlements pe
+    WHERE pe.plan_id = ANY(v_plan_ids)
+      AND (
+        (pe.resource_type = 'test' AND pe.resource_key = p_test_id::text)
+        OR (v_test.folder_id IS NOT NULL AND pe.resource_type = 'folder' AND pe.resource_key = v_test.folder_id::text)
+        OR (pe.resource_type = 'site' AND pe.resource_key = 'site')
+      )
+  );
+END;
+$;
+
+REVOKE ALL ON FUNCTION public.can_access_test(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.can_access_test(uuid, uuid) TO authenticated, service_role;
+
+-- Replace the broad candidate read policy. Admin/staff policies remain in place.
+DROP POLICY IF EXISTS tests_candidate_select ON public.tests;
+CREATE POLICY tests_candidate_select ON public.tests
+  FOR SELECT TO authenticated
+  USING (active = true AND public.can_access_test(id, auth.uid()));
+
+
 COMMIT;
