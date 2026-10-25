@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS public.user_subscriptions (
   starts_at timestamptz,
   ends_at timestamptz,
   order_id uuid,
+  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  admin_note text NOT NULL DEFAULT '',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (ends_at IS NULL OR starts_at IS NULL OR ends_at > starts_at)
@@ -166,6 +168,18 @@ CREATE TABLE IF NOT EXISTS public.user_entitlement_override_audit (
 );
 CREATE INDEX IF NOT EXISTS user_override_audit_lookup
   ON public.user_entitlement_override_audit(override_id, changed_at DESC);
+CREATE TABLE IF NOT EXISTS public.user_subscription_audit (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  subscription_id uuid REFERENCES public.user_subscriptions(id) ON DELETE SET NULL,
+  event_type text NOT NULL CHECK (event_type IN ('created', 'updated', 'cancelled')),
+  before_state jsonb,
+  after_state jsonb,
+  actor_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  changed_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS user_subscription_audit_lookup
+  ON public.user_subscription_audit(subscription_id, changed_at DESC);
+
 
 
 CREATE OR REPLACE FUNCTION public.audit_access_mode_change()
@@ -242,6 +256,43 @@ AFTER INSERT OR UPDATE ON public.user_entitlement_overrides
 FOR EACH ROW EXECUTE FUNCTION public.audit_user_entitlement_override_change();
 REVOKE ALL ON FUNCTION public.audit_user_entitlement_override_change() FROM PUBLIC, anon, authenticated;
 
+CREATE OR REPLACE FUNCTION public.audit_user_subscription_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_event text := CASE WHEN TG_OP = 'INSERT' THEN 'created' ELSE 'updated' END;
+  v_before jsonb;
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    v_before := jsonb_build_object(
+      'user_id', OLD.user_id, 'plan_id', OLD.plan_id, 'status', OLD.status,
+      'starts_at', OLD.starts_at, 'ends_at', OLD.ends_at, 'admin_note', OLD.admin_note
+    );
+    IF NEW.status = 'cancelled' AND OLD.status <> 'cancelled' THEN v_event := 'cancelled'; END IF;
+  END IF;
+  INSERT INTO public.user_subscription_audit(subscription_id, event_type, before_state, after_state, actor_user_id)
+  VALUES (
+    NEW.id, v_event, v_before,
+    jsonb_build_object(
+      'user_id', NEW.user_id, 'plan_id', NEW.plan_id, 'status', NEW.status,
+      'starts_at', NEW.starts_at, 'ends_at', NEW.ends_at, 'admin_note', NEW.admin_note
+    ),
+    auth.uid()
+  );
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS user_subscription_audit_trigger ON public.user_subscriptions;
+CREATE TRIGGER user_subscription_audit_trigger
+AFTER INSERT OR UPDATE ON public.user_subscriptions
+FOR EACH ROW EXECUTE FUNCTION public.audit_user_subscription_change();
+REVOKE ALL ON FUNCTION public.audit_user_subscription_change() FROM PUBLIC, anon, authenticated;
+
+
 
 CREATE INDEX IF NOT EXISTS user_subscriptions_active_lookup
   ON public.user_subscriptions(user_id, status, starts_at, ends_at);
@@ -260,7 +311,7 @@ DECLARE t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'subscription_plans','plan_entitlements','user_subscriptions',
-    'user_entitlement_overrides','user_entitlement_override_audit','coupons','coupon_plan_eligibility',
+    'user_entitlement_overrides','user_entitlement_override_audit','user_subscription_audit','coupons','coupon_plan_eligibility',
     'orders','payment_transactions','coupon_redemptions','access_policies','access_policy_audit'
   ] LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
@@ -739,6 +790,100 @@ REVOKE ALL ON FUNCTION public.admin_revoke_user_entitlement_override(uuid) FROM 
 GRANT EXECUTE ON FUNCTION public.admin_list_user_entitlement_overrides() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_save_user_entitlement_override(uuid, uuid, text, text, text, timestamptz, timestamptz, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_revoke_user_entitlement_override(uuid) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.admin_list_user_subscriptions()
+RETURNS TABLE(
+  id uuid, user_id uuid, user_name text, user_email text, plan_id uuid, plan_name text,
+  status text, starts_at timestamptz, ends_at timestamptz, admin_note text, created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  RETURN QUERY
+  SELECT us.id, us.user_id, p.full_name::text, p.email::text, us.plan_id, sp.name::text,
+         us.status, us.starts_at, us.ends_at, us.admin_note, us.created_at
+  FROM public.user_subscriptions us
+  JOIN public.profiles p ON p.id = us.user_id
+  JOIN public.subscription_plans sp ON sp.id = us.plan_id
+  ORDER BY us.created_at DESC;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_grant_user_subscription(
+  p_user_id uuid,
+  p_plan_id uuid,
+  p_starts_at timestamptz,
+  p_ends_at timestamptz,
+  p_admin_note text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_start timestamptz := COALESCE(p_starts_at, now());
+  v_end timestamptz;
+  v_sub public.user_subscriptions%ROWTYPE;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  IF p_user_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id AND role = 'candidate') THEN
+    RAISE EXCEPTION 'Candidate profile not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_plan_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.subscription_plans WHERE id = p_plan_id AND is_active = true) THEN
+    RAISE EXCEPTION 'Active subscription plan not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_admin_note IS NULL OR length(btrim(p_admin_note)) = 0 OR length(p_admin_note) > 500 THEN
+    RAISE EXCEPTION 'A reason of 1-500 characters is required for manual grants' USING ERRCODE = '22023';
+  END IF;
+  SELECT COALESCE(p_ends_at, v_start + make_interval(days => sp.duration_days))
+  INTO v_end FROM public.subscription_plans sp WHERE sp.id = p_plan_id;
+  IF v_end <= v_start THEN
+    RAISE EXCEPTION 'Subscription end time must be after start time' USING ERRCODE = '22023';
+  END IF;
+  INSERT INTO public.user_subscriptions(user_id, plan_id, status, starts_at, ends_at, created_by, admin_note)
+  VALUES (p_user_id, p_plan_id, 'active', v_start, v_end, auth.uid(), btrim(p_admin_note))
+  RETURNING * INTO v_sub;
+  RETURN jsonb_build_object('id', v_sub.id, 'user_id', v_sub.user_id, 'plan_id', v_sub.plan_id,
+    'status', v_sub.status, 'starts_at', v_sub.starts_at, 'ends_at', v_sub.ends_at);
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_cancel_user_subscription(p_id uuid, p_admin_note text)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  IF p_admin_note IS NULL OR length(btrim(p_admin_note)) = 0 OR length(p_admin_note) > 500 THEN
+    RAISE EXCEPTION 'A cancellation reason of 1-500 characters is required' USING ERRCODE = '22023';
+  END IF;
+  UPDATE public.user_subscriptions
+  SET status = 'cancelled', admin_note = left(CASE WHEN admin_note = '' THEN '' ELSE admin_note || E'\n' END || btrim(p_admin_note), 500),
+      updated_at = now()
+  WHERE id = p_id AND status IN ('active', 'pending');
+  IF NOT FOUND THEN RAISE EXCEPTION 'Active or pending subscription not found' USING ERRCODE = 'P0002'; END IF;
+  RETURN true;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_list_user_subscriptions() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_grant_user_subscription(uuid, uuid, timestamptz, timestamptz, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_cancel_user_subscription(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_list_user_subscriptions() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_grant_user_subscription(uuid, uuid, timestamptz, timestamptz, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_cancel_user_subscription(uuid, text) TO authenticated;
 
 -- Resolve effective access on the server. This function is also used by the
 -- typing-result Edge Function; callers must fail closed if it errors.
