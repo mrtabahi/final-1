@@ -26,6 +26,8 @@
       const permissions = data?.permissions || {};
       const granted = permissionKeys.some(key => permissions[key] === true);
       let item = links.querySelector('.pro-nav-item');
+      const homeProCard = document.querySelector('#home-pro-access');
+      if (homeProCard) homeProCard.hidden = !granted;
       if (!granted) {
         item?.remove();
         return;
