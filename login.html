@@ -64,7 +64,12 @@ $('login-form').onsubmit = async e => {
 };
   $('signup-form').onsubmit=async e=>{e.preventDefault();$('auth-message').textContent='';if (window.registrationAllowed === false) { alert(window.registrationPauseMessage); $('auth-message').textContent=window.registrationPauseMessage; return; } if($('signup-password').value!==$('signup-confirm').value){$('auth-message').textContent='Passwords do not match.';return;}try{const d=await AuthManager.register({email:$('signup-email').value,phone:$('signup-phone').value,password:$('signup-password').value,fullName:$('signup-name').value});if(d.session){location.href='verify.html';}else{$('auth-message').textContent='Account created. Check your email, confirm it, then sign in to complete mobile verification.';$('tab-login').click();}}catch(err){$('auth-message').textContent=err.message;}};
 
-$('google-signin-button')?.addEventListener('click', async () => {\n  $('auth-message').textContent = '';\n  try { await AuthManager.signInWithGoogle(); }\n  catch (err) { $('auth-message').textContent = err.message || 'Google sign-in is not configured yet. Please use email and password or a magic link.'; }\n});\n$('magic-link-button')?.addEventListener('click', async () => {
+$('google-signin-button')?.addEventListener('click', async () => {
+  $('auth-message').textContent = '';
+  try { await AuthManager.signInWithGoogle(); }
+  catch (err) { $('auth-message').textContent = err.message || 'Google sign-in is not configured yet. Please use email and password or a magic link.'; }
+});
+$('magic-link-button')?.addEventListener('click', async () => {
   const email = $('login-id').value.trim();
   $('auth-message').textContent = '';
   try {
@@ -83,7 +88,8 @@ $('resend-confirmation-button')?.addEventListener('click', async () => {
 refreshRegistrationSetting();
 (async () => {
   const params = new URLSearchParams(location.search);
-  if (params.get('magic') !== '1') return;
+  if (params.get('error_description')) $('auth-message').textContent = params.get('error_description').replace(/\+/g, ' ');
+  if (params.get('magic') !== '1' && params.get('oauth') !== '1') return;
   const { data } = await supabaseClient.auth.getSession();
   if (!data?.session?.user) return;
   try {
