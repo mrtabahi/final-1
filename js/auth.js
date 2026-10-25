@@ -78,6 +78,17 @@ const AuthManager = {
     return data || { registration_enabled: true, registration_paused_message: 'New account creation is temporarily paused. Please try again later.' };
   },
 
+  async signInWithGoogle() {
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/login.html?oauth=1',
+        queryParams: { prompt: 'select_account' }
+      }
+    });
+    if (error) throw error;
+  },
+
   async sendMagicLink(email) {
     const value = String(email || '').trim().toLowerCase();
     if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
