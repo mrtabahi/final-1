@@ -38,6 +38,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (folderRes.error) throw folderRes.error;
       if (testRes.error) throw testRes.error;
       plans = planRes.data || []; folders = folderRes.data || []; tests = testRes.data || [];
+      const entitlementResults = await Promise.all(plans.map(plan => supabaseClient.rpc('admin_get_plan_entitlements', {p_plan_id:plan.id})));
+      const entitlementError = entitlementResults.find(result => result.error);
+      if (entitlementError) throw entitlementError.error;
+      const entitlementCount = entitlementResults.reduce((sum, result) => sum + (Array.isArray(result.data) ? result.data.length : 0), 0);
+      $('plans-entitlement-count').textContent = entitlementCount;
       renderPlans(); renderResources();
       setStatus('Plans loaded. Checkout and payment verification are not connected yet.', 'success');
     } catch (error) {
