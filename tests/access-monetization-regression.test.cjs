@@ -42,3 +42,11 @@ test('Paid cannot be enabled in the admin UI before server-side validation', () 
   assert.match(adminAccess, /<option value="paid" disabled/);
   assert.match(adminAccess, /if \(mode === 'paid'\)/);
 });
+
+test('access policy changes are written to a server-managed audit trail', () => {
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.access_policy_audit/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.audit_access_mode_change\(\)/);
+  assert.match(migration, /CREATE TRIGGER folders_access_mode_audit/);
+  assert.match(migration, /CREATE TRIGGER tests_access_mode_audit/);
+  assert.match(migration, /REVOKE ALL ON TABLE public\.%I FROM anon, authenticated/);
+});
