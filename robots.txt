@@ -2,6 +2,9 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 Disallow: /admin-materials.html
+Disallow: /admin-ads.html
+Disallow: /admin-leaderboard.html
+Disallow: /candidate-workspace.html
 Disallow: /my_account.html
 Disallow: /my_results.html
 Disallow: /dashboard.html
