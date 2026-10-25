@@ -28,7 +28,7 @@ async function init(){
 }
 function openModule(key){if(!permissions[key])return;activeKey=key;editingId=null;$('cw-nav').querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.cwNav===key)));({folder_tests:renderFolders,results_attempts:renderAttempts,study_materials:renderMaterials,website_content:renderContent,website_settings:renderSettings})[key]();}
 function panel(title,desc,body){$('cw-view').innerHTML='<section class="cw-panel"><div class="cw-panel-head"><div><h2>'+title+'</h2><p>'+desc+'</p></div><span class="cw-tag">Authorized</span></div>'+body+'</section>';}
-async function getRows(table,cols,order='created_at'){const {data,error}=await supabaseClient.from(table).select(cols).order(order,{ascending:false}).limit(500);if(error)throw error;return data||[];}
+async function getRows(table,cols,order='created_at'){const {data,error}=await supabaseClient.from(table).select(cols).order(order,{ascending:order==='sort_order'}).limit(500);if(error)throw error;return data||[];}
 async function renderFolders(){
  panel('Test Library & Bulk Import','Build your test library: organize folders, create tests, import PDFs in batches and manage visibility.','<div class="cw-loading">Loading folders and tests…</div>');
  try{folders=await getRows('folders','id,name,description,active,sort_order,created_at','sort_order');tests=await getRows('tests','id,folder_id,title,language,passage,mode,duration_minutes,target_wpm,active,sort_order,created_at','sort_order');drawFolderWorkspace();}catch(e){panel('Test Library & Bulk Import','Your assigned test-library access is protected by database permissions.','<div class="cw-empty">'+esc(e.message)+'</div>');}
