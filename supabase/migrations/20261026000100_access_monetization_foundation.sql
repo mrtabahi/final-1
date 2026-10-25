@@ -457,6 +457,46 @@ BEGIN
 END;
 $function$;
 
+CREATE OR REPLACE FUNCTION public.admin_list_subscription_plans()
+RETURNS SETOF public.subscription_plans
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  RETURN QUERY SELECT * FROM public.subscription_plans ORDER BY created_at DESC;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_get_plan_entitlements(p_plan_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  IF p_plan_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.subscription_plans WHERE id = p_plan_id) THEN
+    RAISE EXCEPTION 'Subscription plan not found' USING ERRCODE = 'P0002';
+  END IF;
+  RETURN COALESCE((
+    SELECT jsonb_agg(jsonb_build_object('resource_type', pe.resource_type, 'resource_key', pe.resource_key)
+                     ORDER BY pe.resource_type, pe.resource_key)
+    FROM public.plan_entitlements pe WHERE pe.plan_id = p_plan_id
+  ), '[]'::jsonb);
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_list_subscription_plans() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_get_plan_entitlements(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_list_subscription_plans() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_get_plan_entitlements(uuid) TO authenticated;
+
 REVOKE ALL ON FUNCTION public.admin_upsert_subscription_plan(uuid, text, text, bigint, text, integer, boolean) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.admin_set_plan_entitlements(uuid, jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.admin_upsert_subscription_plan(uuid, text, text, bigint, text, integer, boolean) TO authenticated;
