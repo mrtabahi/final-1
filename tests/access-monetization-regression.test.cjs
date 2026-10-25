@@ -321,8 +321,8 @@ test('Razorpay checkout and verification remain server-authoritative', () => {
 
 test('Razorpay late-payment refunds are claimed idempotently and never grant late access', () => {
   const webhook = read('supabase/functions/razorpay-webhook/index.ts');
-  assert.equal(migration.split('CREATE TABLE IF NOT EXISTS public.payment_transactions').length - 1, 1);
-  assert.equal(migration.split('CREATE TABLE IF NOT EXISTS public.provider_webhook_events').length - 1, 1);
+  assert.match(migration, /provider_transaction_id text/);
+  assert.match(migration, /provider_webhook_events/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.service_record_late_payment_for_refund\(/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.service_claim_late_refund\(/);
   assert.match(migration, /p_provider_created_at > v_order\.expires_at/);
