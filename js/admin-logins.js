@@ -41,7 +41,7 @@
     try {
       const [{ data: settings, error: settingsError }, { data: messages, error: messagesError }] = await Promise.all([
         supabaseClient.from('site_access_settings').select('*').eq('id', 1).maybeSingle(),
-        supabaseClient.from('candidate_login_messages').select('user_id,message,enabled,updated_at,profiles(full_name,email)').order('updated_at', { ascending: false }).limit(500)
+        supabaseClient.from('candidate_login_messages').select('user_id,message,enabled,updated_at,profiles!candidate_login_messages_user_id_fkey(full_name,email)').order('updated_at', { ascending: false }).limit(500)
       ]);
       if (settingsError) throw settingsError;
       if (messagesError) throw messagesError;
