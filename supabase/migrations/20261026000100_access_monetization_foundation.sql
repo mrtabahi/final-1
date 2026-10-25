@@ -113,6 +113,12 @@ CREATE TABLE IF NOT EXISTS public.orders (
   CHECK (total_minor = subtotal_minor - discount_minor)
 );
 
+ALTER TABLE public.user_subscriptions
+  ADD CONSTRAINT user_subscriptions_order_id_fkey
+  FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS user_subscriptions_order_lookup
+  ON public.user_subscriptions(order_id);
+
 CREATE TABLE IF NOT EXISTS public.payment_transactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id uuid NOT NULL REFERENCES public.orders(id) ON DELETE RESTRICT,
