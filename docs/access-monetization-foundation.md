@@ -109,6 +109,13 @@ Existing functional modules should be preserved and moved into a clearer informa
 - Coupon listing, eligibility lookup, and save operations use admin-only SECURITY DEFINER RPCs; coupon fields and plan eligibility are written atomically.
 - Regression tests cover RPC-only browser access and server-side validation. No checkout, coupon redemption, payment capture, refund, or subscription activation flow is enabled.
 
+## Manual entitlement operations increment (2026-10-26)
+
+- Added `admin-entitlements.html` to create, edit and revoke user-specific test/folder overrides with validity dates and a required reason.
+- Added admin-only RPCs and an audit table/trigger recording before/after state, actor and timestamp. Revocation sets an end time rather than deleting the record.
+- The UI explicitly limits this first version to test/folder overrides; disabled tests and disabled parent folders remain blocked by the access resolver.
+- Automated regression checks cover the RPC boundary and audit hooks; database behavior still requires staging integration tests.
+
 ## Decisions intentionally left open
 
 - Payment gateway/provider and supported currencies.
