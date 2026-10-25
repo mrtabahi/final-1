@@ -1014,6 +1014,9 @@ BEGIN
   END IF;
   SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Order not found' USING ERRCODE = 'P0002'; END IF;
+  IF p_amount_minor <> v_order.total_minor OR p_currency <> v_order.currency THEN
+    RAISE EXCEPTION 'Verified payment amount or currency does not match order' USING ERRCODE = '22023';
+  END IF;
   IF v_order.status = 'paid' THEN
     SELECT id INTO v_transaction_id FROM public.payment_transactions
     WHERE order_id = v_order.id AND provider = p_provider AND provider_transaction_id = p_provider_transaction_id;
@@ -1023,9 +1026,6 @@ BEGIN
   IF v_order.status <> 'pending' THEN RAISE EXCEPTION 'Order is not awaiting payment' USING ERRCODE = '22023'; END IF;
   IF v_order.expires_at IS NOT NULL AND v_order.expires_at <= now() THEN
     RAISE EXCEPTION 'Checkout order expired; verified payment must be refunded' USING ERRCODE = '22023';
-  END IF;
-  IF p_amount_minor <> v_order.total_minor OR p_currency <> v_order.currency THEN
-    RAISE EXCEPTION 'Verified payment amount or currency does not match order' USING ERRCODE = '22023';
   END IF;
   INSERT INTO public.payment_transactions(
     order_id, provider, provider_transaction_id, status, amount_minor, currency, verified_at, provider_payload
