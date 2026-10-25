@@ -498,7 +498,7 @@ BEGIN
   IF p_description IS NULL OR length(p_description) > 2000 THEN
     RAISE EXCEPTION 'Coupon description is too long' USING ERRCODE = '22023';
   END IF;
-  IF p_discount_type NOT IN ('percent', 'fixed') OR p_discount_value IS NULL OR p_discount_value <= 0 THEN
+  IF p_discount_type IS NULL OR p_discount_type NOT IN ('percent', 'fixed') OR p_discount_value IS NULL OR p_discount_value <= 0 THEN
     RAISE EXCEPTION 'Invalid coupon discount' USING ERRCODE = '22023';
   END IF;
   IF p_discount_type = 'percent' AND p_discount_value > 100 THEN
@@ -507,7 +507,7 @@ BEGIN
   IF p_currency IS NULL OR p_currency !~ '^[A-Z][A-Z][A-Z]' OR length(p_currency) <> 3 THEN
     RAISE EXCEPTION 'Currency must be a three-letter uppercase code' USING ERRCODE = '22023';
   END IF;
-  IF p_applies_to NOT IN ('selected_plans', 'all_plans') THEN
+  IF p_applies_to IS NULL OR p_applies_to NOT IN ('selected_plans', 'all_plans') THEN
     RAISE EXCEPTION 'Invalid coupon plan scope' USING ERRCODE = '22023';
   END IF;
   IF p_starts_at IS NOT NULL AND p_ends_at IS NOT NULL AND p_ends_at <= p_starts_at THEN
