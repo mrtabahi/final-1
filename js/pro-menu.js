@@ -36,7 +36,7 @@
         const link = document.createElement('a');
         link.href = 'candidate-workspace.html';
         link.className = 'pro-nav-link';
-        link.innerHTML = '<span aria-hidden="true">✦</span><span>Pro</span>';
+        link.innerHTML = '<span aria-hidden="true"><img src="/logo.png" alt="" width="18" height="18"></span><span>Pro</span>';
         link.setAttribute('aria-label', 'Pro workspace — your assigned permissions');
         item.appendChild(link);
         const account = links.querySelector('.account-nav-item');
