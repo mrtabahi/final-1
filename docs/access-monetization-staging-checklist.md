@@ -86,6 +86,15 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Direct browser SELECT/INSERT/UPDATE/DELETE against billing tables remains denied; the admin page only calls the approved RPCs.
 - The plan page clearly indicates checkout is not connected; no active plan is purchasable until server-side payment verification is implemented.
 
+## 6. Subscription operations scenarios
+
+- Admin can list subscription records and grant an active plan only to a candidate profile through the approved RPC.
+- Manual grants require an explicit reason, enforce plan duration/default end time, and require a confirmation in the UI.
+- Cancelling an active/pending subscription immediately blocks access because the resolver accepts only active subscriptions.
+- Every grant/cancel/update writes before/after state and actor to the server-managed subscription audit table.
+- Non-admin callers cannot list, grant or cancel subscriptions; direct browser writes to `user_subscriptions` remain denied.
+- Manual subscription grants are an administrative exception path, not evidence of payment. Do not treat them as checkout completion.
+
 ## 6. Coupon catalog RPC scenarios
 
 - Admin can list coupons, read selected-plan eligibility, and save coupon configuration through the approved RPCs.
@@ -103,7 +112,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - The function does not return passage content in its start response.
 - Run the repository Node regression suite with `node --test tests/*.test.cjs`.
 
-## 8. Release gate
+## 9. Release gate
 
 Do not merge/deploy or enable Paid policies until:
 - all scenarios above pass in staging;
