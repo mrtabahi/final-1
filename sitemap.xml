@@ -30,4 +30,9 @@
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
+  <url><loc>https://decoding-hcm.vercel.app/terms-and-conditions.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://decoding-hcm.vercel.app/privacy-policy.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://decoding-hcm.vercel.app/shipping-policy.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://decoding-hcm.vercel.app/cancellation-and-refunds.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://decoding-hcm.vercel.app/contact-us.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
 </urlset>
