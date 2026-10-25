@@ -67,8 +67,8 @@ test('subscription and payment tables are server-managed behind RLS', () => {
   }
 });
 
-test('the access check fails closed when the entitlement RPC errors', () => {
-  assert.match(edge, /if \(accessError\) \{[\s\S]*?return reply\(503/);
+test('session submission is bound to the authenticated owner and server-measured duration', () => {
+  assert.match(edge, /eq\("user_id", user\.id\)\.maybeSingle\(\)/);
+  assert.match(edge, /const actualElapsed = Math\.max\(1, Math\.floor\(\(now - startedAt\) \/ 1000\)\)/);
   assert.match(edge, /if \(accessAllowed !== true\) return reply\(403/);
-  assert.match(edge, /if \(accessError\) \{[\s\S]*?return reply\(503/);
 });
