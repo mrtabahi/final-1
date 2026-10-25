@@ -126,3 +126,38 @@
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
+/* Mark admin-locked OFF controls with a red, diagonally slashed icon. */
+(() => {
+  const controlIds = ['btn-sound','btn-highlight','btn-backspace','btn-hide-passage','btn-hide-input','btn-auto-scroll','btn-mode-switch','self-highlight','self-hide','self-hide-input'];
+  const install = () => {
+    if (document.getElementById('admin-feature-state-style')) return;
+    const style=document.createElement('style');
+    style.id='admin-feature-state-style';
+    style.textContent=`
+      .compact-tip-control.admin-feature-forced-off{color:#c62828!important;border-color:#ef9a9a!important;position:relative}
+      .compact-tip-control.admin-feature-forced-off::before{color:#c62828!important;filter:none!important}
+      .compact-tip-control.admin-feature-forced-off::after{content:'';position:absolute;left:50%;top:50%;width:1.45em;height:2px;background:#c62828;transform:translate(-50%,-50%) rotate(-45deg);border-radius:2px;pointer-events:none;box-shadow:0 0 0 1px #fff8}
+      .compact-tip-control.admin-feature-forced-off:disabled{opacity:1!important;cursor:not-allowed}
+    `;
+    document.head.append(style);
+    const update=()=>{
+      for(const id of controlIds){
+        const el=document.getElementById(id);if(!el)continue;
+        const forcedOff=el.disabled && (id==='btn-highlight'||id==='btn-backspace'||id==='btn-hide-passage'||id==='self-highlight'||id==='self-hide');
+        el.classList.toggle('admin-feature-forced-off',forcedOff);
+        if(forcedOff){
+          const prior=el.getAttribute('data-admin-forced-off-label');
+          if(!prior)el.setAttribute('data-admin-forced-off-label',el.getAttribute('aria-label')||el.title||el.textContent.trim());
+          el.title=(el.getAttribute('data-tooltip')||el.getAttribute('data-admin-forced-off-label'))+' — Off by admin';
+          el.setAttribute('aria-description','This feature is turned off or locked by the administrator.');
+        }else{
+          const prior=el.getAttribute('data-admin-forced-off-label');
+          if(prior){el.title=el.getAttribute('data-tooltip')||prior;el.removeAttribute('aria-description');}
+        }
+      }
+    };
+    update();
+    new MutationObserver(update).observe(document.body,{subtree:true,attributes:true,attributeFilter:['disabled','hidden','aria-pressed','data-tooltip'],childList:true});
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+})();
