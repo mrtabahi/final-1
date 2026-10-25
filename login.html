@@ -1,7 +1,28 @@
 <!DOCTYPE html><html lang="en"><head>
 <link rel="icon" type="image/png" href="/logo.png?v=20261026-branding2">
-<link rel="apple-touch-icon" href="/logo.png?v=20261026-branding2"><meta name="google-adsense-account" content="ca-pub-2757719583090087"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Account | Decoding HCM</title><link rel="stylesheet" href="css/main.css?v=20261023-motion1"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><nav class="navbar"><a href="login.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="SRB"/></div><div class="brand-title">DECODING HCM</div></a></nav><div class="container" style="max-width:560px;margin-top:2rem"><div class="card"><h2 class="card-title">Candidate Account</h2><div style="display:flex;gap:.5rem;margin-bottom:1rem"><button id="tab-login" class="btn btn-primary" type="button">Sign In</button><button id="tab-signup" class="btn btn-secondary" type="button">Create Account</button></div><div id="login-box"><form id="login-form"><div class="form-group"><label class="form-label">Email or Mobile Number</label><input id="login-id" class="form-control" required placeholder="name@gmail.com or +91XXXXXXXXXX"></div><div class="form-group"><label class="form-label">Password</label><input id="login-password" type="password" class="form-control" required></div><button class="btn btn-primary btn-block">Sign In</button></form><p style="text-align:center;margin-top:1rem"><a href="forgot.html">Forgot Password?</a></p></div><div id="signup-box" style="display:none"><p class="form-help">Only four details are required: name, email, mobile number and password. Your email and mobile must be verified before you can take a test.</p><form id="signup-form"><div class="form-group"><label class="form-label">Full Name</label><input id="signup-name" class="form-control" maxlength="100" required></div><div class="form-group"><label class="form-label">Gmail / Email</label><input id="signup-email" type="email" class="form-control" required placeholder="name@gmail.com"></div><div class="form-group"><label class="form-label">Mobile Number</label><input id="signup-phone" type="tel" class="form-control" required placeholder="+91XXXXXXXXXX"></div><div class="form-group"><label class="form-label">Password</label><input id="signup-password" type="password" minlength="8" class="form-control" required></div><div class="form-group"><label class="form-label">Confirm Password</label><input id="signup-confirm" type="password" minlength="8" class="form-control" required></div><button class="btn btn-primary btn-block">Create Account</button></form></div><p id="auth-message" class="form-help" style="margin-top:1rem"></p></div></div><script src="js/config.js"></script><script src="js/auth.js"></script><script>
-const $=id=>document.getElementById(id); $('tab-login').onclick=()=>{ $('login-box').style.display='block';$('signup-box').style.display='none';$('tab-login').className='btn btn-primary';$('tab-signup').className='btn btn-secondary';}; $('tab-signup').onclick=()=>{ $('login-box').style.display='none';$('signup-box').style.display='block';$('tab-login').className='btn btn-secondary';$('tab-signup').className='btn btn-primary';};
+<link rel="apple-touch-icon" href="/logo.png?v=20261026-branding2"><meta name="google-adsense-account" content="ca-pub-2757719583090087"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Account | Decoding HCM</title><link rel="stylesheet" href="css/main.css?v=20261023-motion1"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><nav class="navbar"><a href="login.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="SRB"/></div><div class="brand-title">DECODING HCM</div></a></nav><div class="container" style="max-width:560px;margin-top:2rem"><div class="card"><h2 class="card-title">Candidate Account</h2><div style="display:flex;gap:.5rem;margin-bottom:1rem"><button id="tab-login" class="btn btn-primary" type="button">Sign In</button><button id="tab-signup" class="btn btn-secondary" type="button">Create Account</button></div><div id="login-box"><form id="login-form"><div class="form-group"><label class="form-label">Email or Mobile Number</label><input id="login-id" class="form-control" required placeholder="name@gmail.com or +91XXXXXXXXXX"></div><div class="form-group"><label class="form-label">Password</label><input id="login-password" type="password" class="form-control" required></div><button class="btn btn-primary btn-block">Sign In</button></form><p style="text-align:center;margin-top:1rem"><a href="forgot.html">Forgot Password?</a></p><div style="display:grid;gap:.5rem;margin-top:1rem"><button class="btn btn-secondary btn-block" type="button" id="magic-link-button">Email me a secure sign-in link</button><button class="btn btn-secondary btn-block" type="button" id="resend-confirmation-button">Resend confirmation email</button></div></div><div id="signup-box" style="display:none"><p class="form-help">Only four details are required: name, email, mobile number and password. Your email and mobile must be verified before you can take a test.</p><form id="signup-form"><div class="form-group"><label class="form-label">Full Name</label><input id="signup-name" class="form-control" maxlength="100" required></div><div class="form-group"><label class="form-label">Gmail / Email</label><input id="signup-email" type="email" class="form-control" required placeholder="name@gmail.com"></div><div class="form-group"><label class="form-label">Mobile Number</label><input id="signup-phone" type="tel" class="form-control" required placeholder="+91XXXXXXXXXX"></div><div class="form-group"><label class="form-label">Password</label><input id="signup-password" type="password" minlength="8" class="form-control" required></div><div class="form-group"><label class="form-label">Confirm Password</label><input id="signup-confirm" type="password" minlength="8" class="form-control" required></div><button class="btn btn-primary btn-block">Create Account</button></form></div><p id="auth-message" class="form-help" style="margin-top:1rem"></p></div></div><script src="js/config.js"></script><script src="js/auth.js"></script><script>
+const $=id=>document.getElementById(id);
+window.registrationAllowed = true;
+window.registrationPauseMessage = 'New account creation is temporarily paused. Please try again later.';
+async function refreshRegistrationSetting() {
+  try {
+    const setting = await AuthManager.getAccessSettings();
+    window.registrationAllowed = setting.registration_enabled !== false;
+    window.registrationPauseMessage = setting.registration_paused_message || window.registrationPauseMessage;
+    $('tab-signup').disabled = !window.registrationAllowed;
+    $('tab-signup').title = window.registrationAllowed ? '' : window.registrationPauseMessage;
+    if (!window.registrationAllowed) $('tab-signup').className = 'btn btn-secondary';
+  } catch (e) { console.warn('Could not load account creation setting:', e); }
+}
+async function showCandidateWelcome(profile) {
+  if (!profile || profile.role !== 'candidate') return;
+  try {
+    const { data } = await supabaseClient.from('candidate_login_messages')
+      .select('message,enabled').eq('user_id', profile.id).maybeSingle();
+    if (data?.enabled && data.message) alert(data.message);
+  } catch (e) { console.debug('No custom login greeting:', e?.message || e); }
+}
+ $('tab-login').onclick=()=>{ $('login-box').style.display='block';$('signup-box').style.display='none';$('tab-login').className='btn btn-primary';$('tab-signup').className='btn btn-secondary';}; $('tab-signup').onclick=()=>{ if (window.registrationAllowed === false) { alert(window.registrationPauseMessage || 'New account creation is temporarily paused. Please try again later.'); return; } $('login-box').style.display='none';$('signup-box').style.display='block';$('tab-login').className='btn btn-secondary';$('tab-signup').className='btn btn-primary';};
 // $('login-form').onsubmit=async e=>{e.preventDefault();try{await AuthManager.login($('login-id').value,$('login-password').value);location.href='index.html';}catch(err){$('auth-message').textContent=err.message;}};
 $('login-form').onsubmit = async e => {
     e.preventDefault();
@@ -41,5 +62,36 @@ $('login-form').onsubmit = async e => {
             err.message || 'Unable to sign in. Please try again.';
     }
 };
-  $('signup-form').onsubmit=async e=>{e.preventDefault();$('auth-message').textContent='';if($('signup-password').value!==$('signup-confirm').value){$('auth-message').textContent='Passwords do not match.';return;}try{const d=await AuthManager.register({email:$('signup-email').value,phone:$('signup-phone').value,password:$('signup-password').value,fullName:$('signup-name').value});if(d.session){location.href='verify.html';}else{$('auth-message').textContent='Account created. Check your email, confirm it, then sign in to complete mobile verification.';$('tab-login').click();}}catch(err){$('auth-message').textContent=err.message;}};
+  $('signup-form').onsubmit=async e=>{e.preventDefault();$('auth-message').textContent='';if (window.registrationAllowed === false) { alert(window.registrationPauseMessage); $('auth-message').textContent=window.registrationPauseMessage; return; } if($('signup-password').value!==$('signup-confirm').value){$('auth-message').textContent='Passwords do not match.';return;}try{const d=await AuthManager.register({email:$('signup-email').value,phone:$('signup-phone').value,password:$('signup-password').value,fullName:$('signup-name').value});if(d.session){location.href='verify.html';}else{$('auth-message').textContent='Account created. Check your email, confirm it, then sign in to complete mobile verification.';$('tab-login').click();}}catch(err){$('auth-message').textContent=err.message;}};
+
+$('magic-link-button')?.addEventListener('click', async () => {
+  const email = $('login-id').value.trim();
+  $('auth-message').textContent = '';
+  try {
+    await AuthManager.sendMagicLink(email);
+    $('auth-message').textContent = 'If this email belongs to an existing account, a secure sign-in link has been requested. Check Inbox and Spam.';
+  } catch (err) { $('auth-message').textContent = err.message || 'Could not request a sign-in link.'; }
+});
+$('resend-confirmation-button')?.addEventListener('click', async () => {
+  const email = ($('login-id').value || $('signup-email').value).trim();
+  $('auth-message').textContent = '';
+  try {
+    await AuthManager.resendConfirmation(email);
+    $('auth-message').textContent = 'If this account needs confirmation, a new confirmation email has been requested. Check Inbox and Spam.';
+  } catch (err) { $('auth-message').textContent = err.message || 'Could not resend confirmation email.'; }
+});
+refreshRegistrationSetting();
+(async () => {
+  const params = new URLSearchParams(location.search);
+  if (params.get('magic') !== '1') return;
+  const { data } = await supabaseClient.auth.getSession();
+  if (!data?.session?.user) return;
+  try {
+    const profile = await AuthManager.getProfile(data.session.user.id);
+    if (profile?.role === 'candidate') {
+      await showCandidateWelcome(profile);
+      location.replace('index.html');
+    } else if (profile?.role === 'admin') location.replace('admin.html');
+  } catch (e) { console.warn('Magic-link session could not be routed:', e); }
+})();
 </script></body></html>
