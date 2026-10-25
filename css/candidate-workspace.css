@@ -16,3 +16,7 @@
 .cw-bulk-draft{margin:12px 0;padding:14px;background:#fff;border:1px solid #dbe5f0;border-radius:11px}
 #cw-bulk-status{font-size:12px;color:#46627e}
 @media(max-width:760px){.cw-hero{padding:22px}.cw-hero-icon{display:none}.cw-panel{padding:16px}.cw-grid{grid-template-columns:1fr}}
+
+/* Professional attribution for the Pro workspace */
+.cw-credit{margin-top:12px;padding-top:11px;border-top:1px solid #ffffff2e;color:#dce9f8;font-size:12px;letter-spacing:.01em}
+.cw-credit strong{color:#fff;font-weight:750}
