@@ -77,6 +77,15 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Direct browser SELECT/INSERT/UPDATE/DELETE against billing tables remains denied; the admin page only calls the approved RPCs.
 - The plan page clearly indicates checkout is not connected; no active plan is purchasable until server-side payment verification is implemented.
 
+## 6. Coupon catalog RPC scenarios
+
+- Admin can list coupons, read selected-plan eligibility, and save coupon configuration through the approved RPCs.
+- Non-admin callers cannot invoke coupon management RPCs successfully.
+- Invalid codes, discounts above 100 percent, invalid date ranges, zero/negative redemption limits, and missing selected-plan eligibility are rejected.
+- Saving coupon fields and selected-plan eligibility is atomic; force an invalid plan ID and verify the previous coupon and eligibility list remain unchanged.
+- Coupon settings alone never create orders, redeem a code, mark a payment successful, or activate a subscription.
+- Verify coupon currency matches the selected plan during checkout integration; checkout must calculate discounts server-side and enforce total/per-user limits transactionally.
+
 ## 6. Edge Function scenarios
 
 - `start` rejects missing/invalid auth, unknown/inactive tests, unauthorized Paid tests, and inactive parent folders.
@@ -85,7 +94,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - The function does not return passage content in its start response.
 - Run the repository Node regression suite with `node --test tests/*.test.cjs`.
 
-## 7. Release gate
+## 8. Release gate
 
 Do not merge/deploy or enable Paid policies until:
 - all scenarios above pass in staging;
