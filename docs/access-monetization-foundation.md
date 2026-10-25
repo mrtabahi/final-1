@@ -1,13 +1,14 @@
 # Access & Monetization Foundation
 
-Status: design baseline only. This document does not change the live database or deployment.
+Status: implementation in draft PR #44. The migration and Edge Function changes are committed on the feature branch only; neither has been applied/deployed to production.
 
 ## Current verified baseline
 
 - The admin navigation already has Overview, Folders & Tests, Results & Attempts, Candidates, PDF & Study Materials, Website Content, Workspace Banner Text, Analytics & Reports, Security & Audit, Website Settings, plus planned Plans & Subscriptions, Payments & Coupons, and Roles & Permissions.
 - Supabase currently has `public.folders` and `public.tests`, both with RLS enabled. The folders table has no access/price field. The tests table has no access/price field. No subscription, plan, coupon, order, or entitlement tables were found in the current public schema inventory.
 - Existing candidate SELECT policies allow active folders/tests to be read by authenticated users. Because test passages are stored in `public.tests`, simply hiding a paid test in the UI would not protect its content.
-- Therefore, do not ship UI-only Free/Paid toggles. Access must be enforced in database/API paths before paid content is released.
+- Therefore, do not ship UI-only Free/Paid toggles. Access is being enforced in the proposed RLS policy and typing-result Edge Function; staging validation is still required before paid content is released.
+- The migration adds a server-managed audit trail for folder/test access-mode changes and prevents authenticated callers from probing entitlement results for arbitrary user IDs.
 - Current production Vercel deployment is connected to `mrtabahi/final-1`; work is isolated on branch `feature/access-monetization-foundation`. No production deployment or Supabase schema was changed.
 
 ## Admin navigation proposal
@@ -68,13 +69,13 @@ Existing functional modules should be preserved and moved into a clearer informa
 
 1. **Schema and policy review**: map current RLS and all readers of folders/tests; agree on migration and rollback.
 2. **Central access model**: add normalized policy/plan/entitlement primitives with RLS, indexes, audit events, and server-side resolution.
-3. **Safe content delivery**: change candidate read paths so paid passage data is only returned after an entitlement check; test direct Data API and Edge Function access.
+3. **Safe content delivery**: change candidate read paths so paid passage data is only returned after an entitlement check; test direct Data API and Edge Function access. The current branch adds an entitlement-aware `tests` SELECT policy and start/submit checks.
 4. **Folders & Tests UI**: add an Access & Pricing panel with Free/Paid/Inherit, default Paid, clear inherited-state labels, bulk edits, and an impact preview.
 5. **Plan builder and entitlements**: configure duration, price/currency, included folders/tests, activation/expiry, renewal/extension, and upgrade/downgrade rules.
 6. **Coupons and checkout**: support one plan, selected plans, or universal eligibility; percentage/fixed discounts; validity and usage limits; zero-total checkout without opening a payment gateway.
 7. **Payment gateway integration**: select a provider first; verify payment server-side using signed callbacks/webhooks before activating paid entitlements.
 8. **User subscription page and operations**: show active plan, start/end date, remaining validity, purchase history, renew/extend, and admin-granted access.
-9. **QA and rollout**: test expired, revoked, zero-price, refunded, overlapping-plan, and parent/child override cases; use staging and a reversible rollout.
+9. **QA and rollout**: run the Node regression suite, apply the migration to a staging project, test expired, revoked, zero-price, refunded, overlapping-plan, and parent/child override cases, and use a reversible rollout. GitHub Actions regression workflow is now configured; successful CI has not yet been confirmed.
 
 ## Non-negotiable security checks
 
