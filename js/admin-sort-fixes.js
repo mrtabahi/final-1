@@ -124,7 +124,7 @@
   }
   document.addEventListener('change',event=>{if(event.target.id==='library-test-sort'){sortMode=event.target.value||'manual';applyTestSort();}});
   const box=testBox();
-  if(box&&typeof MutationObserver!=='undefined')new MutationObserver(()=>{if(sortMode!=='manual')applyTestSort();}).observe(box,{childList:true,subtree:true});
+  if(typeof MutationObserver!=='undefined') { const observer=new MutationObserver(()=>{ document.querySelectorAll('#manage-folders-list .admin-list-row,#manage-folders-list .folder-test-drawer-row,#manage-tests-list tbody tr').forEach(row=>{row.draggable=true;}); if(sortMode!=='manual')applyTestSort(); }); observer.observe(document.body,{childList:true,subtree:true}); }
   document.addEventListener('DOMContentLoaded',()=>{
     document.querySelectorAll('#manage-folders-list .admin-list-row,#manage-folders-list .folder-test-drawer-row,#manage-tests-list tbody tr').forEach(row=>row.draggable=true);
   });
