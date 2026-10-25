@@ -664,7 +664,7 @@ BEGIN
   IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
     RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
   END IF;
-  IF p_user_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id) THEN
+  IF p_user_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id AND role = 'candidate') THEN
     RAISE EXCEPTION 'Candidate profile not found' USING ERRCODE = 'P0002';
   END IF;
   IF p_resource_type IS NULL OR p_resource_type NOT IN ('test', 'folder') THEN
