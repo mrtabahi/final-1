@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   coupon_id uuid REFERENCES public.coupons(id) ON DELETE SET NULL,
   provider text CHECK (provider IS NULL OR provider IN ('razorpay')),
   provider_order_id text,
-  currency text NOT NULL DEFAULT 'INR' CHECK (currency ~ '^[A-Z]{3}
+  currency text NOT NULL DEFAULT 'INR' CHECK (length(currency) = 3 AND currency !~ '[^A-Z]'),
   subtotal_minor bigint NOT NULL CHECK (subtotal_minor >= 0),
   discount_minor bigint NOT NULL DEFAULT 0 CHECK (discount_minor >= 0),
   total_minor bigint NOT NULL CHECK (total_minor >= 0),
@@ -136,7 +136,15 @@ CREATE TABLE IF NOT EXISTS public.provider_webhook_events (
   provider text NOT NULL CHECK (provider IN ('razorpay')),
   provider_event_id text,
   event_type text NOT NULL,
-  payload_sha256 text NOT NULL CHECK (payload_sha256 ~ '^[a-f0-9]{64}
+  payload_sha256 text NOT NULL CHECK (length(payload_sha256) = 64 AND payload_sha256 !~ '[^a-f0-9]'),
+  outcome text NOT NULL CHECK (outcome IN ('processed', 'ignored', 'duplicate')),
+  processed_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(provider, provider_event_id)
+);
+CREATE INDEX IF NOT EXISTS provider_webhook_events_processed_lookup
+  ON public.provider_webhook_events(processed_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.payment_transactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id uuid NOT NULL REFERENCES public.orders(id) ON DELETE RESTRICT,
   provider text NOT NULL,
@@ -144,7 +152,16 @@ CREATE TABLE IF NOT EXISTS public.provider_webhook_events (
   provider_refund_id text,
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'succeeded', 'failed', 'refunded')),
   amount_minor bigint NOT NULL CHECK (amount_minor >= 0),
-  currency text NOT NULL DEFAULT 'INR' CHECK (currency ~ '^[A-Z]{3}
+  currency text NOT NULL DEFAULT 'INR' CHECK (length(currency) = 3 AND currency !~ '[^A-Z]'),
+  verified_at timestamptz,
+  refunded_at timestamptz,
+  refund_requested_at timestamptz,
+  provider_payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+  refund_payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(provider, provider_transaction_id),
+  UNIQUE(provider, provider_refund_id)
+);
 
 CREATE TABLE IF NOT EXISTS public.coupon_redemptions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1058,6 +1075,86 @@ BEGIN
   );
 END;
 $function$;
+
+CREATE OR REPLACE FUNCTION public.service_record_late_payment_for_refund(
+  p_order_id uuid,
+  p_provider text,
+  p_provider_transaction_id text,
+  p_amount_minor bigint,
+  p_currency text,
+  p_provider_created_at timestamptz,
+  p_verified_payload jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_order public.orders%ROWTYPE;
+  v_transaction_id uuid;
+BEGIN
+  IF COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+    RAISE EXCEPTION 'Trusted payment verifier required' USING ERRCODE = '42501';
+  END IF;
+  IF p_provider IS NULL OR length(btrim(p_provider)) = 0 OR p_provider_transaction_id IS NULL
+     OR length(btrim(p_provider_transaction_id)) = 0 OR p_amount_minor IS NULL OR p_amount_minor < 0
+     OR p_currency IS NULL OR p_provider_created_at IS NULL OR p_verified_payload IS NULL THEN
+    RAISE EXCEPTION 'Invalid late payment payload' USING ERRCODE = '22023';
+  END IF;
+  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Order not found' USING ERRCODE = 'P0002'; END IF;
+  IF v_order.status = 'paid' THEN
+    SELECT id INTO v_transaction_id FROM public.payment_transactions
+    WHERE order_id = v_order.id AND provider = p_provider AND provider_transaction_id = p_provider_transaction_id
+      AND status = 'succeeded';
+    IF FOUND THEN RETURN jsonb_build_object('order_id', v_order.id, 'status', 'paid', 'needs_refund', true, 'idempotent', true); END IF;
+    RAISE EXCEPTION 'Order is already paid by another transaction' USING ERRCODE = '23505';
+  END IF;
+  IF v_order.status <> 'pending' OR v_order.expires_at IS NULL OR p_provider_created_at <= v_order.expires_at THEN
+    RAISE EXCEPTION 'Order is not an expired late-payment refund candidate' USING ERRCODE = '22023';
+  END IF;
+  IF p_amount_minor <> v_order.total_minor OR p_currency <> v_order.currency THEN
+    RAISE EXCEPTION 'Verified payment amount or currency does not match order' USING ERRCODE = '22023';
+  END IF;
+  INSERT INTO public.payment_transactions(
+    order_id, provider, provider_transaction_id, status, amount_minor, currency, verified_at, provider_payload
+  ) VALUES (
+    v_order.id, p_provider, btrim(p_provider_transaction_id), 'succeeded', p_amount_minor, p_currency, now(), p_verified_payload
+  ) RETURNING id INTO v_transaction_id;
+  UPDATE public.orders SET status = 'paid', updated_at = now() WHERE id = v_order.id;
+  RETURN jsonb_build_object('order_id', v_order.id, 'status', 'paid', 'needs_refund', true, 'payment_transaction_id', v_transaction_id, 'idempotent', false);
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.service_claim_late_refund(
+  p_order_id uuid,
+  p_provider text,
+  p_provider_transaction_id text
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+    RAISE EXCEPTION 'Trusted payment verifier required' USING ERRCODE = '42501';
+  END IF;
+  UPDATE public.payment_transactions
+  SET refund_requested_at = now()
+  WHERE order_id = p_order_id AND provider = p_provider
+    AND provider_transaction_id = p_provider_transaction_id AND status = 'succeeded'
+    AND provider_refund_id IS NULL
+    AND (refund_requested_at IS NULL OR refund_requested_at < now() - interval '2 minutes');
+  RETURN FOUND;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.service_record_late_payment_for_refund(uuid, text, text, bigint, text, timestamptz, jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.service_record_late_payment_for_refund(uuid, text, text, bigint, text, timestamptz, jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.service_claim_late_refund(uuid, text, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.service_claim_late_refund(uuid, text, text) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.service_mark_order_paid(
   p_order_id uuid,
