@@ -68,6 +68,46 @@ const AuthManager = {
     return { ok: true, user, profile };
   },
 
+  async getAccessSettings() {
+    const { data, error } = await supabaseClient
+      .from('site_access_settings')
+      .select('registration_enabled, registration_paused_message')
+      .eq('id', 1)
+      .maybeSingle();
+    if (error) throw error;
+    return data || { registration_enabled: true, registration_paused_message: 'New account creation is temporarily paused. Please try again later.' };
+  },
+
+  async sendMagicLink(email) {
+    const value = String(email || '').trim().toLowerCase();
+    if (!value || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value)) {
+      throw new Error('Enter the email address linked to your existing account.');
+    }
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      email: value,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: window.location.origin + '/login.html?magic=1'
+      }
+    });
+    if (error) throw error;
+    return true;
+  },
+
+  async resendConfirmation(email) {
+    const value = String(email || '').trim().toLowerCase();
+    if (!value || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value)) {
+      throw new Error('Enter a valid email address first.');
+    }
+    const { error } = await supabaseClient.auth.resend({
+      type: 'signup',
+      email: value,
+      options: { emailRedirectTo: window.location.origin + '/login.html' }
+    });
+    if (error) throw error;
+    return true;
+  },
+
   async login(identifier, password) {
     const value = String(identifier || '').trim();
 
@@ -347,3 +387,63 @@ const AuthManager = {
     return { user, profile };
   }
 };
+
+
+// Candidate presence tracking: one activity session is shared across page
+// navigations; last_seen_at determines whether the account is currently online.
+(function initCandidateActivityTracking() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  let busy = false;
+  async function heartbeat() {
+    if (busy || !supabaseClient) return;
+    busy = true;
+    try {
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user || !user.email_confirmed_at) return;
+      const profile = await AuthManager.getProfile(user.id);
+      if (!profile || profile.role !== 'candidate') return;
+      const now = new Date();
+      let sessionId = null;
+      try { sessionId = localStorage.getItem('decoding_hcm_activity_session_id'); } catch {}
+      let row = null;
+      if (sessionId) {
+        const { data } = await supabaseClient.from('candidate_activity_sessions')
+          .select('id,started_at,ended_at')
+          .eq('id', sessionId).eq('user_id', user.id).maybeSingle();
+        if (data && !data.ended_at) row = data;
+      }
+      if (!row) {
+        const { data, error } = await supabaseClient.from('candidate_activity_sessions')
+          .insert({
+            user_id: user.id,
+            started_at: now.toISOString(),
+            last_seen_at: now.toISOString(),
+            user_agent: String(navigator.userAgent || '').slice(0, 500),
+            last_page_path: String(location.pathname || '').slice(0, 300)
+          }).select('id,started_at').single();
+        if (error) throw error;
+        row = data;
+        try { localStorage.setItem('decoding_hcm_activity_session_id', row.id); } catch {}
+      } else {
+        const duration = Math.max(0, Math.floor((now.getTime() - new Date(row.started_at).getTime()) / 1000));
+        const { error } = await supabaseClient.from('candidate_activity_sessions').update({
+          last_seen_at: now.toISOString(),
+          duration_seconds: duration,
+          last_page_path: String(location.pathname || '').slice(0, 300)
+        }).eq('id', row.id).eq('user_id', user.id);
+        if (error) throw error;
+      }
+    } catch (e) {
+      console.debug('Candidate activity heartbeat skipped:', e?.message || e);
+    } finally {
+      busy = false;
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', heartbeat, { once: true });
+  else heartbeat();
+  window.addEventListener('pageshow', heartbeat);
+  window.addEventListener('focus', heartbeat);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) heartbeat(); });
+  window.setInterval(() => { if (!document.hidden) heartbeat(); }, 60000);
+})();
