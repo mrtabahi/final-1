@@ -20,3 +20,6 @@
 /* Professional attribution for the Pro workspace */
 .cw-credit{margin-top:12px;padding-top:11px;border-top:1px solid #ffffff2e;color:#dce9f8;font-size:12px;letter-spacing:.01em}
 .cw-credit strong{color:#fff;font-weight:750}
+
+/* Pro feature parity: thumbnails, sorting and report filters */
+.cw-folder-cell{display:flex;align-items:center;gap:10px;min-width:180px}.cw-folder-cell>div{min-width:0}.cw-folder-thumb{width:76px;height:43px;flex:0 0 76px;object-fit:cover;border-radius:7px;border:1px solid #dce5ef}.cw-folder-thumb-empty{display:grid;place-items:center;background:#f0f5fa;color:#55718e;font-size:20px}.cw-report-summary{margin:10px 0 14px;padding:10px 12px;border-radius:9px;background:#f1f6fc;color:#254a70;font-size:12px;font-weight:750}.cw-actions label{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--cw-muted)}.cw-actions input[type=date],.cw-actions select{max-width:170px;padding:9px;border:1px solid #d8e1ec;border-radius:8px;background:#fff;color:#26384b;font:inherit}.cw-row-actions button:disabled{opacity:.35;cursor:not-allowed}
