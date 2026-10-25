@@ -170,3 +170,26 @@ test('manual override RPC limits resources and modes to what can_access_test enf
   assert.match(migration, /ends_at = now\(\)/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_save_user_entitlement_override\([\s\S]*?FROM PUBLIC, anon/);
 });
+
+test('subscription operations UI uses admin RPCs and does not write subscription tables directly', () => {
+  const page = read('admin-subscriptions.html');
+  const js = read('js/admin-subscriptions.js');
+  const adminPage = read('admin.html');
+  assert.match(page, /Manual grants immediately grant paid access/i);
+  assert.match(js, /rpc\('admin_list_user_subscriptions'\)/);
+  assert.match(js, /rpc\('admin_grant_user_subscription'/);
+  assert.match(js, /rpc\('admin_cancel_user_subscription'/);
+  assert.doesNotMatch(js, /from\(['"]user_subscriptions['"]\)/);
+  assert.match(adminPage, /href="admin-subscriptions\.html"/);
+});
+
+test('manual subscriptions are admin-only, candidate-scoped and audited', () => {
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.user_subscription_audit/);
+  assert.match(migration, /CREATE TRIGGER user_subscription_audit_trigger/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_grant_user_subscription\(/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_cancel_user_subscription\(/);
+  assert.match(migration, /id = p_user_id AND role = 'candidate'/);
+  assert.match(migration, /A reason of 1-500 characters is required for manual grants/);
+  assert.match(migration, /A cancellation reason of 1-500 characters is required/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_grant_user_subscription\([\s\S]*?FROM PUBLIC, anon/);
+});
