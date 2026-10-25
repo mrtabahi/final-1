@@ -14,6 +14,8 @@ test('all SQL function bodies use valid dollar-quoted delimiters', () => {
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.can_access_test\([\s\S]*?AS \$function\$/);
   assert.match(migration, /END;\n\$function\$;\n\nREVOKE ALL ON FUNCTION public\.can_access_test/);
   assert.equal((migration.match(/\$function\$/g) || []).length % 2, 0);
+  assert.equal((migration.match(/^COMMIT;$/gm) || []).length, 1, 'migration must have exactly one transaction commit');
+  assert.equal(migration.split('CREATE OR REPLACE FUNCTION public.can_access_test').length - 1, 1, 'access resolver must be defined exactly once');
 });
 
 test('legacy content is backfilled Free while future content defaults Paid', () => {
