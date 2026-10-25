@@ -8,6 +8,7 @@ This checklist is for a **non-production Supabase project only**. Do not run the
 
 - Confirm the staging project has a recent schema/data snapshot and a rollback plan.
 - Review docs/access-monetization-rollback.md and decide whether the test target is functional rollback or security-incident rollback before applying the migration.
+- Review docs/payment-provider-integration.md; provider-specific checkout/webhook/refund tests cannot be completed until the provider is selected.
 - Compare the staging `supabase_migrations.schema_migrations` history with the repository migration files before applying anything.
 - Apply `supabase/migrations/20261026000100_access_monetization_foundation.sql` to staging.
 - Deploy the branch version of `supabase/functions/typing-result/index.ts` to staging only.
