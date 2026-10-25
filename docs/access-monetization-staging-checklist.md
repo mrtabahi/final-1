@@ -4,14 +4,14 @@ This checklist is for a **non-production Supabase project only**. Do not run the
 
 ## 1. Preflight
 
-**Current blocker:** no verified staging project/branch is available as of 2026-10-26. Do not use the production project, and do not assume the unrelated inactive Supabase project is staging. Create/identify a dedicated staging target before applying the migration or deploying the function.
+**Current status (2026-10-26):** Dedicated staging project `decoding-hcm-staging` (`lhuqykxddwdkwksdzqth`, Mumbai `ap-south-1`) is active. The base schema/RLS, application migrations, and access/monetization foundation are applied to staging only. `typing-result`, `create-checkout`, `verify-razorpay-payment`, and `razorpay-webhook` are deployed to staging. No production users, content, attempts, orders, or payment data were copied; only default settings rows were seeded. Razorpay Test Mode secrets and the staging webhook still need configuration. Production project `nuqfmjgkyfychhwzwnfl` remains untouched.
 
-- Confirm the staging project has a recent schema/data snapshot and a rollback plan.
+- Staging is schema-only; use synthetic test accounts/content and review docs/access-monetization-rollback.md before testing.
 - Review docs/access-monetization-rollback.md and decide whether the test target is functional rollback or security-incident rollback before applying the migration.
-- Review docs/payment-provider-integration.md; provider-specific checkout/webhook/refund tests cannot be completed until the provider is selected.
-- Compare the staging `supabase_migrations.schema_migrations` history with the repository migration files before applying anything.
-- Apply `supabase/migrations/20261026000100_access_monetization_foundation.sql` to staging.
-- Deploy the branch version of `supabase/functions/typing-result/index.ts` to staging only.
+- Review docs/payment-provider-integration.md; Razorpay is selected and the functions are deployed, but provider sandbox tests are blocked until Test Mode secrets and webhook are configured.
+- Staging migration history is recorded. Before recreating this environment elsewhere, reconcile the manual `schema.sql`/`rls.sql` bootstrap and staging helper migrations with the repository's migration ordering.
+- The access/monetization migration has already been applied to staging; do not reapply it manually.
+- `typing-result` and all three Razorpay functions are already deployed to staging only.
 - Keep the Paid control disabled until every check below passes.
 
 ## 2. Inspect policies
@@ -86,7 +86,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Invalid currency, negative price, out-of-range duration, oversized entitlement arrays, and unknown resource types are rejected.
 - Saving a plan and replacing its entitlements is one transaction: deliberately submit an invalid entitlement and verify neither the plan fields nor its previous entitlement list partially changes.
 - Direct browser SELECT/INSERT/UPDATE/DELETE against billing tables remains denied; the admin page only calls the approved RPCs.
-- The plan page clearly indicates checkout is not connected; no active plan is purchasable until server-side payment verification is implemented.
+- No active plan is seeded in staging. Paid checkout must remain disabled until an admin configures test plans, Razorpay Test Mode secrets/webhook are set, and end-to-end verification passes.
 
 ## 7. Subscription operations scenarios
 
@@ -111,7 +111,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Anonymous visitors can read only active plan catalog fields; they cannot read subscription/order history.
 - Authenticated users see only their own subscription/order history; test with two separate candidate accounts and verify IDs and amounts never cross.
 - Free plans activate through `create_checkout_order` and create an active subscription only when total is zero.
-- Paid plan buttons remain disabled until provider checkout and signed webhook verification are deployed.
+- Razorpay checkout/verifier/webhook functions are deployed, but paid plan buttons must remain disabled until Test Mode secrets/webhook and sandbox tests are complete.
 - No browser code directly queries `user_subscriptions`, `orders`, or `payment_transactions`.
 
 ## 10. Checkout order and payment-finalization RPC scenarios
@@ -147,5 +147,5 @@ Do not merge/deploy or enable Paid policies until:
 - all scenarios above pass in staging;
 - GitHub Actions regression tests are green;
 - migration ordering/history is reconciled;
-- the payment provider and server-side payment verification flow are decided and tested;
+- Razorpay Test Mode payment, failure, expiry, replay, and refund scenarios pass end-to-end;
 - a rollback path is documented.
