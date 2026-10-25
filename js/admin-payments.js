@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
   const loading = $('payments-loading'), app = $('payments-app'), status = $('payments-status');
   const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-  let coupons = [], plans = [], saving = false;
+  let coupons = [], plans = [], orders = [], transactions = [], saving = false;
   const setStatus = (message, kind = '') => { status.textContent = message; status.className = 'access-status' + (kind ? ' is-' + kind : ''); };
   if (typeof AuthManager === 'undefined' || !supabaseClient) { loading.innerHTML = '<strong>Admin dependencies unavailable</strong><span>Check js/config.js and js/auth.js.</span>'; return; }
   let auth;
@@ -26,17 +26,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function load() {
     if (saving) return;
-    setStatus('Loading coupon catalog…');
+    setStatus('Loading coupon and order catalog…');
     try {
-      const [couponRes, planRes] = await Promise.all([
+      const [couponRes, planRes, orderRes, transactionRes] = await Promise.all([
         supabaseClient.rpc('admin_list_coupons'),
-        supabaseClient.rpc('admin_list_subscription_plans')
+        supabaseClient.rpc('admin_list_subscription_plans'),
+        supabaseClient.rpc('admin_list_orders'),
+        supabaseClient.rpc('admin_list_payment_transactions')
       ]);
-      if (couponRes.error) throw couponRes.error;
-      if (planRes.error) throw planRes.error;
-      coupons = couponRes.data || []; plans = planRes.data || [];
-      renderCoupons();
-      setStatus('Coupon settings loaded. Checkout is not connected.', 'success');
+      for (const result of [couponRes, planRes, orderRes, transactionRes]) if (result.error) throw result.error;
+      coupons = couponRes.data || []; plans = planRes.data || []; orders = orderRes.data || []; transactions = transactionRes.data || [];
+      renderCoupons(); renderOrders(); renderTransactions();
+      setStatus('Coupon, order and transaction records loaded. Checkout is not connected.', 'success');
     } catch (error) {
       console.error('Coupon load failed', error);
       $('payments-list').innerHTML = '<div class="admin-empty">Could not load coupons. Confirm the foundation migration is applied to staging and admin RPC permissions are configured.</div>';
@@ -55,6 +56,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       return '<article class="payments-card"><div class="payments-card-head"><div><h3>' + esc(c.code) + '</h3><p>' + esc(c.description || 'No description') + '</p></div><div class="payments-actions"><span class="payments-chip ' + (c.is_active ? 'active' : '') + '">' + (c.is_active ? 'Active' : 'Inactive') + '</span><button class="admin-btn admin-btn-secondary" type="button" data-edit-coupon="' + esc(c.id) + '">Edit</button></div></div><div class="payments-meta"><strong>' + esc(discount) + ' off</strong><span>·</span><span>' + (c.applies_to === 'all_plans' ? 'All plans' : 'Selected plans') + '</span><span>·</span><span>' + esc(period) + '</span><span>·</span><span>Limit: ' + esc(c.max_redemptions ?? 'Unlimited') + ' total / ' + esc(c.max_redemptions_per_user) + ' per user</span></div></article>';
     }).join('');
     $('payments-list').querySelectorAll('[data-edit-coupon]').forEach(btn => btn.addEventListener('click', () => editCoupon(btn.dataset.editCoupon)));
+  }
+
+  function renderOrders() {
+    const list = $('payments-orders');
+    if (!orders.length) { list.innerHTML = '<div class="admin-empty">No orders yet.</div>'; return; }
+    list.innerHTML = orders.map(o => {
+      const statusLabel = o.status === 'pending' && o.expires_at && new Date(o.expires_at) <= new Date() ? 'pending · expired' : o.status;
+      const format = amount => new Intl.NumberFormat(undefined,{style:'currency',currency:o.currency}).format(Number(amount||0)/100);
+      return '<article class="payments-order-card"><div class="payments-order-head"><div><h3>' + esc(o.plan_name) + '</h3><p>' + esc(o.user_name || 'Candidate') + ' · ' + esc(o.user_email || o.user_id) + '</p></div><span class="payments-order-chip ' + esc(o.status) + '">' + esc(statusLabel) + '</span></div><div class="payments-order-meta"><span>Order ' + esc(o.id) + '</span><span>·</span><span>Subtotal ' + esc(format(o.subtotal_minor)) + '</span><span>·</span><span>Discount ' + esc(format(o.discount_minor)) + '</span><span>·</span><strong>Total ' + esc(format(o.total_minor)) + '</strong><span>·</span><span>' + esc(new Date(o.created_at).toLocaleString()) + '</span></div></article>';
+    }).join('');
+  }
+
+  function renderTransactions() {
+    const list = $('payments-transactions');
+    if (!transactions.length) { list.innerHTML = '<div class="admin-empty">No payment transactions recorded yet.</div>'; return; }
+    list.innerHTML = transactions.map(t => {
+      const amount = new Intl.NumberFormat(undefined,{style:'currency',currency:t.currency}).format(Number(t.amount_minor||0)/100);
+      return '<article class="payments-order-card"><div class="payments-order-head"><div><h3>' + esc(t.provider) + '</h3><p>Transaction ' + esc(t.provider_transaction_id || t.id) + '</p></div><span class="payments-order-chip ' + esc(t.status) + '">' + esc(t.status) + '</span></div><div class="payments-order-meta"><span>Order ' + esc(t.order_id) + '</span><span>·</span><strong>' + esc(amount) + '</strong><span>·</span><span>Verified ' + esc(t.verified_at ? new Date(t.verified_at).toLocaleString() : 'Not verified') + '</span></div></article>';
+    }).join('');
   }
 
   function renderPlans(selected = []) {
