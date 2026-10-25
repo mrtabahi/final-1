@@ -96,7 +96,7 @@ test('plan management writes go through admin-only SECURITY DEFINER RPCs', () =>
 
 test('plan management validates prices, duration, currency and entitlement payloads', () => {
   assert.match(migration, /p_price_minor < 0/);
-  assert.match(migration, /p_currency !~ '\^\[A-Z\]\{3\}\$'/);
+  assert.match(migration, /p_currency !~ '\^\[A-Z\]\[A-Z\]\[A-Z\]'/);
   assert.match(migration, /p_duration_days < 1 OR p_duration_days > 3650/);
   assert.match(migration, /jsonb_array_length\(p_entitlements\) > 500/);
   assert.match(migration, /e\.resource_type NOT IN \('site', 'menu', 'submenu', 'folder', 'test', 'materials'\)/);
