@@ -180,12 +180,12 @@ $function$;
 
 DROP TRIGGER IF EXISTS folders_access_mode_audit ON public.folders;
 CREATE TRIGGER folders_access_mode_audit
-AFTER INSERT OR UPDATE OF access_mode ON public.folders
+AFTER INSERT OR UPDATE ON public.folders
 FOR EACH ROW EXECUTE FUNCTION public.audit_access_mode_change();
 
 DROP TRIGGER IF EXISTS tests_access_mode_audit ON public.tests;
 CREATE TRIGGER tests_access_mode_audit
-AFTER INSERT OR UPDATE OF access_mode ON public.tests
+AFTER INSERT OR UPDATE ON public.tests
 FOR EACH ROW EXECUTE FUNCTION public.audit_access_mode_change();
 
 REVOKE ALL ON FUNCTION public.audit_access_mode_change() FROM PUBLIC, anon, authenticated;
