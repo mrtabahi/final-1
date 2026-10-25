@@ -112,7 +112,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - The function does not return passage content in its start response.
 - Run the repository Node regression suite with `node --test tests/*.test.cjs`.
 
-## 9. Release gate
+## 10. Release gate
 
 Do not merge/deploy or enable Paid policies until:
 - all scenarios above pass in staging;
