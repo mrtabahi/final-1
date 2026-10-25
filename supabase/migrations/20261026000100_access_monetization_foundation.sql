@@ -1221,7 +1221,7 @@ RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
-AS $
+AS $function$
 DECLARE
   v_test public.tests%ROWTYPE;
   v_folder public.folders%ROWTYPE;
@@ -1310,7 +1310,7 @@ BEGIN
       )
   );
 END;
-$;
+$function$;
 
 REVOKE ALL ON FUNCTION public.can_access_test(uuid, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.can_access_test(uuid, uuid) TO authenticated, service_role;
