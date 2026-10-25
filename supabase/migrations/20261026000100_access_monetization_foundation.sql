@@ -235,6 +235,233 @@ AS $function$
   );
 $function$;
 
+-- Narrow authenticated RPCs for admin plan management. Billing tables remain
+-- inaccessible directly from browser clients; all writes go through these
+-- role-checked SECURITY DEFINER functions.
+CREATE OR REPLACE FUNCTION public.admin_upsert_subscription_plan(
+  p_id uuid,
+  p_name text,
+  p_description text,
+  p_price_minor bigint,
+  p_currency text,
+  p_duration_days integer,
+  p_is_active boolean
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_plan public.subscription_plans%ROWTYPE;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  IF p_name IS NULL OR length(btrim(p_name)) = 0 OR length(p_name) > 120 THEN
+    RAISE EXCEPTION 'Plan name must be between 1 and 120 characters' USING ERRCODE = '22023';
+  END IF;
+  IF p_description IS NULL OR length(p_description) > 2000 THEN
+    RAISE EXCEPTION 'Plan description is too long' USING ERRCODE = '22023';
+  END IF;
+  IF p_price_minor IS NULL OR p_price_minor < 0 THEN
+    RAISE EXCEPTION 'Price must be a non-negative integer in minor currency units' USING ERRCODE = '22023';
+  END IF;
+  IF p_currency IS NULL OR p_currency !~ '^[A-Z]{3}
+-- typing-result Edge Function; callers must fail closed if it errors.
+CREATE OR REPLACE FUNCTION public.can_access_test(p_test_id uuid, p_user_id uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $
+DECLARE
+  v_test public.tests%ROWTYPE;
+  v_folder public.folders%ROWTYPE;
+  v_mode text;
+  v_override text;
+  v_plan_ids uuid[];
+  v_now timestamptz := now();
+BEGIN
+  IF p_user_id IS NULL THEN RETURN false; END IF;
+  -- Prevent authenticated callers from probing another user's entitlement state.
+  -- The trusted Edge Function uses the service_role JWT and may pass its verified user ID.
+  IF p_user_id IS DISTINCT FROM auth.uid()
+     AND COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+    RETURN false;
+  END IF;
+  SELECT * INTO v_test FROM public.tests WHERE id = p_test_id AND active = true;
+  IF NOT FOUND THEN RETURN false; END IF;
+
+  IF v_test.folder_id IS NOT NULL THEN
+    SELECT * INTO v_folder FROM public.folders WHERE id = v_test.folder_id AND active = true;
+    IF NOT FOUND THEN RETURN false; END IF;
+  END IF;
+
+  -- Even administrators cannot start or submit tests in disabled folders.
+  IF EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = p_user_id AND p.role IN ('admin', 'head_admin')) THEN
+    RETURN true;
+  END IF;
+
+  v_mode := CASE
+    WHEN v_test.access_mode <> 'inherit' THEN v_test.access_mode
+    ELSE COALESCE(v_folder.access_mode, 'inherit')
+  END;
+  IF v_mode = 'inherit' THEN
+    SELECT ap.access_mode INTO v_mode
+    FROM public.access_policies ap
+    WHERE ap.resource_type = 'site' AND ap.resource_key = 'site';
+    v_mode := COALESCE(v_mode, 'free');
+    IF v_mode = 'mixed' OR v_mode = 'inherit' THEN v_mode := 'free'; END IF;
+  END IF;
+
+  -- A test-specific override takes precedence over a folder-level override.
+  SELECT o.access_mode INTO v_override
+  FROM public.user_entitlement_overrides o
+  WHERE o.user_id = p_user_id
+    AND o.resource_type = 'test'
+    AND o.resource_key = p_test_id::text
+    AND (o.starts_at IS NULL OR o.starts_at <= v_now)
+    AND (o.ends_at IS NULL OR o.ends_at > v_now)
+  ORDER BY o.created_at DESC LIMIT 1;
+  IF FOUND THEN
+    IF v_override IN ('free', 'grant') THEN RETURN true; END IF;
+    IF v_override = 'paid' THEN v_mode := 'paid'; END IF;
+  ELSIF v_test.folder_id IS NOT NULL THEN
+    SELECT o.access_mode INTO v_override
+    FROM public.user_entitlement_overrides o
+    WHERE o.user_id = p_user_id
+      AND o.resource_type = 'folder'
+      AND o.resource_key = v_test.folder_id::text
+      AND (o.starts_at IS NULL OR o.starts_at <= v_now)
+      AND (o.ends_at IS NULL OR o.ends_at > v_now)
+    ORDER BY o.created_at DESC LIMIT 1;
+    IF FOUND THEN
+      IF v_override IN ('free', 'grant') THEN RETURN true; END IF;
+      IF v_override = 'paid' THEN v_mode := 'paid'; END IF;
+    END IF;
+  END IF;
+
+  IF v_mode = 'free' THEN RETURN true; END IF;
+  IF v_mode <> 'paid' THEN RETURN false; END IF;
+
+  SELECT array_agg(us.plan_id) INTO v_plan_ids
+  FROM public.user_subscriptions us
+  WHERE us.user_id = p_user_id
+    AND us.status = 'active'
+    AND (us.starts_at IS NULL OR us.starts_at <= v_now)
+    AND (us.ends_at IS NULL OR us.ends_at > v_now);
+
+  IF v_plan_ids IS NULL THEN RETURN false; END IF;
+  RETURN EXISTS (
+    SELECT 1 FROM public.plan_entitlements pe
+    WHERE pe.plan_id = ANY(v_plan_ids)
+      AND (
+        (pe.resource_type = 'test' AND pe.resource_key = p_test_id::text)
+        OR (v_test.folder_id IS NOT NULL AND pe.resource_type = 'folder' AND pe.resource_key = v_test.folder_id::text)
+        OR (pe.resource_type = 'site' AND pe.resource_key = 'site')
+      )
+  );
+END;
+$;
+
+REVOKE ALL ON FUNCTION public.can_access_test(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.can_access_test(uuid, uuid) TO authenticated, service_role;
+
+-- Replace the broad candidate read policy. Admin/staff policies remain in place.
+DROP POLICY IF EXISTS tests_candidate_select ON public.tests;
+CREATE POLICY tests_candidate_select ON public.tests
+  FOR SELECT TO authenticated
+  USING (active = true AND public.can_access_test(id, auth.uid()));
+
+
+COMMIT;
+ THEN
+    RAISE EXCEPTION 'Currency must be a three-letter uppercase code' USING ERRCODE = '22023';
+  END IF;
+  IF p_duration_days IS NULL OR p_duration_days < 1 OR p_duration_days > 3650 THEN
+    RAISE EXCEPTION 'Duration must be between 1 and 3650 days' USING ERRCODE = '22023';
+  END IF;
+  IF p_is_active IS NULL THEN
+    RAISE EXCEPTION 'Plan active status is required' USING ERRCODE = '22023';
+  END IF;
+
+  IF p_id IS NULL THEN
+    INSERT INTO public.subscription_plans(name, description, price_minor, currency, duration_days, is_active, created_by)
+    VALUES (btrim(p_name), p_description, p_price_minor, p_currency, p_duration_days, p_is_active, auth.uid())
+    RETURNING * INTO v_plan;
+  ELSE
+    UPDATE public.subscription_plans
+    SET name = btrim(p_name), description = p_description, price_minor = p_price_minor,
+        currency = p_currency, duration_days = p_duration_days, is_active = p_is_active,
+        updated_at = now()
+    WHERE id = p_id
+    RETURNING * INTO v_plan;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Subscription plan not found' USING ERRCODE = 'P0002';
+    END IF;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'id', v_plan.id, 'name', v_plan.name, 'description', v_plan.description,
+    'price_minor', v_plan.price_minor, 'currency', v_plan.currency,
+    'duration_days', v_plan.duration_days, 'is_active', v_plan.is_active,
+    'created_at', v_plan.created_at, 'updated_at', v_plan.updated_at
+  );
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_set_plan_entitlements(
+  p_plan_id uuid,
+  p_entitlements jsonb
+)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_count integer;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_current_user_admin() THEN
+    RAISE EXCEPTION 'Administrator access required' USING ERRCODE = '42501';
+  END IF;
+  IF p_plan_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.subscription_plans WHERE id = p_plan_id) THEN
+    RAISE EXCEPTION 'Subscription plan not found' USING ERRCODE = 'P0002';
+  END IF;
+  IF p_entitlements IS NULL OR jsonb_typeof(p_entitlements) <> 'array' THEN
+    RAISE EXCEPTION 'Entitlements must be a JSON array' USING ERRCODE = '22023';
+  END IF;
+  IF jsonb_array_length(p_entitlements) > 500 THEN
+    RAISE EXCEPTION 'A plan may contain at most 500 entitlements' USING ERRCODE = '22023';
+  END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM jsonb_to_recordset(p_entitlements) AS e(resource_type text, resource_key text)
+    WHERE e.resource_type IS NULL
+       OR e.resource_type NOT IN ('site', 'menu', 'submenu', 'folder', 'test', 'materials')
+       OR e.resource_key IS NULL
+       OR length(btrim(e.resource_key)) = 0
+       OR length(e.resource_key) > 200
+  ) THEN
+    RAISE EXCEPTION 'Each entitlement needs a valid resource_type and resource_key' USING ERRCODE = '22023';
+  END IF;
+
+  DELETE FROM public.plan_entitlements WHERE plan_id = p_plan_id;
+  INSERT INTO public.plan_entitlements(plan_id, resource_type, resource_key)
+  SELECT p_plan_id, e.resource_type, btrim(e.resource_key)
+  FROM jsonb_to_recordset(p_entitlements) AS e(resource_type text, resource_key text);
+
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN v_count;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_upsert_subscription_plan(uuid, text, text, bigint, text, integer, boolean) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_set_plan_entitlements(uuid, jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_upsert_subscription_plan(uuid, text, text, bigint, text, integer, boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_set_plan_entitlements(uuid, jsonb) TO authenticated;
+
 -- Resolve effective access on the server. This function is also used by the
 -- typing-result Edge Function; callers must fail closed if it errors.
 CREATE OR REPLACE FUNCTION public.can_access_test(p_test_id uuid, p_user_id uuid DEFAULT auth.uid())
