@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   coupon_id uuid REFERENCES public.coupons(id) ON DELETE SET NULL,
   provider text CHECK (provider IS NULL OR provider IN ('razorpay')),
   provider_order_id text,
-  currency text NOT NULL DEFAULT 'INR' CHECK (currency ~ '^[A-Z]{3}
+  currency text NOT NULL DEFAULT 'INR' CHECK (length(currency) = 3 AND currency !~ '[^A-Z]'),
   subtotal_minor bigint NOT NULL CHECK (subtotal_minor >= 0),
   discount_minor bigint NOT NULL DEFAULT 0 CHECK (discount_minor >= 0),
   total_minor bigint NOT NULL CHECK (total_minor >= 0),
