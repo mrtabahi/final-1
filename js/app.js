@@ -16,8 +16,6 @@ document.addEventListener('DOMContentLoaded', async()=>{
     document.addEventListener('keydown',e=>{
         if(!inputBoxHidden||!engine||engine.isFinished||!typing||typing.style.display==='none')return;
         if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing)return;
-        const target=e.target;
-        if(target&&target!==textarea&&target.matches&&target.matches('input,select,button,[contenteditable="true"]')&&target!==hideInputButton)return;
         const printable=e.key&&e.key.length===1;
         const isEnter=e.key==='Enter';
         const isBackspace=e.key==='Backspace'&&backspaceEnabled;
