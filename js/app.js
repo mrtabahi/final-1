@@ -82,18 +82,12 @@ document.addEventListener('DOMContentLoaded', async()=>{
     if(requestedTestId&&currentPassage){$('btn-start-test').click();}
     $('btn-submit-early').onclick=()=>{if(engine&&!engine.isFinished&&confirm('End this test now and calculate your result?')){engine.handleInput(textarea.value);if(!engine.isActive)engine.start();engine.stop('manual');}};
     $('btn-cancel-test')?.addEventListener('click',()=>{
-        if(!confirm('Cancel this attempt and reset the typing test? Your current typing will be cleared.'))return;
+        if(!confirm('Reset this typing attempt? Your typed text and timer will be cleared.'))return;
         if(engine){engine.destroy();engine=null;}
-        textarea.value='';textarea.disabled=false;textarea.oninput=null;lastTypedValue='';
-        serverSessionPromise=null;serverSessionId=null;resultScores={};selectedFormula='bsf';
-        typing.style.display='none';result.style.display='none';inst.style.display='block';setup.style.display='none';
-        if(currentPassage){renderPassageProgress('');display.style.display=(passageHidden||selectedTypingMode==='page')?'none':'block';}
-        $('timer-display').textContent=String(Math.max(1,Number.parseInt(currentPassage?.duration_minutes,10)||10)).padStart(2,'0')+':00';
-        ['live-gross-wpm','live-net-wpm','live-errors','live-extra-errors','live-allowed-errors','live-penalty-speed'].forEach(id=>{const node=$(id);if(node)node.textContent='0';});
-        const accuracy=$('live-accuracy');if(accuracy)accuracy.textContent='100%';
-        const attempt=$('live-attempting-time');if(attempt)attempt.textContent='00:00';
-        const panel=$('live-metrics-panel'),toggle=$('btn-toggle-live-metrics');if(panel)panel.hidden=false;if(toggle){toggle.textContent='📊 Hide live calculation';toggle.setAttribute('aria-expanded','true');}
-        modeLocked=false;autoScrollLocked=false;
+        result.style.display='none';typing.style.display='block';inst.style.display='none';setup.style.display='none';
+        textarea.value='';textarea.disabled=false;lastTypedValue='';attemptStartedAt=null;attemptTypedText='';isComposing=false;
+        serverSessionPromise=null;serverSessionId=null;resultScores={};selectedFormula='bsf';modeLocked=false;autoScrollLocked=false;
+        $('btn-start-test').click();
     });
     $('btn-toggle-live-metrics')?.addEventListener('click',()=>{const panel=$('live-metrics-panel'),button=$('btn-toggle-live-metrics');if(!panel||!button)return;panel.hidden=!panel.hidden;button.textContent=panel.hidden?'📊 Show live calculation':'📊 Hide live calculation';button.setAttribute('aria-expanded',String(!panel.hidden));});
     function renderComparison(score){
