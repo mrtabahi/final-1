@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!transactions.length) { list.innerHTML = '<div class="admin-empty">No payment transactions recorded yet.</div>'; return; }
     list.innerHTML = transactions.map(t => {
       const amount = new Intl.NumberFormat(undefined,{style:'currency',currency:t.currency}).format(Number(t.amount_minor||0)/100);
-      return '<article class="payments-order-card"><div class="payments-order-head"><div><h3>' + esc(t.provider) + '</h3><p>Transaction ' + esc(t.provider_transaction_id || t.id) + '</p></div><span class="payments-order-chip ' + esc(t.status) + '">' + esc(t.status) + '</span></div><div class="payments-order-meta"><span>Order ' + esc(t.order_id) + '</span><span>·</span><strong>' + esc(amount) + '</strong><span>·</span><span>Verified ' + esc(t.verified_at ? new Date(t.verified_at).toLocaleString() : 'Not verified') + '</span></div></article>';
+      return '<article class="payments-order-card"><div class="payments-order-head"><div><h3>' + esc(t.provider) + '</h3><p>Transaction ' + esc(t.provider_transaction_id || t.id) + '</p>' + (t.provider_refund_id ? '<p>Refund ' + esc(t.provider_refund_id) + '</p>' : '') + '</div><span class="payments-order-chip ' + esc(t.status) + '">' + esc(t.status) + '</span></div><div class="payments-order-meta"><span>Order ' + esc(t.order_id) + '</span><span>·</span><strong>' + esc(amount) + '</strong><span>·</span><span>Verified ' + esc(t.verified_at ? new Date(t.verified_at).toLocaleString() : 'Not verified') + '</span>' + (t.refunded_at ? '<span>·</span><span>Refunded ' + esc(new Date(t.refunded_at).toLocaleString()) + '</span>' : '') + '</div></article>';
     }).join('');
   }
 
