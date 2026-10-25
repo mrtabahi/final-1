@@ -94,6 +94,7 @@ Deno.serve(async (req: Request) => {
         payment.currency !== order.currency) {
       return json(400, { error: "Provider payment details do not match this order." });
     }
+    if (!Number.isFinite(Number(payment.created_at))) return json(502, { error: "Provider payment timestamp is unavailable; webhook confirmation will continue." });
     if (payment.status !== "captured" || payment.captured !== true) {
       return json(409, { error: "Payment is not captured yet. Your order will update after provider confirmation." });
     }
@@ -104,6 +105,7 @@ Deno.serve(async (req: Request) => {
       p_provider_transaction_id: payment.id,
       p_amount_minor: Number(payment.amount),
       p_currency: payment.currency,
+      p_provider_created_at: new Date(Number(payment.created_at) * 1000).toISOString(),
       p_verified_payload: {
         source: "checkout_signature_and_provider_api",
         razorpay_order_id: providerOrderId,
