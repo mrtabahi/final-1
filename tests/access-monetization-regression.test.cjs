@@ -73,8 +73,10 @@ test('session submission is bound to the authenticated owner and server-measured
 });
 
 test('inactive parent folders deny access before the admin bypass', () => {
-  const folderCheck = migration.indexOf('SELECT * INTO v_folder FROM public.folders WHERE id = v_test.folder_id AND active = true;');
-  const adminBypass = migration.indexOf("role IN ('admin', 'head_admin') THEN");
+  const functionStart = migration.indexOf('CREATE OR REPLACE FUNCTION public.can_access_test');
+  const functionBody = migration.slice(functionStart);
+  const folderCheck = functionBody.indexOf('SELECT * INTO v_folder FROM public.folders WHERE id = v_test.folder_id AND active = true;');
+  const adminBypass = functionBody.indexOf("role IN ('admin', 'head_admin') THEN");
   assert.ok(folderCheck >= 0 && adminBypass > folderCheck, 'folder active check must precede admin bypass');
 });
 
