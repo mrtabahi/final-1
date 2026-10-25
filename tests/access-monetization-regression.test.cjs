@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const read = (relative) => fs.readFileSync(path.join(__dirname, '..', relative), 'utf8');
-const migration = read('supabase/migrations/202610260001_access_monetization_foundation.sql');
+const migration = read('supabase/migrations/20261026000100_access_monetization_foundation.sql');
 const edge = read('supabase/functions/typing-result/index.ts');
 const adminAccess = read('js/admin-access.js');
 const auth = read('js/auth.js');
