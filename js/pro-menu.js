@@ -26,8 +26,6 @@
       const permissions = data?.permissions || {};
       const granted = permissionKeys.some(key => permissions[key] === true);
       let item = links.querySelector('.pro-nav-item');
-      const homeProCard = document.querySelector('#home-pro-access');
-      if (homeProCard) homeProCard.hidden = !granted;
       if (!granted) {
         item?.remove();
         return;
@@ -38,7 +36,7 @@
         const link = document.createElement('a');
         link.href = 'candidate-workspace.html';
         link.className = 'pro-nav-link';
-        link.innerHTML = '<span aria-hidden="true">✦</span><span>Pro</span><span class="pro-nav-badge">ACCESS</span>';
+        link.innerHTML = '<span aria-hidden="true">✦</span><span>Pro</span>';
         link.setAttribute('aria-label', 'Pro workspace — your assigned permissions');
         item.appendChild(link);
         const account = links.querySelector('.account-nav-item');
