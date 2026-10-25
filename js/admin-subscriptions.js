@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const note=$('subs-note').value.trim(),starts=$('subs-starts').value,ends=$('subs-ends').value;
   if(!note||note.length>500){setStatus('Enter a reason of at most 500 characters.','error');return;}
   if(starts&&ends&&new Date(ends)<=new Date(starts)){setStatus('End date must be after start date.','error');return;}
+  if(!confirm('This will immediately grant this candidate the selected plan access. Continue only if this manual grant is approved.'))return;
   saving=true;$('subs-save').disabled=true;$('subs-save').textContent='Granting…';setStatus('Creating audited manual subscription…');
   try{
    const result=await supabaseClient.rpc('admin_grant_user_subscription',{p_user_id:$('subs-user').value,p_plan_id:$('subs-plan').value,p_starts_at:starts?new Date(starts).toISOString():null,p_ends_at:ends?new Date(ends).toISOString():null,p_admin_note:note});
