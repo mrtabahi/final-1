@@ -91,9 +91,112 @@ Deno.serve(async (req: Request) => {
         } else if (Number(payment.amount) !== Number(order.total_minor) || payment.currency !== order.currency) {
           console.error("Razorpay webhook amount/currency mismatch.", order.id, payment.id);
           return json(400, { error: "Payment amount or currency mismatch." });
-        } else if (order.expires_at && providerCreatedAt * 1000 > new Date(order.expires_at).getTime() && order.status === "pending") {
-          console.error("Captured payment arrived after local order expiry; manual refund reconciliation required.", order.id, payment.id);
-          outcome = "ignored";
+        } else if (order.expires_at && providerCreatedAt * 1000 > new Date(order.expires_at).getTime()) {
+          const latePayload = {
+            source: "razorpay_signed_webhook",
+            event: event.event,
+            event_id: eventId,
+            razorpay_order_id: payment.order_id,
+            razorpay_payment_id: payment.id,
+            status: payment.status,
+            amount: Number(payment.amount),
+            currency: payment.currency,
+            captured: true,
+            refund_reason: "late_payment_after_expiry",
+          };
+          const { error: lateError } = await serviceClient.rpc("service_record_late_payment_for_refund", {
+            p_order_id: order.id,
+            p_provider: "razorpay",
+            p_provider_transaction_id: payment.id,
+            p_amount_minor: Number(payment.amount),
+            p_currency: payment.currency,
+            p_provider_created_at: new Date(providerCreatedAt * 1000).toISOString(),
+            p_verified_payload: latePayload,
+          });
+          if (lateError) {
+            console.error("Late captured payment could not be recorded for refund.", lateError.code, order.id);
+            return json(503, { error: "Late payment needs refund processing; retry later." });
+          }
+
+          const { data: tx, error: txError } = await serviceClient.from("payment_transactions")
+            .select("order_id,provider_transaction_id,provider_refund_id,amount_minor,currency")
+            .eq("order_id", order.id).eq("provider", "razorpay")
+            .eq("provider_transaction_id", payment.id).maybeSingle();
+          if (txError || !tx) return json(503, { error: "Could not load late payment refund state." });
+
+          if (tx.provider_refund_id) {
+            outcome = "processed";
+          } else {
+            const { data: claimed, error: claimError } = await serviceClient.rpc("service_claim_late_refund", {
+              p_order_id: order.id,
+              p_provider: "razorpay",
+              p_provider_transaction_id: payment.id,
+            });
+            if (claimError) return json(503, { error: "Could not claim late payment refund processing." });
+            if (claimed !== true) return json(503, { error: "Late payment refund is being processed; retry shortly." });
+
+            const providerAuth = "Basic " + btoa(keyId + ":" + keySecret);
+            const refundsResponse = await fetch("https://api.razorpay.com/v1/payments/" + encodeURIComponent(payment.id) + "/refunds", {
+              headers: { Authorization: providerAuth },
+            });
+            if (!refundsResponse.ok) return json(503, { error: "Could not reconcile existing provider refunds." });
+            const refundsData = await refundsResponse.json();
+            const refundItems = Array.isArray(refundsData.items) ? refundsData.items : [];
+            const fullRefund = refundItems.find((item: any) =>
+              item.payment_id === payment.id &&
+              Number(item.amount) === Number(order.total_minor) &&
+              (item.notes?.local_order_id === order.id || item.status === "processed" || item.status === "pending" || item.status === "created")
+            );
+            const refundedTotal = refundItems.reduce((sum: number, item: any) => sum + Number(item.amount || 0), 0);
+            if (!fullRefund && refundedTotal > 0) {
+              console.error("Existing partial or multiple refunds require manual reconciliation.", order.id, payment.id);
+              outcome = "ignored";
+            } else {
+              let refund = fullRefund;
+              if (!refund) {
+                const refundResponse = await fetch("https://api.razorpay.com/v1/payments/" + encodeURIComponent(payment.id) + "/refund", {
+                  method: "POST",
+                  headers: { Authorization: providerAuth, "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    amount: Number(order.total_minor),
+                    notes: { local_order_id: order.id, reason: "late_payment_after_expiry" },
+                  }),
+                });
+                refund = await refundResponse.json();
+                if (!refundResponse.ok || typeof refund.id !== "string" ||
+                    refund.payment_id !== payment.id || Number(refund.amount) !== Number(order.total_minor)) {
+                  console.error("Razorpay full refund initiation failed.", refundResponse.status, refund?.error?.code, order.id);
+                  return json(503, { error: "Could not initiate late-payment refund; retry will reconcile with provider." });
+                }
+              }
+
+              const { error: persistRefundError } = await serviceClient.from("payment_transactions")
+                .update({ provider_refund_id: refund.id })
+                .eq("order_id", order.id).eq("provider", "razorpay")
+                .eq("provider_transaction_id", payment.id).eq("status", "succeeded");
+              if (persistRefundError) return json(503, { error: "Refund was initiated but its reference could not be saved." });
+
+              if (refund.status === "processed") {
+                const { error: finalizeRefundError } = await serviceClient.rpc("service_mark_order_refunded", {
+                  p_order_id: order.id,
+                  p_provider: "razorpay",
+                  p_provider_refund_id: refund.id,
+                  p_amount_minor: Number(refund.amount),
+                  p_currency: order.currency,
+                  p_verified_payload: {
+                    source: "razorpay_authenticated_api",
+                    event: "late_payment_auto_refund",
+                    razorpay_refund_id: refund.id,
+                    razorpay_payment_id: payment.id,
+                    amount: Number(refund.amount),
+                    status: refund.status,
+                  },
+                });
+                if (finalizeRefundError) return json(503, { error: "Provider refund processed but local finalization is pending." });
+              }
+              outcome = "processed";
+            }
+          }
         } else {
           const { error: finalizeError } = await serviceClient.rpc("service_mark_order_paid", {
             p_order_id: order.id,
