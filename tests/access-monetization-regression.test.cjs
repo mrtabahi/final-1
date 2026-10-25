@@ -219,6 +219,7 @@ test('only trusted service role can mark an order paid and activate a subscripti
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.service_mark_order_paid\(/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.order_status_audit/);
   assert.match(migration, /CREATE TRIGGER order_status_audit_trigger/);
+  assert.match(migration, /'order_status_audit'/);
   assert.match(migration, /current_setting\('request\.jwt\.claim\.role', true\).*service_role/s);
   assert.match(migration, /p_amount_minor <> v_order\.total_minor OR p_currency <> v_order\.currency/);
   assert.match(migration, /v_order\.expires_at <= now\(\)/);
