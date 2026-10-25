@@ -145,7 +145,7 @@ test('BSF treats a short prefix as a spelling/incomplete error without shifting 
   assert.equal(score.alignment[0].type, 'substitute');
   assert.equal(score.alignment[0].expected, 'the');
   assert.equal(score.alignment[0].typed, 'th');
-  assert.deepEqual(score.alignment.filter(item => item.type === 'match').map(item => item.expected), ['quick', 'brown']);
+  assert.deepEqual(Array.from(score.alignment.filter(item => item.type === 'match'), item => item.expected), ['quick', 'brown']);
   assert.equal(score.errorBreakdown.incompleteWords, 1);
   assert.equal(score.errorBreakdown.omissions, 0);
 });
@@ -159,7 +159,7 @@ test('BSF does not count unreached trailing words as errors', () => {
 
 test('BSF keeps early duplicate-word alignment when later duplicate also exists', () => {
   const score = scoring.calculateScore('Why the cat comming and why cat dancing', 'Why the cat comming', 60, config, null, 'bsf');
-  assert.deepEqual(score.alignment.filter(item => item.type === 'match').map(item => item.expected), ['Why', 'the', 'cat', 'comming']);
+  assert.deepEqual(Array.from(score.alignment.filter(item => item.type === 'match'), item => item.expected), ['Why', 'the', 'cat', 'comming']);
   assert.equal(score.errorBreakdown.omissions, 0);
   assert.equal(score.totalErrors, 0);
 });
