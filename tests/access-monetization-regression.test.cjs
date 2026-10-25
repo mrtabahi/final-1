@@ -102,3 +102,23 @@ test('plan management validates prices, duration, currency and entitlement paylo
   assert.match(migration, /e\.resource_type NOT IN \('site', 'menu', 'submenu', 'folder', 'test', 'materials'\)/);
   assert.match(migration, /DELETE FROM public\.plan_entitlements WHERE plan_id = p_plan_id/);
 });
+
+test('plan editor uses server-side admin RPCs and never writes billing tables directly', () => {
+  const plansPage = read('admin-plans.html');
+  const plansJs = read('js/admin-plans.js');
+  const adminPage = read('admin.html');
+  assert.match(plansPage, /checkout is not connected yet/i);
+  assert.match(plansJs, /rpc\('admin_list_subscription_plans'\)/);
+  assert.match(plansJs, /rpc\('admin_get_plan_entitlements'/);
+  assert.match(plansJs, /rpc\('admin_save_subscription_plan'/);
+  assert.doesNotMatch(plansJs, /from\(['"]subscription_plans['"]\)/);
+  assert.doesNotMatch(plansJs, /from\(['"]plan_entitlements['"]\)/);
+  assert.match(adminPage, /href="admin-plans\.html"/);
+});
+
+test('combined plan save is atomic and authenticated execution is limited to admins', () => {
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_save_subscription_plan\(/);
+  assert.match(migration, /public\.admin_upsert_subscription_plan\([\s\S]*?public\.admin_set_plan_entitlements\(/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_save_subscription_plan\([\s\S]*?FROM PUBLIC, anon/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.admin_save_subscription_plan\([\s\S]*?TO authenticated/);
+});
