@@ -242,3 +242,16 @@ test('customer overview exposes only active plan catalog publicly and scopes acc
   assert.match(migration, /WHERE o\.user_id = v_user_id/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.get_my_subscription_overview\(\) TO authenticated/);
 });
+
+test('admin billing view reads orders and payment metadata through admin-only RPCs', () => {
+  const page = read('admin-payments.html');
+  const js = read('js/admin-payments.js');
+  assert.match(page, /<h2>Orders<\/h2>/);
+  assert.match(page, /<h2>Payment transactions<\/h2>/);
+  assert.match(js, /rpc\('admin_list_orders'\)/);
+  assert.match(js, /rpc\('admin_list_payment_transactions'\)/);
+  assert.doesNotMatch(js, /from\(['"]orders['"]\)/);
+  assert.doesNotMatch(js, /from\(['"]payment_transactions['"]\)/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_list_orders\(\)/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_list_payment_transactions\(\)/);
+});
