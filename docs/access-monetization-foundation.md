@@ -126,7 +126,17 @@ Existing functional modules should be preserved and moved into a clearer informa
 
 - Added a server-priced `create_checkout_order` RPC that validates active plans, coupon scope/validity/currency/limits, computes discounts server-side, reserves coupon capacity for 15 minutes, and activates zero-total purchases atomically.
 - Added a service-role-only `service_mark_order_paid` RPC that checks order amount/currency, rejects expired orders, creates a payment transaction, activates a subscription from the order's duration snapshot, and handles duplicate callbacks idempotently.
-- This is a provider-neutral database foundation only. No payment provider SDK, signed webhook verifier, checkout UI, refunds or production payment activation are deployed. Do not call the finalization RPC except from a provider-specific verifier after signature verification.
+- Razorpay is now the selected provider and checkout/webhook Edge Function code is implemented in the feature branch. It is not deployed; do not enable live payments or call finalization RPCs except through the signed provider verification path.
+
+## Razorpay integration increment (2026-10-26)
+
+- Added server-side `create-checkout` to create a local order from trusted plan pricing/coupon rules, create a Razorpay order, and persist the provider order ID.
+- Added `verify-razorpay-payment` to verify the Razorpay checkout HMAC against the server-stored order ID, fetch payment state from Razorpay, and activate only captured payments with matching amount/currency.
+- Added `razorpay-webhook` with raw-body HMAC verification, event-ID deduplication, minimized audit metadata, and handling for `order.paid`, `payment.failed`, and `refund.processed`.
+- Delayed webhooks may finalize when the provider payment was created within the original checkout expiry window. Captured payments created after expiry never activate access and trigger an idempotent full-refund workflow; existing partial/multiple refunds are flagged for manual reconciliation.
+- Added private webhook event ledger and a two-minute refund-processing lease to reduce duplicate provider refund requests.
+- Added Razorpay order references to the admin order view and enabled authenticated paid checkout on the customer subscription page.
+- This remains staging-only code. Supabase migration, Edge Functions, Razorpay Test Mode secrets, dashboard webhook configuration, and end-to-end sandbox validation are still pending.
 
 ## Customer subscription overview increment (2026-10-26)
 
