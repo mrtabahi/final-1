@@ -174,6 +174,20 @@ END $$;
 -- be completed in the passage-delivery path before any paid item is switched to Paid in production.
 
 
+-- Ensure the existing admin-only CRUD policies recognize the explicit head_admin role too.
+CREATE OR REPLACE FUNCTION public.is_current_user_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('admin', 'head_admin')
+  );
+$function$;
+
 -- Resolve effective access on the server. This function is also used by the
 -- typing-result Edge Function; callers must fail closed if it errors.
 CREATE OR REPLACE FUNCTION public.can_access_test(p_test_id uuid, p_user_id uuid DEFAULT auth.uid())
@@ -191,6 +205,12 @@ DECLARE
   v_now timestamptz := now();
 BEGIN
   IF p_user_id IS NULL THEN RETURN false; END IF;
+  -- Prevent authenticated callers from probing another user's entitlement state.
+  -- The trusted Edge Function uses the service_role JWT and may pass its verified user ID.
+  IF p_user_id IS DISTINCT FROM auth.uid()
+     AND COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+    RETURN false;
+  END IF;
   SELECT * INTO v_test FROM public.tests WHERE id = p_test_id AND active = true;
   IF NOT FOUND THEN RETURN false; END IF;
 
