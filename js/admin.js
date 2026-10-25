@@ -656,7 +656,7 @@ async function loadDashboard() {
         }
 
 
-        cachedFolders = data || [];
+        cachedFolders = (data || []).sort((a, b) => Number(a.sort_order ?? 999999) - Number(b.sort_order ?? 999999) || String(a.created_at || '').localeCompare(String(b.created_at || '')));
 
 
         renderFolders(
@@ -763,11 +763,22 @@ async function loadDashboard() {
         if (index < 0 || targetIndex < 0 || targetIndex >= ordered.length) return;
         const first = ordered[index], second = ordered[targetIndex];
         const firstOrder = Number(first.sort_order ?? index), secondOrder = Number(second.sort_order ?? targetIndex);
-        const a = await supabaseClient.from('folders').update({sort_order: secondOrder}).eq('id', first.id);
-        if (a.error) { alert('Folder order save nahi hua: ' + a.error.message); return; }
-        const b = await supabaseClient.from('folders').update({sort_order: firstOrder}).eq('id', second.id);
-        if (b.error) { alert('Folder order partially save hua. Refresh karke dobara try karein.'); }
-        await loadFolders();
+        try {
+            // Use unique temporary positions so the swap cannot collapse when one row has a NULL/default order.
+            const tempOrder = Math.max(0, ...ordered.map((item, i) => Number(item.sort_order ?? i))) + ordered.length + 10;
+            const steps = [
+                await supabaseClient.from('folders').update({sort_order: tempOrder}).eq('id', first.id).select('id').maybeSingle(),
+                await supabaseClient.from('folders').update({sort_order: firstOrder}).eq('id', second.id).select('id').maybeSingle(),
+                await supabaseClient.from('folders').update({sort_order: secondOrder}).eq('id', first.id).select('id').maybeSingle()
+            ];
+            const failed = steps.find(result => result.error || !result.data);
+            if (failed) throw failed.error || new Error('Database ne folder order update nahi kiya. Admin permissions check karein.');
+            await loadFolders();
+        } catch (error) {
+            console.error('Move folder failed:', error);
+            alert('Folder order save nahi hua: ' + (error.message || 'Please refresh and try again.'));
+            await loadFolders();
+        }
     }
 
     async function moveTest(testId, direction) {
@@ -780,14 +791,24 @@ async function loadDashboard() {
         if (index < 0 || targetIndex < 0 || targetIndex >= group.length) return;
         const first = group[index], second = group[targetIndex];
         const firstOrder = Number(first.sort_order ?? index), secondOrder = Number(second.sort_order ?? targetIndex);
-        const a = await supabaseClient.from('tests').update({sort_order: secondOrder}).eq('id', first.id);
-        if (a.error) { alert('Test order save nahi hua: ' + a.error.message); return; }
-        const b = await supabaseClient.from('tests').update({sort_order: firstOrder}).eq('id', second.id);
-        if (b.error) { alert('Test order partially save hua. Refresh karke dobara try karein.'); }
-        await loadManageTests();
-        const folderId = current.folder_id || '';
-        const drawer = document.getElementById('folder-tests-' + folderId);
-        if (drawer) { drawer.hidden = false; const toggle = document.querySelector('[data-folder-tests-toggle="' + folderId + '"]'); toggle?.setAttribute('aria-expanded','true'); if (toggle) toggle.textContent='▴ Hide tests'; }
+        try {
+            const tempOrder = Math.max(0, ...group.map((item, i) => Number(item.sort_order ?? i))) + group.length + 10;
+            const steps = [
+                await supabaseClient.from('tests').update({sort_order: tempOrder}).eq('id', first.id).select('id').maybeSingle(),
+                await supabaseClient.from('tests').update({sort_order: firstOrder}).eq('id', second.id).select('id').maybeSingle(),
+                await supabaseClient.from('tests').update({sort_order: secondOrder}).eq('id', first.id).select('id').maybeSingle()
+            ];
+            const failed = steps.find(result => result.error || !result.data);
+            if (failed) throw failed.error || new Error('Database ne test order update nahi kiya. Admin permissions check karein.');
+            await loadManageTests();
+            const folderId = current.folder_id || '';
+            const drawer = document.getElementById('folder-tests-' + folderId);
+            if (drawer) { drawer.hidden = false; const toggle = document.querySelector('[data-folder-tests-toggle="' + folderId + '"]'); toggle?.setAttribute('aria-expanded','true'); if (toggle) toggle.textContent='▴ Hide tests'; }
+        } catch (error) {
+            console.error('Move test failed:', error);
+            alert('Test order save nahi hua: ' + (error.message || 'Please refresh and try again.'));
+            await loadManageTests();
+        }
     }
 
     function populateFolderSelect(folders) {
