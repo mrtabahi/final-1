@@ -122,6 +122,12 @@ Existing functional modules should be preserved and moved into a clearer informa
 - Added admin-only RPCs for listing subscriptions, granting an active plan to a candidate, and cancelling active/pending subscriptions. Manual grants require a reason and an explicit confirmation.
 - Added a server-managed subscription audit table/trigger that records before/after state and actor. Manual grants are not a payment flow; payment verification remains a separate required phase.
 
+## Checkout/order foundation increment (2026-10-26)
+
+- Added a server-priced `create_checkout_order` RPC that validates active plans, coupon scope/validity/currency/limits, computes discounts server-side, reserves coupon capacity for 15 minutes, and activates zero-total purchases atomically.
+- Added a service-role-only `service_mark_order_paid` RPC that checks order amount/currency, rejects expired orders, creates a payment transaction, activates a subscription from the order's duration snapshot, and handles duplicate callbacks idempotently.
+- This is a provider-neutral database foundation only. No payment provider SDK, signed webhook verifier, checkout UI, refunds or production payment activation are deployed. Do not call the finalization RPC except from a provider-specific verifier after signature verification.
+
 ## Decisions intentionally left open
 
 - Payment gateway/provider and supported currencies.
