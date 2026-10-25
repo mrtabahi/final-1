@@ -23,9 +23,10 @@ order by tablename, policyname;
 ```
 
 Expected:
-- `tests_candidate_select` contains `can_access_test(id, auth.uid())`.
-- No other permissive candidate-facing SELECT policy on `tests` grants every active test without an entitlement check.
-- Admin and staff policies remain present and match the intended access roles.
+- `tests_candidate_select` contains `active = true AND public.can_access_test(id, auth.uid())`; the migration explicitly drops and recreates this policy.
+- The current production policy inventory (read-only inspection) contains `tests_admin_all`, `tests_candidate_select`, and `tests_staff_manage` on `tests`, plus `folders_admin_all`, `folders_candidate_select`, and `folders_staff_manage` on `folders`. Verify the same names and predicates in staging before release.
+- `tests_admin_all` remains admin-only, and `tests_staff_manage` remains scoped to the existing `has_candidate_permission('folder_tests')` capability. Confirm the staff capability is intentional and does not grant access to ordinary candidates.
+- No other permissive candidate-facing SELECT policy on `tests` may grant every active test without an entitlement check; PostgreSQL permissive policies combine with OR, so one leftover broad policy would bypass the new gate.
 - Folder listing may expose folder metadata, but not passage content; passage text lives on `tests` and must remain protected by the test SELECT policy.
 
 ## 3. Verify access function privileges and audit trail
