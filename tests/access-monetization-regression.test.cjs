@@ -255,3 +255,15 @@ test('admin billing view reads orders and payment metadata through admin-only RP
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_list_orders\(\)/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_list_payment_transactions\(\)/);
 });
+
+test('refund finalization is service-role-only, full-amount checked and idempotent', () => {
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.service_mark_order_refunded\(/);
+  assert.match(migration, /p_amount_minor <> v_order\.total_minor OR p_currency <> v_order\.currency/);
+  assert.match(migration, /provider_refund_id text/);
+  assert.match(migration, /refunded_at timestamptz/);
+  assert.match(migration, /UPDATE public\.orders SET status = 'refunded'/);
+  assert.match(migration, /SET status = 'refunded', admin_note/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.service_mark_order_refunded\([\s\S]*?FROM PUBLIC, anon, authenticated/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.service_mark_order_refunded\([\s\S]*?TO service_role/);
+  assert.match(migration, /provider_refund_id \? '<p>Refund '/);
+});
