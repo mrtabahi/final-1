@@ -67,7 +67,17 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Admins can manage access policies; staff retain only their existing explicitly granted capabilities.
 - Changing access mode writes an audit row with resource, old/new mode, actor, and timestamp.
 
-## 5. Edge Function scenarios
+
+## 5. Plan catalog admin RPC scenarios
+
+- Admin can list plans and read a plan's entitlements through the role-checked RPCs.
+- Candidate/non-admin calls to every `admin_*subscription_plan*` and `admin_*plan_entitlements*` RPC fail with insufficient privilege.
+- Invalid currency, negative price, out-of-range duration, oversized entitlement arrays, and unknown resource types are rejected.
+- Saving a plan and replacing its entitlements is one transaction: deliberately submit an invalid entitlement and verify neither the plan fields nor its previous entitlement list partially changes.
+- Direct browser SELECT/INSERT/UPDATE/DELETE against billing tables remains denied; the admin page only calls the approved RPCs.
+- The plan page clearly indicates checkout is not connected; no active plan is purchasable until server-side payment verification is implemented.
+
+## 6. Edge Function scenarios
 
 - `start` rejects missing/invalid auth, unknown/inactive tests, unauthorized Paid tests, and inactive parent folders.
 - `submit` rejects sessions owned by another user, duplicate submissions, and access revoked after session start.
@@ -75,7 +85,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - The function does not return passage content in its start response.
 - Run the repository Node regression suite with `node --test tests/*.test.cjs`.
 
-## 6. Release gate
+## 7. Release gate
 
 Do not merge/deploy or enable Paid policies until:
 - all scenarios above pass in staging;
