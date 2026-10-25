@@ -141,6 +141,7 @@ test('coupon RPCs are admin-only and validate discount, date and redemption limi
   assert.match(migration, /auth\.uid\(\) IS NULL OR NOT public\.is_current_user_admin\(\)/);
   assert.match(migration, /p_discount_type IS NULL OR p_discount_type NOT IN \('percent', 'fixed'\)/);
   assert.match(migration, /p_discount_value > 100/);
+  assert.match(migration, /id = p_user_id AND role = 'candidate'/);
   assert.match(migration, /p_ends_at <= p_starts_at/);
   assert.match(migration, /p_max_redemptions_per_user < 1/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_save_coupon\([\s\S]*?FROM PUBLIC, anon/);
