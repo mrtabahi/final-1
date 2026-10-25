@@ -19,5 +19,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Check monetization browser script syntax
+        run: |
+          for file in js/admin-access.js js/admin-plans.js js/admin-payments.js js/admin-entitlements.js js/admin-subscriptions.js js/my-subscription.js; do
+            node --check "$file"
+          done
       - name: Run regression tests
         run: node --test tests/*.test.cjs
