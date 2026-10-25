@@ -194,3 +194,24 @@ test('manual subscriptions are admin-only, candidate-scoped and audited', () => 
   assert.match(migration, /A cancellation reason of 1-500 characters is required/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_grant_user_subscription\([\s\S]*?FROM PUBLIC, anon/);
 });
+
+test('checkout order creation prices plans and coupons server-side with redemption reservations', () => {
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.create_checkout_order\(/);
+  assert.match(migration, /role = 'candidate'/);
+  assert.match(migration, /WHERE id = p_plan_id AND is_active = true FOR SHARE/);
+  assert.match(migration, /FROM public\.coupons WHERE code = v_code FOR UPDATE/);
+  assert.match(migration, /max_redemptions_per_user/);
+  assert.match(migration, /CASE WHEN v_total = 0 THEN 'free' ELSE 'pending' END/);
+  assert.match(migration, /INSERT INTO public\.coupon_redemptions/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.create_checkout_order\(uuid, text\) TO authenticated/);
+});
+
+test('only trusted service role can mark an order paid and activate a subscription', () => {
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.service_mark_order_paid\(/);
+  assert.match(migration, /current_setting\('request\.jwt\.claim\.role', true\).*service_role/s);
+  assert.match(migration, /p_amount_minor <> v_order\.total_minor OR p_currency <> v_order\.currency/);
+  assert.match(migration, /v_order\.expires_at <= now\(\)/);
+  assert.match(migration, /UPDATE public\.orders SET status = 'paid'/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.service_mark_order_paid\([\s\S]*?FROM PUBLIC, anon, authenticated/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.service_mark_order_paid\([\s\S]*?TO service_role/);
+});
