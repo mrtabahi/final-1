@@ -261,13 +261,14 @@ BEGIN
   SELECT * INTO v_test FROM public.tests WHERE id = p_test_id AND active = true;
   IF NOT FOUND THEN RETURN false; END IF;
 
-  IF EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = p_user_id AND p.role IN ('admin', 'head_admin')) THEN
-    RETURN true;
-  END IF;
-
   IF v_test.folder_id IS NOT NULL THEN
     SELECT * INTO v_folder FROM public.folders WHERE id = v_test.folder_id AND active = true;
     IF NOT FOUND THEN RETURN false; END IF;
+  END IF;
+
+  -- Even administrators cannot start or submit tests in disabled folders.
+  IF EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = p_user_id AND p.role IN ('admin', 'head_admin')) THEN
+    RETURN true;
   END IF;
 
   v_mode := CASE
