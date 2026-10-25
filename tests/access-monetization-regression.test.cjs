@@ -318,3 +318,19 @@ test('Razorpay checkout and verification remain server-authoritative', () => {
   assert.match(config, /\[functions\.razorpay-webhook\]\nverify_jwt = false/);
   assert.doesNotMatch(createCheckout + verifyPayment + webhook, /RAZORPAY_KEY_SECRET\s*[:=]\s*["'][^"']+["']/);
 });
+
+test('Razorpay late-payment refunds are claimed idempotently and never grant late access', () => {
+  const webhook = read('supabase/functions/razorpay-webhook/index.ts');
+  assert.equal(migration.split('CREATE TABLE IF NOT EXISTS public.payment_transactions').length - 1, 1);
+  assert.equal(migration.split('CREATE TABLE IF NOT EXISTS public.provider_webhook_events').length - 1, 1);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.service_record_late_payment_for_refund\(/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.service_claim_late_refund\(/);
+  assert.match(migration, /p_provider_created_at > v_order\.expires_at/);
+  assert.match(migration, /refund_requested_at < now\(\) - interval '2 minutes'/);
+  assert.match(webhook, /service_record_late_payment_for_refund/);
+  assert.match(webhook, /service_claim_late_refund/);
+  assert.match(webhook, /\/refunds/);
+  assert.match(webhook, /late_payment_after_expiry/);
+  assert.match(webhook, /manual reconciliation/);
+  assert.match(migration, /length\(currency\) = 3 AND currency !~ '\[\^A-Z\]'/);
+});
