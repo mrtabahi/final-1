@@ -11,6 +11,32 @@ document.addEventListener('DOMContentLoaded', async()=>{
     backspaceButton?.addEventListener('click',()=>{backspaceEnabled=!backspaceEnabled;if(engine)engine.allowBackspace=backspaceEnabled;backspaceButton.textContent=backspaceEnabled?'⌫ Backspace: On':'⌫ Backspace: Off';backspaceButton.setAttribute('aria-pressed',String(backspaceEnabled));});
     hideButton?.addEventListener('click',()=>{passageHidden=!passageHidden;display.style.display=(passageHidden||selectedTypingMode==='page')?'none':'block';hideButton.textContent=passageHidden?'👁 Show passage':'🙈 Hide passage';hideButton.setAttribute('aria-pressed',String(passageHidden));});
     hideInputButton?.addEventListener('click',()=>{inputBoxHidden=!inputBoxHidden;textarea.style.display=inputBoxHidden?'none':'block';hideInputButton.textContent=inputBoxHidden?'👁 Show typing box':'🙈 Hide typing box';hideInputButton.setAttribute('aria-pressed',String(inputBoxHidden));});
+    // When the typing box is hidden, keep keyboard input flowing into it even if focus
+    // moved to the Hide button or another non-editable part of the page.
+    document.addEventListener('keydown',e=>{
+        if(!inputBoxHidden||!engine||engine.isFinished||!typing||typing.style.display==='none')return;
+        if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing)return;
+        const printable=e.key&&e.key.length===1;
+        const isEnter=e.key==='Enter';
+        const isBackspace=e.key==='Backspace'&&backspaceEnabled;
+        if(!printable&&!isEnter&&!isBackspace)return;
+        if(e.key==='Backspace'&&!backspaceEnabled)return;
+        e.preventDefault();
+        textarea.focus({preventScroll:true});
+        const start=textarea.selectionStart??textarea.value.length;
+        const end=textarea.selectionEnd??textarea.value.length;
+        let nextStart=start,nextEnd=end;
+        if(isBackspace){
+            if(start===end&&start>0)nextStart=start-1;
+            textarea.setRangeText('',nextStart,end,'end');
+        }else{
+            const inserted=isEnter?'\\n':e.key;
+            textarea.setRangeText(inserted,start,end,'end');
+        }
+        if(!modeLocked)lockTypingMode();
+        if(engine){engine.totalKeystrokes++;if(!engine.isActive)engine.start();}
+        textarea.dispatchEvent(new Event('input',{bubbles:true}));
+    });
     fullscreenButton?.addEventListener('click',async()=>{try{if(!document.fullscreenElement){await $('app-root').requestFullscreen();}else{await document.exitFullscreen();}}catch(error){console.error('Fullscreen unavailable',error);}});
     document.addEventListener('fullscreenchange',()=>{if(fullscreenButton)fullscreenButton.textContent=document.fullscreenElement?'⛶ Exit full screen':'⛶ Full screen';});
     function applySelectedTypingMode(){
