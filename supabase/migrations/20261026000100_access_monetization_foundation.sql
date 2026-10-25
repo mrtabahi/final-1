@@ -104,7 +104,9 @@ CREATE TABLE IF NOT EXISTS public.orders (
   subtotal_minor bigint NOT NULL CHECK (subtotal_minor >= 0),
   discount_minor bigint NOT NULL DEFAULT 0 CHECK (discount_minor >= 0),
   total_minor bigint NOT NULL CHECK (total_minor >= 0),
+  duration_days integer NOT NULL DEFAULT 30 CHECK (duration_days > 0 AND duration_days <= 3650),
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'free', 'failed', 'refunded', 'cancelled')),
+  expires_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (discount_minor <= subtotal_minor),
@@ -884,6 +886,166 @@ REVOKE ALL ON FUNCTION public.admin_cancel_user_subscription(uuid, text) FROM PU
 GRANT EXECUTE ON FUNCTION public.admin_list_user_subscriptions() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_grant_user_subscription(uuid, uuid, timestamptz, timestamptz, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_cancel_user_subscription(uuid, text) TO authenticated;
+
+-- Candidate checkout order creation is server-priced. Paid orders remain pending
+-- until a provider-specific Edge Function verifies payment and calls the service RPC.
+CREATE OR REPLACE FUNCTION public.create_checkout_order(p_plan_id uuid, p_coupon_code text DEFAULT NULL)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_user_id uuid := auth.uid();
+  v_plan public.subscription_plans%ROWTYPE;
+  v_coupon public.coupons%ROWTYPE;
+  v_coupon_id uuid;
+  v_code text := NULLIF(upper(btrim(p_coupon_code)), '');
+  v_discount bigint := 0;
+  v_total bigint;
+  v_now timestamptz := now();
+  v_count bigint;
+  v_order public.orders%ROWTYPE;
+  v_subscription_id uuid;
+BEGIN
+  IF v_user_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = v_user_id AND role = 'candidate') THEN
+    RAISE EXCEPTION 'Candidate sign-in required' USING ERRCODE = '42501';
+  END IF;
+  SELECT * INTO v_plan FROM public.subscription_plans WHERE id = p_plan_id AND is_active = true FOR SHARE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Active subscription plan not found' USING ERRCODE = 'P0002'; END IF;
+
+  IF v_code IS NOT NULL THEN
+    SELECT * INTO v_coupon FROM public.coupons WHERE code = v_code FOR UPDATE;
+    IF NOT FOUND OR NOT v_coupon.is_active THEN RAISE EXCEPTION 'Coupon is invalid or inactive' USING ERRCODE = '22023'; END IF;
+    IF v_coupon.starts_at IS NOT NULL AND v_coupon.starts_at > v_now THEN
+      RAISE EXCEPTION 'Coupon is not active yet' USING ERRCODE = '22023';
+    END IF;
+    IF v_coupon.ends_at IS NOT NULL AND v_coupon.ends_at <= v_now THEN
+      RAISE EXCEPTION 'Coupon has expired' USING ERRCODE = '22023';
+    END IF;
+    IF v_coupon.currency <> v_plan.currency THEN
+      RAISE EXCEPTION 'Coupon currency does not match this plan' USING ERRCODE = '22023';
+    END IF;
+    IF v_coupon.applies_to = 'selected_plans' AND NOT EXISTS (
+      SELECT 1 FROM public.coupon_plan_eligibility WHERE coupon_id = v_coupon.id AND plan_id = v_plan.id
+    ) THEN
+      RAISE EXCEPTION 'Coupon is not eligible for this plan' USING ERRCODE = '22023';
+    END IF;
+    SELECT count(*) INTO v_count FROM public.coupon_redemptions cr WHERE cr.coupon_id = v_coupon.id;
+    v_count := v_count + (SELECT count(*) FROM public.orders o
+      WHERE o.coupon_id = v_coupon.id AND o.status = 'pending' AND o.expires_at > v_now);
+    IF v_coupon.max_redemptions IS NOT NULL AND v_count >= v_coupon.max_redemptions THEN
+      RAISE EXCEPTION 'Coupon redemption limit reached' USING ERRCODE = '22023';
+    END IF;
+    SELECT count(*) INTO v_count FROM public.coupon_redemptions cr
+      WHERE cr.coupon_id = v_coupon.id AND cr.user_id = v_user_id;
+    v_count := v_count + (SELECT count(*) FROM public.orders o
+      WHERE o.coupon_id = v_coupon.id AND o.user_id = v_user_id AND o.status = 'pending' AND o.expires_at > v_now);
+    IF v_count >= v_coupon.max_redemptions_per_user THEN
+      RAISE EXCEPTION 'You have reached this coupon redemption limit' USING ERRCODE = '22023';
+    END IF;
+    v_coupon_id := v_coupon.id;
+    IF v_coupon.discount_type = 'percent' THEN
+      v_discount := round((v_plan.price_minor::numeric * v_coupon.discount_value) / 100)::bigint;
+    ELSE
+      v_discount := v_coupon.discount_value;
+    END IF;
+    v_discount := LEAST(v_plan.price_minor, v_discount);
+  END IF;
+
+  v_total := v_plan.price_minor - v_discount;
+  INSERT INTO public.orders(
+    user_id, plan_id, coupon_id, currency, subtotal_minor, discount_minor, total_minor,
+    duration_days, status, expires_at
+  ) VALUES (
+    v_user_id, v_plan.id, v_coupon_id, v_plan.currency, v_plan.price_minor, v_discount, v_total,
+    v_plan.duration_days, CASE WHEN v_total = 0 THEN 'free' ELSE 'pending' END,
+    CASE WHEN v_total = 0 THEN NULL ELSE v_now + interval '15 minutes' END
+  ) RETURNING * INTO v_order;
+
+  IF v_total = 0 THEN
+    INSERT INTO public.user_subscriptions(user_id, plan_id, status, starts_at, ends_at, order_id, admin_note)
+    VALUES (v_user_id, v_plan.id, 'active', v_now, v_now + make_interval(days => v_order.duration_days),
+      v_order.id, 'Zero-total checkout')
+    RETURNING id INTO v_subscription_id;
+    IF v_coupon_id IS NOT NULL THEN
+      INSERT INTO public.coupon_redemptions(coupon_id, user_id, order_id, discount_minor)
+      VALUES (v_coupon_id, v_user_id, v_order.id, v_discount);
+    END IF;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'order_id', v_order.id, 'plan_id', v_plan.id, 'plan_name', v_plan.name,
+    'currency', v_order.currency, 'subtotal_minor', v_order.subtotal_minor,
+    'discount_minor', v_order.discount_minor, 'total_minor', v_order.total_minor,
+    'status', v_order.status, 'expires_at', v_order.expires_at,
+    'subscription_id', v_subscription_id
+  );
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.service_mark_order_paid(
+  p_order_id uuid,
+  p_provider text,
+  p_provider_transaction_id text,
+  p_amount_minor bigint,
+  p_currency text,
+  p_verified_payload jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_order public.orders%ROWTYPE;
+  v_subscription_id uuid;
+  v_transaction_id uuid;
+BEGIN
+  IF COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+    RAISE EXCEPTION 'Trusted payment verifier required' USING ERRCODE = '42501';
+  END IF;
+  IF p_provider IS NULL OR length(btrim(p_provider)) = 0 OR length(p_provider) > 80
+     OR p_provider_transaction_id IS NULL OR length(btrim(p_provider_transaction_id)) = 0
+     OR p_amount_minor IS NULL OR p_amount_minor < 0 OR p_currency IS NULL OR p_verified_payload IS NULL THEN
+    RAISE EXCEPTION 'Invalid verified payment payload' USING ERRCODE = '22023';
+  END IF;
+  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Order not found' USING ERRCODE = 'P0002'; END IF;
+  IF v_order.status = 'paid' THEN
+    SELECT id INTO v_transaction_id FROM public.payment_transactions
+    WHERE order_id = v_order.id AND provider = p_provider AND provider_transaction_id = p_provider_transaction_id;
+    IF FOUND THEN RETURN jsonb_build_object('order_id', v_order.id, 'status', 'paid', 'idempotent', true); END IF;
+    RAISE EXCEPTION 'Order is already paid by another transaction' USING ERRCODE = '23505';
+  END IF;
+  IF v_order.status <> 'pending' THEN RAISE EXCEPTION 'Order is not awaiting payment' USING ERRCODE = '22023'; END IF;
+  IF p_amount_minor <> v_order.total_minor OR p_currency <> v_order.currency THEN
+    RAISE EXCEPTION 'Verified payment amount or currency does not match order' USING ERRCODE = '22023';
+  END IF;
+  INSERT INTO public.payment_transactions(
+    order_id, provider, provider_transaction_id, status, amount_minor, currency, verified_at, provider_payload
+  ) VALUES (
+    v_order.id, btrim(p_provider), btrim(p_provider_transaction_id), 'succeeded',
+    p_amount_minor, p_currency, now(), p_verified_payload
+  ) RETURNING id INTO v_transaction_id;
+  UPDATE public.orders SET status = 'paid', updated_at = now() WHERE id = v_order.id;
+  INSERT INTO public.user_subscriptions(user_id, plan_id, status, starts_at, ends_at, order_id, admin_note)
+  VALUES (v_order.user_id, v_order.plan_id, 'active', now(), now() + make_interval(days => v_order.duration_days),
+    v_order.id, 'Verified payment')
+  RETURNING id INTO v_subscription_id;
+  IF v_order.coupon_id IS NOT NULL THEN
+    INSERT INTO public.coupon_redemptions(coupon_id, user_id, order_id, discount_minor)
+    VALUES (v_order.coupon_id, v_order.user_id, v_order.id, v_order.discount_minor);
+  END IF;
+  RETURN jsonb_build_object('order_id', v_order.id, 'status', 'paid', 'subscription_id', v_subscription_id,
+    'payment_transaction_id', v_transaction_id, 'idempotent', false);
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.create_checkout_order(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_checkout_order(uuid, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.service_mark_order_paid(uuid, text, text, bigint, text, jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.service_mark_order_paid(uuid, text, text, bigint, text, jsonb) TO service_role;
 
 -- Resolve effective access on the server. This function is also used by the
 -- typing-result Edge Function; callers must fail closed if it errors.
