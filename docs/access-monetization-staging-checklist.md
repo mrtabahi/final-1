@@ -123,6 +123,7 @@ Use dedicated test accounts; do not alter real candidate/admin accounts.
 - Only service_role can finalize a paid order; amount/currency must match exactly; duplicate provider transaction callbacks are idempotent; mismatched or duplicate transactions cannot create extra subscriptions.
 - Staging tests must cover concurrent coupon redemption limits and failed/late payment callbacks. A real provider integration is still required before production checkout.
 - Admin order and transaction views return only the approved summary fields; verify non-admin callers cannot invoke either list RPC and raw provider payloads are never exposed.
+- Refund finalization must be called only after a provider-signed refund is verified; only full refunds are supported initially, the order and transaction become refunded, active subscription access is revoked, and duplicate refund callbacks are idempotent.
 
 ## 11. Edge Function scenarios
 
