@@ -1207,7 +1207,6 @@ BEGIN
   SET status = 'refunded', admin_note = left(CASE WHEN admin_note = '' THEN '' ELSE admin_note || E'\n' END || 'Verified provider refund', 500),
       updated_at = now()
   WHERE order_id = v_order.id AND status = 'active';
-  IF NOT FOUND THEN RAISE EXCEPTION 'Active subscription for this order not found' USING ERRCODE = 'P0002'; END IF;
   RETURN jsonb_build_object('order_id', v_order.id, 'status', 'refunded', 'payment_transaction_id', v_transaction_id, 'idempotent', false);
 END;
 $function$;
