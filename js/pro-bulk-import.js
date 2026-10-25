@@ -5,6 +5,7 @@
   let mounted = false;
   function addImporter() {
     const view = document.getElementById('cw-view');
+    if (mounted && !view?.querySelector('.cw-bulk-import')) mounted = false;
     if (!view || mounted || !view.querySelector('h2')?.textContent.includes('Test Library & Bulk Import')) return;
     mounted = true;
     const section = document.createElement('section');
