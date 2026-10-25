@@ -122,3 +122,27 @@ test('combined plan save is atomic and authenticated execution is limited to adm
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_save_subscription_plan\([\s\S]*?FROM PUBLIC, anon/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.admin_save_subscription_plan\([\s\S]*?TO authenticated/);
 });
+
+test('coupon admin UI uses server RPCs and does not directly mutate billing tables', () => {
+  const paymentsPage = read('admin-payments.html');
+  const paymentsJs = read('js/admin-payments.js');
+  const adminPage = read('admin.html');
+  assert.match(paymentsPage, /Payment gateway not connected/i);
+  assert.match(paymentsJs, /rpc\('admin_list_coupons'\)/);
+  assert.match(paymentsJs, /rpc\('admin_get_coupon_plan_eligibility'/);
+  assert.match(paymentsJs, /rpc\('admin_save_coupon'/);
+  assert.doesNotMatch(paymentsJs, /from\(['"]coupons['"]\)/);
+  assert.doesNotMatch(paymentsJs, /from\(['"]coupon_plan_eligibility['"]\)/);
+  assert.match(adminPage, /href="admin-payments\.html"/);
+});
+
+test('coupon RPCs are admin-only and validate discount, date and redemption limits', () => {
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.admin_save_coupon\(/);
+  assert.match(migration, /auth\.uid\(\) IS NULL OR NOT public\.is_current_user_admin\(\)/);
+  assert.match(migration, /p_discount_type IS NULL OR p_discount_type NOT IN \('percent', 'fixed'\)/);
+  assert.match(migration, /p_discount_value > 100/);
+  assert.match(migration, /p_ends_at <= p_starts_at/);
+  assert.match(migration, /p_max_redemptions_per_user < 1/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.admin_save_coupon\([\s\S]*?FROM PUBLIC, anon/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.admin_save_coupon\([\s\S]*?TO authenticated/);
+});
