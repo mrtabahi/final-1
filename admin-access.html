@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <title>Website Access &amp; Monetization | Decoding HCM</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/admin-access.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="admin-body">
+  <div id="access-loading" class="admin-loading"><div class="admin-loader"></div><strong>Securing your workspace…</strong><span>Verifying administrator access</span></div>
+  <div id="access-app" class="admin-shell" hidden>
+    <aside class="admin-sidebar">
+      <a href="admin.html" class="admin-brand"><span class="admin-brand-mark"><img src="logo.png" alt=""></span><span><strong>DECODING HCM</strong><small>CONTROL CENTER</small></span></a>
+      <div class="admin-workspace-label">BUSINESS &amp; ACCESS</div>
+      <nav class="admin-nav" aria-label="Admin navigation">
+        <a class="admin-nav-link" href="admin.html">▦ Overview</a>
+        <a class="admin-nav-link" href="admin.html#folders">⌨ Folders &amp; Tests</a>
+        <a class="admin-nav-link active" href="admin-access.html" aria-current="page">◇ Website Access &amp; Monetization</a>
+        <a class="admin-nav-link" href="admin.html">← Main Control Center</a>
+      </nav>
+      <div class="admin-sidebar-bottom"><div class="admin-profile"><div class="admin-avatar" id="access-avatar">A</div><div class="admin-profile-copy"><strong id="access-admin-name">Administrator</strong><small id="access-admin-email"></small></div></div><button type="button" class="admin-logout" id="access-logout">↗ <span>Sign out securely</span></button><a class="admin-back-link" href="index.html">← View public website</a></div>
+    </aside>
+    <div class="admin-main-column">
+      <header class="admin-topbar"><a class="admin-icon-button" href="admin.html" aria-label="Back to admin">←</a><div class="admin-breadcrumb"><span>Business &amp; Access</span><span>/</span><strong>Website Access &amp; Monetization</strong></div><div class="admin-topbar-right"><span class="admin-live-dot"></span><span class="admin-live-label">Admin session</span></div></header>
+      <main class="admin-content access-content">
+        <div class="admin-page-heading"><div><div class="admin-kicker">ACCESS CONTROL CENTER</div><h1>Website Access &amp; Monetization</h1><p>Control whether folders and tests are Free, Paid, or inherit access from their parent. Existing content is preserved as Free during the initial rollout.</p></div><div class="admin-heading-actions"><button type="button" id="access-refresh" class="admin-btn admin-btn-secondary">↻ Refresh</button></div></div>
+        <div class="access-warning" role="note"><strong>Rollout safety</strong><p>These settings are only a policy editor. Do not switch any content to Paid in production until passage delivery is server-gated and direct Supabase reads are protected. UI locks alone do not protect paid content.</p></div>
+        <section class="access-kpis" aria-label="Access policy summary">
+          <article><span>Folders</span><strong id="access-folder-count">—</strong></article>
+          <article><span>Tests</span><strong id="access-test-count">—</strong></article>
+          <article><span>Free policies</span><strong id="access-free-count">—</strong></article>
+          <article><span>Paid policies</span><strong id="access-paid-count">—</strong></article>
+        </section>
+        <section class="admin-panel access-panel">
+          <div class="admin-panel-heading"><div><h2>Folder access policies</h2><p>New folders default to Paid. Tests set to Inherit follow the folder’s effective policy.</p></div></div>
+          <div class="access-toolbar"><label class="admin-search">⌕ <input type="search" id="access-search" placeholder="Search folders or tests…"></label><select id="access-filter" class="admin-select" aria-label="Filter by access policy"><option value="all">All policies</option><option value="free">Free</option><option value="paid">Paid</option><option value="inherit">Inherit</option></select></div>
+          <div id="access-folder-list" class="access-folder-list"><div class="admin-empty">Loading access policies…</div></div>
+          <div id="access-status" class="access-status" role="status" aria-live="polite"></div>
+        </section>
+        <section class="admin-panel"><div class="admin-panel-heading"><div><h2>Policy rules</h2><p>These rules define the intended access model for the subscription rollout.</p></div></div>
+          <ul class="access-rules">
+            <li><strong>Free</strong><span>Available to signed-in candidates without a paid plan.</span></li>
+            <li><strong>Paid</strong><span>Requires a valid subscription entitlement or an authorized admin grant.</span></li>
+            <li><strong>Inherit</strong><span>Uses the parent folder’s policy. A test can override its folder by choosing Free or Paid.</span></li>
+            <li><strong>Default for new content</strong><span>Paid. Existing content is backfilled to Free to avoid unexpectedly locking current users.</span></li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin-access.js"></script>
+</body>
+</html>
