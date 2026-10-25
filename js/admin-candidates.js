@@ -5,7 +5,8 @@
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let candidates = [], filtered = [], selected = null, attempts = [], activityById = new Map();
   const date = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); };
-  const dateTime = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString(); };\n  const durationLabel = seconds => { const s=Math.max(0,Number(seconds)||0), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), r=s%60; return (h?h+'h ':'')+(m?m+'m ':'')+(!h&&!m?r+'s':'').trim() || '0s'; };\n  const initials = v => String(v || 'C').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+  const dateTime = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString(); };
+  const durationLabel = seconds => { const s=Math.max(0,Number(seconds)||0), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), r=s%60; return (h?h+'h ':'')+(m?m+'m ':'')+(!h&&!m?r+'s':'').trim() || '0s'; };\n  const initials = v => String(v || 'C').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
   function renderShell() {
     const view = $('view-module'); if (!view) return;
     view.innerHTML = `
