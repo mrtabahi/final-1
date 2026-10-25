@@ -339,7 +339,7 @@ const AuthManager = {
       return null;
     }
 
-    if (!profile || profile.role !== 'admin') {
+    if (!profile || !['admin', 'head_admin'].includes(String(profile.role || '').toLowerCase())) {
       window.location.href = '/index.html';
       return null;
     }
