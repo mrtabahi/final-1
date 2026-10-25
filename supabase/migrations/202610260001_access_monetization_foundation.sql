@@ -143,6 +143,53 @@ CREATE TABLE IF NOT EXISTS public.access_policies (
   UNIQUE(resource_type, resource_key)
 );
 
+-- Immutable audit trail for access-mode changes on folders and tests.
+CREATE TABLE IF NOT EXISTS public.access_policy_audit (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  resource_type text NOT NULL CHECK (resource_type IN ('folder', 'test')),
+  resource_id uuid NOT NULL,
+  old_mode text,
+  new_mode text NOT NULL CHECK (new_mode IN ('inherit', 'free', 'paid')),
+  actor_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  changed_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS access_policy_audit_resource_lookup
+  ON public.access_policy_audit(resource_type, resource_id, changed_at DESC);
+
+CREATE OR REPLACE FUNCTION public.audit_access_mode_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF TG_OP = 'UPDATE' AND OLD.access_mode IS NOT DISTINCT FROM NEW.access_mode THEN
+    RETURN NEW;
+  END IF;
+  INSERT INTO public.access_policy_audit(resource_type, resource_id, old_mode, new_mode, actor_user_id)
+  VALUES (
+    CASE WHEN TG_TABLE_NAME = 'folders' THEN 'folder' ELSE 'test' END,
+    NEW.id,
+    CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.access_mode END,
+    NEW.access_mode,
+    auth.uid()
+  );
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS folders_access_mode_audit ON public.folders;
+CREATE TRIGGER folders_access_mode_audit
+AFTER INSERT OR UPDATE OF access_mode ON public.folders
+FOR EACH ROW EXECUTE FUNCTION public.audit_access_mode_change();
+
+DROP TRIGGER IF EXISTS tests_access_mode_audit ON public.tests;
+CREATE TRIGGER tests_access_mode_audit
+AFTER INSERT OR UPDATE OF access_mode ON public.tests
+FOR EACH ROW EXECUTE FUNCTION public.audit_access_mode_change();
+
+REVOKE ALL ON FUNCTION public.audit_access_mode_change() FROM PUBLIC, anon, authenticated;
+
 CREATE INDEX IF NOT EXISTS user_subscriptions_active_lookup
   ON public.user_subscriptions(user_id, status, starts_at, ends_at);
 CREATE INDEX IF NOT EXISTS plan_entitlements_resource_lookup
@@ -161,7 +208,7 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
     'subscription_plans','plan_entitlements','user_subscriptions',
     'user_entitlement_overrides','coupons','coupon_plan_eligibility',
-    'orders','payment_transactions','coupon_redemptions','access_policies'
+    'orders','payment_transactions','coupon_redemptions','access_policies','access_policy_audit'
   ] LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('REVOKE ALL ON TABLE public.%I FROM anon, authenticated', t);
