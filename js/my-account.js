@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const say=(text,isError=false)=>{msg.textContent=text;msg.classList.toggle('is-error',isError);msg.classList.toggle('is-success',!isError)};
  $('profile-name').value=profile.full_name||'';$('profile-phone').value=profile.phone||'';
  $('profile-email').value=user.email||profile.email||'';$('profile-status').value=profile.phone_verified?'Verified':'Verification required';
- $('account-logout-btn')?.addEventListener('click',async e=>{e.preventDefault();if(!window.confirm('Are you sure you want to log out?'))return;try{await AuthManager.logout()}catch(err){console.error(err);say('Logout failed. Please try again.',true)}});
+ $('account-logout-btn')?.addEventListener('click',async e=>{e.preventDefault();if(!await window.showBrandedDialog('Are you sure you want to log out?', {confirm:true}))return;try{await AuthManager.logout()}catch(err){console.error(err);say('Logout failed. Please try again.',true)}});
  $('cancel-password-btn')?.addEventListener('click',()=>{ $('password-form').reset(); say('Password change cancelled.'); });
  $('profile-form').addEventListener('submit',async e=>{
   e.preventDefault();const btn=e.currentTarget.querySelector('[type="submit"]');
