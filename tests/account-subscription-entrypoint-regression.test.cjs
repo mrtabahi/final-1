@@ -39,8 +39,16 @@ test('legacy subscription URL redirects to My Account and the admin editor offer
   const legacy = read('my-subscription.html');
   const adminContent = read('js/admin-content.js');
   const home = read('index.html');
+  const homeScript = read('js/home.js');
+  const subscriptionScript = read('js/account-subscription.js');
+  const config = read('js/config.js');
   assert.match(legacy, /my_account\.html#upgrade-plan/);
   assert.doesNotMatch(home, /href="my-subscription\.html"/);
   assert.match(adminContent, /site-content-use-subscription-link/);
   assert.match(adminContent, /my_account\.html#upgrade-plan/);
+  assert.match(homeScript, /item\.cta_label&&item\.cta_url/);
+  assert.match(homeScript, /data-content-cta/);
+  assert.match(subscriptionScript, /location\.hash==='#upgrade-plan'/);
+  assert.match(subscriptionScript, /addEventListener\('hashchange'/);
+  assert.match(config, /currentHostname\.endsWith\('\.vercel\.app'\) && !PRODUCTION_HOSTNAMES\.has\(currentHostname\)/);
 });
