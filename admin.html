@@ -78,7 +78,7 @@
     <section class="admin-progress-track" aria-labelledby="progress-function-title">
       <h3 id="progress-function-title"><span>02</span> Functions &amp; backend</h3>
       <ul>
-        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>Regression suite and Edge Function type checks</strong><small>Regression run #479 passed; the homepage upgrade CTA and staging-only empty-entitlement checkout guard are covered. Latest branch commit cbf7cac6 is now deployed to a READY preview and the account, homepage, config and legacy redirect returned HTTP 200.</small></div></li>
+        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>Regression suite and Edge Function type checks</strong><small>Regression run #479 passed; follow-up tracker commit CI #481 also passed. The feature branch preview is READY; HTTP smoke checks for My Account, homepage, environment config and the legacy subscription redirect returned 200. Open the development PR below for the current preview URL.</small></div></li>
         <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Authenticated staging end-to-end tests</strong><small>Next: configure Razorpay TEST secrets in staging (RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET), then verify authenticated candidate/admin flows and paid-content delivery.</small></div></li>
         <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Payment lifecycle test matrix</strong><small>Still pending: signed test webhooks, duplicates, failed/pending payments, amount/currency mismatch and refunds. Do not use live keys for these checks.</small></div></li>
       </ul>
