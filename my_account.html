@@ -6,6 +6,13 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>My Account | Decoding HCM</title>
 <link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix">
+<style>
+.password-form-actions{display:flex;gap:12px;width:100%;margin-top:.25rem}
+.password-form-actions .btn{flex:1;min-width:0;min-height:46px;height:46px;padding:.65rem 1rem}
+.password-form-actions .password-cancel-btn{background:#f1f5f9;color:#334155;border:1px solid #cbd5e1}
+.password-form-actions .password-cancel-btn:hover{background:#e2e8f0}
+@media(max-width:420px){.password-form-actions{gap:10px}.password-form-actions .btn{padding:.6rem .5rem;font-size:.92rem}}
+</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head><body><nav class="navbar">
 <a href="index.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="SRB"></div><div><div class="brand-title">DECODING HCM</div><div class="brand-subtitle">BSF HCM Preparation</div></div></a>
@@ -13,7 +20,7 @@
 <form id="profile-form"><div class="grid-2"><div class="form-group"><label class="form-label" for="profile-name">Name</label><input id="profile-name" class="form-control" required maxlength="100"></div><div class="form-group"><label class="form-label" for="profile-phone">Phone</label><input id="profile-phone" class="form-control" readonly></div></div>
 <div class="grid-2"><div class="form-group"><label class="form-label" for="profile-email">Email</label><input id="profile-email" type="email" class="form-control" required></div><div class="form-group"><label class="form-label" for="profile-status">Account Status</label><input id="profile-status" class="form-control" readonly></div></div>
 <button class="btn btn-primary" type="submit">Save Name / Email</button></form><hr style="margin:2rem 0"><h3>Change Password</h3>
-<form id="password-form"><div class="form-group"><label class="form-label" for="new-password">New Password</label><input id="new-password" type="password" minlength="8" autocomplete="new-password" class="form-control" required></div><button class="btn btn-secondary" type="submit">Change Password</button></form><button id="account-logout-btn" class="btn btn-danger" type="button" style="margin-top:1rem">Log Out</button><p id="profile-message" class="form-help" role="status" aria-live="polite" style="margin-top:1rem"></p></section></div>
+<form id="password-form"><div class="form-group"><label class="form-label" for="new-password">New Password</label><input id="new-password" type="password" minlength="8" autocomplete="new-password" class="form-control" required></div><div class="password-form-actions"><button class="btn btn-secondary" type="submit">Change Password</button><button class="btn btn-secondary password-cancel-btn" id="cancel-password-btn" type="button">Cancel</button></div></form><button id="account-logout-btn" class="btn btn-danger" type="button" style="margin-top:1rem">Log Out</button><p id="profile-message" class="form-help" role="status" aria-live="polite" style="margin-top:1rem"></p></section></div>
 <script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/my-account.js"></script>
 
 <script defer src="js/pro-menu.js?v=20261024-pro-nav2"></script>
