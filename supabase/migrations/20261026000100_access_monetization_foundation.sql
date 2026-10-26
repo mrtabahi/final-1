@@ -1094,7 +1094,7 @@ DECLARE
   v_order public.orders%ROWTYPE;
   v_transaction_id uuid;
 BEGIN
-  IF COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+  IF COALESCE(NULLIF(current_setting('request.jwt.claim.role', true), ''), NULLIF((NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'), ''), '') <> 'service_role' THEN
     RAISE EXCEPTION 'Trusted payment verifier required' USING ERRCODE = '42501';
   END IF;
   IF p_provider IS NULL OR length(btrim(p_provider)) = 0 OR p_provider_transaction_id IS NULL
@@ -1138,7 +1138,7 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $function$
 BEGIN
-  IF COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+  IF COALESCE(NULLIF(current_setting('request.jwt.claim.role', true), ''), NULLIF((NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'), ''), '') <> 'service_role' THEN
     RAISE EXCEPTION 'Trusted payment verifier required' USING ERRCODE = '42501';
   END IF;
   UPDATE public.payment_transactions
@@ -1175,7 +1175,7 @@ DECLARE
   v_subscription_id uuid;
   v_transaction_id uuid;
 BEGIN
-  IF COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+  IF COALESCE(NULLIF(current_setting('request.jwt.claim.role', true), ''), NULLIF((NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'), ''), '') <> 'service_role' THEN
     RAISE EXCEPTION 'Trusted payment verifier required' USING ERRCODE = '42501';
   END IF;
   IF p_provider IS NULL OR length(btrim(p_provider)) = 0 OR length(p_provider) > 80
@@ -1350,7 +1350,7 @@ DECLARE
   v_order public.orders%ROWTYPE;
   v_transaction_id uuid;
 BEGIN
-  IF COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+  IF COALESCE(NULLIF(current_setting('request.jwt.claim.role', true), ''), NULLIF((NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'), ''), '') <> 'service_role' THEN
     RAISE EXCEPTION 'Trusted payment verifier required' USING ERRCODE = '42501';
   END IF;
   IF p_provider IS NULL OR length(btrim(p_provider)) = 0 OR length(p_provider) > 80
