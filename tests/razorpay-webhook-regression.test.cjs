@@ -28,8 +28,13 @@ test('webhook retries with an existing provider event ID are idempotently acknow
   assert.match(webhook, /if \(lookupError\) return json\(503/);
 });
 
+test('order.paid webhook requires both captured status and captured flag', () => {
+  assert.match(webhook, /if \(payment\.status !== "captured" \|\| payment\.captured !== true\)/);
+  assert.doesNotMatch(webhook, /payment\.status !== "captured" && payment\.captured !== true/);
+});
+
 test('captured payments must match the local order amount and currency', () => {
-  assert.match(webhook, /payment\.status !== "captured" && payment\.captured !== true/);
+  assert.match(webhook, /payment\.status !== "captured" \|\| payment\.captured !== true/);
   assert.match(webhook, /Number\(payment\.amount\) !== Number\(order\.total_minor\) \|\| payment\.currency !== order\.currency/);
   assert.match(webhook, /return json\(400, \{ error: "Payment amount or currency mismatch\." \}\)/);
 });
