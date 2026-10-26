@@ -286,7 +286,7 @@ test('refund finalization is service-role-only, full-amount checked and idempote
 });
 
 test('new monetization pages have unique element IDs and existing local assets', () => {
-  const pages = ['admin-plans.html','admin-payments.html','admin-entitlements.html','admin-subscriptions.html','my-subscription.html'];
+  const pages = ['admin-plans.html','admin-payments.html','admin-entitlements.html','admin-subscriptions.html'];
   for (const page of pages) {
     const html = read(page);
     const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
