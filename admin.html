@@ -78,9 +78,9 @@
     <section class="admin-progress-track" aria-labelledby="progress-function-title">
       <h3 id="progress-function-title"><span>02</span> Functions &amp; backend</h3>
       <ul>
-        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>Regression suite and Edge Function type checks</strong><small>Last verified run #461 passed; newest preview build is blocked by Vercel's build-rate limit.</small></div></li>
-        <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Authenticated staging end-to-end tests</strong><small>Exercise admin/candidate permissions and paid-content delivery over the actual API.</small></div></li>
-        <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Payment lifecycle test matrix</strong><small>Signed test webhooks, duplicates, failed/pending payments, amount mismatch and refunds.</small></div></li>
+        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>Regression suite and Edge Function type checks</strong><small>Last verified run #469 passed; staging rejects checkout when a plan has no configured entitlements. Latest preview build is blocked by Vercel's build-rate limit.</small></div></li>
+        <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Authenticated staging end-to-end tests</strong><small>Next: authenticated admin/candidate permissions and paid-content delivery over the actual API.</small></div></li>
+        <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Payment lifecycle test matrix</strong><small>Still pending: signed test webhooks, duplicates, failed/pending payments, amount mismatch and refunds.</small></div></li>
       </ul>
     </section>
     <section class="admin-progress-track" aria-labelledby="progress-release-title">
@@ -94,7 +94,7 @@
   </div>
   <div class="admin-progress-footer">
     <p><strong>How to read this:</strong> This is a manually maintained project snapshot, not a live CI feed. “Ready” means only the specific checks listed above passed; it does not mean the whole site is production-ready.</p>
-    <div class="admin-progress-links"><a href="https://github.com/mrtabahi/final-1/pull/54" target="_blank" rel="noopener noreferrer">View development PR ↗</a><a href="https://github.com/mrtabahi/final-1/actions/workflows/regression-tests.yml" target="_blank" rel="noopener noreferrer">View latest checks ↗</a></div>
+    <div class="admin-progress-links"><a href="https://github.com/mrtabahi/final-1/pull/64" target="_blank" rel="noopener noreferrer">View development PR ↗</a><a href="https://github.com/mrtabahi/final-1/actions/workflows/regression-tests.yml" target="_blank" rel="noopener noreferrer">View latest checks ↗</a></div>
   </div>
 </section>
 <div class="admin-dashboard-grid"><section class="admin-panel admin-panel-wide"><div class="admin-panel-heading"><div><h2>Recent candidate attempts</h2><p>Latest submitted typing sessions</p></div><button type="button" class="admin-text-button" id="dashboard-view-all">View all →</button></div><div id="dashboard-recent-attempts"><div class="admin-empty">Loading recent activity…</div></div></section>
