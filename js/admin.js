@@ -326,7 +326,7 @@
               const targetId=button.dataset.roleTarget;
               const label=nextRole==='admin'?'promote this candidate to admin':'remove this account’s admin access';
               if(!isHeadAdmin){alert('Only the head admin can change administrator roles.');return;}
-              if(!confirm('Are you sure you want to '+label+'?'))return;
+              if(!await window.showBrandedDialog('Are you sure you want to '+label+'?',{confirm:true}))return;
               button.disabled=true;
               try{
                 const {error}=await supabaseClient.rpc('admin_set_user_role',{p_user_id:targetId,p_role:nextRole});
@@ -1209,7 +1209,7 @@ async function loadDashboard() {
         if (!folder) return;
         const nextActive = !folder.active;
         const action = nextActive ? 'enable' : 'disable';
-        if (!confirm((nextActive ? 'Enable' : 'Disable') + ' folder "' + folder.name + '"? ' + (nextActive ? 'Its active tests will become visible to candidates again.' : 'Tests in this folder will no longer be available to candidates.'))) return;
+        if (!await window.showBrandedDialog((nextActive ? 'Enable' : 'Disable') + ' folder \"' + folder.name + '\"? ' + (nextActive ? 'Its active tests will become visible to candidates again.' : 'Tests in this folder will no longer be available to candidates.'), {confirm:true})) return;
         const { data: updatedFolder, error } = await supabaseClient.from('folders').update({ active: nextActive }).eq('id', id).select('id, active').maybeSingle();
         if (error) { alert('Could not ' + action + ' folder: ' + error.message); return; }
         if (!updatedFolder) { alert('Folder was not changed. Your admin permissions may have expired; refresh and sign in again.'); return; }
@@ -1221,7 +1221,7 @@ async function loadDashboard() {
         if (!test) return;
         const nextActive = !test.active;
         const action = nextActive ? 'enable' : 'disable';
-        if (!confirm((nextActive ? 'Enable' : 'Disable') + ' typing test "' + test.title + '"?')) return;
+        if (!await window.showBrandedDialog((nextActive ? 'Enable' : 'Disable') + ' typing test \"' + test.title + '\"?', {confirm:true})) return;
         const { error } = await supabaseClient.from('tests').update({ active: nextActive }).eq('id', id);
         if (error) { alert('Could not ' + action + ' typing test: ' + error.message); return; }
         await loadManageTests();
@@ -1229,7 +1229,7 @@ async function loadDashboard() {
 
     async function deleteFolder(id) {
         const folder = cachedFolders.find(item => String(item.id) === String(id));
-        if (!folder || !confirm('Delete folder "' + folder.name + '"? Folders linked to tests may be protected by database constraints.')) return;
+        if (!folder || !await window.showBrandedDialog('Delete folder \"' + folder.name + '\"? Folders linked to tests may be protected by database constraints.', {confirm:true})) return;
         const { error } = await supabaseClient.from('folders').delete().eq('id', id);
         if (error) {
             alert(error.code === '23503' ? 'This folder still has typing tests linked to it. Move those tests to another folder or delete them first; you can also disable this folder instead.' : 'Could not delete folder: ' + error.message);
@@ -1393,7 +1393,7 @@ async function loadDashboard() {
 
     async function deleteTest(id) {
         const test = cachedTests.find(item => String(item.id) === String(id));
-        if (!test || !confirm('Permanently delete test "' + test.title + '"? Existing attempts or sessions may be protected by database constraints.')) return;
+        if (!test || !await window.showBrandedDialog('Permanently delete test \"' + test.title + '\"? Existing attempts or sessions may be protected by database constraints.', {confirm:true})) return;
         const { error } = await supabaseClient.from('tests').delete().eq('id', id);
         if (error) { alert(error.code === '23503' ? 'This test has saved attempts or exam sessions, so it cannot be permanently deleted. Disable it instead to keep historical results safe.' : 'Could not delete test: ' + error.message); return; }
         await loadManageTests();

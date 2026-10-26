@@ -170,7 +170,7 @@
     const included = drafts.filter(d => d.include && d.title.trim() && d.text.trim().length >= 1);
     if ((!selectedFolderId && !folderName) || !included.length) { setStatus('Choose a folder and at least one non-empty reviewed test.', true); return; }
     const duplicateTitles = included.map(d => d.title.trim().toLowerCase());
-    if (new Set(duplicateTitles).size !== duplicateTitles.length && !confirm('Some selected PDFs have duplicate test titles. Save them anyway?')) return;
+    if (new Set(duplicateTitles).size !== duplicateTitles.length && !await window.showBrandedDialog('Some selected PDFs have duplicate test titles. Save them anyway?', {confirm:true})) return;
     const saveButton = $('bulk-pdf-save');
     saveButton.disabled = true;
     try {
@@ -189,7 +189,7 @@
       if (testsError) throw testsError;
       const existing = new Set((existingTests || []).map(t => t.title.trim().toLowerCase() + '|' + t.passage.trim()));
       const duplicates = included.filter(d => existing.has(d.title.trim().toLowerCase() + '|' + d.text.trim()));
-      if (duplicates.length && !confirm(duplicates.length + ' exact duplicate test(s) already exist in this folder. Skip duplicates and continue?')) return;
+      if (duplicates.length && !await window.showBrandedDialog(duplicates.length + ' exact duplicate test(s) already exist in this folder. Skip duplicates and continue?', {confirm:true})) return;
       const rows = included.filter(d => !existing.has(d.title.trim().toLowerCase() + '|' + d.text.trim())).map(d => ({
         title: d.title.trim(), folder_id: folder.id, language: $('bulk-language').value,
         duration_minutes: Number($('bulk-duration').value) || 5,
