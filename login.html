@@ -47,6 +47,7 @@ $('login-form').onsubmit = async e => {
         if (profile.role === 'admin') {
             window.location.href = 'admin.html';
         } else if (profile.role === 'candidate') {
+            await showCandidateWelcome(profile);
             const requested = new URLSearchParams(window.location.search).get('redirect') || '';
             const safeTarget = requested && !requested.startsWith('//') && !requested.includes('://') && !requested.startsWith('/\\') ? requested : '';
             window.location.href = safeTarget || 'index.html';
