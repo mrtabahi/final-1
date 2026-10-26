@@ -182,9 +182,9 @@ async function initializeSavedPassages(){
   if(typeof AuthManager!=='undefined'&&typeof AuthManager.getUser==='function') user=await AuthManager.getUser();
   SAVED_KEY='decodingHcmSelfTestPassagesV1:'+(user?.id||'guest');
  } catch(_){SAVED_KEY='decodingHcmSelfTestPassagesV1:guest';}
- // Old saves used one shared key for every account on this browser. Never import
- // them into an account, because we cannot reliably identify their owner.
- try{localStorage.removeItem(LEGACY_SAVED_KEY);}catch(_){}
+ // Old saves used one shared key for every account on this browser. Do not import
+ // them into any account because their owner cannot be verified; leave the legacy
+ // data untouched rather than deleting potentially personal material.
  refreshSaved();
 }
 void initializeSavedPassages();
