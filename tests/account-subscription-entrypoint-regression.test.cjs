@@ -9,6 +9,7 @@ test('subscription UI is embedded in My Account with an accessible upgrade dialo
   const page = read('my_account.html');
   const script = read('js/account-subscription.js');
   const css = read('css/account-subscription.css');
+  const catalogMigration = read('supabase/migrations/20261026065000_subscription_plan_display_details.sql');
   assert.match(page, /id="account-subscription"/);
   assert.match(page, /id="account-upgrade-modal"/);
   assert.match(page, /role="dialog" aria-modal="true"/);
@@ -22,6 +23,9 @@ test('subscription UI is embedded in My Account with an accessible upgrade dialo
   assert.match(script, /functions\.invoke\('create-checkout'/);
   assert.match(script, /functions\.invoke\('verify-razorpay-payment'/);
   assert.match(script, /event\.key==='Escape'/);
+  assert.match(script, /account-plan-features/);
+  assert.match(catalogMigration, /get_active_subscription_plan_details/);
+  assert.match(catalogMigration, /GRANT EXECUTE ON FUNCTION public\\.get_active_subscription_plan_details\\(\\) TO anon, authenticated/);
   assert.match(css, /accountGlow/);
   assert.match(css, /prefers-reduced-motion:reduce/);
 });
