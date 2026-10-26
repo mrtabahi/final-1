@@ -49,3 +49,22 @@ test("shared admin design system keeps keyboard focus and reduced-motion support
   assert.match(css, /\.admin-module-grid>\.admin-module-card-link:focus-visible/);
   assert.match(css, /@media\(max-width:760px\)/);
 });
+
+
+test("dashboard exposes a truthful development progress tracker with release blockers", () => {
+  const html = readRepoFile("admin.html");
+  const css = readRepoFile("css/admin.css");
+
+  assert.match(html, /id="development-progress-title"/);
+  assert.match(html, /UI &amp; admin experience/);
+  assert.match(html, /Functions &amp; backend/);
+  assert.match(html, /Security &amp; release gates/);
+  assert.match(html, /Authenticated staging end-to-end tests/);
+  assert.match(html, /Payment lifecycle test matrix/);
+  assert.match(html, /Leaderboard privacy and security findings/);
+  assert.match(html, /Backup, migration and rollback review/);
+  assert.match(html, /manually maintained project snapshot, not a live CI feed/);
+  assert.match(html, /actions\/runs\/40274881214/);
+  assert.match(css, /\.admin-progress-columns/);
+  assert.match(css, /@media\(max-width:700px\)\{\.admin-progress-summary,\.admin-progress-columns/);
+});
