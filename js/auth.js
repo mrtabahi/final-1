@@ -369,7 +369,7 @@ const AuthManager = {
     }
     const message = 'Is feature ko use karne ke liye login zaroori hai. OK dabane par Login page khulega. Cancel dabane par aap Home page par rahenge.';
     if (window.confirm(message)) {
-      const returnTo = window.location.pathname.replace(/^\\//, '') + window.location.search + window.location.hash;
+      const returnTo = window.location.pathname.slice(1) + window.location.search + window.location.hash;
       window.location.href = '/login.html?redirect=' + encodeURIComponent(returnTo);
     } else {
       window.location.href = '/index.html';
