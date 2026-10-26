@@ -145,6 +145,9 @@
             element.style.setProperty('display', visible ? 'block' : 'none', 'important');
         });
         currentView = view;
+        if (!isCore && $('module-capabilities')) {
+            $('module-capabilities').innerHTML = '<div class="admin-empty" role="status">Opening this section… If it does not load, use Reload in the top bar and try again.</div>';
+        }
         document.querySelectorAll('.admin-nav-link').forEach(link => link.classList.remove('active'));
         const activeMap = { dashboard: 'nav-dash', tests: 'nav-tests', attempts: 'nav-attempts' };
         if (activeMap[view] && $(activeMap[view])) $(activeMap[view]).classList.add('active');
@@ -1901,6 +1904,8 @@ async function loadDashboard() {
                 const module = button.getAttribute('data-module');
                 showAdminView(module);
                 $('admin-sidebar')?.classList.remove('is-open');
+                document.body.classList.remove('admin-menu-open');
+                $('admin-menu-toggle')?.setAttribute('aria-expanded', 'false');
             });
         });
 
@@ -2166,7 +2171,23 @@ async function loadDashboard() {
         setupTestActions();
 
         setupAttemptActions();
-        $('admin-menu-toggle')?.addEventListener('click', () => $('admin-sidebar')?.classList.toggle('is-open'));
+        const sidebar = $('admin-sidebar');
+        const menuBackdrop = $('admin-sidebar-backdrop');
+        const setMobileMenuOpen = open => {
+            sidebar?.classList.toggle('is-open', Boolean(open));
+            document.body.classList.toggle('admin-menu-open', Boolean(open));
+            $('admin-menu-toggle')?.setAttribute('aria-expanded', String(Boolean(open)));
+        };
+        $('admin-menu-toggle')?.addEventListener('click', () => {
+            setMobileMenuOpen(!sidebar?.classList.contains('is-open'));
+        });
+        menuBackdrop?.addEventListener('click', () => setMobileMenuOpen(false));
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') setMobileMenuOpen(false);
+        });
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 760) setMobileMenuOpen(false);
+        });
         $('admin-refresh')?.addEventListener('click', () => {
             const button = $('admin-refresh');
             if (button?.disabled) return;
