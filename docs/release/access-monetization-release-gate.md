@@ -57,6 +57,16 @@ This is an evidence snapshot, not a production sign-off.
 - Transaction-only access test outcome: 10/10 assertions passed; all fixture rows were rolled back and independently verified absent. This was a direct SQL invocation of `public.can_access_test`, not an authenticated HTTP API test.
 - Production advisor findings were observed separately. No production database changes were made as part of this audit.
 
+## Current release blockers and latest verification — 2026-10-26
+
+- The newest commit's combined status currently reports a **Vercel failure** with the build-rate-limit URL. The latest READY preview observed in Vercel is for commit `7c1ed39958d5c1c8a8d2ca2963beec39d2fec2f7`, not the newest security-test commit. Do not treat the old preview as verification of current source.
+- GitHub compare reports the feature branch is **181 commits ahead and 8 behind** `main` (diverged). Review and reconcile the base branch before merge; do not perform a blind merge or production promotion.
+- Staging Razorpay webhook was found to differ from the feature branch: deployed version 5 used an `&&` check for the captured status/flag, while branch source requires `||` so both signals must match. Deployed the exact branch `index.ts` to staging as version 6, preserved `verify_jwt=false` for the external provider callback, and re-read it. Verification confirmed the live staging function is byte-for-byte identical to branch source and contains the strict guard. No production function was changed. This deployment has not yet been validated with signed Razorpay Test Mode events.
+- Staging Security Advisor still reports 16 RLS-enabled tables without policies, 27 authenticated-executable SECURITY DEFINER function findings, one anon-executable SECURITY DEFINER plan-catalog function, and leaked-password protection disabled. Initial source inspection shows admin RPCs checked in this sample require the current user to be an administrator, but the entire finding set still needs a systematic disposition and authenticated negative tests.
+- Production Security Advisor (read-only) reports one SECURITY DEFINER view (`public.public_leaderboard_attempts`), mutable search paths on `handle_new_user` and `touch_updated_at`, three anon-executable SECURITY DEFINER functions (`admin_get_candidate_emails`, `has_candidate_permission`, `is_head_admin`), seven authenticated-executable SECURITY DEFINER functions, and leaked-password protection disabled. These are observations only; no production changes were made. Inspect the view definition/grants and each function's authorization contract before accepting or changing them.
+- The new source-level typing-result security test is committed, but the combined status lookup for its commit reports the Vercel build-rate-limit failure and no successful current-head GitHub Actions result was returned. The prior green CI run is evidence for its earlier SHA only, not this exact head.
+- Authenticated HTTP/REST/RPC and browser end-to-end tests are still outstanding. The 10/10 transaction-only access function assertions are not a substitute for these checks.
+
 ## 6. Release decision
 - [ ] All CI and functional gates pass with evidence tied to the same commit.
 - [ ] Security findings are fixed or formally accepted with documented rationale.
