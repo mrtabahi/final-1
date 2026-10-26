@@ -49,9 +49,25 @@
       $('registration-message').value = settings?.registration_paused_message || 'New account creation is temporarily paused. Please try again later.';
       $('registration-status').textContent = settings?.registration_enabled === false ? 'Registration is currently paused.' : 'Registration is currently enabled.';
       const rows = messages || [];
+      // profiles.email may be empty on older accounts; resolve the authoritative
+      // email from Supabase Auth using the admin-only RPC, as in the save form.
+      const emailById = new Map(rows.map(row => [String(row.user_id), String(row.profiles?.email || '').trim()]));
+      if (rows.length) {
+        const { data: authEmails, error: rpcError } = await supabaseClient.rpc(
+          'admin_get_candidate_emails',
+          { p_user_ids: rows.map(row => row.user_id) }
+        );
+        if (!rpcError) {
+          for (const item of authEmails || []) {
+            if (item.email) emailById.set(String(item.user_id), String(item.email).trim());
+          }
+        } else {
+          console.warn('Could not load authoritative candidate emails for configured messages:', rpcError);
+        }
+      }
       $('login-message-count').textContent = rows.length + ' message' + (rows.length === 1 ? '' : 's');
       list.innerHTML = rows.length ? '<div class="candidate-list">' + rows.map(row => `
-        <article class="candidate-row"><div class="candidate-avatar">✉</div><div class="candidate-main"><strong>${esc(row.profiles?.full_name || 'Candidate')}</strong><span>${esc(row.profiles?.email || 'Email not available')}</span><small>Updated ${esc(when(row.updated_at))}</small><p>${esc(row.message)}</p></div><div class="candidate-row-meta"><span class="candidate-status ${row.enabled ? 'is-verified' : 'is-pending'}">${row.enabled ? 'Popup enabled' : 'Popup disabled'}</span><button type="button" class="admin-btn admin-btn-secondary" data-remove-login-message="${esc(row.user_id)}">Remove</button></div></article>`).join('') + '</div>' : '<div class="admin-empty">No personalized login messages configured yet.</div>';
+        <article class="candidate-row"><div class="candidate-avatar">✉</div><div class="candidate-main"><strong>${esc(row.profiles?.full_name || 'Candidate')}</strong><span>${esc(emailById.get(String(row.user_id)) || 'Email not available')}</span><small>Updated ${esc(when(row.updated_at))}</small><p>${esc(row.message)}</p></div><div class="candidate-row-meta"><span class="candidate-status ${row.enabled ? 'is-verified' : 'is-pending'}">${row.enabled ? 'Popup enabled' : 'Popup disabled'}</span><button type="button" class="admin-btn admin-btn-secondary" data-remove-login-message="${esc(row.user_id)}">Remove</button></div></article>`).join('') + '</div>' : '<div class="admin-empty">No personalized login messages configured yet.</div>';
     } catch (error) {
       list.innerHTML = '<div class="admin-error">Could not load login controls: ' + esc(error.message) + '</div>';
     }
