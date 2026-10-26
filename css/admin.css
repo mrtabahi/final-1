@@ -206,3 +206,13 @@
 @media(prefers-reduced-motion:reduce){
   .admin-body *, .admin-body *:before, .admin-body *:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+
+/* Dashboard operational cards are real navigation links, not placeholder actions */
+.admin-module-grid>.admin-module-card-link{display:flex;flex-direction:column;align-items:flex-start;gap:.55rem;min-width:0;padding:1.05rem;border:1px solid var(--admin-border,#e1e8f1);border-radius:14px;background:var(--admin-card,#fff);color:inherit;text-align:left;text-decoration:none;box-shadow:0 4px 16px rgba(24,43,75,.035);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.admin-module-grid>.admin-module-card-link:hover{transform:translateY(-2px);border-color:#b9cafa;box-shadow:0 12px 28px rgba(24,43,75,.08)}
+.admin-module-grid>.admin-module-card-link:focus-visible{outline:3px solid rgba(72,116,255,.75);outline-offset:3px}
+.admin-module-grid>.admin-module-card-link>span{font-size:1.25rem;color:var(--admin-primary,#315ee8)}
+.admin-module-grid>.admin-module-card-link>strong{font-size:.92rem;color:var(--admin-ink,#14243b)}
+.admin-module-grid>.admin-module-card-link>small{font-size:.76rem;line-height:1.55;color:var(--admin-muted,#66768c)}
+.admin-module-grid>.admin-module-card-link>em{margin-top:auto;font-style:normal;font-size:.68rem;font-weight:800;color:#2458a6;background:#eaf2ff;border-radius:999px;padding:.35rem .55rem}
