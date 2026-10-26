@@ -136,7 +136,7 @@
     const button = event.target.closest('[data-remove-login-message]');
     if (!button) return;
     const userId = button.getAttribute('data-remove-login-message');
-    if (!confirm('Remove this candidate login popup?')) return;
+    if (!await window.showBrandedDialog('Remove this candidate login popup?', {confirm:true})) return;
     const { error } = await supabaseClient.from('candidate_login_messages').delete().eq('user_id', userId);
     if (error) { alert('Could not remove message: ' + error.message); return; }
     await loadSettingsAndMessages();
