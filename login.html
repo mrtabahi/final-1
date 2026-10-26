@@ -17,10 +17,56 @@ async function refreshRegistrationSetting() {
 async function showCandidateWelcome(profile) {
   if (!profile || profile.role !== 'candidate') return;
   try {
-    const { data } = await supabaseClient.from('candidate_login_messages')
+    const { data, error } = await supabaseClient.from('candidate_login_messages')
       .select('message,enabled').eq('user_id', profile.id).maybeSingle();
-    if (data?.enabled && data.message) alert(data.message);
-  } catch (e) { console.debug('No custom login greeting:', e?.message || e); }
+    if (error || !data?.enabled || !data.message) return;
+
+    // Show the administrator's personalized note in a branded modal instead of
+    // the browser's generic "site says" alert. Await dismissal before routing.
+    const safe = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[ch]));
+    const name = String(profile.full_name || 'there').trim() || 'there';
+    const style = document.createElement('style');
+    style.id = 'founder-note-styles';
+    style.textContent = `
+      #founder-note-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,18,40,.72);backdrop-filter:blur(7px);animation:founderFadeIn .2s ease-out}
+      #founder-note-overlay .founder-note-card{position:relative;overflow:hidden;width:min(100%,500px);border:1px solid rgba(255,255,255,.7);border-radius:22px;background:linear-gradient(155deg,#fff 0%,#f8fbff 100%);box-shadow:0 28px 90px rgba(0,0,0,.35);font-family:inherit;animation:founderRiseIn .28s ease-out}
+      #founder-note-overlay .founder-note-banner{padding:25px 28px 23px;background:linear-gradient(120deg,#0c2461 0%,#174ea6 55%,#2878d0 100%);color:#fff;position:relative}
+      #founder-note-overlay .founder-note-banner:after{content:"";position:absolute;width:150px;height:150px;border:1px solid rgba(255,255,255,.18);border-radius:50%;right:-35px;top:-65px;box-shadow:0 0 0 18px rgba(255,255,255,.05),0 0 0 38px rgba(255,255,255,.035)}
+      #founder-note-overlay .founder-note-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#dbeafe}
+      #founder-note-overlay .founder-note-eyebrow span{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:8px;background:rgba(255,255,255,.17);font-size:.95rem}
+      #founder-note-overlay h2{margin:14px 0 5px;font-size:clamp(1.25rem,4vw,1.65rem);line-height:1.25;color:#fff}
+      #founder-note-overlay .founder-note-for{margin:0;color:#dbeafe;font-size:.95rem}
+      #founder-note-overlay .founder-note-body{padding:25px 28px 26px}
+      #founder-note-overlay .founder-note-message{margin:0;color:#1e293b;font-size:1rem;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+      #founder-note-overlay .founder-note-divider{height:1px;background:linear-gradient(90deg,#dbeafe, #e2e8f0, transparent);margin:22px 0 18px}
+      #founder-note-overlay .founder-note-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
+      #founder-note-overlay .founder-note-signoff{font-size:.8rem;color:#64748b;line-height:1.5}
+      #founder-note-overlay .founder-note-signoff strong{display:block;color:#1d4ed8;font-size:.9rem}
+      #founder-note-overlay .founder-note-continue{border:0;border-radius:10px;padding:12px 19px;min-height:46px;background:linear-gradient(120deg,#1d4ed8,#2563eb);color:white;font:700 .95rem inherit;font-family:inherit;font-size:.95rem;font-weight:750;cursor:pointer;box-shadow:0 7px 18px rgba(37,99,235,.24);transition:transform .15s,box-shadow .15s}
+      #founder-note-overlay .founder-note-continue:hover{transform:translateY(-1px);box-shadow:0 10px 23px rgba(37,99,235,.3)}
+      #founder-note-overlay .founder-note-continue:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+      @keyframes founderFadeIn{from{opacity:0}to{opacity:1}}@keyframes founderRiseIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+      @media(max-width:480px){#founder-note-overlay .founder-note-banner{padding:22px 21px}#founder-note-overlay .founder-note-body{padding:21px}#founder-note-overlay .founder-note-footer{align-items:stretch;flex-direction:column}#founder-note-overlay .founder-note-continue{width:100%}}
+      @media(prefers-reduced-motion:reduce){#founder-note-overlay,#founder-note-overlay .founder-note-card{animation:none}}
+    `;
+    document.head.appendChild(style);
+    const overlay = document.createElement('div');
+    overlay.id = 'founder-note-overlay';
+    overlay.setAttribute('role','presentation');
+    overlay.innerHTML = `<section class="founder-note-card" role="dialog" aria-modal="true" aria-labelledby="founder-note-title" aria-describedby="founder-note-message">
+      <header class="founder-note-banner"><div class="founder-note-eyebrow"><span>✦</span> Decoding HCM · A personal note</div><h2 id="founder-note-title">A Personal Message from the Founder</h2><p class="founder-note-for">Especially for ${safe(name)}</p></header>
+      <div class="founder-note-body"><p class="founder-note-message" id="founder-note-message">${safe(data.message)}</p><div class="founder-note-divider"></div><div class="founder-note-footer"><div class="founder-note-signoff">With best wishes,<strong>Founder · Decoding HCM</strong></div><button type="button" class="founder-note-continue">Continue to your account <span aria-hidden="true">→</span></button></div></div>
+    </section>`;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    await new Promise(resolve => {
+      const finish = () => { overlay.remove(); style.remove(); document.body.style.overflow = ''; resolve(); };
+      overlay.querySelector('.founder-note-continue').addEventListener('click', finish, { once: true });
+      overlay.querySelector('.founder-note-continue').focus();
+    });
+  } catch (e) { console.debug('Could not show personalized login message:', e?.message || e); }
 }
  $('tab-login').onclick=()=>{ $('login-box').style.display='block';$('signup-box').style.display='none';$('tab-login').className='btn btn-primary';$('tab-signup').className='btn btn-secondary';}; $('tab-signup').onclick=()=>{ if (window.registrationAllowed === false) { alert(window.registrationPauseMessage || 'New account creation is temporarily paused. Please try again later.'); return; } $('login-box').style.display='none';$('signup-box').style.display='block';$('tab-login').className='btn btn-secondary';$('tab-signup').className='btn btn-primary';};
 // $('login-form').onsubmit=async e=>{e.preventDefault();try{await AuthManager.login($('login-id').value,$('login-password').value);location.href='index.html';}catch(err){$('auth-message').textContent=err.message;}};
