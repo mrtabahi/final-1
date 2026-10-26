@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const read = (relative) => fs.readFileSync(path.join(__dirname, '..', relative), 'utf8');
 const migration = read('supabase/migrations/20261026000100_access_monetization_foundation.sql');
@@ -333,4 +334,30 @@ test('Razorpay late-payment refunds are claimed idempotently and never grant lat
   assert.match(webhook, /late_payment_after_expiry/);
   assert.match(webhook, /manual reconciliation/);
   assert.match(migration, /length\(currency\) = 3 AND currency !~ '\[\^A-Z\]'/);
+});
+
+
+test('Vercel previews and localhost use staging Supabase while known production hosts use production', () => {
+  const config = read('js/config.js');
+  const resolveClient = (hostname) => {
+    const calls = [];
+    vm.runInNewContext(config, {
+      window: { location: { hostname } },
+      supabase: {
+        createClient: (url, key) => {
+          calls.push({ url, key });
+          return {};
+        }
+      },
+      console: { error: () => {} },
+      Set
+    });
+    assert.equal(calls.length, 1, 'Supabase client should initialize exactly once');
+    return calls[0];
+  };
+
+  assert.equal(resolveClient('final-1-preview123-decoding-hcn.vercel.app').url, 'https://lhuqykxddwdkwksdzqth.supabase.co');
+  assert.equal(resolveClient('localhost').url, 'https://lhuqykxddwdkwksdzqth.supabase.co');
+  assert.equal(resolveClient('final-1-git-main-decoding-hcn.vercel.app').url, 'https://nuqfmjgkyfychhwzwnfl.supabase.co');
+  assert.equal(resolveClient('final-1-decoding-hcn.vercel.app').url, 'https://nuqfmjgkyfychhwzwnfl.supabase.co');
 });
