@@ -3,7 +3,8 @@
 const $ = id => document.getElementById(id);
 const setup=$('self-setup'), workspace=$('self-workspace'), source=$('source-text'), typed=$('self-typed'), passage=$('self-passage'), passageCard=$('self-passage-card'), typeCard=$('self-type-card');
 let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, inputHidden=false, allowBackspace=true, totalElapsed=0;
-const SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
+let SAVED_KEY='decodingHcmSelfTestPassagesV1:guest';
+const LEGACY_SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
 let scoringFormula='bsf', selfFontSize=17.3;
 function applySelfFontSize(){passage.style.fontSize=selfFontSize+'px';typed.style.fontSize=selfFontSize+'px';}
 $('self-font-down')?.addEventListener('click',()=>{selfFontSize=Math.max(14,selfFontSize-1.5);applySelfFontSize()});
@@ -172,5 +173,19 @@ $('self-end').addEventListener('click',()=>{if(startedAt===null&&typed.value.len
 $('self-pdf').addEventListener('click',downloadPDF);$('self-print-scorecard').addEventListener('click',()=>window.print());
 $('self-again').addEventListener('click',()=>{if(timerId)window.clearInterval(timerId);workspace.hidden=true;setup.hidden=false;source.focus();$('self-message').textContent='You can prepare a new passage or change the duration.'});
 $('self-cancel').addEventListener('click',async()=>{if(!await window.showBrandedDialog('Reset this typing attempt? Your typed text and timer will be cleared.', {confirm:true}))return;if(timerId)window.clearInterval(timerId);timerId=null;startedAt=null;attemptDate=null;deadline=null;finished=false;totalElapsed=0;typed.value='';typed.disabled=false;typed.placeholder='Start typing here…';workspace.hidden=false;setup.hidden=true;$('self-result').hidden=true;passageCard.hidden=false;setHidden(false);setInputHidden(false);setHighlight(false);$('self-timer').textContent=formatTime(duration);$('self-message').textContent='';renderPassage();updateLive();typed.focus();});
-refreshSaved();
+async function initializeSavedPassages(){
+ try {
+  // auth.js is loaded immediately after this script; resolve the signed-in user
+  // on the next task so each account receives its own browser-storage namespace.
+  await new Promise(resolve=>setTimeout(resolve,0));
+  let user=null;
+  if(typeof AuthManager!=='undefined'&&typeof AuthManager.getUser==='function') user=await AuthManager.getUser();
+  SAVED_KEY='decodingHcmSelfTestPassagesV1:'+(user?.id||'guest');
+ } catch(_){SAVED_KEY='decodingHcmSelfTestPassagesV1:guest';}
+ // Old saves used one shared key for every account on this browser. Never import
+ // them into an account, because we cannot reliably identify their owner.
+ try{localStorage.removeItem(LEGACY_SAVED_KEY);}catch(_){}
+ refreshSaved();
+}
+void initializeSavedPassages();
 })();
