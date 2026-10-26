@@ -73,6 +73,13 @@ This is an evidence snapshot, not a production sign-off.
 - Production Security Advisor baseline includes the SECURITY DEFINER view `public.public_leaderboard_attempts`, three anon-executable SECURITY DEFINER functions, and leaked-password protection disabled. The new grant migration addresses the three anon function grants, and the trigger migration addresses the two mutable trigger search paths, but neither has been applied to production. The public leaderboard view is intentionally designed as a restricted public projection, yet it exposes candidate names and performance fields; product/privacy acceptance or a consent/visibility redesign is required before release. Leaked-password protection still needs to be enabled in Supabase Auth settings.
 - Authenticated HTTP/REST/RPC and browser E2E tests remain outstanding, as do signed Razorpay Test Mode cases (valid signature, invalid signature, duplicate event, pending/failed payment, amount/currency mismatch, refund, and late payment). The preview is not production-ready until these gates and the production migration/backup/rollback review are complete.
 
+## Latest exact-head verification — 2026-10-26
+
+- Current open draft is PR #54, branch `feature/access-monetization-mainline`; the old PR #44 is closed and must not be used for release tracking.
+- Exact current PR head `386b03af2e122df68701f435dd46f860ca0f31a5` passed GitHub Actions run [40266414397](https://github.com/mrtabahi/final-1/actions/runs/40266414397): browser syntax, Deno type-check, and regression test steps all succeeded.
+- Latest READY Vercel preview is built from `eb2885d46673a6358d9b07cce4a4f0c27853dc7b` at https://final-1-rhbcve5sx-decoding-hcn.vercel.app/. Comparing that deployment commit with the current PR head shows the only later change is this release-gate documentation file. The exact-head Vercel check still reports the free-tier deployment-rate limit; do not describe the exact-head deployment as successful.
+- This reduces the preview/source uncertainty for application code but does not clear authenticated HTTP/browser E2E, signed Razorpay Test Mode, production leaderboard privacy acceptance, production migration/recovery review, or explicit release approval. Production remains unchanged.
+
 ## 6. Release decision
 - [ ] All CI and functional gates pass with evidence tied to the same commit.
 - [ ] Security findings are fixed or formally accepted with documented rationale.
