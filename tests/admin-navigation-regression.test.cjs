@@ -64,7 +64,7 @@ test("dashboard exposes a truthful development progress tracker with release blo
   assert.match(html, /Leaderboard privacy and security findings/);
   assert.match(html, /Backup, migration and rollback review/);
   assert.match(html, /manually maintained project snapshot, not a live CI feed/);
-  assert.match(html, /actions\/runs\/40274881214/);
+  assert.match(html, /actions\/workflows\/regression-tests\.yml/);
   assert.match(css, /\.admin-progress-columns/);
   assert.match(css, /@media\(max-width:700px\)\{\.admin-progress-summary,\.admin-progress-columns/);
 });
