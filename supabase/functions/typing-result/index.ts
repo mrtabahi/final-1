@@ -184,6 +184,12 @@ Deno.serve(async (req) => {
     const body = await req.json();
     if (body.action === "start") {
       if (typeof body.test_id !== "string") return reply(400, { error: "test_id is required" });
+      const { data: accessAllowed, error: accessError } = await db.rpc("can_access_test", { p_test_id: body.test_id, p_user_id: user.id });
+      if (accessError) {
+        console.error("test access check failed", accessError);
+        return reply(503, { error: "Unable to verify access to this test. Please try again." });
+      }
+      if (accessAllowed !== true) return reply(403, { error: "This test requires an active subscription or an administrator access grant." });
       const { data: test, error: testError } = await db.from("tests").select("id,active,duration_minutes,folder_id").eq("id", body.test_id).eq("active", true).maybeSingle();
       if (testError || !test) return reply(404, { error: "Active test not found" });
       if (test.folder_id) {
@@ -207,8 +213,18 @@ Deno.serve(async (req) => {
       const { data: session, error: sessionError } = await db.from("typing_exam_sessions").select("id,user_id,test_id,started_at,submitted_at").eq("id", sessionId).eq("user_id", user.id).maybeSingle();
       if (sessionError || !session) return reply(404, { error: "Typing session not found" });
       if (session.submitted_at) return reply(409, { error: "This typing session has already been submitted" });
-      const { data: test, error: testError } = await db.from("tests").select("id,title,language,mode,duration_minutes,passage,target_wpm,min_accuracy,free_error_pct,penalty_per_error,active").eq("id", session.test_id).maybeSingle();
-      if (testError || !test) return reply(404, { error: "Test not found" });
+      const { data: accessAllowed, error: accessError } = await db.rpc("can_access_test", { p_test_id: session.test_id, p_user_id: user.id });
+      if (accessError) {
+        console.error("test access re-check failed", accessError);
+        return reply(503, { error: "Unable to verify test access. Please try again." });
+      }
+      if (accessAllowed !== true) return reply(403, { error: "Access to this test is no longer active." });
+      const { data: test, error: testError } = await db.from("tests").select("id,title,language,mode,duration_minutes,passage,target_wpm,min_accuracy,free_error_pct,penalty_per_error,active,folder_id").eq("id", session.test_id).eq("active", true).maybeSingle();
+      if (testError || !test) return reply(404, { error: "Active test not found" });
+      if (test.folder_id) {
+        const { data: folder, error: folderError } = await db.from("folders").select("id").eq("id", test.folder_id).eq("active", true).maybeSingle();
+        if (folderError || !folder) return reply(404, { error: "This test is currently unavailable because its folder is disabled." });
+      }
       const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name").eq("id", user.id).maybeSingle();
       if (profileError || !profile) return reply(403, { error: "Candidate profile not found" });
       const now = Date.now();
