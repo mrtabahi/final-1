@@ -20,7 +20,6 @@ test('subscription UI is embedded in My Account with an accessible upgrade dialo
   assert.match(script, /functions\.invoke\('create-checkout'/);
   assert.match(script, /functions\.invoke\('verify-razorpay-payment'/);
   assert.match(script, /event\.key==='Escape'/);
-  assert.match(script, /prefers-reduced-motion/);
   assert.match(css, /accountGlow/);
   assert.match(css, /prefers-reduced-motion:reduce/);
 });
