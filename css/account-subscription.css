@@ -48,3 +48,7 @@
 @keyframes accountGlow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @media(max-width:640px){.account-sub-history-grid{grid-template-columns:1fr}.account-subscription-heading{align-items:flex-start}.account-upgrade-trigger{width:100%}.account-upgrade-overlay{padding:10px}.account-upgrade-dialog{max-height:90vh;border-radius:18px;padding:17px}.account-upgrade-top h2{font-size:1.45rem}.account-plan-grid{grid-template-columns:1fr}.account-plan-description{min-height:0}}
 @media(prefers-reduced-motion:reduce){.account-upgrade-overlay,.account-upgrade-dialog,.account-upgrade-dialog:before,.account-upgrade-trigger,.account-plan-card,.account-plan-buy{animation:none!important;transition:none!important}}
+
+.account-plan-features{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.account-plan-feature{display:inline-flex;align-items:center;padding:5px 8px;border:1px solid #dbeafe;border-radius:999px;background:#eff6ff;color:#1e40af;font-size:.72rem;font-weight:750;line-height:1.3}
+.account-plan-feature.is-muted{border-color:#e2e8f0;background:#f8fafc;color:#64748b;font-weight:600}
