@@ -45,6 +45,15 @@
 - [ ] Validate migrations on an isolated clean database or disposable project; do not reset shared staging or production.
 - [ ] Verify rollback/recovery steps preserve payment, refund, audit, and attempt history.
 
+### Initial staging security audit snapshot — 2026-10-26
+This is an evidence snapshot, not a production sign-off.
+
+- Verified with database privilege checks that the inspected monetization tables (`orders`, `payment_transactions`, `user_subscriptions`, `subscription_plans`, `plan_entitlements`, `provider_webhook_events`, `coupons`, `coupon_redemptions`, `access_policies`, `access_policy_audit`, `user_entitlement_overrides`, and `typing_exam_sessions`) have no direct SELECT/INSERT/UPDATE/DELETE privileges for `anon` or `authenticated`; `service_role` has table privileges. This supports the intentional server-managed design, but the full API/UI flow still needs testing.
+- Security Advisor reports 16 RLS-enabled tables with no policies. For the inspected billing/access tables, zero browser grants were confirmed. Keep these findings documented as intentional only after verifying every table and its callers.
+- `get_active_subscription_plans()` is executable by `anon` and `authenticated`, is SECURITY DEFINER, pins `search_path`, and returns only active plan catalog fields. Public execution may be intentional; verify the returned fields and keep the rationale documented.
+- The advisor also reports authenticated-executable SECURITY DEFINER RPCs. A read-only scan found authorization-check markers and explicit search paths on the inspected functions, but regex markers are not proof; inspect each function body and test non-admin calls before accepting the findings.
+- Production advisor findings were observed separately. No production database changes were made as part of this audit.
+
 ## 6. Release decision
 - [ ] All CI and functional gates pass with evidence tied to the same commit.
 - [ ] Security findings are fixed or formally accepted with documented rationale.
