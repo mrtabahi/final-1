@@ -236,6 +236,7 @@ test('customer subscription page only uses safe catalog and own-account overview
   const page = read('my-subscription.html');
   const js = read('js/my-subscription.js');
   const index = read('index.html');
+  const accountPage = read('my_account.html');
   assert.match(js, /rpc\('get_active_subscription_plans'\)/);
   assert.match(js, /rpc\('get_my_subscription_overview'\)/);
   assert.match(js, /rpc\('create_checkout_order'/);
@@ -243,7 +244,9 @@ test('customer subscription page only uses safe catalog and own-account overview
   assert.doesNotMatch(js, /from\(['"]user_subscriptions['"]\)/);
   assert.doesNotMatch(js, /from\(['"]orders['"]\)/);
   assert.match(page, /My Subscription/);
-  assert.match(index, /href="my-subscription\.html"/);
+  assert.doesNotMatch(index, /href="my-subscription\.html"/);
+  assert.match(accountPage, /id="account-subscription"/);
+  assert.match(accountPage, /data-open-subscription/);
 });
 
 test('customer overview exposes only active plan catalog publicly and scopes account history to auth.uid', () => {
