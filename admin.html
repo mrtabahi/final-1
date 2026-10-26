@@ -8,13 +8,14 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1220">
 <title>Admin Control Center | Decoding HCM</title>
-<link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix"><link rel="stylesheet" href="css/admin.css?v=20261025-workspace-banner1">
+<link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix"><link rel="stylesheet" href="css/admin.css?v=20261025-workspace-banner1"><link rel="stylesheet" href="css/admin-mobile-fix.css?v=20261026-mobile-polish1">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body class="admin-body">
 <div id="admin-loading" class="admin-loading"><div class="admin-loader"></div><strong>Securing your workspace…</strong><span>Verifying administrator access</span></div>
 <div id="admin-app" class="admin-shell" style="display:none">
+<button type="button" class="admin-sidebar-backdrop" id="admin-sidebar-backdrop" aria-label="Close navigation menu"></button>
 <aside class="admin-sidebar" id="admin-sidebar">
 <a href="admin.html" class="admin-brand"><span class="admin-brand-mark"><img src="logo.png" alt="Decoding HCM logo" ></span><span><strong>DECODING HCM</strong><small>CONTROL CENTER</small></span></a>
 <div class="admin-workspace-label">WORKSPACE</div>
