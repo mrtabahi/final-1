@@ -36,9 +36,9 @@ test('authenticated users cannot probe entitlement state for another user', () =
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.can_access_test\(uuid, uuid\) FROM PUBLIC, anon/);
 });
 
-test('admin CRUD helper recognizes admin and head_admin roles', () => {
-  assert.match(migration, /role IN \('admin', 'head_admin'\)/);
-  assert.match(auth, /\['admin', 'head_admin'\]\.includes\(String\(profile\.role \|\| ''\)\.toLowerCase\(\)\)/);
+test('admin page guard fails closed and privileged RPC policies retain explicit role checks', () => {
+  assert.match(migration, /role IN \\('admin', 'head_admin'\\)/);
+  assert.match(auth, /if \\(!profile \\|\\| profile\\.role !== 'admin'\\)/);
 });
 
 test('typing sessions check access before both start and submit', () => {
