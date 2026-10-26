@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1220">
+  <title>Payments &amp; Coupons | Decoding HCM</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/admin.css"><link rel="stylesheet" href="css/admin-payments.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="admin-body">
+  <div id="payments-loading" class="admin-loading"><div class="admin-loader"></div><strong>Securing your workspace…</strong><span>Verifying administrator access</span></div>
+  <div id="payments-app" class="admin-shell" hidden>
+    <aside class="admin-sidebar">
+      <a href="admin.html" class="admin-brand"><span class="admin-brand-mark"><img src="logo.png" alt=""></span><span><strong>DECODING HCM</strong><small>CONTROL CENTER</small></span></a>
+      <div class="admin-workspace-label">BUSINESS &amp; ACCESS</div>
+      <nav class="admin-nav" aria-label="Admin navigation">
+        <a class="admin-nav-link" href="admin.html">▦ Overview</a>
+        <a class="admin-nav-link" href="admin.html#folders">⌨ Folders &amp; Tests</a>
+        <div class="admin-nav-label">BUSINESS &amp; ACCESS</div>
+        <a class="admin-nav-link" href="admin-access.html">◇ Website Access &amp; Monetization</a>
+        <a class="admin-nav-link" href="admin-plans.html">◇ Plans &amp; Subscriptions</a>
+        <a class="admin-nav-link" href="admin-subscriptions.html">♙ Subscription Operations</a>
+        <a class="admin-nav-link" href="admin-entitlements.html">♙ User Entitlements</a>
+        <a class="admin-nav-link active" href="admin-payments.html" aria-current="page">₹ Payments &amp; Coupons</a>
+        <a class="admin-nav-link" href="admin.html">← Main Control Center</a>
+      </nav>
+      <div class="admin-sidebar-bottom"><div class="admin-profile"><div class="admin-avatar" id="payments-avatar">A</div><div class="admin-profile-copy"><strong id="payments-admin-name">Administrator</strong><small id="payments-admin-email"></small></div></div><button type="button" class="admin-logout" id="payments-logout">↗ <span>Sign out securely</span></button><a class="admin-back-link" href="index.html">← View public website</a></div>
+    </aside>
+    <div class="admin-main-column">
+      <header class="admin-topbar"><a class="admin-icon-button" href="admin.html" aria-label="Back to admin">←</a><div class="admin-breadcrumb"><span>Business &amp; Access</span><span>/</span><strong>Payments &amp; Coupons</strong></div><div class="admin-topbar-right"><span class="admin-live-dot"></span><span class="admin-live-label">Admin session</span></div></header>
+      <main class="admin-content payments-content">
+        <div class="admin-page-heading"><div><div class="admin-kicker">PROMOTIONS &amp; BILLING SETUP</div><h1>Payments &amp; Coupons</h1><p>Configure discount codes, eligible plans, validity windows and redemption limits.</p></div><div class="admin-heading-actions"><button id="payments-refresh" class="admin-btn admin-btn-secondary" type="button">↻ Refresh</button><button id="payments-new" class="admin-btn admin-btn-primary" type="button">＋ New coupon</button></div></div>
+        <div class="payments-warning" role="note"><strong>Payment gateway not connected.</strong><p>Coupons are configuration only. Discount calculation, redemption reservation, checkout, signed webhook verification, refunds and subscription activation must be implemented server-side before any purchase flow is enabled. Keep coupons inactive until that release gate passes.</p></div>
+        <section class="payments-kpis"><article><span>Total coupons</span><strong id="payments-count">—</strong></article><article><span>Active coupons</span><strong id="payments-active-count">—</strong></article><article><span>Selected-plan coupons</span><strong id="payments-selected-count">—</strong></article></section>
+        <section class="admin-panel payments-form-panel" id="payments-form-panel" hidden>
+          <div class="admin-panel-heading"><div><h2 id="payments-form-title">Create coupon</h2><p>Fixed discounts use minor currency units (₹10 = 1000 paise); percentage discounts use whole numbers from 1 to 100.</p></div></div>
+          <form id="payments-form">
+            <input type="hidden" id="payments-id">
+            <div class="payments-fields">
+              <label>Coupon code<input id="payments-code" maxlength="40" required placeholder="WELCOME10" autocapitalize="characters"></label>
+              <label>Discount type<select id="payments-type"><option value="percent">Percentage</option><option value="fixed">Fixed amount</option></select></label>
+              <label>Discount value<input id="payments-value" type="number" min="1" step="1" required value="10"></label>
+              <label>Currency<select id="payments-currency"><option value="INR">INR — Indian Rupee</option><option value="USD">USD — US Dollar</option><option value="GBP">GBP — Pound Sterling</option><option value="EUR">EUR — Euro</option></select></label>
+              <label>Applies to<select id="payments-scope"><option value="selected_plans">Selected plans only</option><option value="all_plans">All plans</option></select></label>
+              <label>Maximum total redemptions<input id="payments-max" type="number" min="1" step="1" placeholder="Unlimited"></label>
+              <label>Maximum per user<input id="payments-per-user" type="number" min="1" max="100" step="1" required value="1"></label>
+              <label class="payments-datetime">Starts at (optional)<input id="payments-starts" type="datetime-local"></label>
+              <label class="payments-datetime">Ends at (optional)<input id="payments-ends" type="datetime-local"></label>
+              <label class="payments-description">Description<textarea id="payments-description" maxlength="2000" rows="2" placeholder="Internal or customer-facing note"></textarea></label>
+              <label class="payments-active"><input id="payments-active" type="checkbox"> Coupon is active</label>
+            </div>
+            <div id="payments-plan-picker" class="payments-plan-picker"><h3>Eligible plans</h3><p>Select one or more plans when scope is “Selected plans only”.</p><div id="payments-plans" class="payments-plans-list"><span class="admin-empty">Loading plans…</span></div></div>
+            <div class="payments-form-actions"><button id="payments-cancel" class="admin-btn admin-btn-secondary" type="button">Cancel</button><button id="payments-save" class="admin-btn admin-btn-primary" type="submit">Save coupon</button></div>
+          </form>
+        </section>
+        <section class="admin-panel"><div class="admin-panel-heading"><div><h2>Coupon catalog</h2><p>Coupons are never applied or redeemed by this admin page.</p></div></div><div id="payments-list" class="payments-list"><div class="admin-empty">Loading coupons…</div></div><div id="payments-status" class="access-status" role="status" aria-live="polite"></div></section>
+        <section class="admin-panel"><div class="admin-panel-heading"><div><h2>Orders</h2><p>Read-only order status. Paid status can only be set by the verified payment callback.</p></div></div><div id="payments-orders" class="payments-list"><div class="admin-empty">Loading orders…</div></div></section>
+        <section class="admin-panel"><div class="admin-panel-heading"><div><h2>Payment transactions</h2><p>Verified transaction metadata only; raw provider payloads are not exposed in this page.</p></div></div><div id="payments-transactions" class="payments-list"><div class="admin-empty">Loading transactions…</div></div></section>
+      </main>
+    </div>
+  </div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/admin-payments.js"></script>
+</body>
+</html>
