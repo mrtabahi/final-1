@@ -373,5 +373,5 @@ test('existing trigger functions pin an empty search_path in the release migrati
 test('service-role payment guards support both legacy and JSON JWT role claims', () => {
   const compatibleClaim = "NULLIF((NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'), '')";
   assert.equal(migration.split(compatibleClaim).length - 1, 4, 'all four trusted payment helpers must support the JSON claims role');
-  assert.match(migration, /request\\.jwt\\.claim\\.role/);
+  assert.ok(migration.includes("current_setting('request.jwt.claim.role', true)"));
 });
