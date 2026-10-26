@@ -1221,7 +1221,7 @@ async function loadDashboard() {
         if (!test) return;
         const nextActive = !test.active;
         const action = nextActive ? 'enable' : 'disable';
-        if (!confirm((nextActive ? 'Enable' : 'Disable') + ' typing test "' + test.title + '"?')) return;
+        if (!await window.showBrandedDialog((nextActive ? 'Enable' : 'Disable') + ' typing test \"' + test.title + '\"?', {confirm:true})) return;
         const { error } = await supabaseClient.from('tests').update({ active: nextActive }).eq('id', id);
         if (error) { alert('Could not ' + action + ' typing test: ' + error.message); return; }
         await loadManageTests();
@@ -1229,7 +1229,7 @@ async function loadDashboard() {
 
     async function deleteFolder(id) {
         const folder = cachedFolders.find(item => String(item.id) === String(id));
-        if (!folder || !confirm('Delete folder "' + folder.name + '"? Folders linked to tests may be protected by database constraints.')) return;
+        if (!folder || !await window.showBrandedDialog('Delete folder \"' + folder.name + '\"? Folders linked to tests may be protected by database constraints.', {confirm:true})) return;
         const { error } = await supabaseClient.from('folders').delete().eq('id', id);
         if (error) {
             alert(error.code === '23503' ? 'This folder still has typing tests linked to it. Move those tests to another folder or delete them first; you can also disable this folder instead.' : 'Could not delete folder: ' + error.message);
@@ -1393,7 +1393,7 @@ async function loadDashboard() {
 
     async function deleteTest(id) {
         const test = cachedTests.find(item => String(item.id) === String(id));
-        if (!test || !confirm('Permanently delete test "' + test.title + '"? Existing attempts or sessions may be protected by database constraints.')) return;
+        if (!test || !await window.showBrandedDialog('Permanently delete test \"' + test.title + '\"? Existing attempts or sessions may be protected by database constraints.', {confirm:true})) return;
         const { error } = await supabaseClient.from('tests').delete().eq('id', id);
         if (error) { alert(error.code === '23503' ? 'This test has saved attempts or exam sessions, so it cannot be permanently deleted. Disable it instead to keep historical results safe.' : 'Could not delete test: ' + error.message); return; }
         await loadManageTests();
