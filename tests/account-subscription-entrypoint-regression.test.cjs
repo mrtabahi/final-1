@@ -18,14 +18,14 @@ test('subscription UI is embedded in My Account with an accessible upgrade dialo
   assert.doesNotMatch(page, /href="my-subscription\.html"/);
   assert.match(script, /typeof supabaseClient === 'undefined'/);
   assert.match(script, /login\.html\?redirect=/);
-  assert.match(script, /rpc\('get_active_subscription_plans'\)/);
+  assert.match(script, /rpc\('get_active_subscription_plan_details'\)/);
   assert.match(script, /rpc\('get_my_subscription_overview'\)/);
   assert.match(script, /functions\.invoke\('create-checkout'/);
   assert.match(script, /functions\.invoke\('verify-razorpay-payment'/);
   assert.match(script, /event\.key==='Escape'/);
   assert.match(script, /account-plan-features/);
   assert.match(catalogMigration, /get_active_subscription_plan_details/);
-  assert.match(catalogMigration, /GRANT EXECUTE ON FUNCTION public\\.get_active_subscription_plan_details\\(\\) TO anon, authenticated/);
+  assert.ok(catalogMigration.includes('GRANT EXECUTE ON FUNCTION public.get_active_subscription_plan_details() TO anon, authenticated;'));
   assert.match(css, /accountGlow/);
   assert.match(css, /prefers-reduced-motion:reduce/);
 });
