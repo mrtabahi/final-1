@@ -37,8 +37,8 @@ test('authenticated users cannot probe entitlement state for another user', () =
 });
 
 test('admin page guard fails closed and privileged RPC policies retain explicit role checks', () => {
-  assert.match(migration, /role IN \\('admin', 'head_admin'\\)/);
-  assert.match(auth, /if \\(!profile \\|\\| profile\\.role !== 'admin'\\)/);
+  assert.ok(migration.includes("role IN ('admin', 'head_admin')"));
+  assert.ok(auth.includes("if (!profile || profile.role !== 'admin')"));
 });
 
 test('typing sessions check access before both start and submit', () => {
