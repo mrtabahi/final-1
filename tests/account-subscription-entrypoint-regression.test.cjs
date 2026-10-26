@@ -10,6 +10,7 @@ test('subscription UI is embedded in My Account with an accessible upgrade dialo
   const script = read('js/account-subscription.js');
   const css = read('css/account-subscription.css');
   const catalogMigration = read('supabase/migrations/20261026065000_subscription_plan_display_details.sql');
+  const emptyPlanGuard = read('supabase/migrations/20261026140000_block_empty_entitlement_checkout.sql');
   assert.match(page, /id="account-subscription"/);
   assert.match(page, /id="account-upgrade-modal"/);
   assert.match(page, /role="dialog" aria-modal="true"/);
@@ -20,12 +21,16 @@ test('subscription UI is embedded in My Account with an accessible upgrade dialo
   assert.match(script, /login\.html\?redirect=/);
   assert.match(script, /rpc\('get_active_subscription_plan_details'\)/);
   assert.match(script, /rpc\('get_my_subscription_overview'\)/);
+  assert.match(script, /Unavailable — access not configured/);
+  assert.match(script, /plan\.entitlements\.length===0/);
   assert.match(script, /functions\.invoke\('create-checkout'/);
   assert.match(script, /functions\.invoke\('verify-razorpay-payment'/);
   assert.match(script, /event\.key==='Escape'/);
   assert.match(script, /account-plan-features/);
   assert.match(catalogMigration, /get_active_subscription_plan_details/);
   assert.ok(catalogMigration.includes('GRANT EXECUTE ON FUNCTION public.get_active_subscription_plan_details() TO anon, authenticated;'));
+  assert.match(emptyPlanGuard, /Plan is unavailable until access entitlements are configured/);
+  assert.match(emptyPlanGuard, /public\.plan_entitlements WHERE plan_id = v_plan\.id/);
   assert.match(css, /accountGlow/);
   assert.match(css, /prefers-reduced-motion:reduce/);
 });
