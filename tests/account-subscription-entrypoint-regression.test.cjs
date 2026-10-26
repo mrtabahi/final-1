@@ -15,6 +15,8 @@ test('subscription UI is embedded in My Account with an accessible upgrade dialo
   assert.match(page, /account-subscription\.css/);
   assert.match(page, /js\/account-subscription\.js/);
   assert.doesNotMatch(page, /href="my-subscription\.html"/);
+  assert.match(script, /typeof supabaseClient === 'undefined'/);
+  assert.match(script, /login\.html\?redirect=/);
   assert.match(script, /rpc\('get_active_subscription_plans'\)/);
   assert.match(script, /rpc\('get_my_subscription_overview'\)/);
   assert.match(script, /functions\.invoke\('create-checkout'/);
