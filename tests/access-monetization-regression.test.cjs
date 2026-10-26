@@ -375,3 +375,16 @@ test('service-role payment guards support both legacy and JSON JWT role claims',
   assert.equal(migration.split(compatibleClaim).length - 1, 4, 'all four trusted payment helpers must support the JSON claims role');
   assert.ok(migration.includes("current_setting('request.jwt.claim.role', true)"));
 });
+
+
+test('admin-only SECURITY DEFINER helpers revoke anonymous execution but preserve authenticated execution', () => {
+  const grantMigration = read('supabase/migrations/20261026050000_restrict_anon_admin_security_definer.sql');
+  for (const signature of [
+    'public.admin_get_candidate_emails(uuid[])',
+    'public.has_candidate_permission(text)',
+    'public.is_head_admin()'
+  ]) {
+    assert.ok(grantMigration.includes(`REVOKE EXECUTE ON FUNCTION ${signature} FROM PUBLIC, anon;`), `anon revoke missing for ${signature}`);
+    assert.ok(grantMigration.includes(`GRANT EXECUTE ON FUNCTION ${signature} TO authenticated;`), `authenticated grant missing for ${signature}`);
+  }
+});
