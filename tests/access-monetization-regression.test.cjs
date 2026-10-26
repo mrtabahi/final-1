@@ -361,3 +361,10 @@ test('Vercel previews and localhost use staging Supabase while known production 
   assert.equal(resolveClient('final-1-git-main-decoding-hcn.vercel.app').url, 'https://nuqfmjgkyfychhwzwnfl.supabase.co');
   assert.equal(resolveClient('final-1-decoding-hcn.vercel.app').url, 'https://nuqfmjgkyfychhwzwnfl.supabase.co');
 });
+
+
+test('existing trigger functions pin an empty search_path in the release migration', () => {
+  const hardeningMigration = read('supabase/migrations/20261026000200_pin_trigger_function_search_paths.sql');
+  assert.match(hardeningMigration, /ALTER FUNCTION public\\.handle_new_user\\(\\) SET search_path = ''/);
+  assert.match(hardeningMigration, /ALTER FUNCTION public\\.touch_updated_at\\(\\) SET search_path = ''/);
+});
