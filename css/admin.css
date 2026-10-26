@@ -216,3 +216,40 @@
 .admin-module-grid>.admin-module-card-link>strong{font-size:.92rem;color:var(--admin-ink,#14243b)}
 .admin-module-grid>.admin-module-card-link>small{font-size:.76rem;line-height:1.55;color:var(--admin-muted,#66768c)}
 .admin-module-grid>.admin-module-card-link>em{margin-top:auto;font-style:normal;font-size:.68rem;font-weight:800;color:#2458a6;background:#eaf2ff;border-radius:999px;padding:.35rem .55rem}
+
+
+/* Delivery tracker: show verified progress and remaining release gates honestly */
+.admin-progress-panel{margin:1.2rem 0 1.35rem;padding:clamp(1rem,2vw,1.4rem);border:1px solid var(--admin-border,#e1e8f1);border-radius:var(--admin-radius,16px);background:#fff;box-shadow:var(--admin-shadow,0 8px 28px rgba(24,43,75,.055))}
+.admin-progress-heading{align-items:flex-start;flex-wrap:wrap}
+.admin-progress-heading h2{margin:.3rem 0;color:var(--admin-ink,#14243b);font-size:1.15rem;letter-spacing:-.025em}
+.admin-progress-heading p{margin:.35rem 0 0;color:var(--admin-muted,#66768c);font-size:.8rem;line-height:1.6}
+.admin-progress-snapshot{display:inline-flex;align-items:center;padding:.45rem .65rem;border:1px solid #dbe5f1;border-radius:999px;background:#f7f9fc;color:#56677d;font-size:.68rem;font-weight:800;white-space:nowrap}
+.admin-progress-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin:1rem 0 1.15rem}
+.admin-progress-stat{display:flex;align-items:flex-start;gap:.7rem;min-width:0;padding:.9rem;border:1px solid #e5ebf3;border-radius:12px;background:#fbfcfe}
+.admin-progress-stat>div{display:flex;flex-direction:column;gap:.28rem;min-width:0}
+.admin-progress-stat strong{font-size:.8rem;color:#20334b}
+.admin-progress-stat small{font-size:.7rem;line-height:1.5;color:#718096}
+.admin-progress-indicator{width:9px;height:9px;flex:0 0 auto;margin-top:.25rem;border-radius:50%;background:#16a36a;box-shadow:0 0 0 4px #e3f7ec}
+.admin-progress-stat.is-blocked .admin-progress-indicator{background:#d97706;box-shadow:0 0 0 4px #fff1d6}
+.admin-progress-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}
+.admin-progress-track{min-width:0;padding:1rem;border:1px solid #e6ecf4;border-radius:13px;background:#fff}
+.admin-progress-track h3{display:flex;align-items:center;gap:.55rem;margin:0 0 .8rem;color:#20334b;font-size:.82rem;line-height:1.4}
+.admin-progress-track h3 span{display:grid;place-items:center;width:27px;height:27px;flex:0 0 auto;border-radius:8px;background:#edf3ff;color:#315ee8;font-size:.68rem;font-weight:850}
+.admin-progress-track ul{display:flex;flex-direction:column;gap:.75rem;list-style:none;padding:0;margin:0}
+.admin-progress-track li{display:flex;align-items:flex-start;gap:.55rem;min-width:0}
+.admin-progress-track li>span{display:grid;place-items:center;width:20px;height:20px;flex:0 0 auto;border-radius:50%;font-size:.7rem;font-weight:900}
+.admin-progress-track li.progress-done>span{background:#e4f7ec;color:#087647}
+.admin-progress-track li.progress-next>span{background:#eaf2ff;color:#2458a6}
+.admin-progress-track li.progress-blocked>span{background:#fff1d6;color:#985a08}
+.admin-progress-track li>div{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.admin-progress-track li strong{font-size:.73rem;line-height:1.45;color:#253850}
+.admin-progress-track li small{font-size:.68rem;line-height:1.55;color:#718096}
+.admin-progress-footer{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1rem;padding-top:.9rem;border-top:1px solid #e8edf4}
+.admin-progress-footer p{flex:1 1 300px;margin:0;color:#718096;font-size:.69rem;line-height:1.6}
+.admin-progress-footer p strong{color:#41556d}
+.admin-progress-links{display:flex;gap:.8rem;flex-wrap:wrap}
+.admin-progress-links a{color:#2458a6;font-size:.72rem;font-weight:800;text-decoration:none}
+.admin-progress-links a:hover{text-decoration:underline}
+.admin-progress-links a:focus-visible{outline:3px solid rgba(72,116,255,.75);outline-offset:3px;border-radius:3px}
+@media(max-width:1050px){.admin-progress-columns{grid-template-columns:1fr 1fr}.admin-progress-track:last-child{grid-column:1/-1}}
+@media(max-width:700px){.admin-progress-summary,.admin-progress-columns{grid-template-columns:1fr}.admin-progress-track:last-child{grid-column:auto}.admin-progress-footer{flex-direction:column}.admin-progress-links{width:100%}}
