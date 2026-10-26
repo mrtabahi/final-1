@@ -79,7 +79,7 @@ Deno.serve(async (req: Request) => {
       eventEntityId = payment.id;
       const providerCreatedAt = Number(payment.created_at);
       if (!Number.isFinite(providerCreatedAt)) return json(503, { error: "Provider payment timestamp is unavailable." });
-      if (payment.status !== "captured" && payment.captured !== true) {
+      if (payment.status !== "captured" || payment.captured !== true) {
         console.warn("Ignoring order.paid notification without captured payment state.");
       } else {
         const { data: order, error: orderError } = await serviceClient.from("orders")
