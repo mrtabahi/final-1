@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  }
  async function loadAccount(){
   user=await AuthManager.getUser();
+  renderPlans(); // Re-render plan buttons after the authenticated user is loaded.
   if(user){$('sub-login-link').textContent='My Account';$('sub-login-link').href='my_account.html';$('sub-logout').hidden=false;
    const result=await supabaseClient.rpc('get_my_subscription_overview');if(result.error)throw result.error;
    renderSubscriptions(result.data?.subscriptions||[]);renderOrders(result.data?.orders||[]);
