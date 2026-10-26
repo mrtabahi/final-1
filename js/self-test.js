@@ -109,7 +109,8 @@ function finishTest(){
  $('self-penalty').textContent=String(score.penaltyWords);
  $('self-correct').textContent=String(score.correctChars);
  $('self-count').textContent=String(score.totalTypedChars);
- const performance=ScoringEngine.getPerformanceLabel(score);const reportStatus=$('self-report-id');if(reportStatus){reportStatus.textContent=/qualif|pass/i.test(performance.text)?'Qualify':'Try again';reportStatus.style.color=/qualif|pass/i.test(performance.text)?'#166534':'#b91c1c';}\n const bsfScore=ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,'bsf');
+ const performance=ScoringEngine.getPerformanceLabel(score);const reportStatus=$('self-report-id');if(reportStatus){reportStatus.textContent=/qualif|pass/i.test(performance.text)?'Qualify':'Try again';reportStatus.style.color=/qualif|pass/i.test(performance.text)?'#166534':'#b91c1c';}
+ const bsfScore=ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,'bsf');
  const crpfScore=ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,'crpf');
  let compare=$('self-formula-comparison');
  if(!compare){compare=document.createElement('div');compare.id='self-formula-comparison';compare.className='self-formula-comparison';$('self-result').insertBefore(compare,$('self-analysis-breakdown'));}
