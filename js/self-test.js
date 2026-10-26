@@ -150,14 +150,14 @@ typed.addEventListener('input',()=>{if(typed.value.length&&!startedAt)startClock
 function autoScrollTyping(){
  const style=getComputedStyle(typed),lineHeight=parseFloat(style.lineHeight)||28;
  const text=typed.value.slice(0,typed.selectionStart||typed.value.length);
- const explicitLines=text.split('\\n').length;
+ const explicitLines=text.split('\n').length;
  const approxChars=Math.max(18,Math.floor((typed.clientWidth-parseFloat(style.paddingLeft||0)-parseFloat(style.paddingRight||0))/(parseFloat(style.fontSize||16)*.62)));
- const visualLines=explicitLines+text.split('\\n').reduce((n,line)=>n+Math.max(0,Math.ceil(line.length/approxChars)-1),0);
+ const visualLines=explicitLines+text.split('\n').reduce((n,line)=>n+Math.max(0,Math.ceil(line.length/approxChars)-1),0);
  if(visualLines>=3)typed.scrollTop=Math.max(0,(visualLines-2)*lineHeight);
  const passageStyle=getComputedStyle(passage),passageFont=parseFloat(passageStyle.fontSize)||17;
  const passageCharsPerLine=Math.max(20,Math.floor(passage.clientWidth/(passageFont*.62)));
  const reachedText=original.slice(0,typed.value.length);
- const passageVisualLines=reachedText.split('\\n').reduce((n,line)=>n+Math.max(1,Math.ceil(line.length/passageCharsPerLine)),0);
+ const passageVisualLines=reachedText.split('\n').reduce((n,line)=>n+Math.max(1,Math.ceil(line.length/passageCharsPerLine)),0);
  if(passageVisualLines>=3)passage.scrollTop=Math.max(0,(passageVisualLines-2)*(parseFloat(passageStyle.lineHeight)||32));
 }
 $('self-formula').addEventListener('change',()=>{scoringFormula=$('self-formula').value==='crpf'?'crpf':'bsf';updateLive()});
