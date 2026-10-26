@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     catch (_) { return String((Number(minor||0)/100).toFixed(2))+' '+String(currency||'INR'); }
   };
   const modal=$('account-upgrade-modal'), planList=$('account-plan-list'), status=$('account-subscription-status'), checkoutStatus=$('account-checkout-status');
-  if(!modal || !window.supabaseClient) return;
+  if(!modal || typeof supabaseClient === 'undefined' || !supabaseClient) return;
   let plans=[], user=null, lastFocus=null, razorpayPromise=null;
   const say=(node,message,kind='')=>{if(!node)return;node.textContent=message;node.className=(node===status?'account-sub-status':'account-checkout-status')+(kind?' '+kind:'');};
   const openModal=()=>{lastFocus=document.activeElement;modal.hidden=false;document.body.style.overflow='hidden';modal.querySelector('.account-upgrade-dialog')?.focus();};
