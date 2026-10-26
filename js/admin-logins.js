@@ -18,16 +18,16 @@
           <button class="admin-btn admin-btn-primary" type="submit">Save registration settings</button>
         </form>
       </section>
-      <section class="admin-panel" style="margin-top:1.25rem"><div class="admin-panel-heading"><div><h2>Personalized login popup</h2><p>Assign a welcome message to one candidate profile ID. The message appears after a successful sign-in.</p></div></div>
+      <section class="admin-panel" style="margin-top:1.25rem"><div class="admin-panel-heading"><div><h2>Personalized login popup</h2><p>Enter the candidate's email address instead of a UUID. The popup appears after a successful sign-in.</p></div></div>
         <form id="login-message-form" class="account-admin-card">
-          <label>Candidate profile ID<input id="login-message-user-id" required placeholder="UUID from Candidates → View profile"></label>
-          <label>Popup message<textarea id="login-message-text" rows="3" maxlength="500" required placeholder="Hey Saurabh, welcome back! Bahut din baad aaye ho."></textarea></label>
+          <label>Candidate email address<input id="login-message-email" type="email" autocomplete="email" required placeholder="candidate@example.com"></label>
+          <label>Popup message<textarea id="login-message-text" rows="3" maxlength="500" required placeholder="Hey, welcome back! Bahut din baad aaye ho."></textarea></label>
           <label style="display:flex;gap:.6rem;align-items:center"><input id="login-message-enabled" type="checkbox" checked> Show popup on login</label>
           <p class="admin-form-message" id="login-message-status" role="status" aria-live="polite"></p>
           <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="admin-btn admin-btn-primary" type="submit">Save popup message</button><button class="admin-btn admin-btn-secondary" id="login-message-clear" type="button">Clear form</button></div>
         </form>
       </section>
-      <section class="admin-panel" style="margin-top:1.25rem"><div class="admin-panel-heading"><div><h2>Configured login messages</h2><p>Remove or edit a candidate-specific popup.</p></div><span class="site-content-count" id="login-message-count">Loading…</span></div><div id="login-message-list"><div class="admin-empty">Loading saved messages…</div></div></section>`;
+      <section class="admin-panel" style="margin-top:1.25rem"><div class="admin-panel-heading"><div><h2>Configured login messages</h2><p>Review or remove a candidate-specific popup.</p></div><span class="site-content-count" id="login-message-count">Loading…</span></div><div id="login-message-list"><div class="admin-empty">Loading saved messages…</div></div></section>`;
     $('login-controls-refresh').addEventListener('click', window.renderLoginsModule);
     $('login-message-clear').addEventListener('click', () => $('login-message-form').reset());
     $('registration-settings-form').addEventListener('submit', saveRegistration);
@@ -51,10 +51,46 @@
       const rows = messages || [];
       $('login-message-count').textContent = rows.length + ' message' + (rows.length === 1 ? '' : 's');
       list.innerHTML = rows.length ? '<div class="candidate-list">' + rows.map(row => `
-        <article class="candidate-row"><div class="candidate-avatar">✉</div><div class="candidate-main"><strong>${esc(row.profiles?.full_name || 'Candidate')}</strong><span>${esc(row.profiles?.email || row.user_id)}</span><small>Updated ${esc(when(row.updated_at))} · ID ${esc(row.user_id)}</small><p>${esc(row.message)}</p></div><div class="candidate-row-meta"><span class="candidate-status ${row.enabled ? 'is-verified' : 'is-pending'}">${row.enabled ? 'Popup enabled' : 'Popup disabled'}</span><button type="button" class="admin-btn admin-btn-secondary" data-remove-login-message="${esc(row.user_id)}">Remove</button></div></article>`).join('') + '</div>' : '<div class="admin-empty">No personalized login messages configured yet.</div>';
+        <article class="candidate-row"><div class="candidate-avatar">✉</div><div class="candidate-main"><strong>${esc(row.profiles?.full_name || 'Candidate')}</strong><span>${esc(row.profiles?.email || 'Email not available')}</span><small>Updated ${esc(when(row.updated_at))}</small><p>${esc(row.message)}</p></div><div class="candidate-row-meta"><span class="candidate-status ${row.enabled ? 'is-verified' : 'is-pending'}">${row.enabled ? 'Popup enabled' : 'Popup disabled'}</span><button type="button" class="admin-btn admin-btn-secondary" data-remove-login-message="${esc(row.user_id)}">Remove</button></div></article>`).join('') + '</div>' : '<div class="admin-empty">No personalized login messages configured yet.</div>';
     } catch (error) {
       list.innerHTML = '<div class="admin-error">Could not load login controls: ' + esc(error.message) + '</div>';
     }
+  }
+
+  async function resolveCandidateIdByEmail(email) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (!normalizedEmail) throw new Error('Enter the candidate email address.');
+
+    const { data: profiles, error } = await supabaseClient
+      .from('profiles')
+      .select('id,email,role')
+      .eq('role', 'candidate')
+      .limit(2000);
+    if (error) throw new Error('Could not search candidate accounts: ' + error.message);
+
+    const candidates = profiles || [];
+    let emailById = new Map(candidates.map(candidate => [String(candidate.id), String(candidate.email || '').trim().toLowerCase()]));
+
+    // Some older accounts have an empty profile email. Use the admin-only RPC
+    // to resolve their authoritative Supabase Auth email without exposing UUIDs in the UI.
+    if (candidates.length) {
+      const { data: authEmails, error: rpcError } = await supabaseClient.rpc(
+        'admin_get_candidate_emails',
+        { p_user_ids: candidates.map(candidate => candidate.id) }
+      );
+      if (!rpcError) {
+        for (const row of authEmails || []) {
+          const id = String(row.user_id);
+          if (row.email) emailById.set(id, String(row.email).trim().toLowerCase());
+        }
+      } else {
+        console.warn('Could not resolve authoritative candidate emails:', rpcError);
+      }
+    }
+
+    const match = candidates.find(candidate => emailById.get(String(candidate.id)) === normalizedEmail);
+    if (!match) throw new Error('No candidate account found for this email. Check the spelling or confirm the account exists.');
+    return match.id;
   }
 
   async function saveRegistration(event) {
@@ -76,18 +112,24 @@
   async function saveMessage(event) {
     event.preventDefault();
     const status = $('login-message-status');
-    const userId = $('login-message-user-id').value.trim();
+    const email = $('login-message-email').value.trim();
     const message = $('login-message-text').value.trim();
-    if (!userId || !message) { status.textContent = 'Enter a candidate ID and popup message.'; return; }
-    const { data: userData } = await supabaseClient.auth.getUser();
-    status.textContent = 'Saving…';
-    const { error } = await supabaseClient.from('candidate_login_messages').upsert({
-      user_id: userId, message, enabled: $('login-message-enabled').checked,
-      updated_at: new Date().toISOString(), updated_by: userData?.user?.id || null
-    }, { onConflict: 'user_id' });
-    if (error) { status.textContent = 'Save failed: ' + error.message; return; }
-    status.textContent = 'Popup message saved.';
-    await loadSettingsAndMessages();
+    if (!email || !message) { status.textContent = 'Enter the candidate email and popup message.'; return; }
+    status.textContent = 'Finding candidate account by email…';
+    try {
+      const userId = await resolveCandidateIdByEmail(email);
+      const { data: userData } = await supabaseClient.auth.getUser();
+      status.textContent = 'Saving popup message…';
+      const { error } = await supabaseClient.from('candidate_login_messages').upsert({
+        user_id: userId, message, enabled: $('login-message-enabled').checked,
+        updated_at: new Date().toISOString(), updated_by: userData?.user?.id || null
+      }, { onConflict: 'user_id' });
+      if (error) throw error;
+      status.textContent = 'Popup message saved for ' + email + '.';
+      await loadSettingsAndMessages();
+    } catch (error) {
+      status.textContent = 'Save failed: ' + (error.message || 'Could not save popup message.');
+    }
   }
 
   async function removeMessage(event) {
