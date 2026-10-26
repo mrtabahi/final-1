@@ -1,6 +1,8 @@
 // DECODING HCM - SUPABASE ENVIRONMENT INITIALIZATION
-const SUPABASE_URL = "https://nuqfmjgkyfychhwzwnfl.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_qs5b_5S5CphfZSYxqSiV8A_18XR4Gra";
+// Staging-only configuration for feature/access-monetization-foundation.
+// Keep production configuration unchanged on the main branch.
+const SUPABASE_URL = "https://lhuqykxddwdkwksdzqth.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_8HnMuDTqbrml8JfB3JyURA_KHzDU8-u";
 
 // Initialize Supabase Client globally loaded via CDN in HTML
 let supabaseClient = null;
