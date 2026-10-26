@@ -1,0 +1,44 @@
+name: Regression tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "feature/**", "chore/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node-regression-tests:
+    name: Browser syntax, Edge Function types, and regression suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check monetization browser script syntax
+        run: |
+          set -euo pipefail
+          for file in js/admin-access.js js/admin-plans.js js/admin-payments.js js/admin-entitlements.js js/admin-subscriptions.js js/my-subscription.js; do
+            node --check "$file"
+          done
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Razorpay Edge Functions
+        run: deno check supabase/functions/create-checkout/index.ts supabase/functions/verify-razorpay-payment/index.ts supabase/functions/razorpay-webhook/index.ts
+      - name: Run regression tests
+        run: node --test tests/*.test.cjs
