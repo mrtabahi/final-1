@@ -384,70 +384,11 @@ const AuthManager = {
   },
 
   async logout() {
-    const user = await this.getUser().catch(() => null);
-    let logoutMessage = 'You’re signing out of Decoding HCM. Thank you for being part of our learning community. Wishing you continued success!';
-    let showCandidateNotice = false;
-
-    if (user) {
-      try {
-        const profile = await this.getProfile(user.id);
-        if (profile?.role === 'candidate') {
-          showCandidateNotice = true;
-          const { data } = await supabaseClient.from('candidate_login_messages')
-            .select('message,enabled').eq('user_id', profile.id).maybeSingle();
-          if (data?.enabled && data.message) logoutMessage = data.message;
-        }
-      } catch (e) {
-        console.debug('Could not load personalized logout message:', e?.message || e);
-      }
-    }
-
-    if (showCandidateNotice && typeof document !== 'undefined' && document.body) {
-      await new Promise(resolve => {
-        const overlay = document.createElement('div');
-        overlay.id = 'candidate-logout-note';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:20px;background:rgba(8,18,40,.72);backdrop-filter:blur(7px);';
-        const card = document.createElement('section');
-        card.setAttribute('role', 'dialog');
-        card.setAttribute('aria-modal', 'true');
-        card.setAttribute('aria-labelledby', 'candidate-logout-title');
-        card.style.cssText = 'width:min(100%,480px);box-sizing:border-box;border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 28px 90px rgba(0,0,0,.35);font-family:inherit;';
-        const header = document.createElement('header');
-        header.style.cssText = 'padding:24px 26px;background:linear-gradient(120deg,#0c2461,#2563eb);color:#fff;';
-        const eyebrow = document.createElement('p');
-        eyebrow.textContent = 'DECODING HCM · A PERSONAL NOTE';
-        eyebrow.style.cssText = 'margin:0 0 10px;font-size:.72rem;font-weight:800;letter-spacing:.12em;';
-        const title = document.createElement('h2');
-        title.id = 'candidate-logout-title';
-        title.textContent = 'Before You Go';
-        title.style.cssText = 'margin:0;font-size:1.55rem;color:#fff;';
-        header.append(eyebrow, title);
-        const body = document.createElement('div');
-        body.style.cssText = 'padding:24px 26px 26px;';
-        const message = document.createElement('p');
-        message.textContent = logoutMessage;
-        message.style.cssText = 'margin:0;color:#1e293b;font-size:1rem;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;';
-        const footer = document.createElement('div');
-        footer.style.cssText = 'display:flex;justify-content:flex-end;margin-top:22px;';
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = 'Sign out securely';
-        button.style.cssText = 'border:0;border-radius:10px;padding:12px 18px;min-height:44px;background:#1d4ed8;color:#fff;font:inherit;font-weight:750;cursor:pointer;';
-        footer.appendChild(button);
-        body.append(message, footer);
-        card.append(header, body);
-        overlay.appendChild(card);
-        document.body.appendChild(overlay);
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        const finish = () => {
-          overlay.remove();
-          document.body.style.overflow = previousOverflow;
-          resolve();
-        };
-        button.addEventListener('click', finish, { once: true });
-        button.focus();
-      });
+    // All logout entry points share one branded confirmation. Candidate-specific
+    // admin messages are intentionally limited to the targeted candidate's login.
+    if (typeof window.showBrandedDialog === 'function') {
+      const confirmed = await window.showBrandedDialog('Are you sure you want to log out?', { confirm: true });
+      if (!confirmed) return false;
     }
 
     const { error } = await supabaseClient.auth.signOut();
@@ -456,6 +397,7 @@ const AuthManager = {
       throw error;
     }
     window.location.href = '/login.html';
+    return true;
   },
 
   async requireCandidateGuard() {
