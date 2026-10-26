@@ -326,7 +326,7 @@
               const targetId=button.dataset.roleTarget;
               const label=nextRole==='admin'?'promote this candidate to admin':'remove this account’s admin access';
               if(!isHeadAdmin){alert('Only the head admin can change administrator roles.');return;}
-              if(!confirm('Are you sure you want to '+label+'?'))return;
+              if(!await window.showBrandedDialog('Are you sure you want to '+label+'?',{confirm:true}))return;
               button.disabled=true;
               try{
                 const {error}=await supabaseClient.rpc('admin_set_user_role',{p_user_id:targetId,p_role:nextRole});
@@ -1209,7 +1209,7 @@ async function loadDashboard() {
         if (!folder) return;
         const nextActive = !folder.active;
         const action = nextActive ? 'enable' : 'disable';
-        if (!confirm((nextActive ? 'Enable' : 'Disable') + ' folder "' + folder.name + '"? ' + (nextActive ? 'Its active tests will become visible to candidates again.' : 'Tests in this folder will no longer be available to candidates.'))) return;
+        if (!await window.showBrandedDialog((nextActive ? 'Enable' : 'Disable') + ' folder \"' + folder.name + '\"? ' + (nextActive ? 'Its active tests will become visible to candidates again.' : 'Tests in this folder will no longer be available to candidates.'), {confirm:true})) return;
         const { data: updatedFolder, error } = await supabaseClient.from('folders').update({ active: nextActive }).eq('id', id).select('id, active').maybeSingle();
         if (error) { alert('Could not ' + action + ' folder: ' + error.message); return; }
         if (!updatedFolder) { alert('Folder was not changed. Your admin permissions may have expired; refresh and sign in again.'); return; }
