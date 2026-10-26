@@ -50,5 +50,5 @@ test('legacy subscription URL redirects to My Account and the admin editor offer
   assert.match(homeScript, /data-content-cta/);
   assert.match(subscriptionScript, /location\.hash==='#upgrade-plan'/);
   assert.match(subscriptionScript, /addEventListener\('hashchange'/);
-  assert.match(config, /currentHostname\.endsWith\('\.vercel\.app'\) && !PRODUCTION_HOSTNAMES\.has\(currentHostname\)/);
+  assert.ok(config.includes('(currentHostname.endsWith(".vercel.app") && !PRODUCTION_HOSTNAMES.has(currentHostname))'));
 });
