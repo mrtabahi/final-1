@@ -2,6 +2,18 @@
 
 > Status: NOT APPROVED FOR PRODUCTION until every required gate below has attached evidence. This checklist is intentionally non-destructive and does not authorize production migrations or live Razorpay payments.
 
+## Latest implementation update — 2026-10-27
+
+- Feature branch: `feature/account-subscription-modal`; PR #64 remains open and unmerged. Latest verified commit: `ffcaa01e297db950318b9ac463c10e91e0e6cc3f`.
+- CI run [#502](https://github.com/mrtabahi/final-1/actions/runs/40457787382) passed browser syntax checks, Razorpay Edge Function type checks, and the full Node regression suite.
+- The plan-admin UI now describes the actual state: checkout and payment verification are implemented, while paid activation remains gated on Test Mode credentials and lifecycle E2E. A regression test prevents the old misleading copy from returning.
+- Fixed a plan-admin KPI bug where the entitlement count was calculated and then overwritten with a dash during rendering.
+- Fixed checkout-order cleanup: when Razorpay credentials are missing, or the provider order request fails, the local pending order is marked failed before the function returns an error. This prevents orphaned pending orders. The updated `create-checkout` function is deployed to staging as version 11 with JWT verification enabled; no production function was changed.
+- Staging catalog remains a test fixture: one active `STAGING TEST ONLY - ₹1 / 1 day` plan, zero entitlements, and zero active tests/folders. Do not add a broad site-wide entitlement just to force a payment test; configure an explicitly approved, narrow staging entitlement or seed disposable fixtures in a transaction and roll them back.
+- Razorpay secrets must be verified through Supabase Edge Function Secrets and authenticated staging flows; secret values must not be printed or shared in chat. The database Vault query is not authoritative for Edge Function environment secrets.
+- Production remains unchanged. Monetization tables and checkout/payment Edge Functions are not deployed there, and production migration reconciliation plus security review remain release blockers.
+
+
 ## 1. Change and environment control
 - [ ] Confirm PR head SHA and target branch; keep the feature PR unmerged until all gates pass.
 - [ ] Confirm Vercel Preview points only to the staging Supabase project (`lhuqykxddwdkwksdzqth`). Do not print or commit secrets.
