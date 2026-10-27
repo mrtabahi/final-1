@@ -41,6 +41,8 @@ test("admin can configure Paid access while server-side candidate access enforce
   assert.match(script, /<option value="paid"[^>]*>Paid · subscription required/);
   assert.doesNotMatch(script, /<option value="paid" disabled/);
   assert.doesNotMatch(script, /Paid access is locked until passage delivery is enforced server-side/);
+  assert.match(script, /modeSelect\('folder', folder\.id, folder\.access_mode \|\| 'paid'\)/);
+  assert.match(script, /modeSelect\('test', test\.id, test\.access_mode \|\| 'inherit'\)/);
   assert.match(script, /update\(\{access_mode:mode\}\)/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.can_access_test/);
   assert.match(migration, /CREATE POLICY tests_candidate_select ON public\.tests/);
