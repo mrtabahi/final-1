@@ -12,7 +12,7 @@ test('login page provides Google and email account creation with recovery action
   assert.match(html, /id="signup-form"/);
   assert.match(html, /id="signup-email"/);
   assert.match(html, /id="signup-password"/);
-  assert.match(html, /id="forgot-password"|"Forgot password\?"/);
+  assert.match(html, /Forgot password\?/);
   assert.match(html, /forgot\.html/);
   assert.match(html, /id="signup-phone"[^>]*placeholder="\+91…"/);
   assert.match(html, /auth-shell/);
@@ -23,7 +23,7 @@ test('Google signup respects the registration pause and callback uses Google dis
   const html = read('login.html');
   assert.match(auth, /async signInWithGoogle\(\{ isSignup = false \} = \{\}\)/);
   assert.match(auth, /settings\.registration_enabled === false/);
-    assert.match(html, /user_metadata\\?\\.full_name \\|\\| data\\.session\\.user\\.user_metadata\\?\\.name/);
+  assert.ok(html.includes('user_metadata?.full_name || data.session.user.user_metadata?.name'));
   assert.match(html, /AuthManager\.updateName\(googleName\)/);
 });
 
