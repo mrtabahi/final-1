@@ -1,14 +1,14 @@
 document.addEventListener('DOMContentLoaded', async () => {
  const root=document.getElementById('account-membership-state'), details=document.getElementById('account-membership-details');
- if(!root||!details||!window.supabaseClient)return;
+ const db=(typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient); if(!root||!details||!db)return;
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const money=(minor,currency='INR')=>new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
  try{
-  const {data:{user}}=await window.supabaseClient.auth.getUser();
+  const {data:{user}}=await db.auth.getUser();
   if(!user){root.innerHTML='<strong>Sign in to see your membership.</strong><br><a href="login.html?redirect=my_account.html">Sign in securely →</a>';return;}
   const [subs,orders]=await Promise.all([
-   window.supabaseClient.from('user_subscriptions').select('id,status,starts_at,ends_at,admin_note,subscription_plans(name,description)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(10),
-   window.supabaseClient.from('orders').select('id,status,total_minor,currency,created_at,expires_at,subscription_plans(name)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(10)
+   db.from('user_subscriptions').select('id,status,starts_at,ends_at,admin_note,subscription_plans(name,description)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(10),
+   db.from('orders').select('id,status,total_minor,currency,created_at,expires_at,subscription_plans(name)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(10)
   ]);
   if(subs.error)throw subs.error;
   const rows=subs.data||[], current=rows.find(s=>s.status==='active'&&(!s.ends_at||new Date(s.ends_at)>new Date()));
