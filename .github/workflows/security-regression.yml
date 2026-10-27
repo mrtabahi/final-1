@@ -25,3 +25,7 @@ jobs:
         run: node --check js/admin-command-center.js
       - name: Test admin command center wiring
         run: node --test tests/admin-command-center-regression.test.cjs
+      - name: Check subscription UI JavaScript syntax
+        run: node --check js/admin-subscriptions.js && node --check js/premium.js && node --check js/my-subscription.js
+      - name: Test subscription control center wiring
+        run: node --test tests/subscription-control-center-regression.test.cjs
