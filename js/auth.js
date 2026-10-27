@@ -118,11 +118,22 @@ const AuthManager = {
     return data || { registration_enabled: true, registration_paused_message: 'New account creation is temporarily paused. Please try again later.' };
   },
 
-  async signInWithGoogle() {
+  async signInWithGoogle({ isSignup = false } = {}) {
+    // Keep Google registration subject to the same administrator-controlled
+    // registration switch as email/password registration.
+    if (isSignup) {
+      const settings = await this.getAccessSettings();
+      if (settings.registration_enabled === false) {
+        throw new Error(settings.registration_paused_message || 'New account creation is temporarily paused. Please try again later.');
+      }
+    }
+    const callback = new URL('/login.html', window.location.origin);
+    callback.searchParams.set('oauth', '1');
+    if (isSignup) callback.searchParams.set('source', 'signup');
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/login.html?oauth=1',
+        redirectTo: callback.toString(),
         queryParams: { prompt: 'select_account' }
       }
     });
