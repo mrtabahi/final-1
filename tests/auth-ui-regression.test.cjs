@@ -29,7 +29,7 @@ test('Google signup respects the registration pause and callback uses Google dis
 
 test('site navigation only rewrites My Account links based on auth state', () => {
   const nav = read('js/account-nav.js');
-    assert.match(nav, /my_account/);
+  assert.match(nav, /my_account/);
   assert.match(nav, /signedIn \? 'My Account' : 'Login'/);
   assert.match(nav, /supabaseClient\.auth\.onAuthStateChange/);
   for (const file of ['index.html', 'Typing_test.html', 'dashboard.html', 'my_account.html']) {
