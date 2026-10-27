@@ -61,6 +61,10 @@ test("dashboard exposes a truthful development progress tracker with release blo
   assert.match(html, /Security &amp; release gates/);
   assert.match(html, /Authenticated staging end-to-end tests/);
   assert.match(html, /Payment lifecycle test matrix/);
+  assert.match(html, /Status snapshot · 27 Oct 2026/);
+  assert.match(html, /Regression run #504 passed/);
+  assert.match(html, /create-checkout is active at version 11/);
+  assert.match(html, /current staging plan has zero entitlements/);
   assert.match(html, /Leaderboard privacy and security findings/);
   assert.match(html, /Backup, migration and rollback review/);
   assert.match(html, /manually maintained project snapshot, not a live CI feed/);
