@@ -117,7 +117,9 @@ test('plan editor uses server-side admin RPCs and never writes billing tables di
   const plansPage = read('admin-plans.html');
   const plansJs = read('js/admin-plans.js');
   const adminPage = read('admin.html');
-  assert.match(plansPage, /checkout is not connected yet/i);
+  assert.match(plansPage, /Paid activation is still gated/i);
+  assert.match(plansPage, /Razorpay Test Mode secrets/i);
+  assert.doesNotMatch(plansPage, /Checkout is not connected yet/i);
   assert.match(plansJs, /rpc\('admin_list_subscription_plans'\)/);
   assert.match(plansJs, /rpc\('admin_get_plan_entitlements'/);
   assert.match(plansJs, /rpc\('admin_save_subscription_plan'/);
