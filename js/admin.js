@@ -145,8 +145,11 @@
             element.style.setProperty('display', visible ? 'block' : 'none', 'important');
         });
         currentView = view;
-        if (!isCore && $('module-capabilities')) {
-            $('module-capabilities').innerHTML = '<div class="admin-empty" role="status">Opening this section… If it does not load, use Reload in the top bar and try again.</div>';
+        // Legacy modules may replace #view-module.innerHTML. Rebuild the shared
+        // module shell before every navigation so later modules always get fresh
+        // targets instead of leaving the previous module's interface on screen.
+        if (!isCore && views.module) {
+            views.module.innerHTML = '<div class="admin-page-heading"><div><div class="admin-kicker">PLATFORM OPERATIONS</div><h1 id="module-title">Administration module</h1><p id="module-subtitle">Module overview</p></div></div><section class="admin-panel"><div class="admin-module-notice"><span class="admin-notice-icon">✦</span><div><h2 id="module-status-title">Loading module</h2><p id="module-status-copy">Loading the selected administration tools.</p></div></div><div id="module-capabilities" class="admin-capability-list"><div class="admin-empty" role="status">Opening this section…</div></div><div class="admin-security-note"><strong>Security rule</strong><p>Account bans, role changes, billing, refunds and subscription entitlements must be enforced server-side with audited permissions. A visual control alone is not authorization.</p></div></section>';
         }
         document.querySelectorAll('.admin-nav-link').forEach(link => link.classList.remove('active'));
         const activeMap = { dashboard: 'nav-dash', tests: 'nav-tests', attempts: 'nav-attempts' };
@@ -172,12 +175,6 @@
         if (['materials','leaderboard','adsense'].includes(view)) {
             updatePageHeader(view);
             renderEmbeddedAdminTool(view, renderSequence);
-            return;
-        }
-        if (view === 'workspace-banner') {
-            updatePageHeader(view);
-            if (typeof window.renderWorkspaceBannerModule === 'function') window.renderWorkspaceBannerModule();
-            else console.error('Workspace banner editor is not loaded.');
             return;
         }
         if (view === 'content') {
@@ -221,7 +218,6 @@
             candidates:{title:'Candidate Management',subtitle:'Review accounts, login history and online sessions.'},
             logins:{title:'Logins & Registration',subtitle:'Manage account creation and personalized login messages.'},
             content:{title:'Website Content',subtitle:'Manage public-facing pages, banners and announcements.'},
-            'workspace-banner':{title:'Pro Menu (Public Account)',subtitle:'Edit the Pro workspace heading and supporting lines shown to public users.'},
             materials:{title:'PDF & Study Materials',subtitle:'Manage PDFs and study packs without leaving the admin control center.'},
             leaderboard:{title:'Leaderboard Control',subtitle:'Manage leaderboard history and manual entries inside this workspace.'},
             adsense:{title:'AdSense Control',subtitle:'Manage ad placements and density for eligible public pages.'},
