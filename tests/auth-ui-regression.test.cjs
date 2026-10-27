@@ -76,4 +76,7 @@ test('admin navigation excludes public Pro menu and resets shared module shell',
   assert.match(js, /Legacy modules may replace #view-module\.innerHTML/);
   assert.match(js, /views\.module\.innerHTML =/);
   assert.match(js, /renderEmbeddedAdminTool\(view, renderSequence\)/);
+  assert.match(js, /new DOMParser\(\)/, 'legacy tool pages should render inline rather than inside iframes');
+  assert.match(js, /admin-tool-ready/, 'inline controls should initialize after markup is inserted');
+  assert.doesNotMatch(js, /<iframe class="admin-tool-frame"/, 'admin modules should not depend on iframe rendering');
 });
