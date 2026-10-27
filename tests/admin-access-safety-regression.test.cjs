@@ -32,15 +32,18 @@ test("access policy renderer escapes database values before inserting dynamic HT
   assert.match(script, /escapeHtml\(resourceId\)/);
 });
 
-test("paid access remains blocked until server-side passage delivery enforcement is ready", () => {
+test("admin can configure Paid access while server-side candidate access enforcement remains required", () => {
   const html = readRepoFile("admin-access.html");
   const script = readRepoFile("js/admin-access.js");
+  const migration = readRepoFile("supabase/migrations/20261026000100_access_monetization_foundation.sql");
 
-  assert.match(html, /UI locks alone do not protect paid content/);
-  assert.match(script, /<option value="paid" disabled/);
-  assert.match(script, /if \(mode === 'paid'\)/);
-  assert.match(script, /Paid access is locked until passage delivery is enforced server-side/);
-  assert.match(script, /select\.value = item\.access_mode \|\| 'free'/);
+  assert.match(html, /Paid access is enforced by the server-side test access check/);
+  assert.match(script, /<option value="paid"[^>]*>Paid · subscription required/);
+  assert.doesNotMatch(script, /<option value="paid" disabled/);
+  assert.doesNotMatch(script, /Paid access is locked until passage delivery is enforced server-side/);
+  assert.match(script, /update\(\{access_mode:mode\}\)/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.can_access_test/);
+  assert.match(migration, /CREATE POLICY tests_candidate_select ON public\.tests/);
 });
 
 test("policy save reports database failures and refuses silent zero-row updates", () => {
