@@ -97,7 +97,7 @@
           close();
           item.button.click();
         });
-        button.addEventListener('mousemove', () => { selected = index; render(); });
+        button.addEventListener('mouseenter', () => {\n          selected = index;\n          results.querySelectorAll('.admin-command-item').forEach((node, nodeIndex) => {\n            node.classList.toggle('is-selected', nodeIndex === selected);\n            node.setAttribute('aria-selected', nodeIndex === selected ? 'true' : 'false');\n          });\n        });
         results.appendChild(button);
       });
     };
