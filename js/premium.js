@@ -23,9 +23,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   try{
    const {data,error}=await client.functions.invoke('create-checkout',{body:{plan_id:btn.dataset.choosePlan}});
    if(error)throw error;
-   if(data?.checkout_url){window.location.href=data.checkout_url;return;}
-   if(data?.url){window.location.href=data.url;return;}
-   throw new Error(data?.message||'Secure checkout is not available yet. No payment has been taken.');
+   if(data?.mode==='free'){
+    message('Your free plan has been activated. Opening your membership details…');
+    window.location.href='my_account.html?subscription=updated';return;
+   }
+   if(data?.mode==='razorpay'&&data.key_id&&data.razorpay_order_id&&data.local_order_id){
+    await new Promise((resolve,reject)=>{
+     if(window.Razorpay){resolve();return;}
+     const script=document.createElement('script');script.src='https://checkout.razorpay.com/v1/checkout.js';
+     script.onload=resolve;script.onerror=()=>reject(new Error('Secure payment window could not load. No payment was started.'));
+     document.head.appendChild(script);
+    });
+    const checkout=new window.Razorpay({
+     key:data.key_id,amount:Number(data.amount),currency:data.currency||'INR',name:'Decoding HCM',
+     description:data.plan_name||'Preparation plan',order_id:data.razorpay_order_id,
+     prefill:{name:data.customer?.name||'',email:data.customer?.email||''},
+     theme:{color:'#2563eb'},
+     handler:async response=>{
+      message('Payment submitted. Verifying it securely before activating access…');
+      try{
+       const verified=await client.functions.invoke('verify-razorpay-payment',{body:{
+        local_order_id:data.local_order_id,razorpay_order_id:response.razorpay_order_id,
+        razorpay_payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature
+       }});
+       if(verified.error)throw verified.error;
+       if(!verified.data?.success)throw new Error(verified.data?.error||'Payment verification is pending. Please do not pay again; check My Account shortly.');
+       message('Payment verified and membership updated. Opening My Account…');
+       window.location.href='my_account.html?subscription=updated';
+      }catch(err){console.error(err);message(err.message||'Payment verification is pending. Please do not pay again; check My Account shortly.',true);btn.disabled=false;btn.textContent='Check membership status';}
+     },
+     modal:{ondismiss:()=>{btn.disabled=false;btn.innerHTML='Try again <span aria-hidden="true">→</span>';message('Checkout closed. No access was changed unless the server confirms payment.');}}
+    });
+    checkout.on('payment.failed',()=>{message('Payment was not completed. You can retry when ready.',true);btn.disabled=false;btn.innerHTML='Try again <span aria-hidden="true">→</span>';});
+    checkout.open();return;
+   }
+   throw new Error(data?.error||data?.message||'Secure checkout is not available yet. No payment has been taken.');
   }catch(err){console.error(err);message(err.message||'Checkout is temporarily unavailable. No payment has been taken.',true);btn.disabled=false;btn.innerHTML='Try again <span aria-hidden="true">→</span>';}
  }));
 });
