@@ -1,0 +1,23 @@
+name: Security regression tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, fix/anon-execute-privileged-rpcs]
+
+permissions:
+  contents: read
+
+jobs:
+  privileged-rpc-grants:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Test privileged RPC grants migration
+        run: node --test tests/privileged-rpc-grants-regression.test.cjs
