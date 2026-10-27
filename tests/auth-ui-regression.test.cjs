@@ -23,13 +23,13 @@ test('Google signup respects the registration pause and callback uses Google dis
   const html = read('login.html');
   assert.match(auth, /async signInWithGoogle\(\{ isSignup = false \} = \{\}\)/);
   assert.match(auth, /settings\.registration_enabled === false/);
-  assert.match(html, /user_metadata\?\.full_name \|\| data\.session\.user\.user_metadata\?\.name/);
+    assert.match(html, /user_metadata\\?\\.full_name \\|\\| data\\.session\\.user\\.user_metadata\\?\\.name/);
   assert.match(html, /AuthManager\.updateName\(googleName\)/);
 });
 
 test('site navigation only rewrites My Account links based on auth state', () => {
   const nav = read('js/account-nav.js');
-  assert.match(nav, /my_account\\\.html/);
+    assert.match(nav, /my_account/);
   assert.match(nav, /signedIn \? 'My Account' : 'Login'/);
   assert.match(nav, /supabaseClient\.auth\.onAuthStateChange/);
   for (const file of ['index.html', 'Typing_test.html', 'dashboard.html', 'my_account.html']) {
