@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       folders = folderResult.data || [];
       tests = testResult.data || [];
       render();
-      setStatus('Access policies loaded. Save each change to persist it.', 'success');
+      setStatus('Access policies loaded. New folders default to Paid; choose Free for any folder or test you want to offer without a subscription. Save each change to persist it.', 'success');
     } catch (error) {
       console.error('Access policy load failed', error);
       $('access-folder-list').innerHTML = '<div class="admin-empty">Could not load access policies. If the migration has not been applied to a staging database, access_mode will not exist yet.</div>';
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function modeSelect(resourceType, resourceId, mode) {
     const label = resourceType === 'folder' ? 'Folder access policy' : 'Test access policy';
-    return '<label class="access-mode-label"><span class="sr-only">' + label + '</span><select class="admin-select" data-access-type="' + resourceType + '" data-access-id="' + escapeHtml(resourceId) + '" aria-label="' + label + '"><option value="inherit" ' + (mode === 'inherit' ? 'selected' : '') + '>Inherit</option><option value="free" ' + (mode === 'free' ? 'selected' : '') + '>Free</option><option value="paid" disabled ' + (mode === 'paid' ? 'selected' : '') + '>Paid (server gate pending)</option></select></label>';
+    return '<label class="access-mode-label"><span class="sr-only">' + label + '</span><select class="admin-select" data-access-type="' + resourceType + '" data-access-id="' + escapeHtml(resourceId) + '" aria-label="' + label + '"><option value="inherit" ' + (mode === 'inherit' ? 'selected' : '') + '>Inherit</option><option value="free" ' + (mode === 'free' ? 'selected' : '') + '>Free</option><option value="paid" ' + (mode === 'paid' ? 'selected' : '') + '>Paid · subscription required</option></select></label>';
   }
 
   function render() {
@@ -110,11 +110,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mode = select.value;
     const item = (type === 'folder' ? folders : tests).find(row => String(row.id) === String(id));
     if (!item || !['inherit','free','paid'].includes(mode)) return;
-    if (mode === 'paid') {
-      setStatus('Paid access is locked until passage delivery is enforced server-side. This prevents an unsafe UI-only lock.', 'error');
-      select.value = item.access_mode || 'free';
-      return;
-    }
     saving = true;
     setStatus('Saving ' + type + ' access policy…');
     const button = select.parentElement.querySelector('button');
