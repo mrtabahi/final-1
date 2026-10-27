@@ -68,14 +68,21 @@ Deno.serve(async (req: Request) => {
 
   const keyId = Deno.env.get("RAZORPAY_KEY_ID");
   const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
-  if (!keyId || !keySecret) {
-    console.error("Razorpay test credentials are not configured.");
-    return json(503, { error: "Paid checkout is not configured yet. No payment was started." });
-  }
-
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+
+  if (!keyId || !keySecret) {
+    console.error("Razorpay test credentials are not configured.");
+    const { error: closeOrderError } = await serviceClient.from("orders")
+      .update({ status: "failed" })
+      .eq("id", order.order_id)
+      .eq("status", "pending");
+    if (closeOrderError) {
+      console.error("Could not close checkout order after missing credentials.", closeOrderError.code);
+    }
+    return json(503, { error: "Paid checkout is not configured yet. No payment was started." });
+  }
   try {
     const response = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
