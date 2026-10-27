@@ -123,6 +123,8 @@ test('plan editor uses server-side admin RPCs and never writes billing tables di
   assert.match(plansJs, /rpc\('admin_list_subscription_plans'\)/);
   assert.match(plansJs, /rpc\('admin_get_plan_entitlements'/);
   assert.match(plansJs, /rpc\('admin_save_subscription_plan'/);
+  assert.match(plansJs, /const entitlementCount = entitlementResults\.reduce/);
+  assert.doesNotMatch(plansJs, /\$\('plans-entitlement-count'\)\.textContent = '—'/);
   assert.doesNotMatch(plansJs, /from\(['"]subscription_plans['"]\)/);
   assert.doesNotMatch(plansJs, /from\(['"]plan_entitlements['"]\)/);
   assert.match(adminPage, /href="admin-plans\.html"/);
