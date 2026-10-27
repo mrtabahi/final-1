@@ -399,31 +399,60 @@
         }
     }
 
-    function renderEmbeddedAdminTool(view, renderSequence = viewRenderSequence) {
+    async function renderEmbeddedAdminTool(view, renderSequence = viewRenderSequence) {
         const box = $('module-capabilities');
         if (!box) return;
         const tools = {
-            materials: { src: 'admin-materials.html', title: 'PDF & Study Materials', hint: 'Changes are saved by the existing materials admin workflow.' },
-            leaderboard: { src: 'admin-leaderboard.html', title: 'Leaderboard Control', hint: 'Review history and manual entries. Existing admin permissions remain enforced by the embedded tool.' },
-            adsense: { src: 'admin-ads.html', title: 'AdSense Control', hint: 'Ad settings apply to eligible public content pages; typing workspaces are excluded.' }
+            materials: { src: 'admin-materials.html', title: 'PDF & Study Materials', hint: 'Manage published PDFs and study packs here.', root: '.materials-admin-shell', script: 'js/admin-materials.js', initEvent: true},
+            leaderboard: { src: 'admin-leaderboard.html', title: 'Leaderboard Control', hint: 'Manage submitted attempts and manual leaderboard entries here.', root: 'main.container', script: 'js/admin-leaderboard.js', initEvent: true},
+            adsense: { src: 'admin-ads.html', title: 'AdSense Control', hint: 'Manage ad placement preferences for eligible public pages.', root: 'body', script: 'js/admin-ads.js', initEvent: false}
         };
         const tool = tools[view];
         if (!tool) return;
-        box.innerHTML = '<section class="admin-panel admin-embedded-tool"><div class="admin-panel-heading"><div><h2>' + esc(tool.title) + '</h2><p>' + esc(tool.hint) + '</p></div><span class="admin-embedded-badge">Admin workspace</span></div><iframe class="admin-tool-frame" title="' + esc(tool.title) + '" src="' + tool.src + '" loading="eager" referrerpolicy="same-origin"></iframe></section>';
-        const frame = box.querySelector('iframe');
-        frame?.addEventListener('load', () => {
-            if (renderSequence !== viewRenderSequence || currentView !== view) return;
-            try {
-                const doc = frame.contentDocument;
-                if (!doc) return;
-                const style = doc.createElement('style');
-                style.textContent = 'a[href="admin.html"], .ads-back { display:none !important; } body { padding-top:0 !important; }';
-                doc.head?.appendChild(style);
-                doc.querySelectorAll('a[href="admin.html"], .ads-back').forEach(node => node.remove());
-            } catch (error) {
-                console.warn('Embedded admin tool styling skipped.', error);
+        box.innerHTML = '<section class="admin-panel admin-embedded-tool"><div class="admin-panel-heading"><div><h2>' + esc(tool.title) + '</h2><p>' + esc(tool.hint) + '</p></div><span class="admin-embedded-badge">Admin workspace</span></div><div class="admin-tool-content"><div class="admin-empty" role="status">Loading working controls…</div></div></section>';
+        const contentBox = box.querySelector('.admin-tool-content');
+        try {
+            const response = await fetch(tool.src, { credentials: 'same-origin', cache: 'no-store' });
+            if (!response.ok) throw new Error('Tool page could not be loaded (' + response.status + ').');
+            const source = await response.text();
+            if (renderSequence !== viewRenderSequence || currentView !== view || !contentBox.isConnected) return;
+            const parsed = new DOMParser().parseFromString(source, 'text/html');
+            parsed.querySelectorAll('script').forEach(node => node.remove());
+            parsed.querySelectorAll('a[href="admin.html"], .ads-back').forEach(node => node.remove());
+            parsed.head.querySelectorAll('style').forEach(node => {
+                const style = document.createElement('style');
+                style.dataset.adminToolStyle = view;
+                style.textContent = node.textContent;
+                document.head.appendChild(style);
+            });
+            if (view === 'materials') {
+                const css = document.createElement('link');
+                css.rel = 'stylesheet'; css.href = 'css/materials.css'; css.dataset.adminToolStyle = view;
+                document.head.appendChild(css);
             }
-        }, { once: true });
+            let root;
+            if (view === 'materials') root = parsed.querySelector('.materials-admin-shell');
+            else if (view === 'leaderboard') root = parsed.querySelector('main.container');
+            else { root = document.createElement('div'); root.innerHTML = parsed.body.innerHTML; }
+            if (!root) throw new Error('The original controls could not be found in the tool page.');
+            contentBox.innerHTML = root.innerHTML;
+            contentBox.querySelectorAll('a[href="admin.html"], .ads-back').forEach(node => node.remove());
+            const script = document.createElement('script');
+            script.src = tool.script + '?inline=' + encodeURIComponent(view + '-' + renderSequence);
+            script.dataset.adminToolScript = view;
+            script.onload = () => {
+                if (tool.initEvent && renderSequence === viewRenderSequence && currentView === view) document.dispatchEvent(new Event('admin-tool-ready'));
+            };
+            script.onerror = () => {
+                const status = contentBox.querySelector('[role="status"]');
+                if (status) status.textContent = 'Controls loaded, but their JavaScript could not start. Use Reload and try again.';
+            };
+            document.body.appendChild(script);
+        } catch (error) {
+            if (renderSequence !== viewRenderSequence || currentView !== view) return;
+            contentBox.innerHTML = '<div class="admin-empty" role="alert">Unable to load this tool: ' + esc(error.message || 'Unknown error') + '. Please refresh the admin panel.</div>';
+            console.error('Admin tool load failed:', error);
+        }
     }
 
 
