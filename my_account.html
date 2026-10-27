@@ -7,6 +7,26 @@
 <title>My Account | Decoding HCM</title>
 <link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix">
 <style>
+/* Production-safe My Account refresh: presentation only; auth and form behavior unchanged */
+body.account-page{background:radial-gradient(circle at 8% 0%,rgba(99,102,241,.09),transparent 28%),linear-gradient(180deg,#f8faff 0%,#f1f5fb 100%)}
+.account-page .container{max-width:1080px;padding-top:clamp(22px,4vw,44px);padding-bottom:48px}
+.account-page .account-profile-card{position:relative;overflow:hidden;border:1px solid #e0e7ff;border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 20px 50px rgba(30,41,59,.08);padding:clamp(20px,4vw,42px)}
+.account-page .account-profile-card:before{content:"";display:block;height:5px;position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,#4f46e5,#7c3aed 52%,#06b6d4)}
+.account-page .account-profile-card>.card-title{font-size:clamp(1.7rem,4vw,2.3rem);font-weight:850;letter-spacing:-.045em;color:#172554;margin-bottom:.35rem}
+.account-page .account-profile-card>.form-help{color:#64748b;line-height:1.7}
+.account-page .account-section-label{display:flex;align-items:center;gap:10px;margin:1.65rem 0 .9rem;color:#1e293b;font-size:1.08rem;font-weight:800;letter-spacing:-.02em}
+.account-page .account-section-label:before{content:"";width:8px;height:25px;border-radius:99px;background:linear-gradient(180deg,#6366f1,#06b6d4)}
+.account-page .account-profile-card .form-label{color:#334155;font-weight:700;font-size:.9rem}
+.account-page .account-profile-card .form-control{min-height:47px;border:1px solid #dbe3f0;border-radius:12px;background:#fbfdff;transition:border-color .16s,box-shadow .16s}
+.account-page .account-profile-card .form-control:focus{border-color:#818cf8;box-shadow:0 0 0 4px rgba(99,102,241,.12);outline:none}
+.account-page .account-profile-card .form-control[readonly]{background:#f1f5f9;color:#64748b}
+.account-page .account-profile-card .btn{min-height:45px;border-radius:12px;font-weight:750;transition:transform .16s,box-shadow .16s}
+.account-page .account-profile-card .btn:hover{transform:translateY(-1px)}
+.account-page .account-profile-card hr{border:0;border-top:1px solid #e2e8f0}
+.account-page .account-security-note{display:flex;gap:10px;align-items:flex-start;padding:13px 15px;margin-top:1.2rem;border:1px solid #dbeafe;border-radius:14px;background:linear-gradient(110deg,#eff6ff,#f5f3ff);color:#475569;font-size:.88rem;line-height:1.55}
+.account-page .account-security-note strong{color:#3730a3}
+@media(max-width:600px){.account-page .container{padding-left:14px;padding-right:14px}.account-page .account-profile-card{border-radius:18px;padding:23px 17px}.account-page .account-profile-card form>.btn{width:100%}}
+@media(prefers-reduced-motion:reduce){.account-page .account-profile-card .btn,.account-page .account-profile-card .form-control{transition:none}.account-page .account-profile-card .btn:hover{transform:none}}
 .password-form-actions{display:flex;gap:12px;width:100%;margin-top:.25rem}
 .password-form-actions .btn{flex:1;min-width:0;min-height:46px;height:46px;padding:.65rem 1rem}
 .password-form-actions .password-cancel-btn{background:#f1f5f9;color:#334155;border:1px solid #cbd5e1}
@@ -14,12 +34,12 @@
 @media(max-width:420px){.password-form-actions{gap:10px}.password-form-actions .btn{padding:.6rem .5rem;font-size:.92rem}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head><body><nav class="navbar">
+</head><body class="account-page"><nav class="navbar">
 <a href="index.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="SRB"></div><div><div class="brand-title">DECODING HCM</div><div class="brand-subtitle">BSF HCM Preparation</div></div></a>
-<ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="self-test.html">Self Test</a></li><li><a href="materials.html">PDF Library</a></li><li><a href="my_results.html">My Results</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="dashboard.html">Start Preparation</a></li><li><a href="my_account.html" aria-current="page">My Account</a></li></ul></nav><div class="container"><section class="card"><h2 class="card-title">My Account</h2><p class="form-help">Manage your account name, email and password.</p>
+<ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="self-test.html">Self Test</a></li><li><a href="materials.html">PDF Library</a></li><li><a href="my_results.html">My Results</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="dashboard.html">Start Preparation</a></li><li><a href="my_account.html" aria-current="page">My Account</a></li></ul></nav><div class="container"><section class="card account-profile-card"><h2 class="card-title">My Account</h2><p class="form-help">Manage your profile, account details and sign-in security from one place.</p><div class="account-security-note" role="note"><span aria-hidden="true">✦</span><span><strong>Your account, your control.</strong> Profile updates and password changes are saved securely to your signed-in account.</span></div><h3 class="account-section-label">Personal details</h3>
 <form id="profile-form"><div class="grid-2"><div class="form-group"><label class="form-label" for="profile-name">Name</label><input id="profile-name" class="form-control" required maxlength="100"></div><div class="form-group"><label class="form-label" for="profile-phone">Phone</label><input id="profile-phone" class="form-control" readonly></div></div>
 <div class="grid-2"><div class="form-group"><label class="form-label" for="profile-email">Email</label><input id="profile-email" type="email" class="form-control" required></div><div class="form-group"><label class="form-label" for="profile-status">Account Status</label><input id="profile-status" class="form-control" readonly></div></div>
-<button class="btn btn-primary" type="submit">Save Name / Email</button></form><hr style="margin:2rem 0"><h3>Change Password</h3>
+<button class="btn btn-primary" type="submit">Save Name / Email</button></form><hr style="margin:2rem 0"><h3 class="account-section-label">Sign-in security</h3>
 <form id="password-form"><div class="form-group"><label class="form-label" for="new-password">New Password</label><input id="new-password" type="password" minlength="8" autocomplete="new-password" class="form-control" required></div><div class="password-form-actions"><button class="btn btn-secondary" type="submit">Change Password</button><button class="btn btn-secondary password-cancel-btn" id="cancel-password-btn" type="button">Cancel</button></div></form><button id="account-logout-btn" class="btn btn-danger" type="button" style="margin-top:1rem">Log Out</button><p id="profile-message" class="form-help" role="status" aria-live="polite" style="margin-top:1rem"></p></section></div>
 <script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/my-account.js"></script>
 
