@@ -7,7 +7,7 @@
 .admin-command-dialog{width:min(620px,100%);overflow:hidden;border:1px solid rgba(255,255,255,.65);border-radius:18px;background:#fff;box-shadow:0 30px 100px rgba(0,0,0,.28);color:#172033}
 .admin-command-search-row{display:flex;align-items:center;gap:.75rem;padding:1rem 1.1rem;border-bottom:1px solid #e8ecf4}
 .admin-command-search-icon{font-size:1.3rem;color:#64748b}
-.admin-command-search{width:100%;min-width:0;border:0;outline:0!important;background:transparent;color:#172033;font:500 1rem/1.5 inherit}
+.admin-command-search{width:100%;min-width:0;border:0;outline:0!important;background:transparent;color:#172033;font:inherit;font-size:1rem;font-weight:500;line-height:1.5}
 .admin-command-search::placeholder{color:#94a3b8}
 .admin-command-hint{padding:.7rem 1.1rem .45rem;color:#64748b;font-size:.72rem;font-weight:750;letter-spacing:.09em;text-transform:uppercase}
 .admin-command-results{max-height:min(52vh,430px);overflow:auto;padding:.35rem .55rem .7rem}
