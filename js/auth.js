@@ -118,11 +118,22 @@ const AuthManager = {
     return data || { registration_enabled: true, registration_paused_message: 'New account creation is temporarily paused. Please try again later.' };
   },
 
-  async signInWithGoogle() {
+  async signInWithGoogle({ isSignup = false } = {}) {
+    // Keep Google registration subject to the same administrator-controlled
+    // registration switch as email/password registration.
+    if (isSignup) {
+      const settings = await this.getAccessSettings();
+      if (settings.registration_enabled === false) {
+        throw new Error(settings.registration_paused_message || 'New account creation is temporarily paused. Please try again later.');
+      }
+    }
+    const callback = new URL('/login.html', window.location.origin);
+    callback.searchParams.set('oauth', '1');
+    if (isSignup) callback.searchParams.set('source', 'signup');
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/login.html?oauth=1',
+        redirectTo: callback.toString(),
         queryParams: { prompt: 'select_account' }
       }
     });
@@ -179,19 +190,24 @@ const AuthManager = {
     return data;
   },
 
-  async register({ email, phone, password, fullName }) {
+  async register({ email, phone, password, fullName = '' }) {
     const normalizedEmail = String(email || '').trim().toLowerCase();
-    const normalizedName = String(fullName || '').trim();
     const normalizedPhone = String(phone || '').trim();
+    const normalizedName = String(fullName || '').trim() || normalizedEmail.split('@')[0];
     const accessSettings = await this.getAccessSettings();
     if (!accessSettings.registration_enabled) {
       throw new Error(accessSettings.registration_paused_message || 'New account creation is temporarily paused. Please try again later.');
     }
 
-    if (!normalizedEmail || !normalizedName || !password) {
-      throw new Error('Name, email and password are required.');
+    if (!normalizedEmail || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(normalizedEmail) || !normalizedPhone || !password) {
+      throw new Error('Enter a valid email, mobile number and password.');
+    }
+    if (String(password).length < 8) {
+      throw new Error('Password must be at least 8 characters.');
     }
 
+    // The phone is stored as profile metadata only. Do not call updateUser({phone})
+    // here: Supabase treats that as a phone change and may require SMS OTP.
     const { data, error } = await supabaseClient.auth.signUp({
       email: normalizedEmail,
       password,
@@ -205,18 +221,6 @@ const AuthManager = {
     });
 
     if (error) throw error;
-
-    // Only update the Auth phone when a session exists.
-    // Supabase may require a separate phone-change OTP confirmation.
-    if (data.user && data.session && normalizedPhone) {
-      const { error: phoneError } =
-        await supabaseClient.auth.updateUser({
-          phone: normalizedPhone
-        });
-
-      if (phoneError) throw phoneError;
-    }
-
     return data;
   },
 
