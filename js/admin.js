@@ -177,6 +177,17 @@
             renderEmbeddedAdminTool(view, renderSequence);
             return;
         }
+        if (view === 'subscriptions') {
+            updatePageHeader(view);
+            if (typeof window.renderSubscriptionsModule === 'function') window.renderSubscriptionsModule();
+            else console.error('Subscription module renderer is not loaded.');
+            return;
+        }
+        if (view === 'payments') {
+            updatePageHeader(view);
+            renderPlannedModule(view, {title:'Payments & Coupons',subtitle:'Payment ledger and coupon tools'});
+            return;
+        }
         if (view === 'content') {
             if (typeof window.renderWebsiteContentModule === 'function') {
                 window.renderWebsiteContentModule();
@@ -233,7 +244,7 @@
         if(subtitle) subtitle.textContent=item.subtitle;
         // These modules render their own complete interface. Never replace
         // their content with the generic roadmap panel during navigation.
-        const ownsRenderer = ['dashboard','tests','attempts','candidates','logins','content','analytics','security','settings','materials','leaderboard','adsense'].includes(view);
+        const ownsRenderer = ['dashboard','tests','attempts','candidates','logins','content','analytics','security','settings','materials','leaderboard','adsense','subscriptions'].includes(view);
         if (!ownsRenderer) renderPlannedModule(view,item);
     }
 
