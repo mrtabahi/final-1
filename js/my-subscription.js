@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   await razorpayScriptPromise;
  }
  async function loadPlans(){
-  const result=await supabaseClient.rpc('get_active_subscription_plans');
+  const result=await supabaseClient.rpc('get_active_subscription_plan_details');
   if(result.error)throw result.error;plans=result.data||[];renderPlans();
  }
  async function loadAccount(){
@@ -30,8 +30,11 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(!plans.length){$('sub-plans').innerHTML='<div class="sub-empty">No active plans are available right now.</div>';return;}
   $('sub-plans').innerHTML=plans.map(p=>{
    const free=Number(p.price_minor)===0;
-   const disabled=!user;
-   return '<article class="sub-plan-card"><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||'Subscription access to selected content.')+'</p><div class="sub-price">'+esc(money(p.price_minor,p.currency))+'</div><div class="sub-plan-meta"><span>'+esc(p.duration_days)+' days</span><span>·</span><span>'+esc(p.currency)+'</span></div><button class="sub-buy" type="button" data-buy-plan="'+esc(p.id)+'" '+(disabled?'disabled':'')+'>'+ (free?'Activate free plan':'Pay securely with Razorpay')+'</button></article>';
+   const configured=Array.isArray(p.entitlements)&&p.entitlements.length>0;
+   const disabled=!user||!configured;
+   const features=configured?p.entitlements.map(item=>item.label).filter(Boolean):[];
+   const buttonLabel=!configured?'Unavailable — access not configured':!user?'Sign in to continue':free?'Activate free plan':'Pay securely with Razorpay';
+   return '<article class="sub-plan-card"><h3>'+esc(p.name)+'</h3><p>'+esc(p.description||'Subscription access to selected content.')+'</p><div class="sub-price">'+esc(money(p.price_minor,p.currency))+'</div><div class="sub-plan-meta"><span>'+esc(p.duration_days)+' days</span><span>·</span><span>'+esc(p.currency)+'</span></div><div class="sub-plan-features">'+(features.length?features.map(label=>'<span>'+esc(label)+'</span>').join(''):'<span>Included access has not been configured.</span>')+'</div><button class="sub-buy" type="button" data-buy-plan="'+esc(p.id)+'" '+(disabled?'disabled aria-disabled="true" title="Administrator must configure included access first"':'')+'>'+buttonLabel+'</button></article>';
   }).join('');
   $('sub-plans').querySelectorAll('[data-buy-plan]').forEach(b=>b.addEventListener('click',()=>{
    const plan=plans.find(p=>p.id===b.dataset.buyPlan);
