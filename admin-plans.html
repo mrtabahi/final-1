@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <title>Plans &amp; Subscriptions | Decoding HCM</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/admin-plans.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="admin-body">
+  <div id="plans-loading" class="admin-loading"><div class="admin-loader"></div><strong>Securing your workspace…</strong><span>Verifying administrator access</span></div>
+  <div id="plans-app" class="admin-shell" hidden>
+    <aside class="admin-sidebar">
+      <a href="admin.html" class="admin-brand"><span class="admin-brand-mark"><img src="logo.png" alt=""></span><span><strong>DECODING HCM</strong><small>CONTROL CENTER</small></span></a>
+      <div class="admin-workspace-label">BUSINESS &amp; ACCESS</div>
+      <nav class="admin-nav" aria-label="Admin navigation">
+        <a class="admin-nav-link" href="admin.html">▦ Overview</a>
+        <a class="admin-nav-link" href="admin.html#folders">⌨ Folders &amp; Tests</a>
+        <div class="admin-nav-label">BUSINESS &amp; ACCESS</div>
+        <a class="admin-nav-link" href="admin-access.html">◇ Website Access &amp; Monetization</a>
+        <a class="admin-nav-link active" href="admin-plans.html" aria-current="page">◇ Plans &amp; Subscriptions</a>
+        <a class="admin-nav-link" href="admin-subscriptions.html">♙ Subscription Operations</a>
+        <a class="admin-nav-link" href="admin-entitlements.html">♙ User Entitlements</a>
+        <a class="admin-nav-link" href="admin-payments.html">₹ Payments &amp; Coupons</a>
+        <a class="admin-nav-link" href="admin.html">← Main Control Center</a>
+      </nav>
+      <div class="admin-sidebar-bottom"><div class="admin-profile"><div class="admin-avatar" id="plans-avatar">A</div><div class="admin-profile-copy"><strong id="plans-admin-name">Administrator</strong><small id="plans-admin-email"></small></div></div><button type="button" class="admin-logout" id="plans-logout">↗ <span>Sign out securely</span></button><a class="admin-back-link" href="index.html">← View public website</a></div>
+    </aside>
+    <div class="admin-main-column">
+      <header class="admin-topbar"><a class="admin-icon-button" href="admin.html" aria-label="Back to admin">←</a><div class="admin-breadcrumb"><span>Business &amp; Access</span><span>/</span><strong>Plans &amp; Subscriptions</strong></div><div class="admin-topbar-right"><span class="admin-live-dot"></span><span class="admin-live-label">Admin session</span></div></header>
+      <main class="admin-content plans-content">
+        <div class="admin-page-heading"><div><div class="admin-kicker">SUBSCRIPTION CATALOG</div><h1>Plans &amp; Subscriptions</h1><p>Create subscription plans, set duration and price, and choose which site, folders, or tests each plan unlocks.</p></div><div class="admin-heading-actions"><button type="button" id="plans-refresh" class="admin-btn admin-btn-secondary">↻ Refresh</button><button type="button" id="plans-new" class="admin-btn admin-btn-primary">＋ New plan</button></div></div>
+        <div class="plans-warning" role="note"><strong>Paid activation is still gated.</strong><p>Plan management and Razorpay checkout/payment-verification functions are implemented in staging. Configure Razorpay Test Mode secrets, assign only the intended test/folder entitlements, and pass authenticated checkout, webhook, refund, and access-control tests before enabling a customer-facing paid offer. This page configures catalog access; it never grants paid access from a browser-only action.</p></div>
+        <section class="plans-kpis" aria-label="Plan summary"><article><span>Total plans</span><strong id="plans-count">—</strong></article><article><span>Active plans</span><strong id="plans-active-count">—</strong></article><article><span>Assigned entitlements</span><strong id="plans-entitlement-count">—</strong></article></section>
+        <section class="admin-panel plans-form-panel" id="plans-form-panel" hidden>
+          <div class="admin-panel-heading"><div><h2 id="plans-form-title">Create subscription plan</h2><p>Price is stored in minor currency units by the database RPC. Example: ₹199.00 is stored as 19900 INR paise.</p></div></div>
+          <form id="plans-form">
+            <input type="hidden" id="plans-id">
+            <div class="plans-fields">
+              <label>Plan name<input id="plans-name" maxlength="120" required placeholder="e.g. Premium 30 days"></label>
+              <label>Price<input id="plans-price" type="number" min="0" max="10000000" step="0.01" required value="199"></label>
+              <label>Currency<select id="plans-currency"><option value="INR">INR — Indian Rupee</option><option value="USD">USD — US Dollar</option><option value="GBP">GBP — Pound Sterling</option><option value="EUR">EUR — Euro</option></select></label>
+              <label>Duration (days)<input id="plans-duration" type="number" min="1" max="3650" step="1" required value="30"></label>
+              <label class="plans-description">Description<textarea id="plans-description" rows="3" maxlength="2000" placeholder="What's included in this plan?"></textarea></label>
+              <label class="plans-active"><input id="plans-active" type="checkbox"> Plan is active in the catalog</label>
+            </div>
+            <div class="plans-entitlements">
+              <div><h3>Access included</h3><p>Choose a site-wide grant, individual folders, or individual tests. Test and folder keys are saved as UUID resource keys.</p></div>
+              <label class="plans-site-entitlement"><input type="checkbox" id="plans-site-entitlement"> Unlock all site content (site-wide entitlement)</label>
+              <div class="plans-resource-columns">
+                <section><h4>Folders</h4><div id="plans-folders" class="plans-resource-list"><span class="admin-empty">Loading folders…</span></div></section>
+                <section><h4>Tests</h4><div id="plans-tests" class="plans-resource-list"><span class="admin-empty">Loading tests…</span></div></section>
+              </div>
+            </div>
+            <div class="plans-form-actions"><button type="button" id="plans-cancel" class="admin-btn admin-btn-secondary">Cancel</button><button type="submit" id="plans-save" class="admin-btn admin-btn-primary">Save plan</button></div>
+          </form>
+        </section>
+        <section class="admin-panel">
+          <div class="admin-panel-heading"><div><h2>Subscription plans</h2><p>Existing plans remain editable. Deactivate a plan instead of deleting it to preserve order/subscription history.</p></div></div>
+          <div id="plans-list" class="plans-list"><div class="admin-empty">Loading subscription plans…</div></div>
+          <div id="plans-status" class="access-status" role="status" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin-plans.js"></script>
+</body>
+</html>

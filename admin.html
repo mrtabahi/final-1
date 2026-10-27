@@ -28,8 +28,11 @@
 <a class="admin-nav-link" href="admin-materials.html"><span>▤</span> PDF &amp; Study Materials</a><button type="button" class="admin-nav-link" data-module="content"><span>▧</span> Website Content</button>
 <button type="button" class="admin-nav-link" data-module="workspace-banner"><span>▤</span> Workspace Banner Text</button>
 <div class="admin-nav-label">BUSINESS &amp; ACCESS</div>
-<button type="button" class="admin-nav-link" data-module="subscriptions"><span>◇</span> Plans &amp; Subscriptions <em>Future</em></button>
-<button type="button" class="admin-nav-link" data-module="payments"><span>₹</span> Payments &amp; Coupons <em>Future</em></button>
+<a class="admin-nav-link" href="admin-access.html"><span>◇</span> Website Access &amp; Monetization</a>
+<a class="admin-nav-link" href="admin-plans.html"><span>◇</span> Plans &amp; Subscriptions <em class="module-ready">Beta</em></a>
+<a class="admin-nav-link" href="admin-subscriptions.html"><span>♙</span> Subscription Operations <em class="module-ready">Beta</em></a>
+<a class="admin-nav-link" href="admin-entitlements.html"><span>♙</span> User Entitlements <em class="module-ready">Beta</em></a>
+<a class="admin-nav-link" href="admin-payments.html"><span>₹</span> Payments &amp; Coupons <em class="module-ready">Beta</em></a>
 <button type="button" class="admin-nav-link" data-module="roles"><span>⚿</span> Roles &amp; Permissions <em>Future</em></button>
 <div class="admin-nav-label">SYSTEM</div>
 <button type="button" class="admin-nav-link" data-module="analytics"><span>⌁</span> Analytics &amp; Reports</button>
@@ -49,13 +52,59 @@
 <article class="admin-stat-card"><div class="admin-stat-top"><span>Candidates</span><span class="admin-stat-icon amber">♙</span></div><strong id="adm-total-candidates">—</strong><small>Candidate accounts</small></article>
 <article class="admin-stat-card"><div class="admin-stat-top"><span>Average net WPM</span><span class="admin-stat-icon blue">⌁</span></div><strong id="adm-avg-wpm">—</strong><small>Across retrieved attempts</small></article>
 </div>
+<section class="admin-panel admin-progress-panel" aria-labelledby="development-progress-title">
+  <div class="admin-panel-heading admin-progress-heading">
+    <div>
+      <div class="admin-kicker">PROJECT DELIVERY TRACKER</div>
+      <h2 id="development-progress-title">Development progress &amp; next steps</h2>
+      <p>See what is ready, what is being verified, and what still blocks a safe public release.</p>
+    </div>
+    <span class="admin-progress-snapshot">Status snapshot · 27 Oct 2026</span>
+  </div>
+  <div class="admin-progress-summary">
+    <article class="admin-progress-stat is-ready"><span class="admin-progress-indicator" aria-hidden="true"></span><div><strong>Admin UI foundation</strong><small>Implemented · preview smoke-checked</small></div></article>
+    <article class="admin-progress-stat is-ready"><span class="admin-progress-indicator" aria-hidden="true"></span><div><strong>Automated checks</strong><small>Regression run #504 passed · latest feature preview READY</small></div></article>
+    <article class="admin-progress-stat is-blocked"><span class="admin-progress-indicator" aria-hidden="true"></span><div><strong>Production release</strong><small>On hold · critical gates remain</small></div></article>
+  </div>
+  <div class="admin-progress-columns">
+    <section class="admin-progress-track" aria-labelledby="progress-ui-title">
+      <h3 id="progress-ui-title"><span>01</span> UI &amp; admin experience</h3>
+      <ul>
+        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>Consistent admin styling and navigation</strong><small>Responsive layouts, focus states and reduced-motion support.</small></div></li>
+        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>My Subscription integrated in My Account</strong><small>Current plan, validity, history and the animated plan chooser are in one account page.</small></div></li>
+        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>Reusable homepage upgrade link</strong><small>Website Content can add a CTA that opens the same plan chooser from an announcement or offer.</small></div></li>
+        <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Browser-level workflow review</strong><small>Validate forms, loading/error states and mobile interactions with real staging users.</small></div></li>
+      </ul>
+    </section>
+    <section class="admin-progress-track" aria-labelledby="progress-function-title">
+      <h3 id="progress-function-title"><span>02</span> Functions &amp; backend</h3>
+      <ul>
+        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>Regression suite and Edge Function type checks</strong><small>Regression run #504 passed browser syntax checks, Razorpay Edge Function type checks and the full Node regression suite. Staging create-checkout is active at version 11 with JWT verification enabled; open the development PR below for the current feature preview.</small></div></li>
+        <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Authenticated staging end-to-end tests</strong><small>Next: confirm Razorpay Test Mode secrets are set in Supabase Edge Function Secrets, then use isolated staging fixtures for authenticated candidate/admin flows. The current staging plan has zero entitlements and there are no active tests or folders, so paid-content delivery cannot yet be validated.</small></div></li>
+        <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Payment lifecycle test matrix</strong><small>Still pending: signed test webhooks, duplicates, failed/pending payments, amount/currency mismatch and refunds. Do not use live keys for these checks.</small></div></li>
+      </ul>
+    </section>
+    <section class="admin-progress-track" aria-labelledby="progress-release-title">
+      <h3 id="progress-release-title"><span>03</span> Security &amp; release gates</h3>
+      <ul>
+        <li class="progress-blocked"><span aria-hidden="true">!</span><div><strong>Leaderboard privacy and security findings</strong><small>Review production SECURITY DEFINER leaderboard view, anonymous-executable privileged RPCs and mutable search_path findings before release.</small></div></li>
+        <li class="progress-blocked"><span aria-hidden="true">!</span><div><strong>Production plans and entitlements</strong><small>Production currently has no subscription schema migration or checkout/verification/webhook Edge Functions; define real plan pricing and entitlements before production activation.</small></div></li>
+        <li class="progress-blocked"><span aria-hidden="true">!</span><div><strong>Backup, migration and rollback review</strong><small>Required before production database changes or live checkout activation; reconcile the differing staging/production migration histories first.</small></div></li>
+      </ul>
+    </section>
+  </div>
+  <div class="admin-progress-footer">
+    <p><strong>How to read this:</strong> This is a manually maintained project snapshot, not a live CI feed. “Ready” means only the specific checks listed above passed; it does not mean the whole site is production-ready.</p>
+    <div class="admin-progress-links"><a href="https://github.com/mrtabahi/final-1/pull/64" target="_blank" rel="noopener noreferrer">View development PR ↗</a><a href="https://github.com/mrtabahi/final-1/actions/workflows/regression-tests.yml" target="_blank" rel="noopener noreferrer">View latest checks ↗</a></div>
+  </div>
+</section>
 <div class="admin-dashboard-grid"><section class="admin-panel admin-panel-wide"><div class="admin-panel-heading"><div><h2>Recent candidate attempts</h2><p>Latest submitted typing sessions</p></div><button type="button" class="admin-text-button" id="dashboard-view-all">View all →</button></div><div id="dashboard-recent-attempts"><div class="admin-empty">Loading recent activity…</div></div></section>
 <section class="admin-panel"><div class="admin-panel-heading"><div><h2>Quick actions</h2><p>Common administration tasks</p></div></div><div class="admin-quick-actions"><button type="button" id="quick-create-folder"><span>▧</span><div><strong>Create a folder</strong><small>Organize test categories</small></div><b>→</b></button><button type="button" data-quick-action="create-test"><span>⌨</span><div><strong>Publish a typing test</strong><small>Set timing and scoring rules</small></div><b>→</b></button><button type="button" data-quick-action="view-attempts"><span>▤</span><div><strong>Review attempts</strong><small>Inspect scores and accuracy</small></div><b>→</b></button></div></section></div>
 <section class="admin-panel admin-roadmap"><div class="admin-panel-heading"><div><h2>Control areas</h2><p>Core tools are connected; advanced modules need their own backend and permission policies.</p></div></div><div class="admin-module-grid">
 <button type="button" data-module="candidates"><span>♙</span><strong>Candidate management</strong><small>Search profiles, verification and typing history</small><em class="module-ready">Active module</em></button>
 <button type="button" data-module="content"><span>▧</span><strong>Website Content</strong><small>Publish announcements, offers and homepage updates</small><em class="module-ready">Active module</em></button>
-<button type="button" data-module="subscriptions"><span>◇</span><strong>Subscriptions</strong><small>Free/Premium plans, renewals, entitlements</small><em>Future module</em></button>
-<button type="button" data-module="payments"><span>₹</span><strong>Payments &amp; coupons</strong><small>Gateway events, invoices, refunds, discounts</small><em>Future module</em></button>
+<a class="admin-module-card-link" href="admin-plans.html"><span>◇</span><strong>Plans &amp; subscriptions</strong><small>Configure plan pricing, duration and included access. Checkout stays gated until payment E2E passes.</small><em class="module-ready">Configuration UI</em></a>
+<a class="admin-module-card-link" href="admin-payments.html"><span>₹</span><strong>Payments &amp; coupons</strong><small>Review orders and transactions; configure coupons while live payment activation remains gated.</small><em class="module-ready">Operations UI</em></a>
 <button type="button" data-module="roles"><span>⚿</span><strong>Roles &amp; permissions</strong><small>Least-privilege admin access</small><em>Future module</em></button>
 <button type="button" data-module="analytics"><span>⌁</span><strong>Analytics &amp; Reports</strong><small>Live attempts, average speed, accuracy and test-wise export</small><em class="module-ready">Active module</em></button>
 <button type="button" data-module="security"><span>⬡</span><strong>Security &amp; Audit</strong><small>Audit activity, admin roles and suspicious attempts</small><em class="module-ready">Active module</em></button>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1220"><title>User Entitlements | Decoding HCM</title>
+<link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/admin.css"><link rel="stylesheet" href="css/admin-entitlements.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
+<body class="admin-body">
+<div id="entitlements-loading" class="admin-loading"><div class="admin-loader"></div><strong>Securing your workspace…</strong><span>Verifying administrator access</span></div>
+<div id="entitlements-app" class="admin-shell" hidden>
+<aside class="admin-sidebar"><a href="admin.html" class="admin-brand"><span class="admin-brand-mark"><img src="logo.png" alt=""></span><span><strong>DECODING HCM</strong><small>CONTROL CENTER</small></span></a><div class="admin-workspace-label">BUSINESS &amp; ACCESS</div>
+<nav class="admin-nav" aria-label="Admin navigation">
+        <a class="admin-nav-link" href="admin.html">▦ Overview</a>
+        <a class="admin-nav-link" href="admin.html#folders">⌨ Folders &amp; Tests</a>
+        <div class="admin-nav-label">BUSINESS &amp; ACCESS</div>
+        <a class="admin-nav-link" href="admin-access.html">◇ Website Access &amp; Monetization</a>
+        <a class="admin-nav-link" href="admin-plans.html">◇ Plans &amp; Subscriptions</a>
+        <a class="admin-nav-link" href="admin-subscriptions.html">♙ Subscription Operations</a>
+        <a class="admin-nav-link active" href="admin-entitlements.html" aria-current="page">♙ User Entitlements</a>
+        <a class="admin-nav-link" href="admin-payments.html">₹ Payments &amp; Coupons</a>
+        <a class="admin-nav-link" href="admin.html">← Main Control Center</a>
+      </nav>
+<div class="admin-sidebar-bottom"><div class="admin-profile"><div class="admin-avatar" id="entitlements-avatar">A</div><div class="admin-profile-copy"><strong id="entitlements-admin-name">Administrator</strong><small id="entitlements-admin-email"></small></div></div><button type="button" class="admin-logout" id="entitlements-logout">↗ <span>Sign out securely</span></button><a class="admin-back-link" href="index.html">← View public website</a></div></aside>
+<div class="admin-main-column"><header class="admin-topbar"><a class="admin-icon-button" href="admin.html" aria-label="Back to admin">←</a><div class="admin-breadcrumb"><span>Business &amp; Access</span><span>/</span><strong>User Entitlements</strong></div><div class="admin-topbar-right"><span class="admin-live-dot"></span><span class="admin-live-label">Admin session</span></div></header>
+<main class="admin-content entitlements-content">
+<div class="admin-page-heading"><div><div class="admin-kicker">MANUAL ACCESS OPERATIONS</div><h1>User Entitlements</h1><p>Grant or restrict access to a specific folder or test for a candidate, with a reason and optional validity window.</p></div><div class="admin-heading-actions"><button id="entitlements-refresh" class="admin-btn admin-btn-secondary" type="button">↻ Refresh</button><button id="entitlements-new" class="admin-btn admin-btn-primary" type="button">＋ New override</button></div></div>
+<div class="entitlements-warning" role="note"><strong>Use narrowly scoped overrides.</strong><p>These are manual exceptions, not subscription purchases. Changes are audited. A grant applies only to the selected test or folder and validity window; inactive tests/folders remain inaccessible.</p></div>
+<section class="entitlements-kpis"><article><span>Total overrides</span><strong id="entitlements-count">—</strong></article><article><span>Currently active</span><strong id="entitlements-active-count">—</strong></article><article><span>Expired / revoked</span><strong id="entitlements-expired-count">—</strong></article></section>
+<section class="admin-panel entitlements-form-panel" id="entitlements-form-panel" hidden><div class="admin-panel-heading"><div><h2 id="entitlements-form-title">Create entitlement override</h2><p>Only candidate accounts and test/folder resources are supported in this first version.</p></div></div>
+<form id="entitlements-form"><input type="hidden" id="entitlements-id"><div class="entitlements-fields">
+<label>Candidate<select id="entitlements-user" required><option value="">Choose a candidate…</option></select></label>
+<label>Resource type<select id="entitlements-type" required><option value="test">Test</option><option value="folder">Folder</option></select></label>
+<label class="entitlements-resource-label">Resource<select id="entitlements-resource" required><option value="">Choose a resource…</option></select></label>
+<label>Override mode<select id="entitlements-mode" required><option value="grant">Grant access</option><option value="free">Treat as Free</option><option value="paid">Require Paid entitlement</option></select></label>
+<label>Starts at (optional)<input type="datetime-local" id="entitlements-starts"></label><label>Ends at (optional)<input type="datetime-local" id="entitlements-ends"></label>
+<label class="entitlements-reason">Reason (required)<textarea id="entitlements-reason" rows="3" maxlength="500" required placeholder="e.g. Support-approved access extension"></textarea></label>
+</div><div class="entitlements-form-actions"><button id="entitlements-cancel" type="button" class="admin-btn admin-btn-secondary">Cancel</button><button id="entitlements-save" type="submit" class="admin-btn admin-btn-primary">Save override</button></div></form></section>
+<section class="admin-panel"><div class="admin-panel-heading"><div><h2>Manual overrides</h2><p>Revoke an active override to set its end time to now; the audit trail preserves the change.</p></div></div><div id="entitlements-list" class="entitlements-list"><div class="admin-empty">Loading overrides…</div></div><div id="entitlements-status" class="access-status" role="status" aria-live="polite"></div></section>
+</main></div></div>
+<script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/admin-entitlements.js"></script></body></html>
