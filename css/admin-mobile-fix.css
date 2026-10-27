@@ -58,3 +58,12 @@
   .admin-filter-bar .admin-btn,.admin-report-actions .admin-btn{width:100%}
 }
 @media(prefers-reduced-motion:reduce){.admin-view,.admin-panel,.admin-stat-card,.admin-module-grid button,.admin-sidebar-backdrop{animation:none;transition:none}}
+
+/* Inline admin tools and database refresh action */
+.admin-data-refresh{white-space:nowrap}
+.admin-topbar-right{gap:10px}
+.admin-embedded-tool{overflow:hidden}
+.admin-embedded-badge{display:inline-flex;align-items:center;white-space:nowrap;padding:7px 11px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:.78rem;font-weight:750}
+.admin-tool-frame{display:block;width:100%;height:min(78vh,1050px);min-height:620px;border:1px solid var(--admin-line,#e5eaf2);border-radius:12px;background:#fff}
+@media(max-width:760px){.admin-topbar-right{gap:5px}.admin-data-refresh,.admin-full-reload{font-size:.75rem;padding:.45rem .55rem}.admin-tool-frame{height:72vh;min-height:560px;border-radius:9px}.admin-embedded-badge{display:none}}
+@media(max-width:420px){.admin-live-dot{display:none}.admin-topbar-right{gap:4px}.admin-data-refresh,.admin-full-reload{padding:.4rem;font-size:.7rem}}
