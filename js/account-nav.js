@@ -1,7 +1,6 @@
 /* Public-site account navigation: show Login when signed out and My Account when signed in. */
 (function () {
   'use strict';
-  const ACCOUNT_PATHS = new Set(['my_account.html', '/my_account.html']);
   function accountLinks() {
     return Array.from(document.querySelectorAll('a[href]')).filter(a => {
       try {
