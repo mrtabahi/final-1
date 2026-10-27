@@ -58,11 +58,11 @@
       <h2 id="development-progress-title">Development progress &amp; next steps</h2>
       <p>See what is ready, what is being verified, and what still blocks a safe public release.</p>
     </div>
-    <span class="admin-progress-snapshot">Status snapshot · 26 Oct 2026</span>
+    <span class="admin-progress-snapshot">Status snapshot · 27 Oct 2026</span>
   </div>
   <div class="admin-progress-summary">
     <article class="admin-progress-stat is-ready"><span class="admin-progress-indicator" aria-hidden="true"></span><div><strong>Admin UI foundation</strong><small>Implemented · preview smoke-checked</small></div></article>
-    <article class="admin-progress-stat is-ready"><span class="admin-progress-indicator" aria-hidden="true"></span><div><strong>Automated checks</strong><small>Regression run #479 passed · current preview READY</small></div></article>
+    <article class="admin-progress-stat is-ready"><span class="admin-progress-indicator" aria-hidden="true"></span><div><strong>Automated checks</strong><small>Regression run #504 passed · latest feature preview READY</small></div></article>
     <article class="admin-progress-stat is-blocked"><span class="admin-progress-indicator" aria-hidden="true"></span><div><strong>Production release</strong><small>On hold · critical gates remain</small></div></article>
   </div>
   <div class="admin-progress-columns">
@@ -78,8 +78,8 @@
     <section class="admin-progress-track" aria-labelledby="progress-function-title">
       <h3 id="progress-function-title"><span>02</span> Functions &amp; backend</h3>
       <ul>
-        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>Regression suite and Edge Function type checks</strong><small>Regression run #479 passed; follow-up tracker commit CI #481 also passed. The feature branch preview is READY; HTTP smoke checks for My Account, homepage, environment config and the legacy subscription redirect returned 200. Open the development PR below for the current preview URL.</small></div></li>
-        <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Authenticated staging end-to-end tests</strong><small>Next: configure Razorpay TEST secrets in staging (RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET), then verify authenticated candidate/admin flows and paid-content delivery.</small></div></li>
+        <li class="progress-done"><span aria-hidden="true">✓</span><div><strong>Regression suite and Edge Function type checks</strong><small>Regression run #504 passed browser syntax checks, Razorpay Edge Function type checks and the full Node regression suite. Staging create-checkout is active at version 11 with JWT verification enabled; open the development PR below for the current feature preview.</small></div></li>
+        <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Authenticated staging end-to-end tests</strong><small>Next: confirm Razorpay Test Mode secrets are set in Supabase Edge Function Secrets, then use isolated staging fixtures for authenticated candidate/admin flows. The current staging plan has zero entitlements and there are no active tests or folders, so paid-content delivery cannot yet be validated.</small></div></li>
         <li class="progress-next"><span aria-hidden="true">→</span><div><strong>Payment lifecycle test matrix</strong><small>Still pending: signed test webhooks, duplicates, failed/pending payments, amount/currency mismatch and refunds. Do not use live keys for these checks.</small></div></li>
       </ul>
     </section>
