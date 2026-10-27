@@ -48,11 +48,15 @@ test('typing sessions check access before both start and submit', () => {
   assert.match(edge, /if \(accessAllowed !== true\) return reply\(403/);
 });
 
-test('Paid cannot be enabled in the admin UI before server-side validation', () => {
-  assert.match(adminAccess, /<option value="paid" disabled/);
-  assert.match(adminAccess, /if \(mode === 'paid'\)/);
+test('admin can save Paid policies because server-side access checks enforce them', () => {
+  assert.match(adminAccess, /<option value="paid"[^>]*>Paid · subscription required/);
+  assert.doesNotMatch(adminAccess, /Paid access is locked until passage delivery/);
+  assert.match(adminAccess, /update\(\{access_mode:mode\}\)/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.can_access_test/);
+  assert.match(migration, /CREATE POLICY tests_candidate_select ON public\.tests/);
+  assert.match(migration, /ALTER TABLE public\.folders ALTER COLUMN access_mode SET DEFAULT 'paid'/);
+  assert.match(migration, /ALTER TABLE public\.tests ALTER COLUMN access_mode SET DEFAULT 'paid'/);
 });
-
 test('access policy changes are written to a server-managed audit trail', () => {
   assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.access_policy_audit/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.audit_access_mode_change\(\)/);
