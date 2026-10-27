@@ -82,3 +82,14 @@
 .account-sub-skeleton{background:rgba(255,255,255,.8)}
 @media(max-width:640px){.account-subscription-panel{padding:18px;border-radius:17px}.account-subscription-title-wrap{align-items:flex-start;gap:11px}.account-subscription-mark{width:44px;height:44px;flex-basis:44px;border-radius:14px}.account-subscription-heading{gap:14px;padding-bottom:18px}.account-upgrade-trigger{width:100%}.account-sub-stat{min-height:0}.account-sub-history-grid>section{padding:14px}}
 @media(prefers-reduced-motion:reduce){.account-sub-stat{transition:none}}
+
+/* Promo-code entry for subscription chooser */
+.account-plan-tools{display:grid;gap:8px;margin:0 0 16px;padding:14px 15px;border:1px solid #dbeafe;border-radius:15px;background:linear-gradient(120deg,#f8fbff,#f5f3ff)}
+.account-plan-tools>label{display:flex;align-items:center;gap:8px;color:#1e293b;font-size:.88rem;font-weight:800}
+.account-plan-tools>label span{padding:3px 7px;border:1px solid #c7d2fe;border-radius:999px;background:#fff;color:#6366f1;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase}
+.account-coupon-row{display:grid;grid-template-columns:minmax(0,1fr);gap:7px}
+#account-coupon-code{width:100%;min-height:44px;padding:10px 13px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;color:#0f172a;font:inherit;font-size:.95rem;letter-spacing:.04em;text-transform:uppercase;outline:none;transition:border-color .18s,box-shadow .18s}
+#account-coupon-code::placeholder{color:#94a3b8;letter-spacing:0;text-transform:none}
+#account-coupon-code:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.13)}
+.account-coupon-hint{color:#64748b;font-size:.78rem;line-height:1.5}
+@media(min-width:620px){.account-coupon-row{grid-template-columns:minmax(0,1fr)}}
