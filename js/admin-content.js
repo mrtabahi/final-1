@@ -16,15 +16,15 @@
 
  async function renderWorkspaceBannerModule(){
   const box=$('module-capabilities'),heading=$('module-title'),sub=$('module-subtitle');
-  if(heading)heading.textContent='Workspace Banner Text';
+  if(heading)heading.textContent='Pro Menu (Public Account)';
   if(sub)sub.textContent='Edit the heading and supporting lines shown at the top of the Pro workspace.';
   if(!box)return;
   box.innerHTML='<div class="admin-empty">Loading workspace banner text…</div>';
   const escHtml=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const {data,error}=await supabaseClient.from('workspace_banner_settings').select('lines').eq('id',1).maybeSingle();
   if(error)throw error;
-  const lines=Array.isArray(data?.lines)&&data.workspace_banner_lines.length?data.workspace_banner_lines:['Your Pro tools. One workspace.'];
-  box.innerHTML='<section class="admin-panel workspace-banner-editor"><div class="admin-panel-heading"><div><h2>Pro workspace banner</h2><p>First non-empty line is the main heading. Additional lines appear below it. Leave one line per text item.</p></div></div><form id="workspace-banner-form"><div class="admin-form-field"><label for="workspace-banner-lines">Banner text lines</label><textarea id="workspace-banner-lines" class="admin-input" rows="6" maxlength="1200" placeholder="Your Pro tools. One workspace.">'+escHtml(lines.join('\n'))+'</textarea><small class="admin-field-help">Add a new line to add text, or delete a line to remove it. The main heading stays on one line on desktop.</small></div><div class="admin-modal-actions"><button type="button" class="admin-btn admin-btn-secondary" id="workspace-banner-reset">Reset default text</button><button type="submit" class="admin-btn admin-btn-primary" id="workspace-banner-save">Save banner text</button></div><p id="workspace-banner-message" class="admin-form-message" role="status" aria-live="polite"></p></form></section>';
+  const lines=Array.isArray(data?.lines)&&data.lines.length?data.lines:['Your Pro tools. One workspace.'];
+  box.innerHTML='<section class="admin-panel workspace-banner-editor"><div class="admin-panel-heading"><div><h2>Pro menu for the public account</h2><p>First non-empty line is the main heading. Additional lines appear below it. Leave one line per text item.</p></div></div><form id="workspace-banner-form"><div class="admin-form-field"><label for="workspace-banner-lines">Banner text lines</label><textarea id="workspace-banner-lines" class="admin-input" rows="6" maxlength="1200" placeholder="Your Pro tools. One workspace.">'+escHtml(lines.join('\n'))+'</textarea><small class="admin-field-help">Add a new line to add text, or delete a line to remove it. The main heading stays on one line on desktop.</small></div><div class="admin-modal-actions"><button type="button" class="admin-btn admin-btn-secondary" id="workspace-banner-reset">Reset default text</button><button type="submit" class="admin-btn admin-btn-primary" id="workspace-banner-save">Save banner text</button></div><p id="workspace-banner-message" class="admin-form-message" role="status" aria-live="polite"></p></form></section>';
   $('workspace-banner-reset')?.addEventListener('click',()=>{$('workspace-banner-lines').value='Your Pro tools. One workspace.';});
   $('workspace-banner-form')?.addEventListener('submit',async e=>{
    e.preventDefault();const btn=$('workspace-banner-save'),msg=$('workspace-banner-message');

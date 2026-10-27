@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded',async()=>{
+document.addEventListener('admin-tool-ready',async()=>{
  const $=id=>document.getElementById(id), fmt=v=>v==null||v===''?'-':(Number.isFinite(Number(v))?Number(v).toFixed(2):String(v)), esc=v=>String(v??'-').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
  const gate=await AuthManager.requireAdminGuard();if(!gate?.user||!gate?.profile)return;
  const date=v=>{if(!v)return '-';const d=new Date(v);return Number.isNaN(d.getTime())?'-':d.toLocaleString()};

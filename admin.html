@@ -8,7 +8,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1220">
 <title>Admin Control Center | Decoding HCM</title>
-<link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix"><link rel="stylesheet" href="css/admin.css?v=20261025-workspace-banner1"><link rel="stylesheet" href="css/admin-mobile-fix.css?v=20261026-mobile-polish1">
+<link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix"><link rel="stylesheet" href="css/admin.css?v=20261027-fullwidth-tools1"><link rel="stylesheet" href="css/admin-mobile-fix.css?v=20261026-mobile-polish1">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
@@ -25,21 +25,22 @@
 <button type="button" class="admin-nav-link" id="nav-tests"><span>⌨</span> Folders &amp; Tests</button>
 <button type="button" class="admin-nav-link" id="nav-attempts"><span>▤</span> Results &amp; Attempts</button>
 <button type="button" class="admin-nav-link" data-module="candidates"><span>♙</span> Candidates</button><button type="button" class="admin-nav-link" data-module="logins"><span>↪</span> Logins &amp; Registration</button>
-<a class="admin-nav-link" href="admin-materials.html"><span>▤</span> PDF &amp; Study Materials</a><button type="button" class="admin-nav-link" data-module="content"><span>▧</span> Website Content</button>
-<button type="button" class="admin-nav-link" data-module="workspace-banner"><span>▤</span> Workspace Banner Text</button>
+<button type="button" class="admin-nav-link" data-module="materials"><span>▤</span> PDF &amp; Study Materials</button><button type="button" class="admin-nav-link" data-module="content"><span>▧</span> Website Content</button>
 <div class="admin-nav-label">BUSINESS &amp; ACCESS</div>
 <button type="button" class="admin-nav-link" data-module="subscriptions"><span>◇</span> Plans &amp; Subscriptions <em>Future</em></button>
 <button type="button" class="admin-nav-link" data-module="payments"><span>₹</span> Payments &amp; Coupons <em>Future</em></button>
 <button type="button" class="admin-nav-link" data-module="roles"><span>⚿</span> Roles &amp; Permissions <em>Future</em></button>
 <div class="admin-nav-label">SYSTEM</div>
 <button type="button" class="admin-nav-link" data-module="analytics"><span>⌁</span> Analytics &amp; Reports</button>
+<button type="button" class="admin-nav-link" data-module="leaderboard"><span>🏆</span> Leaderboard Control</button>
+<button type="button" class="admin-nav-link" data-module="adsense"><span>▣</span> AdSense Control</button>
 <button type="button" class="admin-nav-link" data-module="security"><span>⬡</span> Security &amp; Audit <em class="module-ready">Active</em></button>
 <button type="button" class="admin-nav-link" data-module="settings"><span>⚙</span> Website Settings <em class="module-ready">Active</em></button>
 </nav>
-<div class="admin-sidebar-bottom"><div class="admin-profile"><div class="admin-avatar" id="admin-avatar">A</div><div class="admin-profile-copy"><strong id="admin-name">Administrator</strong><small id="admin-email">Verified admin</small></div></div><button type="button" class="admin-logout" id="nav-logout">↗ <span>Sign out securely</span></button><a class="admin-back-link" href="admin-leaderboard.html">🏆 Leaderboard History Controls</a><a class="admin-back-link" href="admin-ads.html">▣ AdSense Controls</a><a class="admin-back-link" href="index.html">← View public website</a></div>
+<div class="admin-sidebar-bottom"><div class="admin-profile"><div class="admin-avatar" id="admin-avatar">A</div><div class="admin-profile-copy"><strong id="admin-name">Administrator</strong><small id="admin-email">Verified admin</small></div></div><button type="button" class="admin-logout" id="nav-logout">↗ <span>Sign out securely</span></button><a class="admin-back-link" href="index.html">← View public website</a></div>
 </aside>
 <div class="admin-main-column">
-<header class="admin-topbar"><button type="button" id="admin-menu-toggle" class="admin-icon-button" aria-label="Toggle sidebar">☰</button><div class="admin-breadcrumb"><span>Control Center</span><span>/</span><strong id="page-title">Overview</strong></div><div class="admin-topbar-right"><span class="admin-live-dot"></span><span class="admin-live-label">Admin session</span><button type="button" class="admin-btn admin-btn-secondary admin-full-reload" id="admin-refresh" aria-label="Reload entire admin panel and bypass cache" title="Reload entire panel + cache">⟳ Reload</button><div class="admin-top-avatar" id="admin-top-avatar">A</div></div></header>
+<header class="admin-topbar"><button type="button" id="admin-menu-toggle" class="admin-icon-button" aria-label="Toggle sidebar">☰</button><div class="admin-breadcrumb"><span>Control Center</span><span>/</span><strong id="page-title">Overview</strong></div><div class="admin-topbar-right"><span class="admin-live-dot"></span><span class="admin-live-label">Admin session</span><button type="button" class="admin-btn admin-btn-secondary admin-full-reload" id="admin-refresh" aria-label="Reload entire admin panel and bypass cache" title="Reload entire panel + cache">⟳ Reload</button><button type="button" class="admin-btn admin-btn-secondary admin-data-refresh" id="admin-data-refresh" title="Refresh current view from the database" aria-label="Refresh data from database">↻ Data</button><div class="admin-top-avatar" id="admin-top-avatar">A</div></div></header>
 <main class="admin-content">
 <section id="view-dashboard" class="admin-view">
 <div class="admin-page-heading"><div><div class="admin-kicker">YOUR PLATFORM AT A GLANCE</div><h1 id="dashboard-title">Welcome to your control center</h1><p id="page-subtitle">Manage tests, candidate performance and platform operations.</p></div><div class="admin-heading-actions"><button class="admin-btn admin-btn-secondary" type="button" id="quick-view-attempts">View attempts ↗</button><button class="admin-btn admin-btn-primary" type="button" id="quick-create-test">＋ Create a test</button></div></div>

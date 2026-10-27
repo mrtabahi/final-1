@@ -145,8 +145,11 @@
             element.style.setProperty('display', visible ? 'block' : 'none', 'important');
         });
         currentView = view;
-        if (!isCore && $('module-capabilities')) {
-            $('module-capabilities').innerHTML = '<div class="admin-empty" role="status">Opening this section… If it does not load, use Reload in the top bar and try again.</div>';
+        // Legacy modules may replace #view-module.innerHTML. Rebuild the shared
+        // module shell before every navigation so later modules always get fresh
+        // targets instead of leaving the previous module's interface on screen.
+        if (!isCore && views.module) {
+            views.module.innerHTML = '<div class="admin-page-heading"><div><div class="admin-kicker">PLATFORM OPERATIONS</div><h1 id="module-title">Administration module</h1><p id="module-subtitle">Module overview</p></div></div><section class="admin-panel"><div class="admin-module-notice"><span class="admin-notice-icon">✦</span><div><h2 id="module-status-title">Loading module</h2><p id="module-status-copy">Loading the selected administration tools.</p></div></div><div id="module-capabilities" class="admin-capability-list"><div class="admin-empty" role="status">Opening this section…</div></div><div class="admin-security-note"><strong>Security rule</strong><p>Account bans, role changes, billing, refunds and subscription entitlements must be enforced server-side with audited permissions. A visual control alone is not authorization.</p></div></section>';
         }
         document.querySelectorAll('.admin-nav-link').forEach(link => link.classList.remove('active'));
         const activeMap = { dashboard: 'nav-dash', tests: 'nav-tests', attempts: 'nav-attempts' };
@@ -169,10 +172,9 @@
             }
             return;
         }
-        if (view === 'workspace-banner') {
+        if (['materials','leaderboard','adsense'].includes(view)) {
             updatePageHeader(view);
-            if (typeof window.renderWorkspaceBannerModule === 'function') window.renderWorkspaceBannerModule();
-            else console.error('Workspace banner editor is not loaded.');
+            renderEmbeddedAdminTool(view, renderSequence);
             return;
         }
         if (view === 'content') {
@@ -216,7 +218,9 @@
             candidates:{title:'Candidate Management',subtitle:'Review accounts, login history and online sessions.'},
             logins:{title:'Logins & Registration',subtitle:'Manage account creation and personalized login messages.'},
             content:{title:'Website Content',subtitle:'Manage public-facing pages, banners and announcements.'},
-            'workspace-banner':{title:'Workspace Banner Text',subtitle:'Edit the Pro workspace heading and supporting lines.'},
+            materials:{title:'PDF & Study Materials',subtitle:'Manage PDFs and study packs without leaving the admin control center.'},
+            leaderboard:{title:'Leaderboard Control',subtitle:'Manage leaderboard history and manual entries inside this workspace.'},
+            adsense:{title:'AdSense Control',subtitle:'Manage ad placements and density for eligible public pages.'},
             subscriptions:{title:'Plans & Subscriptions',subtitle:'Plan paid tiers, renewals and premium access.'},
             payments:{title:'Payments & Coupons',subtitle:'Payment ledger, invoices, coupons and refunds.'},
             roles:{title:'Roles & Permissions',subtitle:'Define least-privilege access for administrators.'},
@@ -229,7 +233,7 @@
         if(subtitle) subtitle.textContent=item.subtitle;
         // These modules render their own complete interface. Never replace
         // their content with the generic roadmap panel during navigation.
-        const ownsRenderer = ['dashboard','tests','attempts','candidates','logins','content','analytics','security','settings'].includes(view);
+        const ownsRenderer = ['dashboard','tests','attempts','candidates','logins','content','analytics','security','settings','materials','leaderboard','adsense'].includes(view);
         if (!ownsRenderer) renderPlannedModule(view,item);
     }
 
@@ -394,6 +398,63 @@
             box.innerHTML='<div class="admin-error">Website settings could not be loaded: '+escHtml(error.message||'database request failed')+'</div>';
         }
     }
+
+    async function renderEmbeddedAdminTool(view, renderSequence = viewRenderSequence) {
+        const box = $('module-capabilities');
+        if (!box) return;
+        const tools = {
+            materials: { src: 'admin-materials.html', title: 'PDF & Study Materials', hint: 'Manage published PDFs and study packs here.', root: '.materials-admin-shell', script: 'js/admin-materials.js', initEvent: true},
+            leaderboard: { src: 'admin-leaderboard.html', title: 'Leaderboard Control', hint: 'Manage submitted attempts and manual leaderboard entries here.', root: 'main.container', script: 'js/admin-leaderboard.js', initEvent: true},
+            adsense: { src: 'admin-ads.html', title: 'AdSense Control', hint: 'Manage ad placement preferences for eligible public pages.', root: 'body', script: 'js/admin-ads.js', initEvent: false}
+        };
+        const tool = tools[view];
+        if (!tool) return;
+        box.innerHTML = '<section class="admin-panel admin-embedded-tool"><div class="admin-panel-heading"><div><h2>' + esc(tool.title) + '</h2><p>' + esc(tool.hint) + '</p></div><span class="admin-embedded-badge">Admin workspace</span></div><div class="admin-tool-content"><div class="admin-empty" role="status">Loading working controls…</div></div></section>';
+        const contentBox = box.querySelector('.admin-tool-content');
+        try {
+            const response = await fetch(tool.src, { credentials: 'same-origin', cache: 'no-store' });
+            if (!response.ok) throw new Error('Tool page could not be loaded (' + response.status + ').');
+            const source = await response.text();
+            if (renderSequence !== viewRenderSequence || currentView !== view || !contentBox.isConnected) return;
+            const parsed = new DOMParser().parseFromString(source, 'text/html');
+            parsed.querySelectorAll('script').forEach(node => node.remove());
+            parsed.querySelectorAll('a[href="admin.html"], .ads-back').forEach(node => node.remove());
+            parsed.head.querySelectorAll('style').forEach(node => {
+                const style = document.createElement('style');
+                style.dataset.adminToolStyle = view;
+                style.textContent = node.textContent;
+                document.head.appendChild(style);
+            });
+            if (view === 'materials') {
+                const css = document.createElement('link');
+                css.rel = 'stylesheet'; css.href = 'css/materials.css'; css.dataset.adminToolStyle = view;
+                document.head.appendChild(css);
+            }
+            let root;
+            if (view === 'materials') root = parsed.querySelector('.materials-admin-shell');
+            else if (view === 'leaderboard') root = parsed.querySelector('main.container');
+            else { root = document.createElement('div'); root.innerHTML = parsed.body.innerHTML; }
+            if (!root) throw new Error('The original controls could not be found in the tool page.');
+            contentBox.innerHTML = root.innerHTML;
+            contentBox.querySelectorAll('a[href="admin.html"], .ads-back').forEach(node => node.remove());
+            const script = document.createElement('script');
+            script.src = tool.script + '?inline=' + encodeURIComponent(view + '-' + renderSequence);
+            script.dataset.adminToolScript = view;
+            script.onload = () => {
+                if (tool.initEvent && renderSequence === viewRenderSequence && currentView === view) document.dispatchEvent(new Event('admin-tool-ready'));
+            };
+            script.onerror = () => {
+                const status = contentBox.querySelector('[role="status"]');
+                if (status) status.textContent = 'Controls loaded, but their JavaScript could not start. Use Reload and try again.';
+            };
+            document.body.appendChild(script);
+        } catch (error) {
+            if (renderSequence !== viewRenderSequence || currentView !== view) return;
+            contentBox.innerHTML = '<div class="admin-empty" role="alert">Unable to load this tool: ' + esc(error.message || 'Unknown error') + '. Please refresh the admin panel.</div>';
+            console.error('Admin tool load failed:', error);
+        }
+    }
+
 
     function renderPlannedModule(view,item) {
         const configs = {
@@ -2187,6 +2248,13 @@ async function loadDashboard() {
         });
         window.addEventListener('resize', () => {
             if (window.innerWidth > 760) setMobileMenuOpen(false);
+        });
+        $('admin-data-refresh')?.addEventListener('click', async () => {
+            const button = $('admin-data-refresh');
+            if (button?.disabled) return;
+            if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); button.textContent = '↻ Loading…'; }
+            try { showAdminView(currentView); }
+            finally { window.setTimeout(() => { if (button) { button.disabled = false; button.removeAttribute('aria-busy'); button.textContent = '↻ Data'; } }, 900); }
         });
         $('admin-refresh')?.addEventListener('click', () => {
             const button = $('admin-refresh');
