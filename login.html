@@ -173,6 +173,13 @@ refreshRegistrationSetting();
       await showCandidateWelcome(profile);
       location.replace('index.html');
     } else if (profile?.role === 'admin') location.replace('admin.html');
-  } catch (e) { console.warn('Magic-link session could not be routed:', e); }
+    else {
+      await supabaseClient.auth.signOut();
+      $('auth-message').textContent = 'Google sign-in completed, but your candidate profile was not available. Please try email registration or contact support if this continues.';
+    }
+  } catch (e) {
+    console.warn('Magic-link or Google session could not be routed:', e);
+    $('auth-message').textContent = 'Sign-in succeeded, but your account could not be loaded. Please refresh and try again.';
+  }
 })();
 </script></body></html>
