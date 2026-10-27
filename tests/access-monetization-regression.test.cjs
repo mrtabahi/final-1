@@ -246,8 +246,16 @@ test('account subscription dashboard uses the refreshed membership hero and acce
   assert.match(page, /YOUR MEMBERSHIP · AT A GLANCE/);
   assert.match(page, /Subscription &amp; access/);
   assert.match(page, /data-open-subscription/);
+  assert.match(page, /id="account-coupon-code"/);
+  assert.match(page, /server validates the code and calculates the final price securely at checkout/);
   assert.match(styles, /\.account-subscription-mark/);
+  assert.match(styles, /\.account-plan-tools/);
+  assert.match(styles, /#account-coupon-code:focus/);
   assert.match(styles, /prefers-reduced-motion:reduce/);
+  const checkout = read('js/account-subscription.js');
+  assert.match(checkout, /const couponCode=\(\)=>String\(couponInput\?\.value\|\|''\)\.trim\(\)\.toUpperCase\(\)/);
+  assert.match(checkout, /p_coupon_code:couponCode\(\)/);
+  assert.match(checkout, /coupon_code:couponCode\(\)/);
 });
 
 test('customer subscription page only uses safe catalog and own-account overview RPCs', () => {
