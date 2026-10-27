@@ -5,7 +5,7 @@
   const money = (minor, currency='INR') => new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
   let plans = [], candidates = [], editingId = null;
   const notify = (message, error=false) => { const el=$('subscription-admin-message'); if(el){el.textContent=message;el.className='sub-admin-message'+(error?' is-error':' is-success');} };
-  const client = () => window.supabaseClient || window.supabase;
+  const client = () => (typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
   async function loadPlans() {
     const box=$('subscription-plan-list'); if(!box) return;
     box.innerHTML='<div class="admin-empty">Loading plans…</div>';
