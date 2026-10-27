@@ -5,15 +5,26 @@ const path = require('node:path');
 
 const read = file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 
-test('login page provides Google and email account creation with recovery actions', () => {
+test('manual account creation uses only email, mobile, password and confirmation', () => {
   const html = read('login.html');
-  for (const token of ['id="google-signin-button"', 'id="google-signup-button"', 'id="signup-form"', 'id="signup-email"', 'id="signup-password"', 'Forgot password?', 'forgot.html', 'auth-shell']) {
-    assert.ok(html.includes(token), 'missing login UI token: ' + token);
+  for (const token of ['id="google-signin-button"', 'id="google-signup-button"', 'id="signup-form"', 'id="signup-email"', 'id="signup-phone"', 'id="signup-password"', 'id="signup-confirm"', 'Forgot password?', 'forgot.html', 'auth-shell']) {
+    assert.ok(html.includes(token), 'missing auth UI token: ' + token);
   }
-  assert.ok(html.includes('id="signup-phone"') && html.includes('(optional)'), 'phone should be optional for email signup');
+  assert.ok(!html.includes('id="signup-name"'), 'manual signup should not request a name');
+  assert.ok(!html.includes('(optional)'), 'mobile number should be requested');
+  assert.ok(html.includes('No OTP is requested during manual registration'));
+  assert.ok(html.includes('AuthManager.register({email:$('));
 });
 
-test('Google signup respects the registration pause and callback uses Google display name', () => {
+test('manual signup stores phone as metadata and does not trigger phone OTP', () => {
+  const auth = read('js/auth.js');
+  assert.ok(auth.includes('async register({ email, phone, password, fullName = \'\' })'));
+  assert.ok(auth.includes('phone: normalizedPhone'));
+  assert.ok(auth.includes('Do not call updateUser({phone})'));
+  assert.ok(!auth.includes('await supabaseClient.auth.updateUser({\n          phone: normalizedPhone'));
+});
+
+test('Google signup respects registration pause and uses Google display name', () => {
   const auth = read('js/auth.js');
   const html = read('login.html');
   assert.ok(auth.includes('async signInWithGoogle({ isSignup = false } = {})'));
@@ -22,7 +33,7 @@ test('Google signup respects the registration pause and callback uses Google dis
   assert.ok(html.includes('AuthManager.updateName(googleName)'));
 });
 
-test('site navigation only rewrites My Account links based on auth state', () => {
+test('site navigation rewrites My Account links based on auth state', () => {
   const nav = read('js/account-nav.js');
   assert.ok(nav.includes('my_account.html'));
   assert.ok(nav.includes("signedIn ? 'My Account' : 'Login'"));
@@ -32,9 +43,13 @@ test('site navigation only rewrites My Account links based on auth state', () =>
   }
 });
 
-test('password recovery page keeps email reset and mobile OTP options', () => {
-  const html = read('forgot.html');
-  for (const token of ['id="email-form"', 'id="phone-form"', 'id="otp-form"', 'recovery-card']) {
-    assert.ok(html.includes(token), 'missing recovery UI token: ' + token);
-  }
+test('password reset emails a link and reset page asks for new password plus confirmation', () => {
+  const forgot = read('forgot.html');
+  const reset = read('reset.html');
+  assert.ok(forgot.includes('resetPasswordForEmail'));
+  assert.ok(forgot.includes("new URL('/reset.html',window.location.origin)"));
+  assert.ok(!forgot.includes('phone-form') && !forgot.includes('otp-form'));
+  assert.ok(reset.includes('id="new-password"'));
+  assert.ok(reset.includes('id="confirm-password"'));
+  assert.ok(reset.includes('auth.updateUser({password})'));
 });
