@@ -312,6 +312,16 @@ test('Razorpay checkout and verification remain server-authoritative', () => {
   assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.provider_webhook_events/);
   assert.match(createCheckout, /create_checkout_order/);
   assert.match(createCheckout, /RAZORPAY_KEY_SECRET/);
+  const missingCredentialsBranch = createCheckout.slice(
+    createCheckout.indexOf('if (!keyId || !keySecret)'),
+    createCheckout.indexOf('try {', createCheckout.indexOf('if (!keyId || !keySecret)')),
+  );
+  assert.match(missingCredentialsBranch, /\.update\(\{ status: "failed" \}\)/);
+  assert.match(missingCredentialsBranch, /\.eq\("status", "pending"\)/);
+  assert.ok(
+    missingCredentialsBranch.indexOf('update({ status: "failed" })') < missingCredentialsBranch.indexOf('return json(503'),
+    'missing Razorpay credentials must close the pending local order before returning',
+  );
   assert.match(createCheckout, /Number\(providerOrder\.amount\) !== Number\(order\.total_minor\)/);
   assert.ok(verifyPayment.includes('hmacHex(keySecret, providerOrderId + "|" + paymentId)'));
   assert.match(verifyPayment, /payment\.status !== "captured" \|\| payment\.captured !== true/);
