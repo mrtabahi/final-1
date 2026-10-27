@@ -12,7 +12,7 @@ test('subscription admin controls are wired and server access remains role-gated
 
   assert.match(html, /css\/subscription-control-center\.css/);
   assert.match(html, /js\/admin-subscriptions\.js/);
-  assert.match(html, /data-module="subscriptions"[^>]*Active/);
+  assert.match(html, /data-module="subscriptions"/);\n  assert.match(html, /module-ready">Active<\/em>/);
   assert.match(admin, /view === 'subscriptions'/);
   assert.match(admin, /window\.renderSubscriptionsModule\(\)/);
   assert.match(moduleScript, /subscription_plans/);
