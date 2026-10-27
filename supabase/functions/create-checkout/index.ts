@@ -129,6 +129,13 @@ Deno.serve(async (req: Request) => {
     });
   } catch (error) {
     console.error("Razorpay order request failed.", error instanceof Error ? error.message : "unknown");
+    const { error: closeOrderError } = await serviceClient.from("orders")
+      .update({ status: "failed" })
+      .eq("id", order.order_id)
+      .eq("status", "pending");
+    if (closeOrderError) {
+      console.error("Could not close checkout order after provider request failure.", closeOrderError.code);
+    }
     return json(502, { error: "Unable to reach the payment provider. Please retry." });
   }
 });
