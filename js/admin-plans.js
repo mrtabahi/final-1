@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const entitlementCount = entitlementResults.reduce((sum, result) => sum + (Array.isArray(result.data) ? result.data.length : 0), 0);
       $('plans-entitlement-count').textContent = entitlementCount;
       renderPlans(); renderResources();
-      setStatus('Plans loaded. Checkout and payment verification are not connected yet.', 'success');
+      setStatus('Plans loaded. Paid checkout is implemented; activation remains gated pending Razorpay Test Mode configuration and end-to-end verification.', 'success');
     } catch (error) {
       console.error('Plans load failed', error);
       $('plans-list').innerHTML = '<div class="admin-empty">Could not load plans. Confirm the access foundation migration is applied to a staging database and admin RPC permissions are configured.</div>';
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (result.error) throw result.error;
       closeForm();
       await load();
-      setStatus('Plan saved with ' + Number(result.data?.entitlements_count || 0) + ' entitlement(s). Checkout remains disabled until payment verification is implemented.', 'success');
+      setStatus('Plan saved with ' + Number(result.data?.entitlements_count || 0) + ' entitlement(s). Paid activation remains gated pending Razorpay Test Mode configuration and payment lifecycle verification.', 'success');
     } catch (error) {
       console.error('Plan save failed', error);
       setStatus(error.message || 'Unable to save plan.', 'error');
