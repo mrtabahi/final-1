@@ -12,7 +12,12 @@ test('manual account creation uses only email, mobile, password and confirmation
   }
   assert.ok(!html.includes('id="signup-name"'), 'manual signup should not request a name');
   assert.ok(!html.includes('(optional)'), 'mobile number should be requested');
-  assert.ok(html.includes('No OTP is requested during manual registration'));
+  assert.ok(html.includes('No OTP or email confirmation step is used for manual registration'));
+  assert.ok(!html.includes('magic-link-button'), 'magic sign-in link option should be removed');
+  assert.ok(!html.includes('resend-confirmation-button'), 'resend confirmation option should be removed');
+  assert.ok(!html.includes('Email me a secure sign-in link'));
+  assert.ok(!html.includes('Resend confirmation email'));
+  assert.ok(!html.includes('Email confirmation may still be required'));
   assert.ok(html.includes('AuthManager.register({email:$('));
 });
 
@@ -41,6 +46,15 @@ test('site navigation rewrites My Account links based on auth state', () => {
   for (const file of ['index.html', 'Typing_test.html', 'dashboard.html', 'my_account.html']) {
     assert.ok(read(file).includes('js/account-nav.js'), file + ' should load account navigation');
   }
+});
+
+test('login page only offers password login, Google and email/password signup', () => {
+  const html = read('login.html');
+  assert.ok(html.includes('id="login-password"'));
+  assert.ok(html.includes('id="google-signin-button"'));
+  assert.ok(html.includes('id="google-signup-button"'));
+  assert.ok(!html.includes('sendMagicLink('));
+  assert.ok(!html.includes('resendConfirmation('));
 });
 
 test('password reset emails a link and reset page asks for new password plus confirmation', () => {
