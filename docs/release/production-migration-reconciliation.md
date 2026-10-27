@@ -36,3 +36,18 @@ The version/name differences indicate that some changes were applied with stagin
 ## Release decision
 
 **Not production-ready.** Production remains unchanged until the migration history is reconciled, security findings are reviewed, staging Test Mode and access-control tests pass, and the release evidence is complete.
+
+## Latest preflight recheck — 2026-10-27
+
+- Production project `nuqfmjgkyfychhwzwnfl` is ACTIVE; the latest recorded production migration inventory still ends at `20261025224428_enforce_registration_pause_in_auth` (22 migrations).
+- The production public schema still has **none** of the subscription/payment tables: `subscription_plans`, `plan_entitlements`, `orders`, `payment_transactions`, `user_subscriptions`, `access_policies`, or `provider_webhook_events`.
+- Production Edge Functions still do not include `create-checkout`, `verify-razorpay-payment`, or `razorpay-webhook`. No production subscription migration or payment function has been applied by this work.
+- The production security advisor recheck reports:
+  - `public.public_leaderboard_attempts` flagged as a security-definer view (review exposure and confirm intended public columns).
+  - Mutable search path on `public.handle_new_user` and `public.touch_updated_at`.
+  - Anonymous execution grants on `admin_get_candidate_emails`, `has_candidate_permission`, and `is_head_admin`; authenticated execution grants also appear on privileged security-definer RPCs and require function-by-function authorization review.
+  - Leaked-password protection is disabled.
+  - `public.typing_exam_sessions` has RLS enabled with no policies; verify whether this is intentional and whether it is expected to be inaccessible through the Data API.
+- PR #64's latest branch regression run #541 passed. This does not replace migration reconciliation, payment lifecycle E2E, or production smoke tests.
+- The production alias currently serves main commit `ed95d2fb157b969273a3884cbeddec580d407380`; the latest auth and subscription work remains in feature branches. Do not promote either branch to production until the corresponding auth configuration and monetization release gates are verified.
+
