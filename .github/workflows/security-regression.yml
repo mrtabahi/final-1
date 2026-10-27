@@ -21,3 +21,7 @@ jobs:
           node-version: 20
       - name: Test privileged RPC grants migration
         run: node --test tests/privileged-rpc-grants-regression.test.cjs
+      - name: Check admin command center JavaScript syntax
+        run: node --check js/admin-command-center.js
+      - name: Test admin command center wiring
+        run: node --test tests/admin-command-center-regression.test.cjs
