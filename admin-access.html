@@ -33,7 +33,7 @@
       <header class="admin-topbar"><a class="admin-icon-button" href="admin.html" aria-label="Back to admin">←</a><div class="admin-breadcrumb"><span>Business &amp; Access</span><span>/</span><strong>Website Access &amp; Monetization</strong></div><div class="admin-topbar-right"><span class="admin-live-dot"></span><span class="admin-live-label">Admin session</span></div></header>
       <main class="admin-content access-content">
         <div class="admin-page-heading"><div><div class="admin-kicker">ACCESS CONTROL CENTER</div><h1>Website Access &amp; Monetization</h1><p>Control whether folders and tests are Free, Paid, or inherit access from their parent. Existing content is preserved as Free during the initial rollout.</p></div><div class="admin-heading-actions"><button type="button" id="access-refresh" class="admin-btn admin-btn-secondary">↻ Refresh</button></div></div>
-        <div class="access-warning" role="note"><strong>Rollout safety</strong><p>These settings are only a policy editor. Do not switch any content to Paid in production until passage delivery is server-gated and direct Supabase reads are protected. UI locks alone do not protect paid content.</p></div>
+        <div class="access-warning" role="note"><strong>Rollout safety</strong><p>Paid access is enforced by the server-side test access check and candidate read policy. New folders default to Paid; legacy content remains Free until you explicitly change it. Verify the staging migration is applied before changing policies.</p></div>
         <section class="access-kpis" aria-label="Access policy summary">
           <article><span>Folders</span><strong id="access-folder-count">—</strong></article>
           <article><span>Tests</span><strong id="access-test-count">—</strong></article>
@@ -41,7 +41,7 @@
           <article><span>Paid policies</span><strong id="access-paid-count">—</strong></article>
         </section>
         <section class="admin-panel access-panel">
-          <div class="admin-panel-heading"><div><h2>Folder access policies</h2><p>New folders default to Paid. Tests set to Inherit follow the folder’s effective policy.</p></div></div>
+          <div class="admin-panel-heading"><div><h2>Folder access policies</h2><p>New folders default to Paid. Tests set to Inherit follow their folder. Use Free to make a specific folder or test available without a subscription.</p></div></div>
           <div class="access-toolbar"><label class="admin-search">⌕ <input type="search" id="access-search" placeholder="Search folders or tests…"></label><select id="access-filter" class="admin-select" aria-label="Filter by access policy"><option value="all">All policies</option><option value="free">Free</option><option value="paid">Paid</option><option value="inherit">Inherit</option></select></div>
           <div id="access-folder-list" class="access-folder-list"><div class="admin-empty">Loading access policies…</div></div>
           <div id="access-status" class="access-status" role="status" aria-live="polite"></div>
