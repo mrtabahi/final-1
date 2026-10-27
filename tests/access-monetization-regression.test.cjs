@@ -236,6 +236,16 @@ test('only trusted service role can mark an order paid and activate a subscripti
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.service_mark_order_paid\([\s\S]*?TO service_role/);
 });
 
+test('account subscription dashboard uses the refreshed membership hero and accessible plan CTA', () => {
+  const page = read('my_account.html');
+  const styles = read('css/account-subscription.css');
+  assert.match(page, /YOUR MEMBERSHIP · AT A GLANCE/);
+  assert.match(page, /Subscription &amp; access/);
+  assert.match(page, /data-open-subscription/);
+  assert.match(styles, /\.account-subscription-mark/);
+  assert.match(styles, /prefers-reduced-motion:reduce/);
+});
+
 test('customer subscription page only uses safe catalog and own-account overview RPCs', () => {
   const page = read('my-subscription.html');
   const js = read('js/my-subscription.js');
