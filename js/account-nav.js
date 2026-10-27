@@ -31,7 +31,7 @@
     const links = accountLinks();
     if (!links.length) return;
     try {
-      if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+      if (typeof supabaseClient === 'undefined') {
         if (typeof supabase === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
         await loadScript('/js/config.js');
       }
