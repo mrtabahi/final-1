@@ -241,7 +241,10 @@ test('customer subscription page only uses safe catalog and own-account overview
   const js = read('js/my-subscription.js');
   const index = read('index.html');
   const accountPage = read('my_account.html');
-  assert.match(js, /rpc\('get_active_subscription_plans'\)/);
+  assert.match(js, /rpc\('get_active_subscription_plan_details'\)/);
+  assert.match(js, /const configured=Array\.isArray\(p\.entitlements\)&&p\.entitlements\.length>0/);
+  assert.match(js, /Unavailable — access not configured/);
+  assert.match(js, /Included access has not been configured/);
   assert.match(js, /rpc\('get_my_subscription_overview'\)/);
   assert.match(js, /rpc\('create_checkout_order'/);
   assert.match(js, /Pay securely with Razorpay/);
