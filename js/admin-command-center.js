@@ -97,7 +97,13 @@
           close();
           item.button.click();
         });
-        button.addEventListener('mouseenter', () => {\n          selected = index;\n          results.querySelectorAll('.admin-command-item').forEach((node, nodeIndex) => {\n            node.classList.toggle('is-selected', nodeIndex === selected);\n            node.setAttribute('aria-selected', nodeIndex === selected ? 'true' : 'false');\n          });\n        });
+        button.addEventListener('mouseenter', () => {
+          selected = index;
+          results.querySelectorAll('.admin-command-item').forEach((node, nodeIndex) => {
+            node.classList.toggle('is-selected', nodeIndex === selected);
+            node.setAttribute('aria-selected', nodeIndex === selected ? 'true' : 'false');
+          });
+        });
         results.appendChild(button);
       });
     };
@@ -148,7 +154,7 @@
         backdrop.hidden ? open() : close();
       } else if (event.key === 'Escape' && !backdrop.hidden) {
         close();
-      } else if (event.key === '/' && !backdrop.hidden === false &&
+      } else if (event.key === '/' && backdrop.hidden &&
         !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '') &&
         !document.activeElement?.isContentEditable) {
         event.preventDefault(); open();
