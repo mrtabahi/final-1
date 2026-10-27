@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try { return new Intl.NumberFormat(undefined,{style:'currency',currency:currency||'INR',maximumFractionDigits:2}).format(Number(minor||0)/100); }
     catch (_) { return String((Number(minor||0)/100).toFixed(2))+' '+String(currency||'INR'); }
   };
-  const modal=$('account-upgrade-modal'), planList=$('account-plan-list'), status=$('account-subscription-status'), checkoutStatus=$('account-checkout-status');
+  const modal=$('account-upgrade-modal'), planList=$('account-plan-list'), status=$('account-subscription-status'), checkoutStatus=$('account-checkout-status'), couponInput=$('account-coupon-code');
   if(!modal || typeof supabaseClient === 'undefined' || !supabaseClient) return;
   let plans=[], user=null, lastFocus=null, razorpayPromise=null;
   const say=(node,message,kind='')=>{if(!node)return;node.textContent=message;node.className=(node===status?'account-sub-status':'account-checkout-status')+(kind?' '+kind:'');};
@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     root.innerHTML=rows.map(row=>{const state=row.checkout_expired?'Checkout expired':String(row.status||'pending');const cls=['paid','captured','succeeded'].includes(state.toLowerCase())?'paid':['failed','expired','refunded'].includes(state.toLowerCase())?state.toLowerCase():'';return '<article class="account-sub-record"><strong>'+esc(row.plan_name||'Plan order')+' · '+esc(money(row.total_minor,row.currency))+'</strong><small>'+esc(date(row.created_at))+'<br>Subtotal '+esc(money(row.subtotal_minor,row.currency))+' · Discount '+esc(money(row.discount_minor,row.currency))+'</small><span class="account-sub-chip '+cls+'">'+esc(state)+'</span></article>';}).join('');
   }
   async function loadRazorpay(){if(window.Razorpay)return;if(!razorpayPromise)razorpayPromise=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://checkout.razorpay.com/v1/checkout.js';s.onload=resolve;s.onerror=()=>reject(new Error('Secure checkout could not load. Please retry.'));document.head.appendChild(s);});await razorpayPromise;}
+  const couponCode=()=>String(couponInput?.value||'').trim().toUpperCase().slice(0,80)||null;
   function renderPlans(){
     if(!plans.length){planList.innerHTML='<div class="account-sub-skeleton">No active plans are available right now. Please check back later.</div>';return;}
     planList.innerHTML=plans.map(plan=>{const free=Number(plan.price_minor)===0;const features=Array.isArray(plan.entitlements)?plan.entitlements.map(item=>item.label).filter(Boolean):[];const unavailable=features.length===0;return '<article class="account-plan-card"><h3>'+esc(plan.name)+'</h3><p class="account-plan-description">'+esc(plan.description||'Access to selected Decoding HCM preparation features.')+'</p><p class="account-plan-price">'+esc(money(plan.price_minor,plan.currency))+'</p><div class="account-plan-features">'+(features.length?features.map(label=>'<span class="account-plan-feature">'+esc(label)+'</span>').join(''):'<span class="account-plan-feature is-muted">Access not configured yet</span>')+'</div><div class="account-plan-meta"><span>'+esc(plan.duration_days)+' days</span><span>·</span><span>'+esc(plan.currency||'INR')+'</span></div><button type="button" class="account-plan-buy" data-account-buy="'+esc(plan.id)+'" '+(unavailable?'disabled aria-disabled="true" title="Administrator must configure included access first"':'')+'>'+(unavailable?'Unavailable — access not configured':free?'Activate free plan':'Choose plan securely')+'</button></article>';}).join('');
@@ -66,14 +67,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   async function activateFree(plan,button){
     button.disabled=true;say(checkoutStatus,'Activating the free plan…');
-    try{const result=await supabaseClient.rpc('create_checkout_order',{p_plan_id:plan.id,p_coupon_code:null});if(result.error)throw result.error;if(result.data?.status!=='free')throw new Error('The server did not confirm free-plan activation.');say(checkoutStatus,'Free plan activated. Refreshing your account…','success');await refreshOverview();}
+    try{const result=await supabaseClient.rpc('create_checkout_order',{p_plan_id:plan.id,p_coupon_code:couponCode()});if(result.error)throw result.error;if(result.data?.status!=='free')throw new Error('The server did not confirm free-plan activation.');say(checkoutStatus,'Free plan activated. Refreshing your account…','success');await refreshOverview();}
     catch(error){console.error(error);say(checkoutStatus,error?.message||'Unable to activate this plan.','error');}
     finally{button.disabled=false;}
   }
   async function startCheckout(plan,button){
     button.disabled=true;planList.querySelectorAll('button').forEach(b=>b.disabled=true);say(checkoutStatus,'Preparing secure checkout…');
     try{
-      const result=await supabaseClient.functions.invoke('create-checkout',{body:{plan_id:plan.id,coupon_code:null}});
+      const result=await supabaseClient.functions.invoke('create-checkout',{body:{plan_id:plan.id,coupon_code:couponCode()}});
       if(result.error)throw result.error;const data=result.data||{};
       if(data.mode==='free'){say(checkoutStatus,'Free plan activated.','success');await refreshOverview();return;}
       if(data.mode!=='razorpay'||!data.key_id||!data.razorpay_order_id||!data.local_order_id)throw new Error(data.error||'Paid checkout is not configured yet. No payment was started.');
