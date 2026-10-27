@@ -1,15 +1,59 @@
-<!DOCTYPE html><html lang="en"><head>
-    <link rel="icon" type="image/png" href="/logo.png?v=20261026-sitewide1">
-    <link rel="apple-touch-icon" href="/logo.png?v=20261026-sitewide1">
-<meta name="google-adsense-account" content="ca-pub-2757719583090087"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Candidate Portal | Decoding HCM</title><link rel="stylesheet" href="css/main.css?v=20261023-active-underline-fix"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="/logo.png?v=20261027-prep-hub1">
+  <link rel="apple-touch-icon" href="/logo.png?v=20261027-prep-hub1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <title>Start Preparation | Decoding HCM</title>
+  <meta name="description" content="Start your HCM typing preparation with practice tests, self tests, study materials, results and progress tools on Decoding HCM.">
+  <link rel="stylesheet" href="css/main.css?v=20261027-prep-hub1">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .prep-intro{padding:clamp(1.25rem,4vw,2.5rem);margin:1.5rem auto 1rem;background:linear-gradient(135deg,#eff6ff,#fff 70%);border:1px solid #dbeafe}
+    .prep-kicker{font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1d4ed8}
+    .prep-intro h1{margin:.45rem 0 .6rem;font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.15}
+    .prep-intro p{max-width:720px;line-height:1.7;margin:0;color:#475569}
+    .prep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:1rem;margin:1rem auto 2rem}
+    .prep-card{display:flex;flex-direction:column;gap:.65rem;padding:1.25rem;border:1px solid #e2e8f0;border-radius:16px;background:#fff;box-shadow:0 5px 18px #0f172a08;min-height:205px}
+    .prep-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#eff6ff;font-size:1.35rem}
+    .prep-card h2{font-size:1.1rem;margin:0}
+    .prep-card p{color:#64748b;line-height:1.6;margin:0;flex:1}
+    .prep-card .btn{align-self:flex-start;margin-top:.25rem}
+    .prep-note{font-size:.9rem;color:#64748b;margin:0 auto 2rem;line-height:1.6}
+  </style>
+</head>
+<body>
 <nav class="navbar">
   <a href="index.html" class="brand-container">
-    <div class="brand-logo">
-      <img src="logo.png" alt="SRB"/></div>
-    <div><div class="brand-title">DECODING HCM</div>
-      <div class="brand-subtitle">Candidate Portal</div>
-    </div></a><ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="self-test.html">Self Test</a></li><li><a href="materials.html">PDF Library</a></li><li><a href="my_results.html">My Results</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="dashboard.html" aria-current="page">Start Preparation</a></li><li><a href="my_account.html">My Account</a></li></ul></nav>
-<main class="container"><section class="card"><h1 class="card-title">Start Preparation</h1><p class="form-help">This section is reserved for future preparation features.</p></section></main>
-<script src="js/auth.js"></script>
-<script defer src="js/pro-menu.js?v=20261024-pro-nav2"></script>
-</body></html>
+    <div class="brand-logo"><img src="logo.png" alt="Decoding HCM"></div>
+    <div><div class="brand-title">DECODING HCM</div><div class="brand-subtitle">Typing Test Lab — BSF Preparation</div></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li>
+    <li><a href="self-test.html">Self Test</a></li><li><a href="materials.html">PDF Library</a></li>
+    <li><a href="my_results.html">My Results</a></li><li><a href="leaderboard.html">Leaderboard</a></li>
+    <li><a href="dashboard.html" aria-current="page">Start Preparation</a></li><li><a href="my_account.html">My Account</a></li>
+  </ul>
+</nav>
+<main class="container">
+  <section class="card prep-intro">
+    <div class="prep-kicker">Your preparation workspace</div>
+    <h1>Start your HCM typing preparation</h1>
+    <p>Choose a tool below to practise typing, work with your own passage, review study materials or track your progress. These links open the tools currently available on the website.</p>
+  </section>
+  <section class="prep-grid" aria-label="Available preparation tools">
+    <article class="prep-card"><div class="prep-icon" aria-hidden="true">⌨️</div><h2>Typing Tests</h2><p>Open the available typing test folders and practise with published passages.</p><a class="btn btn-primary" href="Typing_test.html">Browse typing tests →</a></article>
+    <article class="prep-card"><div class="prep-icon" aria-hidden="true">📝</div><h2>Self Test</h2><p>Paste your own passage and practise at your preferred pace.</p><a class="btn btn-primary" href="self-test.html">Start a self test →</a></article>
+    <article class="prep-card"><div class="prep-icon" aria-hidden="true">📚</div><h2>PDF Library</h2><p>Browse the study PDFs and practice material available on the website.</p><a class="btn btn-primary" href="materials.html">Open PDF library →</a></article>
+    <article class="prep-card"><div class="prep-icon" aria-hidden="true">📊</div><h2>My Results</h2><p>Review your saved typing attempts and performance where available.</p><a class="btn btn-primary" href="my_results.html">View my results →</a></article>
+    <article class="prep-card"><div class="prep-icon" aria-hidden="true">🏆</div><h2>Leaderboard</h2><p>See the leaderboard for eligible published tests and recorded attempts.</p><a class="btn btn-primary" href="leaderboard.html">View leaderboard →</a></article>
+    <article class="prep-card"><div class="prep-icon" aria-hidden="true">👤</div><h2>My Account</h2><p>Open your account and manage the profile options currently available to you.</p><a class="btn btn-primary" href="my_account.html">Open my account →</a></article>
+  </section>
+  <p class="prep-note">Some advanced account, subscription and payment functions still require backend setup. They remain unavailable until their security and configuration checks are complete.</p>
+</main>
+<script src="js/auth.js?v=20261027-prep-hub1"></script>
+<script defer src="js/pro-menu.js?v=20261027-prep-hub1"></script>
+</body>
+</html>
