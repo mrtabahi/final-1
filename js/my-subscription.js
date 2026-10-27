@@ -1,0 +1,20 @@
+document.addEventListener('DOMContentLoaded', async () => {
+ const root=document.getElementById('account-membership-state'), details=document.getElementById('account-membership-details');
+ const db=(typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient); if(!root||!details||!db)return;
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const money=(minor,currency='INR')=>new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
+ try{
+  const {data:{user}}=await db.auth.getUser();
+  if(!user){root.innerHTML='<strong>Sign in to see your membership.</strong><br><a href="login.html?redirect=my_account.html">Sign in securely →</a>';return;}
+  const [subs,orders]=await Promise.all([
+   db.from('user_subscriptions').select('id,status,starts_at,ends_at,admin_note,subscription_plans(name,description)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(10),
+   db.from('orders').select('id,status,total_minor,currency,created_at,expires_at,subscription_plans(name)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(10)
+  ]);
+  if(subs.error)throw subs.error;
+  const rows=subs.data||[], current=rows.find(s=>s.status==='active'&&(!s.ends_at||new Date(s.ends_at)>new Date()));
+  root.innerHTML=current?'<strong>Membership active</strong><br><span>'+esc(current.subscription_plans?.name||'Subscription plan')+'</span><br>Valid from '+(current.starts_at?new Date(current.starts_at).toLocaleString():'—')+' · Until '+(current.ends_at?new Date(current.ends_at).toLocaleString():'No expiry recorded'):'<strong>No active subscription found.</strong><br>Explore the available plans to unlock additional preparation tools.';
+  const history=rows.length?rows.map(s=>'<article class="account-membership-item"><div><strong>'+esc(s.subscription_plans?.name||'Subscription')+'</strong><small>'+(s.starts_at?new Date(s.starts_at).toLocaleDateString():'Start date pending')+' → '+(s.ends_at?new Date(s.ends_at).toLocaleDateString():'No expiry')+'</small></div><span class="sub-account-status '+(s.status==='active'?'is-active':'')+'">'+esc(s.status)+'</span></article>').join(''):'<p class="account-membership-muted">Subscription history will appear here after a plan is assigned to your account.</p>';
+  const orderRows=orders.error?'<p class="account-membership-muted">Payment history is not available yet.</p>':(orders.data||[]).length?(orders.data||[]).map(o=>'<article class="account-membership-item"><div><strong>'+esc(o.subscription_plans?.name||'Plan order')+' · '+money(o.total_minor,o.currency||'INR')+'</strong><small>'+new Date(o.created_at).toLocaleString()+(o.expires_at?' · Valid until '+new Date(o.expires_at).toLocaleDateString():'')+'</small></div><span class="sub-account-status '+(o.status==='paid'?'is-active':'')+'">'+esc(o.status)+'</span></article>').join(''):'<p class="account-membership-muted">No payment records yet.</p>';
+  details.innerHTML='<div class="account-membership-summary"><article><small>CURRENT PLAN</small><strong>'+esc(current?.subscription_plans?.name||'Free / no active plan')+'</strong><span>'+esc(current?.status||'No active membership')+'</span></article><article><small>VALID UNTIL</small><strong>'+(current?.ends_at?new Date(current.ends_at).toLocaleDateString():'—')+'</strong><span>Based on subscription records</span></article><article><small>SUBSCRIPTION HISTORY</small><strong>'+rows.length+'</strong><span>Membership records</span></article></div><div class="account-membership-history"><section><h3>Subscription history</h3>'+history+'</section><section><h3>Order &amp; payment history</h3>'+orderRows+'</section></div>';
+ }catch(error){console.error('Membership details error:',error);root.innerHTML='<strong>Membership details could not be loaded.</strong><br>Refresh the page in a moment. Your profile and sign-in controls are unaffected.';details.innerHTML='';}
+});
