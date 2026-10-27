@@ -110,3 +110,12 @@ This is an evidence snapshot, not a production sign-off.
 - Security Advisor findings and disposition:
 - Rollback/recovery owner:
 - Release decision / approver:
+
+
+## Latest customer subscription UI hardening — 27 October 2026
+
+- The standalone subscription page now reads the privacy-safe `get_active_subscription_plan_details` catalog RPC, matching the account upgrade modal.
+- Plan cards show configured entitlement labels and disable checkout when the plan has no configured entitlements. This is a UX guard only; server-side checkout validation remains authoritative.
+- Regression coverage now asserts the details RPC and the unavailable-plan UI state.
+- Vercel preview for the current feature-branch head is READY. This is not a production deployment.
+- Still blocked from production release: complete Razorpay Test Mode secrets setup in staging, configure a narrow disposable staging entitlement/test fixture, run signed payment + webhook lifecycle tests, reconcile production migration history, review production security findings, and verify backup/rollback readiness.
