@@ -169,6 +169,11 @@
             }
             return;
         }
+        if (['materials','leaderboard','adsense'].includes(view)) {
+            updatePageHeader(view);
+            renderEmbeddedAdminTool(view, renderSequence);
+            return;
+        }
         if (view === 'workspace-banner') {
             updatePageHeader(view);
             if (typeof window.renderWorkspaceBannerModule === 'function') window.renderWorkspaceBannerModule();
@@ -216,7 +221,10 @@
             candidates:{title:'Candidate Management',subtitle:'Review accounts, login history and online sessions.'},
             logins:{title:'Logins & Registration',subtitle:'Manage account creation and personalized login messages.'},
             content:{title:'Website Content',subtitle:'Manage public-facing pages, banners and announcements.'},
-            'workspace-banner':{title:'Workspace Banner Text',subtitle:'Edit the Pro workspace heading and supporting lines.'},
+            'workspace-banner':{title:'Pro Menu (Public Account)',subtitle:'Edit the Pro workspace heading and supporting lines shown to public users.'},
+            materials:{title:'PDF & Study Materials',subtitle:'Manage PDFs and study packs without leaving the admin control center.'},
+            leaderboard:{title:'Leaderboard Control',subtitle:'Manage leaderboard history and manual entries inside this workspace.'},
+            adsense:{title:'AdSense Control',subtitle:'Manage ad placements and density for eligible public pages.'},
             subscriptions:{title:'Plans & Subscriptions',subtitle:'Plan paid tiers, renewals and premium access.'},
             payments:{title:'Payments & Coupons',subtitle:'Payment ledger, invoices, coupons and refunds.'},
             roles:{title:'Roles & Permissions',subtitle:'Define least-privilege access for administrators.'},
@@ -229,7 +237,7 @@
         if(subtitle) subtitle.textContent=item.subtitle;
         // These modules render their own complete interface. Never replace
         // their content with the generic roadmap panel during navigation.
-        const ownsRenderer = ['dashboard','tests','attempts','candidates','logins','content','analytics','security','settings'].includes(view);
+        const ownsRenderer = ['dashboard','tests','attempts','candidates','logins','content','analytics','security','settings','materials','leaderboard','adsense'].includes(view);
         if (!ownsRenderer) renderPlannedModule(view,item);
     }
 
@@ -394,6 +402,34 @@
             box.innerHTML='<div class="admin-error">Website settings could not be loaded: '+escHtml(error.message||'database request failed')+'</div>';
         }
     }
+
+    function renderEmbeddedAdminTool(view, renderSequence = viewRenderSequence) {
+        const box = $('module-capabilities');
+        if (!box) return;
+        const tools = {
+            materials: { src: 'admin-materials.html', title: 'PDF & Study Materials', hint: 'Changes are saved by the existing materials admin workflow.' },
+            leaderboard: { src: 'admin-leaderboard.html', title: 'Leaderboard Control', hint: 'Review history and manual entries. Existing admin permissions remain enforced by the embedded tool.' },
+            adsense: { src: 'admin-ads.html', title: 'AdSense Control', hint: 'Ad settings apply to eligible public content pages; typing workspaces are excluded.' }
+        };
+        const tool = tools[view];
+        if (!tool) return;
+        box.innerHTML = '<section class="admin-panel admin-embedded-tool"><div class="admin-panel-heading"><div><h2>' + esc(tool.title) + '</h2><p>' + esc(tool.hint) + '</p></div><span class="admin-embedded-badge">Admin workspace</span></div><iframe class="admin-tool-frame" title="' + esc(tool.title) + '" src="' + tool.src + '" loading="eager" referrerpolicy="same-origin"></iframe></section>';
+        const frame = box.querySelector('iframe');
+        frame?.addEventListener('load', () => {
+            if (renderSequence !== viewRenderSequence || currentView !== view) return;
+            try {
+                const doc = frame.contentDocument;
+                if (!doc) return;
+                const style = doc.createElement('style');
+                style.textContent = 'a[href="admin.html"], .ads-back { display:none !important; } body { padding-top:0 !important; }';
+                doc.head?.appendChild(style);
+                doc.querySelectorAll('a[href="admin.html"], .ads-back').forEach(node => node.remove());
+            } catch (error) {
+                console.warn('Embedded admin tool styling skipped.', error);
+            }
+        }, { once: true });
+    }
+
 
     function renderPlannedModule(view,item) {
         const configs = {
@@ -2187,6 +2223,13 @@ async function loadDashboard() {
         });
         window.addEventListener('resize', () => {
             if (window.innerWidth > 760) setMobileMenuOpen(false);
+        });
+        $('admin-data-refresh')?.addEventListener('click', async () => {
+            const button = $('admin-data-refresh');
+            if (button?.disabled) return;
+            if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); button.textContent = '↻ Loading…'; }
+            try { showAdminView(currentView); }
+            finally { window.setTimeout(() => { if (button) { button.disabled = false; button.removeAttribute('aria-busy'); button.textContent = '↻ Data'; } }, 900); }
         });
         $('admin-refresh')?.addEventListener('click', () => {
             const button = $('admin-refresh');
