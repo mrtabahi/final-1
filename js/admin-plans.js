@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderPlans() {
     $('plans-count').textContent = plans.length;
     $('plans-active-count').textContent = plans.filter(p => p.is_active).length;
-    $('plans-entitlement-count').textContent = '—';
     if (!plans.length) { $('plans-list').innerHTML = '<div class="admin-empty">No plans yet. Create a plan to configure price and included content.</div>'; return; }
     $('plans-list').innerHTML = plans.map(p => {
       const price = new Intl.NumberFormat(undefined, {style:'currency', currency:p.currency || 'INR'}).format(Number(p.price_minor || 0) / 100);
