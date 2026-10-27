@@ -161,3 +161,33 @@
  .admin-embedded-tool .admin-tool-content .ads-toggle-row { align-items:flex-start; }
  .admin-embedded-tool .admin-tool-content .ads-density label { flex:1 1 140px; }
 }
+
+
+/* Full-width legacy admin tools inside the two-column capability grid.
+   The capability list is a 2-col grid for small cards; tool pages must span the whole workspace. */
+#view-module #module-capabilities { display:block!important; width:100%; max-width:none!important; min-width:0; margin:1.2rem 0; }
+#view-module #module-capabilities > .admin-embedded-tool { display:block; width:100%; max-width:none!important; min-width:0; grid-column:1 / -1; }
+#view-module .admin-embedded-tool .admin-panel-heading { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:.75rem; }
+#view-module .admin-embedded-tool .admin-tool-content { display:block; width:100%; max-width:none!important; min-width:0; overflow:visible; padding:clamp(.65rem,1.4vw,1.25rem); }
+#view-module .admin-embedded-tool .admin-tool-content > *,
+#view-module .admin-embedded-tool .admin-tool-content > main,
+#view-module .admin-embedded-tool .admin-tool-content > main.container,
+#view-module .admin-embedded-tool .admin-tool-content .materials-admin-shell { width:100%!important; max-width:none!important; min-width:0!important; margin-left:0!important; margin-right:0!important; box-sizing:border-box; }
+#view-module .admin-embedded-tool .admin-tool-content .materials-admin-shell { padding:0!important; }
+#view-module .admin-embedded-tool .admin-tool-content .materials-admin-head { max-width:none!important; }
+#view-module .admin-embedded-tool .admin-tool-content .container { width:100%!important; max-width:none!important; }
+#view-module .admin-embedded-tool .admin-tool-content .ads-settings-wrap { width:100%!important; max-width:none!important; }
+#view-module .admin-embedded-tool .admin-tool-content .ads-settings-card { width:100%; max-width:none!important; }
+#view-module .admin-embedded-tool .admin-tool-content .grid-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#view-module .admin-embedded-tool .admin-tool-content input,
+#view-module .admin-embedded-tool .admin-tool-content select,
+#view-module .admin-embedded-tool .admin-tool-content textarea { box-sizing:border-box; max-width:100%; min-width:0; }
+#view-module .admin-embedded-tool .admin-tool-content .table-responsive { width:100%; max-width:100%; overflow-x:auto; }
+#view-module .admin-embedded-tool .admin-tool-content table { max-width:100%; }
+@media(max-width:760px) {
+ #view-module .admin-content { padding:.65rem; }
+ #view-module .admin-panel { padding:.75rem; }
+ #view-module .admin-embedded-tool .admin-tool-content { padding:.5rem; }
+ #view-module .admin-embedded-tool .admin-tool-content .grid-2 { grid-template-columns:minmax(0,1fr); }
+ #view-module .admin-embedded-tool .admin-tool-content .materials-admin-actions { display:flex; flex-wrap:wrap; }
+}
