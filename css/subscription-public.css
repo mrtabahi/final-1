@@ -70,3 +70,6 @@
 .sub-account-status{padding:5px 8px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:.68rem;font-weight:850;text-transform:capitalize;white-space:nowrap}
 .sub-account-status.is-active{background:#dcfce7;color:#047857}
 @media(max-width:760px){.account-membership-summary{grid-template-columns:1fr}.account-membership-history{grid-template-columns:1fr}.account-membership-card .sub-section-head{align-items:flex-start}.account-membership-card .sub-btn{width:100%;box-sizing:border-box}}
+
+.sub-plan-card .sub-btn-light{color:#3159c9;background:#f3f6ff;border-color:#dbe5ff}
+.sub-plan-card .sub-btn-light:hover{background:#e8efff;box-shadow:0 8px 18px rgba(49,89,201,.1)}
