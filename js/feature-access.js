@@ -33,6 +33,20 @@
       const label=card.querySelector('.category-foot>span:first-child');
       if(rule&&!rule.is_free&&!premium&&label&&label.textContent.trim()!=='UPGRADE ↗')label.innerHTML='UPGRADE <span aria-hidden="true">↗</span>';
     });
+    document.querySelectorAll('.navbar a[href],.nav-links a[href],a[data-access-key^="feature:"]').forEach(a=>{
+      const href=a.getAttribute('href')||'';
+      const file=norm(href.split(/[?#]/)[0].split('/').pop());
+      const custom=a.getAttribute('data-access-key');
+      const customId=custom&&custom.startsWith('feature:')?custom.slice(8):null;
+      const rule=(customId&&findRule('feature',customId))||findRule('menu',file)||findRule('menu',norm(href));
+      if(rule&&!rule.is_free&&!premium){
+        if(a.dataset.originalAccessLabel===undefined)a.dataset.originalAccessLabel=a.innerHTML;
+        if(a.textContent.trim()!=='UPGRADE')a.textContent='UPGRADE';
+        a.classList.add('feature-upgrade-button');
+      }else if(a.dataset.originalAccessLabel!==undefined){
+        a.innerHTML=a.dataset.originalAccessLabel;delete a.dataset.originalAccessLabel;a.classList.remove('feature-upgrade-button');
+      }
+    });
     document.querySelectorAll('[data-test-id]').forEach(card=>{
       const testId=card.getAttribute('data-test-id');const folderId=card.getAttribute('data-folder-id');
       const rule=findRule('test',testId)||findRule('folder',folderId);
