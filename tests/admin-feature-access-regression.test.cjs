@@ -9,7 +9,9 @@ test('admin access controls and member lifecycle actions are wired', () => {
   const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20261028170000_admin_feature_access_rules.sql'), 'utf8');
   const gate = fs.readFileSync(path.join(root, 'js/feature-access.js'), 'utf8');
   const testList = fs.readFileSync(path.join(root, 'js/test-list.js'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
   const materials = fs.readFileSync(path.join(root, 'js/materials.js'), 'utf8');
+  const secureMigration = fs.readFileSync(path.join(root, 'supabase/migrations/20261028190000_enforce_paid_test_access.sql'), 'utf8');
 
   assert.match(admin, /feature-access-form/);
   assert.match(admin, /toggleAccessRule/);
@@ -23,4 +25,13 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(gate, /user_subscriptions/);
   assert.match(testList, /data-test-id/);
   assert.match(materials, /data-access-key="feature:/);
+  assert.match(admin, /feature-access-tree/);
+  assert.match(admin, /pageResources/);
+  assert.match(gate, /typeof supabaseClient!=='undefined'/);
+  assert.match(gate, /applyPublicAccessLabels/);
+  assert.match(app, /get_test_for_candidate/);
+  assert.match(testList, /list_test_catalog/);
+  assert.match(materials, /get_material_link/);
+  assert.match(secureMigration, /tests_candidate_select/);
+  assert.match(secureMigration, /get_test_for_candidate/);
 });
