@@ -572,10 +572,11 @@ class TypingEngine {
             return;
         }
 
-        /* Update typed text. */
+        /* Update typed text and keep the scored keystroke count aligned
+         * with the final typed content length used by server-side scoring. */
 
-        this.typedText =
-            newText;
+        this.typedText = newText;
+        this.totalKeystrokes = newText.length;
     }
 
 
