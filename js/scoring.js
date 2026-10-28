@@ -5,6 +5,14 @@
  */
 const ScoringEngine = {
   tokenize(text) { return String(text ?? "").match(/\S+/gu) || []; },
+  countCappedKeystrokes(expectedText, typedText) {
+    const expectedWords=this.tokenize(expectedText), typedWords=this.tokenize(typedText);
+    let wordKeystrokes=0;
+    for(let i=0;i<typedWords.length;i++) if(i<expectedWords.length) wordKeystrokes+=Math.min(typedWords[i].length,expectedWords[i].length);
+    const typedSeparators=(String(typedText??"").match(/\s/gu)||[]).length;
+    const passageSeparators=(String(expectedText??"").match(/\s/gu)||[]).length;
+    return wordKeystrokes+Math.min(typedSeparators,passageSeparators);
+  },
   countDoubleSpaceErrors(text) { return (String(text ?? "").match(/ {2,}/g) || []).length; },
   alignWords(expectedWords, typedWords) {
     // Preserve the already-correct prefix by index. Repeated words later in the
@@ -91,8 +99,9 @@ const ScoringEngine = {
     const freePct=Math.max(0,Math.min(.2,Number(config.freeErrorPct??config.free_error_pct??.05)));
     const penaltyPerError=Math.max(0,Math.min(100,Number(config.penaltyPerError??config.penalty_per_error??10)));
     // Score from all typed characters/keystrokes, not passage-capped characters.
-    const measuredKeystrokes=totalKeystrokes==null||!Number.isFinite(Number(totalKeystrokes))
-      ? typedSource.length : Math.max(0,Math.floor(Number(totalKeystrokes)));
+    // Score only passage-bounded word characters; surplus characters inside a word
+    // and words beyond the passage cannot inflate gross speed or other metrics.
+    const measuredKeystrokes=this.countCappedKeystrokes(expectedSource,typedSource);
     const equivalentWords=measuredKeystrokes/5;
     const freeErrors=Math.floor(measuredKeystrokes/100);
     // Errors beyond the allowance cannot be negative.
