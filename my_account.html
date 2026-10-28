@@ -32,6 +32,21 @@ body.account-page{background:radial-gradient(circle at 8% 0%,rgba(99,102,241,.09
 .password-form-actions .password-cancel-btn{background:#f1f5f9;color:#334155;border:1px solid #cbd5e1}
 .password-form-actions .password-cancel-btn:hover{background:#e2e8f0}
 @media(max-width:420px){.password-form-actions{gap:10px}.password-form-actions .btn{padding:.6rem .5rem;font-size:.92rem}}
+
+/* Refined account layout: calm slate/indigo palette, less visual noise */
+.account-page{color:#17243b}
+.account-page .account-membership-card{border:1px solid #dbe5f3;border-radius:22px;box-shadow:0 16px 40px rgba(15,35,70,.07);padding:clamp(20px,3vw,30px)}
+.account-page .account-membership-card .sub-section-head{align-items:center}
+.account-page .account-membership-card .sub-section-head p{max-width:620px}
+.account-page .account-membership-card .sub-btn-primary{color:#fff;background:linear-gradient(115deg,#2563eb,#4f46e5);box-shadow:0 8px 18px rgba(37,99,235,.18)}
+.account-page .account-profile-card{margin-top:20px;border-color:#dbe5f3;box-shadow:0 16px 40px rgba(15,35,70,.06)}
+.account-page .account-security-note{display:none}
+.account-page .account-profile-card hr{margin:1.35rem 0!important}
+.account-page .account-section-label{margin-top:1.25rem}
+.account-page .account-profile-card .btn-primary{background:#2458c6;border-color:#2458c6;color:#fff}
+.account-page .account-profile-card .btn-secondary{background:#eef2ff;border-color:#dbe3ff;color:#293f8f}
+.account-page .account-profile-card .btn-danger{background:#b42335;border-color:#b42335;color:#fff}
+@media(max-width:680px){.account-page .account-membership-card .sub-section-head{align-items:flex-start;flex-direction:column}.account-page .account-membership-card .sub-btn-primary{width:100%;box-sizing:border-box}.account-page .account-profile-card{padding:22px 18px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head><body class="account-page"><nav class="navbar">
