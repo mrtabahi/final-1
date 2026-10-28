@@ -26,6 +26,11 @@
     }catch(e){console.warn('Feature access check unavailable; no client-side lock applied.');}
   }
   function applyPublicAccessLabels(){
+    document.querySelectorAll('a[data-folder-id].category-card').forEach(card=>{
+      const rule=findRule('folder',card.getAttribute('data-folder-id'));
+      const label=card.querySelector('.category-foot>span:first-child');
+      if(rule&&!rule.is_free&&!premium&&label)label.innerHTML='UPGRADE <span aria-hidden="true">↗</span>';
+    });
     document.querySelectorAll('[data-test-id]').forEach(card=>{
       const testId=card.getAttribute('data-test-id');const folderId=card.getAttribute('data-folder-id');
       const rule=findRule('test',testId)||findRule('folder',folderId);
@@ -42,7 +47,7 @@
     let rule=null;
     const custom=a.getAttribute('data-access-key');if(custom){const [type,...rest]=custom.split(':');rule=findRule(type,rest.join(':'));}
     const testId=a.getAttribute('data-test-id')||a.closest('[data-test-id]')?.getAttribute('data-test-id');
-    const folderId=a.getAttribute('data-folder-id')||a.closest('[data-folder-id]')?.getAttribute('data-folder-id');
+    const folderId=a.getAttribute('data-folder-id')||a.closest('[data-folder-id]')?.getAttribute('data-folder-id')||new URLSearchParams((a.getAttribute('href')||'').split('?')[1]||'').get('folder');
     if(!rule&&testId)rule=findRule('test',testId);
     if(!rule&&folderId)rule=findRule('folder',folderId);
     if(!rule&&testId)rule={is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};
