@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async()=>{
         const isEnter=e.key==='Enter';
         const isBackspace=e.key==='Backspace'&&backspaceEnabled;
         if(!printable&&!isEnter&&!isBackspace)return;
-        if(isBackspace&&engine.isActive&&!e.repeat)backspacePressCount++;
         if(e.key==='Backspace'&&!backspaceEnabled)return;
         e.preventDefault();
         textarea.focus({preventScroll:true});
