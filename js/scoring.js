@@ -60,7 +60,7 @@ const ScoringEngine = {
     for(let j=1;j<=b.length;j++){curr[0]=j;for(let i=1;i<=a.length;i++)curr[i]=Math.min(curr[i-1]+1,prev[i]+1,prev[i-1]+(a[i-1]===b[j-1]?0:1));[prev,curr]=[curr,prev];}
     return prev[a.length];
   },
-  calculateScore(expectedText,typedText,durationSeconds,config={},totalKeystrokes=null,formula="bsf") {
+  calculateScore(expectedText,typedText,durationSeconds,config={},totalKeystrokes=null,formula="bsf",backspacePresses=0) {
     const expectedSource=String(expectedText??""),typedSource=String(typedText??"");
     const expectedWords=this.tokenize(expectedSource),typedWords=this.tokenize(typedSource);
     const elapsedSeconds=Math.max(Number(durationSeconds)||0,1),elapsedMinutes=elapsedSeconds/60;
@@ -144,7 +144,8 @@ const ScoringEngine = {
     const minAccuracy=config.minAccuracy==null||config.minAccuracy===""?null:Number(config.minAccuracy);
     const targetWpm=config.targetWpm==null||config.targetWpm===""?null:Number(config.targetWpm);
     const passedByWpm=targetWpm===null||netWpm>=targetWpm,passedByAccuracy=minAccuracy===null||accuracy>=minAccuracy;
-    return {formula:mode,totalTypedWords:typedWords.length,totalTypedChars:typedSource.length,totalKeystrokes:measuredKeystrokes,
+    const totalCorrectWord=Number((measuredKeystrokes/5-totalErrors).toFixed(2));
+    return {formula:mode,totalTypedWords:typedWords.length,totalTypedChars:typedSource.length,totalKeystrokes:measuredKeystrokes,backspacePresses:Math.max(0,Math.floor(Number(backspacePresses)||0)),totalCorrectWord,
       equivalentTypedWords:Number(equivalentWords.toFixed(2)),correctChars,incorrectChars,correctWords,wordErrors,doubleSpaceErrors,totalErrors,
       freeErrors:Number(freeErrors.toFixed(2)),excessErrors:Number(excessErrors.toFixed(2)),penaltyWords:Number(penaltyWords.toFixed(2)),netWords:Number(netWords.toFixed(2)),grossWpm,netWpm,accuracy,elapsedMinutes:Number(elapsedMinutes.toFixed(2)),elapsedSeconds,
       attemptingTimeSeconds:elapsedSeconds,penaltyWpm,allowedErrors:freeErrors,alignment:mode==="bsf"?alignment.filter((item,i)=>!(item.type==="delete"&&i>lastReachedAlignmentIndex)):alignment.filter((item,i)=>!(item.type==="delete"&&item.typed===null&&i>=typedWords.length)),errorBreakdown,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};

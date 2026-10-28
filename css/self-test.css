@@ -349,3 +349,10 @@
 .compact-tip-control[aria-pressed="true"]:focus-visible,
 .self-toolbar-actions .compact-tip-control[aria-pressed="true"]:hover,
 .self-toolbar-actions .compact-tip-control[aria-pressed="true"]:focus-visible { background:#166534!important; border-color:#14532d!important; }
+
+/* Formula toggle and scorecard metric parity */
+.self-result-formula-switch{margin:1rem 0}.self-result-formula-switch .formula-option{flex:1;min-width:0}
+#self-result .self-result-grid>div{border-top:3px solid #2563eb;background:linear-gradient(155deg,#f8fbff,#fff)}
+#self-result .self-result-grid>div:nth-child(4n+1){border-top-color:#0891b2}#self-result .self-result-grid>div:nth-child(4n+2){border-top-color:#16a34a}#self-result .self-result-grid>div:nth-child(4n+3){border-top-color:#7c3aed}#self-result .self-result-grid>div:nth-child(4n){border-top-color:#ea580c}
+#self-result .self-result-grid strong{font-variant-numeric:tabular-nums}
+@media print{#self-result .self-result-formula-switch{display:flex!important;gap:7px!important;margin:7px 0!important}#self-result .self-result-formula-switch .formula-option{padding:6px!important;border:1px solid #d8e2ec!important;border-radius:6px!important;background:#f8fafc!important;color:#12395d!important;box-shadow:none!important}#self-result .self-result-formula-switch .formula-option span{font-size:6pt!important}#self-result .self-result-formula-switch .formula-option strong{font-size:8pt!important}#self-result .self-result-formula-switch .formula-option small{font-size:6pt!important}#self-result .self-result-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}

@@ -62,3 +62,7 @@
 /* Use the official brand image in printed/exported scorecards. */
 .result-pdf-mark{display:block;width:64px;height:64px;flex:0 0 64px;object-fit:contain;background:#fff;border-radius:12px;padding:4px;box-shadow:0 3px 12px #02061730}
 @media print{.result-pdf-mark{width:54px;height:54px;flex-basis:54px;object-fit:contain;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* Additional calculation cards in the typing scorecard */
+.result-metric-correct-word{border-top-color:#7c3aed!important}.result-metric-backspace{border-top-color:#ea580c!important}
+@media print{#result-section .result-metric-correct-word,#result-section .result-metric-backspace{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
