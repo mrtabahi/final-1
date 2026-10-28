@@ -70,7 +70,7 @@ function editDistance(a: string, b: string): number {
   return prev[a.length];
 }
 
-function calculateScore(passage: string, typedText: string, seconds: number, test: Record<string, unknown>, formula = "bsf") {
+function calculateScore(passage: string, typedText: string, seconds: number, test: Record<string, unknown>, formula = "bsf", backspacePresses = 0) {
   const expected = tokenize(passage), typed = tokenize(typedText);
   const mode = formula.toLowerCase() === "crpf" ? "crpf" : "bsf";
   let alignment: Array<{type:string; expected:string|null; typed:string|null}> = [];
@@ -153,8 +153,9 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   const minAccuracy = test.min_accuracy == null ? null : Number(test.min_accuracy);
   const passedByWpm = targetWpm === null || netWpm >= targetWpm;
   const passedByAccuracy = minAccuracy === null || accuracy >= minAccuracy;
+  const totalCorrectWord = Number((measuredKeystrokes / 5 - totalErrors).toFixed(2));
   return {
-    formula: mode, totalTypedWords: typed.length, totalTypedChars: typedText.length, totalKeystrokes: measuredKeystrokes,
+    formula: mode, totalTypedWords: typed.length, totalTypedChars: typedText.length, totalKeystrokes: measuredKeystrokes, backspacePresses: Math.max(0, Math.floor(Number(backspacePresses) || 0)), totalCorrectWord,
     equivalentTypedWords: Number(equivalentTypedWords.toFixed(2)), correctChars, incorrectChars, correctWords,
     wordErrors, doubleSpaceErrors, totalErrors, freeErrors: Number(freeErrors.toFixed(2)), excessErrors: Number(excessErrors.toFixed(2)), penaltyWords: Number(penaltyWords.toFixed(2)),
     netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes: Number(elapsedMinutes.toFixed(2)), elapsedSeconds: Math.max(seconds, 1), attemptingTimeSeconds: elapsedSeconds, penaltyWpm, allowedErrors: freeErrors,
@@ -199,6 +200,7 @@ Deno.serve(async (req) => {
     if (body.action === "submit") {
       const sessionId = body.session_id;
       const typedText = body.typed_text;
+      const backspacePresses = Number.isFinite(Number(body.backspace_presses)) ? Math.max(0, Math.min(100000, Math.floor(Number(body.backspace_presses)))) : 0;
       const requestedMode = body.mode;
       if (typeof sessionId !== "string" || typeof typedText !== "string") return reply(400, { error: "session_id and typed_text are required" });
       if (requestedMode !== undefined && requestedMode !== "screen" && requestedMode !== "page") return reply(400, { error: "mode must be screen or page" });
@@ -215,8 +217,8 @@ Deno.serve(async (req) => {
       if (!Number.isFinite(startedAt) || startedAt > now + 5000) return reply(400, { error: "Invalid session start time" });
       const actualElapsed = Math.max(1, Math.floor((now - startedAt) / 1000));
       const durationSeconds = Math.min(actualElapsed, Math.max(1, Number(test.duration_minutes) * 60));
-      const scoreBsf = calculateScore(String(test.passage || ""), typedText, durationSeconds, test, "bsf");
-      const scoreCrpf = calculateScore(String(test.passage || ""), typedText, durationSeconds, test, "crpf");
+      const scoreBsf = calculateScore(String(test.passage || ""), typedText, durationSeconds, test, "bsf", backspacePresses);
+      const scoreCrpf = calculateScore(String(test.passage || ""), typedText, durationSeconds, test, "crpf", backspacePresses);
       const score = scoreBsf;
       const { data: attempt, error: insertError } = await db.from("attempts").insert({
         session_id: session.id, user_id: user.id, candidate_name: profile.full_name || "Candidate",
