@@ -20,7 +20,7 @@
       ready=true;
       const site=findRule('site','*')||findRule('site',location.pathname.split('/').pop()||'index.html');
       const requestedTest=new URLSearchParams(location.search).get('test');
-      if(requestedTest){const testRule=findRule('test',requestedTest)||{is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};if(!testRule.is_free&&!premium){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Upgrade your plan</h1><p>'+esc(testRule.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}}
+      if(requestedTest){let testRule=findRule('test',requestedTest);if(!testRule){const {data:testMeta}=await client.from('tests').select('folder_id').eq('id',requestedTest).maybeSingle();if(testMeta?.folder_id)testRule=findRule('folder',testMeta.folder_id);}testRule=testRule||{is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};if(!testRule.is_free&&!premium){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Upgrade your plan</h1><p>'+esc(testRule.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}}
       if(site&&!site.is_free&&!premium&&!['premium.html','login.html','signup.html','my_account.html'].includes(location.pathname.split('/').pop())){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium access required</h1><p>'+esc(site.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}
     }catch(e){console.warn('Feature access check unavailable; no client-side lock applied.');}
   }
@@ -30,8 +30,10 @@
     const custom=a.getAttribute('data-access-key');if(custom){const [type,...rest]=custom.split(':');rule=findRule(type,rest.join(':'));}
     const testId=a.getAttribute('data-test-id')||a.closest('[data-test-id]')?.getAttribute('data-test-id');
     const folderId=a.getAttribute('data-folder-id')||a.closest('[data-folder-id]')?.getAttribute('data-folder-id');
-    if(!rule&&testId)rule=findRule('test',testId)||{is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};
-    if(!rule&&folderId)rule=findRule('folder',folderId)||{is_free:false,upgrade_message:'Upgrade your plan to unlock this folder.'};
+    if(!rule&&testId)rule=findRule('test',testId);
+    if(!rule&&folderId)rule=findRule('folder',folderId);
+    if(!rule&&testId)rule={is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};
+    if(!rule&&folderId)rule={is_free:false,upgrade_message:'Upgrade your plan to unlock this folder.'};
     if(!rule&&custom&&custom.startsWith('feature:'))rule=findRule('feature',custom.slice(8))||{is_free:false,upgrade_message:'Upgrade your plan to unlock this premium material.'};
     if(!rule&&a.matches('a[href]')){const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());rule=findRule('menu',file)||findRule('menu',norm(href));}
     if(rule&&!rule.is_free&&!premium){e.preventDefault();e.stopImmediatePropagation();popup(rule.upgrade_message);}
