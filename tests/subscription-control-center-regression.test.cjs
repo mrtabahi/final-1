@@ -41,5 +41,5 @@ test('public pricing and account UI are connected to subscription records', () =
   assert.match(account, /Subscription &amp; access/);
   assert.match(account, /js\/my-subscription\.js/);
   assert.match(accountScript, /user_subscriptions/);
-  assert.match(accountScript, /Order &amp; payment history/);
+  assert.match(accountScript, /LAST SUCCESSFUL PAYMENT/);
 });

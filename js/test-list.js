@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tests = testsResult.data || [];
     if (!tests.length) { box.innerHTML = '<div class="loading-card">No active tests are available in this category yet.</div>'; return; }
     box.innerHTML = tests.map((test, index) => `
-      <article class="test-row">
+      <article class="test-row" data-test-id="${esc(test.id)}">
         <div class="test-number">${String(index + 1).padStart(2, '0')}</div>
         <div class="test-row-copy"><h2>${esc(test.title)}</h2><p>${esc(test.language || 'English')} · ${esc(test.mode === 'page' ? 'Off-screen' : 'On-screen')} practice</p></div>
         <div class="test-meta"><span>◷ ${esc(test.duration_minutes ?? '—')} min</span><span>⌨ ${test.target_wpm == null ? 'Target not set' : esc(test.target_wpm) + ' WPM'}</span><span>✓ ${test.min_accuracy == null ? 'Accuracy not set' : esc(test.min_accuracy) + '% target'}</span></div>
