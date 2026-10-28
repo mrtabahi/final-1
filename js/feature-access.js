@@ -21,7 +21,7 @@
       applyPublicAccessLabels();
       const accessObserver=new MutationObserver(()=>applyPublicAccessLabels());
       accessObserver.observe(document.body,{childList:true,subtree:true});
-      const site=findRule('site','*')||findRule('site',location.pathname.split('/').pop()||'index.html');
+      const site=findRule('site',location.pathname.split('/').pop()||'index.html')||findRule('site','*');
       const requestedTest=new URLSearchParams(location.search).get('test');
       if(requestedTest){let testRule=findRule('test',requestedTest);if(!testRule){const {data:testMeta}=await client.from('tests').select('folder_id').eq('id',requestedTest).maybeSingle();if(testMeta?.folder_id)testRule=findRule('folder',testMeta.folder_id);}testRule=testRule||{is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};if(!testRule.is_free&&!premium){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Upgrade your plan</h1><p>'+esc(testRule.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}}
       if(site&&!site.is_free&&!premium&&!['premium.html','login.html','signup.html','my_account.html'].includes(location.pathname.split('/').pop())){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium access required</h1><p>'+esc(site.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}
