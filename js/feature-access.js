@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const db=()=>window.supabaseClient;
+  const db=()=>window.supabaseClient||(typeof supabaseClient!=='undefined'?supabaseClient:null);
   const norm=v=>String(v||'').trim().replace(/^\/+|\/+$/g,'').toLowerCase();
   const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let rules=[],premium=false,ready=false;
@@ -18,11 +18,24 @@
       rules=rr.error?[]:(rr.data||[]);
       if(user){const {data}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(price_minor)').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(10);premium=(data||[]).some(s=>(!s.starts_at||new Date(s.starts_at)<=new Date())&&(!s.ends_at||new Date(s.ends_at)>new Date())&&Number(s.subscription_plans?.price_minor||0)>0);}
       ready=true;
+      applyPublicAccessLabels();
       const site=findRule('site','*')||findRule('site',location.pathname.split('/').pop()||'index.html');
       const requestedTest=new URLSearchParams(location.search).get('test');
       if(requestedTest){let testRule=findRule('test',requestedTest);if(!testRule){const {data:testMeta}=await client.from('tests').select('folder_id').eq('id',requestedTest).maybeSingle();if(testMeta?.folder_id)testRule=findRule('folder',testMeta.folder_id);}testRule=testRule||{is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};if(!testRule.is_free&&!premium){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Upgrade your plan</h1><p>'+esc(testRule.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}}
       if(site&&!site.is_free&&!premium&&!['premium.html','login.html','signup.html','my_account.html'].includes(location.pathname.split('/').pop())){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium access required</h1><p>'+esc(site.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}
     }catch(e){console.warn('Feature access check unavailable; no client-side lock applied.');}
+  }
+  function applyPublicAccessLabels(){
+    document.querySelectorAll('[data-test-id]').forEach(card=>{
+      const testId=card.getAttribute('data-test-id');const folderId=card.getAttribute('data-folder-id');
+      const rule=findRule('test',testId)||findRule('folder',folderId);
+      const link=card.querySelector('.test-start,[data-test-start],a[href*="start_test.html"]');
+      if(!link)return;
+      if(rule&&!rule.is_free&&!premium){link.textContent='UPGRADE';link.classList.add('feature-upgrade-button');link.setAttribute('aria-label','Upgrade to access '+(card.querySelector('h2')?.textContent||'this test'));}
+      else if(link.dataset.originalLabel){link.innerHTML=link.dataset.originalLabel;}
+      else if(!link.dataset.originalLabel){link.dataset.originalLabel=link.innerHTML;}
+    });
+    document.querySelectorAll('a[href]').forEach(a=>{const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());const rule=findRule('menu',file)||findRule('menu',norm(href));if(rule&&!rule.is_free&&!premium&&/start_test\.html\?test=/i.test(href))return;});
   }
   document.addEventListener('click',e=>{
     const a=e.target.closest('a,button,[data-access-key]');if(!a||!ready)return;
@@ -38,6 +51,6 @@
     if(!rule&&a.matches('a[href]')){const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());rule=findRule('menu',file)||findRule('menu',norm(href));}
     if(rule&&!rule.is_free&&!premium){e.preventDefault();e.stopImmediatePropagation();popup(rule.upgrade_message);}
   },true);
-  const css=document.createElement('style');css.textContent='.feature-upgrade-backdrop{display:none;position:fixed;inset:0;z-index:2147483000;background:rgba(12,22,45,.58);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:20px}.feature-upgrade-backdrop.is-open{display:flex}.feature-upgrade-dialog,.feature-site-lock-card{width:min(100%,420px);box-sizing:border-box;background:#fff;border:1px solid #e1e8f5;border-radius:22px;padding:30px;box-shadow:0 24px 80px rgba(9,25,55,.24);text-align:center;color:#17243b;position:relative}.feature-upgrade-close{position:absolute;right:13px;top:10px;border:0;background:#f1f5ff;border-radius:50%;width:32px;height:32px;font-size:22px;color:#52617b;cursor:pointer}.feature-upgrade-mark{display:inline-grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#4f46e5,#8b5cf6);color:white;font-size:23px;box-shadow:0 8px 20px #4f46e533}.feature-upgrade-dialog h2,.feature-site-lock-card h1{font-size:1.45rem;margin:15px 0 8px}.feature-upgrade-copy,.feature-site-lock-card p{color:#64748b;line-height:1.65;margin:0 0 22px}.feature-upgrade-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.feature-upgrade-primary,.feature-upgrade-secondary{display:inline-flex;align-items:center;justify-content:center;border-radius:11px;padding:12px 17px;font-weight:750;font-size:.92rem;text-decoration:none;cursor:pointer}.feature-upgrade-primary{background:linear-gradient(110deg,#2563eb,#4f46e5);color:white!important;border:0}.feature-upgrade-secondary{background:#f1f5f9;color:#334155;border:1px solid #dbe4f0}.feature-site-lock{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;background:linear-gradient(135deg,#eef4ff,#f8faff);padding:20px}.feature-site-lock-card{width:min(100%,460px)}body.feature-site-locked{overflow:hidden}';document.head.appendChild(css);
+  const css=document.createElement('style');css.textContent='.feature-upgrade-backdrop{display:none;position:fixed;inset:0;z-index:2147483000;background:rgba(12,22,45,.58);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:20px}.feature-upgrade-backdrop.is-open{display:flex}.feature-upgrade-dialog,.feature-site-lock-card{width:min(100%,420px);box-sizing:border-box;background:#fff;border:1px solid #e1e8f5;border-radius:22px;padding:30px;box-shadow:0 24px 80px rgba(9,25,55,.24);text-align:center;color:#17243b;position:relative}.feature-upgrade-close{position:absolute;right:13px;top:10px;border:0;background:#f1f5ff;border-radius:50%;width:32px;height:32px;font-size:22px;color:#52617b;cursor:pointer}.feature-upgrade-mark{display:inline-grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#4f46e5,#8b5cf6);color:white;font-size:23px;box-shadow:0 8px 20px #4f46e533}.feature-upgrade-dialog h2,.feature-site-lock-card h1{font-size:1.45rem;margin:15px 0 8px}.feature-upgrade-copy,.feature-site-lock-card p{color:#64748b;line-height:1.65;margin:0 0 22px}.feature-upgrade-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.feature-upgrade-button{background:#6d28d9!important;color:#fff!important;border-color:#6d28d9!important;font-weight:800!important}.feature-upgrade-primary,.feature-upgrade-secondary{display:inline-flex;align-items:center;justify-content:center;border-radius:11px;padding:12px 17px;font-weight:750;font-size:.92rem;text-decoration:none;cursor:pointer}.feature-upgrade-primary{background:linear-gradient(110deg,#2563eb,#4f46e5);color:white!important;border:0}.feature-upgrade-secondary{background:#f1f5f9;color:#334155;border:1px solid #dbe4f0}.feature-site-lock{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;background:linear-gradient(135deg,#eef4ff,#f8faff);padding:20px}.feature-site-lock-card{width:min(100%,460px)}body.feature-site-locked{overflow:hidden}';document.head.appendChild(css);
   document.addEventListener('DOMContentLoaded',init);if(document.readyState!=='loading')init();
 })();
