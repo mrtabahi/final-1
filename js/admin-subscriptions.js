@@ -3,7 +3,7 @@
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money = (minor, currency='INR') => new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
-  let plans = [], candidates = [], editingId = null;
+  let plans = [], candidates = [], memberships = [], editingId = null;
   const notify = (message, error=false) => { const el=$('subscription-admin-message'); if(el){el.textContent=message;el.className='sub-admin-message'+(error?' is-error':' is-success');} };
   const client = () => (typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
   async function loadPlans() {
@@ -57,8 +57,31 @@
     candidates=people.data||[];
     select.innerHTML='<option value="">Choose candidate…</option>'+candidates.map(p=>'<option value="'+p.id+'">'+esc(p.full_name||p.email||p.id)+'</option>').join('');
     $('sub-member-plan').innerHTML='<option value="">Choose plan…</option>'+(plansResult.data||[]).map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+(p.is_active?'Published':'Draft')+'</option>').join('');
-    const box=$('subscription-member-list');
-    box.innerHTML=(subs.data||[]).length?(subs.data||[]).map(s=>'<article class="sub-admin-member"><div><strong>'+esc(s.profiles?.full_name||s.profiles?.email||'Candidate')+'</strong><p>'+esc(s.subscription_plans?.name||'Plan')+' · '+esc(s.status)+'</p><small>'+esc(s.starts_at?new Date(s.starts_at).toLocaleDateString():'Start not set')+' → '+esc(s.ends_at?new Date(s.ends_at).toLocaleDateString():'No expiry')+'</small></div><span class="sub-admin-status '+(s.status==='active'?'is-active':'')+'">'+esc(s.status)+'</span></article>').join(''):'<div class="admin-empty">No subscription records yet.</div>';
+    memberships=subs.data||[]; const box=$('subscription-member-list');
+    box.innerHTML=(subs.data||[]).length?(subs.data||[]).map(s=>'<article class="sub-admin-member"><div><strong>'+esc(s.profiles?.full_name||'Candidate')+'</strong><p>'+esc(s.profiles?.email||'Email not available')+'</p><p>'+esc(s.subscription_plans?.name||'Plan')+' · '+esc(s.status)+'</p><small>'+esc(s.starts_at?new Date(s.starts_at).toLocaleDateString():'Start not set')+' → '+esc(s.ends_at?new Date(s.ends_at).toLocaleDateString():'No expiry')+'</small><div class="sub-member-actions"><label>Expiry <input type="date" data-expiry="'+s.id+'" value="'+(s.ends_at?new Date(s.ends_at).toISOString().slice(0,10):'')+'"></label><button type="button" class="admin-btn admin-btn-secondary" data-save-membership="'+s.id+'">Save expiry</button><button type="button" class="admin-btn admin-btn-secondary" data-reset-member="'+s.user_id+'">Send password reset</button><button type="button" class="admin-btn admin-btn-danger" data-expire-membership="'+s.id+'">Expire access</button></div></div><span class="sub-admin-status '+(s.status==='active'?'is-active':'')+'">'+esc(s.status)+'</span></article>').join(''):'<div class="admin-empty">No subscription records yet.</div>';
+    box.querySelectorAll('[data-save-membership]').forEach(b=>b.addEventListener('click',()=>saveMembershipExpiry(b.dataset.saveMembership)));
+    box.querySelectorAll('[data-expire-membership]').forEach(b=>b.addEventListener('click',()=>expireMembership(b.dataset.expireMembership)));
+    box.querySelectorAll('[data-reset-member]').forEach(b=>b.addEventListener('click',()=>sendPasswordReset(b.dataset.resetMember)));
+  }
+
+  async function saveMembershipExpiry(id){
+    const input=document.querySelector('[data-expiry="'+id+'"]'); if(!input)return;
+    const row=memberships.find(x=>x.id===id); if(!row)return;
+    const end=input.value?new Date(input.value+'T23:59:59').toISOString():null;
+    if(end&&new Date(end)<=new Date()){notify('Expiry must be in the future. Use Expire access to end membership now.',true);return;}
+    try{const {error}=await client().from('user_subscriptions').update({ends_at:end,status:'active',updated_at:new Date().toISOString()}).eq('id',id);if(error)throw error;notify('Membership expiry updated.');await loadMembershipTools();}
+    catch(err){notify(err.message||'Could not update expiry.',true);}
+  }
+  async function expireMembership(id){
+    if(!confirm('Expire this membership now? This changes access, not payment records.'))return;
+    try{const {error}=await client().from('user_subscriptions').update({status:'expired',ends_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',id);if(error)throw error;notify('Membership expired.');await loadMembershipTools();}
+    catch(err){notify(err.message||'Could not expire membership.',true);}
+  }
+  async function sendPasswordReset(userId){
+    const person=candidates.find(x=>x.id===userId);if(!person?.email){notify('Candidate email is unavailable; cannot send reset link.',true);return;}
+    if(!confirm('Send a secure password-reset email to '+person.email+'? The password itself will never be visible to admins.'))return;
+    try{const {error}=await client().auth.resetPasswordForEmail(person.email,{redirectTo:'https://decoding-hcm.vercel.app/my_account.html?reset-password=1'});if(error)throw error;notify('Password reset email requested for '+person.email+'.');}
+    catch(err){notify(err.message||'Could not request password reset.',true);}
   }
   async function grantMembership(e){
     e.preventDefault();const userId=$('sub-member-candidate').value,planId=$('sub-member-plan').value;
