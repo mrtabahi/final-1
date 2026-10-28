@@ -19,7 +19,16 @@
       if(user){const {data}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(price_minor)').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(10);premium=(data||[]).some(s=>(!s.starts_at||new Date(s.starts_at)<=new Date())&&(!s.ends_at||new Date(s.ends_at)>new Date())&&Number(s.subscription_plans?.price_minor||0)>0);}
       ready=true;
       applyPublicAccessLabels();
-      const accessObserver=new MutationObserver(()=>applyPublicAccessLabels());
+      // Several pages dynamically render large lists. Coalesce DOM updates so one
+      // render burst triggers one label pass instead of repeated full-document scans.
+      let labelRefreshTimer=null;
+      const accessObserver=new MutationObserver(()=>{
+        if(labelRefreshTimer!==null)clearTimeout(labelRefreshTimer);
+        labelRefreshTimer=setTimeout(()=>{
+          labelRefreshTimer=null;
+          applyPublicAccessLabels();
+        },100);
+      });
       accessObserver.observe(document.body,{childList:true,subtree:true});
       const site=findRule('site',location.pathname.split('/').pop()||'index.html')||findRule('site','*');
       const requestedTest=new URLSearchParams(location.search).get('test');
