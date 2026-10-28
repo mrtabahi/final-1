@@ -19,6 +19,8 @@
       if(user){const {data}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(price_minor)').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(10);premium=(data||[]).some(s=>(!s.starts_at||new Date(s.starts_at)<=new Date())&&(!s.ends_at||new Date(s.ends_at)>new Date())&&Number(s.subscription_plans?.price_minor||0)>0);}
       ready=true;
       applyPublicAccessLabels();
+      const accessObserver=new MutationObserver(()=>applyPublicAccessLabels());
+      accessObserver.observe(document.body,{childList:true,subtree:true});
       const site=findRule('site','*')||findRule('site',location.pathname.split('/').pop()||'index.html');
       const requestedTest=new URLSearchParams(location.search).get('test');
       if(requestedTest){let testRule=findRule('test',requestedTest);if(!testRule){const {data:testMeta}=await client.from('tests').select('folder_id').eq('id',requestedTest).maybeSingle();if(testMeta?.folder_id)testRule=findRule('folder',testMeta.folder_id);}testRule=testRule||{is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};if(!testRule.is_free&&!premium){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Upgrade your plan</h1><p>'+esc(testRule.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}}
@@ -29,14 +31,14 @@
     document.querySelectorAll('a[data-folder-id].category-card').forEach(card=>{
       const rule=findRule('folder',card.getAttribute('data-folder-id'));
       const label=card.querySelector('.category-foot>span:first-child');
-      if(rule&&!rule.is_free&&!premium&&label)label.innerHTML='UPGRADE <span aria-hidden="true">↗</span>';
+      if(rule&&!rule.is_free&&!premium&&label&&label.textContent.trim()!=='UPGRADE ↗')label.innerHTML='UPGRADE <span aria-hidden="true">↗</span>';
     });
     document.querySelectorAll('[data-test-id]').forEach(card=>{
       const testId=card.getAttribute('data-test-id');const folderId=card.getAttribute('data-folder-id');
       const rule=findRule('test',testId)||findRule('folder',folderId);
       const link=card.querySelector('.test-start,[data-test-start],a[href*="start_test.html"]');
       if(!link)return;
-      if(rule&&!rule.is_free&&!premium){link.textContent='UPGRADE';link.classList.add('feature-upgrade-button');link.setAttribute('aria-label','Upgrade to access '+(card.querySelector('h2')?.textContent||'this test'));}
+      if(rule&&!rule.is_free&&!premium){if(link.textContent.trim()!=='UPGRADE'){link.dataset.originalLabel=link.innerHTML;link.textContent='UPGRADE';}link.classList.add('feature-upgrade-button');link.setAttribute('aria-label','Upgrade to access '+(card.querySelector('h2')?.textContent||'this test'));}
       else if(link.dataset.originalLabel){link.innerHTML=link.dataset.originalLabel;}
       else if(!link.dataset.originalLabel){link.dataset.originalLabel=link.innerHTML;}
     });
