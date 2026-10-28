@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const [foldersResult, testsResult] = await Promise.all([
       supabaseClient.from('folders').select('id,name,description,thumbnail_url,sort_order,created_at').eq('active', true).order('sort_order', {ascending:true}).order('created_at', {ascending:true}),
-      supabaseClient.from('tests').select('id,folder_id').eq('active', true)
+      supabaseClient.rpc('list_test_catalog', {p_folder_id: null})
     ]);
     if (foldersResult.error) throw foldersResult.error;
     if (testsResult.error) throw testsResult.error;
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     box.innerHTML = selfTestCard + folders.map(folder => `
-      <a class="category-card" href="test-list.html?folder=${encodeURIComponent(String(folder.id))}">
+      <a class="category-card" data-folder-id="${esc(folder.id)}" href="test-list.html?folder=${encodeURIComponent(String(folder.id))}">
         <div class="category-thumb" aria-hidden="true">${folder.thumbnail_url ? `<img src="${esc(folder.thumbnail_url)}" alt="" loading="lazy">` : `<span class="category-symbol">${esc(chooseSymbol(folder.name))}</span>`}</div>
         <div class="category-copy">
           <h2>${esc(folder.name)}</h2>
