@@ -2,10 +2,10 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const setup=$('self-setup'), workspace=$('self-workspace'), source=$('source-text'), typed=$('self-typed'), passage=$('self-passage'), passageCard=$('self-passage-card'), typeCard=$('self-type-card');
-let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, inputHidden=false, allowBackspace=true, totalElapsed=0;
+let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, inputHidden=false, allowBackspace=true, totalElapsed=0, backspacePressCount=0;
 let SAVED_KEY='decodingHcmSelfTestPassagesV1:guest';
 const LEGACY_SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
-let scoringFormula='bsf', selfFontSize=17.3;
+let scoringFormula='bsf', selfFontSize=17.3, selfScores={};
 function applySelfFontSize(){passage.style.fontSize=selfFontSize+'px';typed.style.fontSize=selfFontSize+'px';}
 $('self-font-down')?.addEventListener('click',()=>{selfFontSize=Math.max(14,selfFontSize-1.5);applySelfFontSize()});
 $('self-font-up')?.addEventListener('click',()=>{selfFontSize=Math.min(32,selfFontSize+1.5);applySelfFontSize()});
@@ -23,7 +23,7 @@ function refreshSaved(selected=''){
 }
 function updateLive(){
  const input=typed.value, elapsed=startedAt===null?0:Math.max(1,Math.min(duration,(Date.now()-startedAt)/1000));
- const score=ScoringEngine.calculateScore(original,input,elapsed||1,{freeErrorPct:.05,penaltyPerError:10},input.length,scoringFormula);
+ const score=ScoringEngine.calculateScore(original,input,elapsed||1,{freeErrorPct:.05,penaltyPerError:10},input.length,scoringFormula,backspacePressCount);
  $('self-live-gross').textContent=score.grossWpm.toFixed(2);
  $('self-live-net').textContent=score.netWpm.toFixed(2);
  $('self-live-accuracy').textContent=score.accuracy.toFixed(2)+'%';
@@ -90,7 +90,7 @@ function setInputHidden(on){inputHidden=on;typeCard.hidden=on;$('self-hide-input
 function startTest(){
  original=source.value.replace(/\r\n?/g,'\n');
  if(!original.trim()){$('self-message').textContent='Paste a passage before starting.';source.focus();return}
- duration=Number($('self-duration').value)*60;allowBackspace=$('self-backspace').checked;scoringFormula=$('self-formula').value==='crpf'?'crpf':'bsf';
+ duration=Number($('self-duration').value)*60;allowBackspace=$('self-backspace').checked;scoringFormula='bsf';backspacePressCount=0;selfScores={};
  typed.value='';startedAt=null;attemptDate=null;deadline=null;finished=false;totalElapsed=0;
  $('self-message').textContent='';setup.hidden=true;workspace.hidden=false;$('self-result').hidden=true;
  passageCard.hidden=false;setHidden(false);setInputHidden(false);setHighlight(false);renderPassage();$('self-timer').textContent=formatTime(duration);
@@ -100,38 +100,20 @@ function finishTest(){
  if(finished)return;finished=true;if(timerId)window.clearInterval(timerId);timerId=null;
  totalElapsed=startedAt===null?0:Math.max(1,Math.min(duration,(Date.now()-startedAt)/1000));
  typed.disabled=true;
- const input=typed.value;
- const score=ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,scoringFormula);
- $('self-gross').textContent=score.grossWpm.toFixed(2);
- $('self-net').textContent=score.netWpm.toFixed(2);
- $('self-accuracy').textContent=score.accuracy.toFixed(2)+'%';
- $('self-errors').textContent=String(score.totalErrors);
- $('self-free-errors').textContent=String(score.freeErrors);
- $('self-penalty').textContent=String(score.penaltyWords);
- $('self-correct').textContent=String(score.correctChars);
- $('self-count').textContent=String(score.totalTypedChars);
- const performance=ScoringEngine.getPerformanceLabel(score);const reportStatus=$('self-report-id');if(reportStatus){reportStatus.textContent=/qualif|pass/i.test(performance.text)?'Qualify':'Try again';reportStatus.style.color=/qualif|pass/i.test(performance.text)?'#166534':'#b91c1c';}
- const bsfScore=ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,'bsf');
- const crpfScore=ScoringEngine.calculateScore(original,input,totalElapsed,{freeErrorPct:.05,penaltyPerError:10},input.length,'crpf');
- let compare=$('self-formula-comparison');
- if(!compare){compare=document.createElement('div');compare.id='self-formula-comparison';compare.className='self-formula-comparison';$('self-result').insertBefore(compare,$('self-analysis-breakdown'));}
- compare.replaceChildren();
- const compareTitle=document.createElement('h3');compareTitle.textContent='Compare scoring rules';compare.appendChild(compareTitle);
- const compareGrid=document.createElement('div');compareGrid.className='self-formula-grid';
- [['BSF',bsfScore],['CRPF',crpfScore]].forEach(([name,value])=>{const card=document.createElement('div');card.className='self-formula-card'+(name.toLowerCase()===scoringFormula?' is-selected':'');const heading=document.createElement('strong');heading.textContent=name+' formula';card.appendChild(heading);[['Net WPM',value.netWpm.toFixed(2)],['Gross WPM',value.grossWpm.toFixed(2)],['Accuracy',value.accuracy.toFixed(2)+'%'],['Errors',String(value.totalErrors)],['Penalty words',String(value.penaltyWords.toFixed(2))]].forEach(([label,val])=>{const line=document.createElement('p');line.textContent=label+': '+val;card.appendChild(line)});compareGrid.appendChild(card);});
- compare.appendChild(compareGrid);
- const breakdown=$('self-analysis-breakdown');breakdown.replaceChildren();
- const title=document.createElement('h3');title.textContent='Detailed error analysis';breakdown.appendChild(title);
- const grid=document.createElement('div');grid.className='self-analysis-grid';
- const labels=[['Omitted words','omissions'],['Wrong word / substitution','substitutions'],['Spelling errors','spellingErrors'],['Incomplete words','incompleteWords'],['Extra words','extraWords'],['Repeated words (subset)','repeatedWords'],['Spacing errors','spacingErrors'],['Capitalization','capitalizationErrors'],['Punctuation','punctuationErrors'],['Words not reached','notReached']];
- labels.forEach(([label,key])=>{const card=document.createElement('div'),name=document.createElement('span'),value=document.createElement('strong');name.textContent=label;value.textContent=String(score.errorBreakdown?.[key]??0);card.append(name,value);grid.appendChild(card);});
- breakdown.appendChild(grid);
- const note=document.createElement('p');note.className='self-result-note';note.textContent='Repeated words are included in extra words, not added a second time. Words not reached are shown for transparency and are not penalized as mistakes.';breakdown.appendChild(note);
- const comparison=$('self-result-typed');comparison.replaceChildren();
- score.alignment.forEach((item,i)=>{if(i)comparison.appendChild(document.createTextNode(' '));const span=document.createElement('span');const trailing=item.type==='delete'&&!score.alignment.slice(i+1).some(next=>next.type!=='delete');
- span.className=item.type==='match'?'self-token-match':item.type==='substitute'?'self-token-wrong':item.type==='delete'&&!trailing?'self-token-missing':item.type==='insert'?'self-token-extra':'self-token-unreached';
- span.textContent=item.type==='match'?item.typed:item.type==='substitute'?item.typed+' [expected: '+item.expected+']':trailing?'[not reached: '+item.expected+']':item.type==='delete'?'['+item.expected+' — skipped]':item.typed+' [extra]';comparison.appendChild(span);});
- updateLive();const stamp=$('self-report-date');if(stamp)stamp.textContent=(attemptDate||new Date()).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});const originalReport=$('self-report-original');if(originalReport)originalReport.textContent=original;const exactReport=$('self-report-typed-exact');if(exactReport)exactReport.textContent=input;$('self-result').hidden=false;$('self-result').scrollIntoView({behavior:'smooth',block:'start'});
+ const input=typed.value,config={freeErrorPct:.05,penaltyPerError:10};
+ selfScores={bsf:ScoringEngine.calculateScore(original,input,totalElapsed,config,input.length,'bsf',backspacePressCount),crpf:ScoringEngine.calculateScore(original,input,totalElapsed,config,input.length,'crpf',backspacePressCount)};
+ renderSelfResult(selfScores[scoringFormula]||selfScores.bsf,input,true);
+}
+function renderSelfResult(score,input=typed.value,scroll=false){
+ if(!score)return;
+ $('self-gross').textContent=Number(score.grossWpm||0).toFixed(2);$('self-net').textContent=Number(score.netWpm||0).toFixed(2);$('self-accuracy').textContent=Number(score.accuracy||0).toFixed(2)+'%';$('self-errors').textContent=String(score.totalErrors??0);$('self-free-errors').textContent=String(score.allowedErrors??score.freeErrors??0);$('self-penalty').textContent=Number(score.penaltyWpm||0).toFixed(2);$('self-correct').textContent=Number(score.totalCorrectWord||0).toFixed(2);$('self-count').textContent=String(score.totalKeystrokes??input.length);
+ const status=$('self-report-id');if(status){status.textContent=score.passed?'Qualified':'Try again';status.style.color=score.passed?'#166534':'#b91c1c';}const formulaStatus=$('self-report-formula');if(formulaStatus)formulaStatus.textContent=scoringFormula.toUpperCase();
+ [['self-formula-bsf','bsf'],['self-formula-crpf','crpf']].forEach(([id,mode])=>{const button=$(id);if(button){button.classList.toggle('is-active',mode===scoringFormula);button.setAttribute('aria-pressed',String(mode===scoringFormula));}});
+ const values={'self-total-correct-word':Number(score.totalCorrectWord||0).toFixed(2),'self-backspace-presses':String(score.backspacePresses??backspacePressCount),'self-total-keystrokes':String(score.totalKeystrokes??input.length),'self-allowed-errors':String(score.allowedErrors??score.freeErrors??0),'self-extra-errors':String(score.excessErrors??0),'self-penalty-speed':Number(score.penaltyWpm||0).toFixed(2),'self-attempt-time':formatTime(totalElapsed)};Object.entries(values).forEach(([id,value])=>{const node=$(id);if(node)node.textContent=value;});
+ const compare=$('self-formula-comparison');if(compare){let grid=compare.querySelector('.self-formula-grid');if(!grid){grid=document.createElement('div');grid.className='self-formula-grid';compare.appendChild(grid);}grid.replaceChildren();[['BSF',selfScores.bsf],['CRPF',selfScores.crpf]].forEach(([name,value])=>{const card=document.createElement('div');card.className='self-formula-card'+(name.toLowerCase()===scoringFormula?' is-selected':'');const heading=document.createElement('strong');heading.textContent=name+' formula';card.appendChild(heading);[['Net Speed',Number(value.netWpm||0).toFixed(2)],['Gross Speed',Number(value.grossWpm||0).toFixed(2)],['Total Correct Word',Number(value.totalCorrectWord||0).toFixed(2)],['Accuracy',Number(value.accuracy||0).toFixed(2)+'%'],['Total Errors',String(value.totalErrors)],['Penalty Speed',Number(value.penaltyWpm||0).toFixed(2)]].forEach(([label,val])=>{const line=document.createElement('p');line.textContent=label+': '+val;card.appendChild(line);});grid.appendChild(card);});}
+ const breakdown=$('self-analysis-breakdown');breakdown.replaceChildren();const title=document.createElement('h3');title.textContent='Detailed error analysis · '+scoringFormula.toUpperCase();breakdown.appendChild(title);const grid=document.createElement('div');grid.className='self-analysis-grid';const labels=[['Omitted words','omissions'],['Wrong word / substitution','substitutions'],['Spelling errors','spellingErrors'],['Incomplete words','incompleteWords'],['Extra words','extraWords'],['Repeated words (subset)','repeatedWords'],['Spacing errors','spacingErrors'],['Capitalization','capitalizationErrors'],['Punctuation','punctuationErrors'],['Words not reached','notReached']];labels.forEach(([label,key])=>{const card=document.createElement('div'),name=document.createElement('span'),value=document.createElement('strong');name.textContent=label;value.textContent=String(score.errorBreakdown?.[key]??0);card.append(name,value);grid.appendChild(card);});breakdown.appendChild(grid);const note=document.createElement('p');note.className='self-result-note';note.textContent='Repeated words are included in extra words, not added a second time. Words not reached are shown for transparency and are not penalized as mistakes.';breakdown.appendChild(note);
+ const comparison=$('self-result-typed');comparison.replaceChildren();score.alignment.forEach((item,i)=>{if(i)comparison.appendChild(document.createTextNode(' '));const span=document.createElement('span');const trailing=item.type==='delete'&&!score.alignment.slice(i+1).some(next=>next.type!=='delete');span.className=item.type==='match'?'self-token-match':item.type==='substitute'?'self-token-wrong':item.type==='delete'&&!trailing?'self-token-missing':item.type==='insert'?'self-token-extra':'self-token-unreached';span.textContent=item.type==='match'?item.typed:item.type==='substitute'?item.typed+' [expected: '+item.expected+']':trailing?'[not reached: '+item.expected+']':item.type==='delete'?'['+item.expected+' — skipped]':item.typed+' [extra]';comparison.appendChild(span);});
+ updateLive();const stamp=$('self-report-date');if(stamp)stamp.textContent=(attemptDate||new Date()).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});const originalReport=$('self-report-original');if(originalReport)originalReport.textContent=original;const exactReport=$('self-report-typed-exact');if(exactReport)exactReport.textContent=input;$('self-result').hidden=false;if(scroll)$('self-result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function downloadPDF(){
  if(!hidden){$('self-message').textContent='Hide the passage first to enable the PDF download.';return}
@@ -147,7 +129,7 @@ function downloadPDF(){
  doc.save('Decoding-HCM-Self-Test-Passage.pdf');
 }
 $('self-start').addEventListener('click',startTest);
-typed.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!allowBackspace)e.preventDefault()});
+typed.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!allowBackspace){e.preventDefault();return;}if(e.key==='Backspace'&&allowBackspace&&!e.repeat)backspacePressCount++;});
 typed.addEventListener('input',()=>{if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping()});
 function autoScrollTyping(){
  const style=getComputedStyle(typed),lineHeight=parseFloat(style.lineHeight)||28;
@@ -162,7 +144,7 @@ function autoScrollTyping(){
  const passageVisualLines=reachedText.split('\n').reduce((n,line)=>n+Math.max(1,Math.ceil(line.length/passageCharsPerLine)),0);
  if(passageVisualLines>=3)passage.scrollTop=Math.max(0,(passageVisualLines-2)*(parseFloat(passageStyle.lineHeight)||32));
 }
-$('self-formula').addEventListener('change',()=>{scoringFormula=$('self-formula').value==='crpf'?'crpf':'bsf';updateLive()});
+$('self-formula-bsf')?.addEventListener('click',()=>{scoringFormula='bsf';if(finished)renderSelfResult(selfScores.bsf,typed.value,false);updateLive()});$('self-formula-crpf')?.addEventListener('click',()=>{scoringFormula='crpf';if(finished)renderSelfResult(selfScores.crpf,typed.value,false);updateLive()});
 $('self-save-passage').addEventListener('click',()=>{const text=source.value.trim();if(!text){$('self-save-message').textContent='Pehle passage paste ya type karein.';source.focus();return}const items=readSaved();if(items.length>=MAX_SAVED){$('self-save-message').textContent='Maximum 5 passages save ho sakte hain. Pehle ek delete karein.';return}const id=Date.now();items.push({id,title:'Passage '+(items.length+1)+' · '+new Date(id).toLocaleDateString(),text});if(writeSaved(items)){refreshSaved(id);$('self-save-message').textContent='Passage saved. Aap ise baad mein select karke load kar sakte hain.'}});
 $('self-load-passage').addEventListener('click',()=>{const item=readSaved().find(x=>String(x.id)===$('self-saved-list').value);if(!item){$('self-save-message').textContent='Load karne ke liye saved passage select karein.';return}source.value=item.text;$('self-save-message').textContent='Saved passage loaded.';source.focus()});
 $('self-delete-passage').addEventListener('click',()=>{const id=$('self-saved-list').value;if(!id){$('self-save-message').textContent='Delete karne ke liye saved passage select karein.';return}const items=readSaved().filter(x=>String(x.id)!==id);if(writeSaved(items)){refreshSaved();$('self-save-message').textContent='Saved passage deleted.'}});
