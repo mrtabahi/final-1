@@ -90,14 +90,18 @@ const ScoringEngine = {
     const totalErrors=wordErrors;
     const freePct=Math.max(0,Math.min(.2,Number(config.freeErrorPct??config.free_error_pct??.05)));
     const penaltyPerError=Math.max(0,Math.min(100,Number(config.penaltyPerError??config.penalty_per_error??10)));
-    // Anti-inflation cap: each typed word contributes at most the character count of the original word at that index; extra words contribute zero. Spaces are capped at the original passage separator count. This prevents long/wrong words and extra text from inflating gross speed.
-    const cappedWordKeystrokes=typedWords.reduce((sum,word,i)=>sum+Math.min(word.length,expectedWords[i]?.length??0),0);
-    const cappedSeparatorKeystrokes=Math.min((typedSource.match(/\s/gu)||[]).length,Math.max(0,expectedWords.length-1));
-    const measuredKeystrokes=cappedWordKeystrokes+cappedSeparatorKeystrokes;
-    const equivalentWords=measuredKeystrokes/5,freeErrors=equivalentWords*freePct;
-    const excessErrors=Math.max(0,totalErrors-freeErrors),penaltyWords=excessErrors*penaltyPerError;
-    const netWords=Math.max(0,equivalentWords-penaltyWords);
-    const grossWpm=Number((equivalentWords/elapsedMinutes).toFixed(2)),netWpm=Number((netWords/elapsedMinutes).toFixed(2));
+    // Score from all typed characters/keystrokes, not passage-capped characters.
+    const measuredKeystrokes=totalKeystrokes==null||!Number.isFinite(Number(totalKeystrokes))
+      ? typedSource.length : Math.max(0,Math.floor(Number(totalKeystrokes)));
+    const equivalentWords=measuredKeystrokes/5;
+    const freeErrors=Math.floor(measuredKeystrokes/100);
+    // Errors beyond the allowance cannot be negative.
+    const excessErrors=Math.max(0,totalErrors-freeErrors);
+    const penaltyWpm=Number((excessErrors*600/elapsedSeconds).toFixed(2));
+    const penaltyWords=excessErrors*penaltyPerError;
+    const grossWpm=Number((measuredKeystrokes*60/(5*elapsedSeconds)).toFixed(2));
+    const netWpm=Number((grossWpm-penaltyWpm).toFixed(2));
+    const netWords=netWpm/12;
     // Character accuracy follows word alignment, not raw character indexes; one missing
     // word therefore does not falsely mark every later character wrong.
     let correctChars=0,alignedPairs=0,omittedErrorChars=0;
@@ -115,7 +119,7 @@ const ScoringEngine = {
     correctChars+=Math.min(typedSeparators,expectedTypedSpaces,Math.max(0,alignedPairs-1));
     correctChars=Math.max(0,Math.min(typedSource.length,correctChars-omittedErrorChars));
     const incorrectChars=Math.max(0,typedSource.length-correctChars);
-    const accuracy=typedSource.length?Number((correctChars/typedSource.length*100).toFixed(2)):0;
+    const accuracy=measuredKeystrokes>0?Math.max(0,Number((100-totalErrors*500/measuredKeystrokes).toFixed(2))):0;
     // Mutually exclusive primary classifications; repeatedWords is a subset of extraWords.
     const errorBreakdown={omissions:0,substitutions:0,spellingErrors:0,incompleteWords:0,extraWords:0,repeatedWords:0,spacingErrors:mode==="bsf"?doubleSpaceErrors:0,capitalizationErrors:0,punctuationErrors:0,notReached:0};
     for(let i=0;i<alignment.length;i++){
@@ -143,7 +147,7 @@ const ScoringEngine = {
     return {formula:mode,totalTypedWords:typedWords.length,totalTypedChars:typedSource.length,totalKeystrokes:measuredKeystrokes,
       equivalentTypedWords:Number(equivalentWords.toFixed(2)),correctChars,incorrectChars,correctWords,wordErrors,doubleSpaceErrors,totalErrors,
       freeErrors:Number(freeErrors.toFixed(2)),excessErrors:Number(excessErrors.toFixed(2)),penaltyWords:Number(penaltyWords.toFixed(2)),netWords:Number(netWords.toFixed(2)),grossWpm,netWpm,accuracy,elapsedMinutes:Number(elapsedMinutes.toFixed(2)),elapsedSeconds,
-      attemptingTimeSeconds:elapsedSeconds,penaltyWpm:Number((penaltyWords/elapsedMinutes).toFixed(2)),allowedErrors:Number(freeErrors.toFixed(2)),alignment:mode==="bsf"?alignment.filter((item,i)=>!(item.type==="delete"&&i>lastReachedAlignmentIndex)):alignment.filter((item,i)=>!(item.type==="delete"&&item.typed===null&&i>=typedWords.length)),errorBreakdown,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
+      attemptingTimeSeconds:elapsedSeconds,penaltyWpm,allowedErrors:freeErrors,alignment:mode==="bsf"?alignment.filter((item,i)=>!(item.type==="delete"&&i>lastReachedAlignmentIndex)):alignment.filter((item,i)=>!(item.type==="delete"&&item.typed===null&&i>=typedWords.length)),errorBreakdown,minAccuracy,targetWpm,passedByWpm,passedByAccuracy,passed:passedByWpm&&passedByAccuracy};
   },
   getPerformanceLabel(score){return score.passed?{text:"TARGET ACHIEVED",class:"badge-success"}:{text:"KEEP PRACTISING",class:"badge-danger"};}
 };

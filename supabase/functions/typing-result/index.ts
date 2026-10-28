@@ -100,20 +100,19 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   }
   const lastReachedAlignmentIndex = alignment.reduce((last, item, i) => item.type !== "delete" ? i : last, -1);
   const totalErrors = wordErrors;
-  // Anti-inflation cap mirrors the client: cap each typed word at the original word length at the same index, ignore extra-word characters, and cap spaces to original separators.
-  const cappedWordKeystrokes = typed.reduce((sum, word, i) => sum + Math.min(word.length, expected[i]?.length ?? 0), 0);
-  const cappedSeparatorKeystrokes = Math.min((typedText.match(/\s/gu) || []).length, Math.max(0, expected.length - 1));
-  const measuredKeystrokes = cappedWordKeystrokes + cappedSeparatorKeystrokes;
+  // Use all typed characters/keystrokes, matching the browser scoring engine.
+  const measuredKeystrokes = typedText.length;
   const equivalentTypedWords = measuredKeystrokes / 5;
-  const freePct = Math.max(0, Math.min(0.2, Number(test.free_error_pct ?? 0.05)));
   const penaltyPerError = Math.max(0, Math.min(100, Number(test.penalty_per_error ?? 10)));
-  const freeErrors = equivalentTypedWords * freePct;
+  const freeErrors = Math.floor(measuredKeystrokes / 100);
   const excessErrors = Math.max(0, totalErrors - freeErrors);
+  const elapsedSeconds = Math.max(seconds, 1);
+  const elapsedMinutes = elapsedSeconds / 60;
+  const penaltyWpm = Number((excessErrors * 600 / elapsedSeconds).toFixed(2));
   const penaltyWords = excessErrors * penaltyPerError;
-  const netWords = Math.max(0, equivalentTypedWords - penaltyWords);
-  const elapsedMinutes = Math.max(seconds, 1) / 60;
-  const grossWpm = Number((equivalentTypedWords / elapsedMinutes).toFixed(2));
-  const netWpm = Number((netWords / elapsedMinutes).toFixed(2));
+  const grossWpm = Number((measuredKeystrokes * 60 / (5 * elapsedSeconds)).toFixed(2));
+  const netWpm = Number((grossWpm - penaltyWpm).toFixed(2));
+  const netWords = netWpm / 12;
   let correctChars = 0, alignedPairs = 0, omittedErrorChars = 0;
   for (let i = 0; i < alignment.length; i++) {
     const item = alignment[i];
@@ -127,7 +126,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   correctChars += Math.min(typedSeparators, Math.max(0, typed.length - 1), Math.max(0, alignedPairs - 1));
   correctChars = Math.max(0, Math.min(typedText.length, correctChars - omittedErrorChars));
   const incorrectChars = Math.max(0, typedText.length - correctChars);
-  const accuracy = typedText.length ? Number((correctChars / typedText.length * 100).toFixed(2)) : 0;
+  const accuracy = measuredKeystrokes > 0 ? Math.max(0, Number((100 - totalErrors * 500 / measuredKeystrokes).toFixed(2))) : 0;
   // Primary categories are mutually exclusive; repeatedWords is a subset of extraWords.
   const errorBreakdown = { omissions: 0, substitutions: 0, spellingErrors: 0, incompleteWords: 0, extraWords: 0, repeatedWords: 0, spacingErrors: mode === "bsf" ? doubleSpaceErrors : 0, capitalizationErrors: 0, punctuationErrors: 0, notReached: 0 };
   for (let i = 0; i < alignment.length; i++) {
@@ -158,7 +157,7 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
     formula: mode, totalTypedWords: typed.length, totalTypedChars: typedText.length, totalKeystrokes: measuredKeystrokes,
     equivalentTypedWords: Number(equivalentTypedWords.toFixed(2)), correctChars, incorrectChars, correctWords,
     wordErrors, doubleSpaceErrors, totalErrors, freeErrors: Number(freeErrors.toFixed(2)), excessErrors: Number(excessErrors.toFixed(2)), penaltyWords: Number(penaltyWords.toFixed(2)),
-    netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes: Number(elapsedMinutes.toFixed(2)), elapsedSeconds: Math.max(seconds, 1), attemptingTimeSeconds: Math.max(seconds, 1), penaltyWpm: Number((penaltyWords / elapsedMinutes).toFixed(2)), allowedErrors: Number(freeErrors.toFixed(2)),
+    netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes: Number(elapsedMinutes.toFixed(2)), elapsedSeconds: Math.max(seconds, 1), attemptingTimeSeconds: elapsedSeconds, penaltyWpm, allowedErrors: freeErrors,
     alignment: mode === "bsf" ? alignment.filter((item, i) => !(item.type === "delete" && i > lastReachedAlignmentIndex)) : alignment.filter((item, i) => !(item.type === "delete" && item.typed === null && i >= typed.length)), errorBreakdown, minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy,
   };
 }

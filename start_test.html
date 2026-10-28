@@ -94,7 +94,7 @@
                     <div class="stat-box live-metric-net"><div class="stat-value" id="live-net-wpm">0</div><div class="stat-label">Net Typing Speed (WPM)</div></div>
                     <div class="stat-box live-metric-accuracy"><div class="stat-value" id="live-accuracy">100%</div><div class="stat-label">Typing Accuracy</div></div>
                     <div class="stat-box live-metric-errors"><div class="stat-value" id="live-errors">0</div><div class="stat-label">Total Errors</div></div>
-                    <div class="stat-box live-metric-allowed"><div class="stat-value" id="live-allowed-errors">0</div><div class="stat-label">Allowed Errors (5%)</div></div>
+                    <div class="stat-box live-metric-allowed"><div class="stat-value" id="live-allowed-errors">0</div><div class="stat-label">Error Allowance</div></div>
                     <div class="stat-box live-metric-extra"><div class="stat-value" id="live-extra-errors">0</div><div class="stat-label">Errors Beyond Allowance</div></div>
                     <div class="stat-box live-metric-penalty"><div class="stat-value" id="live-penalty-speed">0</div><div class="stat-label">Penalty Speed (WPM)</div></div>
                     <div class="stat-box live-metric-time"><div class="stat-value" id="live-attempting-time">00:00</div><div class="stat-label">Attempt Duration (Seconds)</div></div>
@@ -122,14 +122,14 @@
                 <section class="result-metrics" aria-label="Typing result calculations">
                     <div class="result-metric-card result-metric-test"><div class="result-metric-label">Test Name</div><div class="result-metric-value" id="res-test-name">—</div><div class="result-metric-formula">Assessment title</div></div>
                     <div class="result-metric-card result-metric-status"><div class="result-metric-label">BSF Assessment Status</div><div class="result-metric-value" id="res-bsf-status">—</div><div class="result-metric-formula">Pass / Fail against configured criteria</div></div>
-                    <div class="result-metric-card result-metric-keystrokes"><div class="result-metric-label">Total Keystrokes</div><div class="result-metric-value" id="res-total-keystrokes">0</div><div class="result-metric-formula">Keyboard input events recorded</div></div>
+                    <div class="result-metric-card result-metric-keystrokes"><div class="result-metric-label">Total Keystrokes</div><div class="result-metric-value" id="res-total-keystrokes">0</div><div class="result-metric-formula">Final typed keystroke count</div></div>
                     <div class="result-metric-card result-metric-net"><div class="result-metric-label">Net Speed (WPM)</div><div class="result-metric-value" id="res-net-wpm">0</div><div class="result-metric-formula">Gross speed − penalty speed</div></div>
-                    <div class="result-metric-card result-metric-gross"><div class="result-metric-label">Gross Speed (WPM)</div><div class="result-metric-value" id="res-gross-wpm">0</div><div class="result-metric-formula">Typed keystrokes ÷ (5 × time in minutes)</div></div>
-                    <div class="result-metric-card result-metric-allowed"><div class="result-metric-label">Error Allowance (5%)</div><div class="result-metric-value" id="res-allowed-errors">0</div><div class="result-metric-formula">Typed keystrokes ÷ 5 × 1/20</div></div>
+                    <div class="result-metric-card result-metric-gross"><div class="result-metric-label">Gross Speed (WPM)</div><div class="result-metric-value" id="res-gross-wpm">0</div><div class="result-metric-formula">Keystrokes × 60 ÷ (5 × time in seconds)</div></div>
+                    <div class="result-metric-card result-metric-allowed"><div class="result-metric-label">Error Allowance</div><div class="result-metric-value" id="res-allowed-errors">0</div><div class="result-metric-formula">floor(Typed keystrokes ÷ 100)</div></div>
                     <div class="result-metric-card result-metric-extra"><div class="result-metric-label">Extra Errors</div><div class="result-metric-value" id="res-extra-errors">0</div><div class="result-metric-formula">Total errors − allowed errors</div></div>
-                    <div class="result-metric-card result-metric-penalty"><div class="result-metric-label">Penalty Speed (WPM)</div><div class="result-metric-value" id="res-penalty-speed">0</div><div class="result-metric-formula">Deduction units ÷ elapsed time in minutes</div></div>
+                    <div class="result-metric-card result-metric-penalty"><div class="result-metric-label">Penalty Speed (WPM)</div><div class="result-metric-value" id="res-penalty-speed">0</div><div class="result-metric-formula">Extra errors × 600 ÷ attempting time (seconds)</div></div>
                     <div class="result-metric-card result-metric-time"><div class="result-metric-label">Attempting Time</div><div class="result-metric-value" id="res-attempting-time">00:00</div><div class="result-metric-formula">Actual time spent typing</div></div>
-                    <div class="result-metric-card result-metric-accuracy"><div class="result-metric-label">Accuracy</div><div class="result-metric-value" id="res-accuracy">0%</div><div class="result-metric-formula">Based on typed characters</div></div>
+                    <div class="result-metric-card result-metric-accuracy"><div class="result-metric-label">Accuracy</div><div class="result-metric-value" id="res-accuracy">0%</div><div class="result-metric-formula">100 − (total errors × 500 ÷ keystrokes), minimum 0</div></div>
                     <div class="result-metric-card result-metric-errors"><div class="result-metric-label">Total Errors</div><div class="result-metric-value" id="res-total-errors">0</div><div class="result-metric-formula">Errors counted by selected formula</div></div>
                     
                 </section>
@@ -148,7 +148,7 @@
                 <div class="card" style="text-align: left;">
                     <h3 class="card-title" id="formula-breakdown-title">BSF Formula Breakdown</h3>
                     <p>Total Words Typed: <strong id="res-typed-words">0</strong></p>
-                    <p>Total Typed Keystrokes (capped): <strong id="res-typed-keystrokes">0</strong></p>
+                    <p>Total Typed Keystrokes: <strong id="res-typed-keystrokes">0</strong></p>
                     <p>Time Elapsed: <strong id="res-elapsed">0</strong> minutes</p>
                 </div>
 

@@ -90,20 +90,42 @@ test('capitalization and punctuation are reported as separate primary categories
 });
 
 
-test('gross-speed keystrokes are capped by original word lengths and separators', () => {
+test('gross speed uses all typed keystrokes without passage-length capping', () => {
   const passage = 'cat dog';
   const normal = scoring.calculateScore(passage, 'cat dog', 60, config, null, 'bsf');
-  const inflated = scoring.calculateScore(passage, 'cat extraordinarilylongword dog', 60, config, null, 'bsf');
+  const longer = scoring.calculateScore(passage, 'cat extraordinarilylongword dog', 60, config, null, 'bsf');
   assert.equal(normal.totalKeystrokes, 7);
-  assert.equal(inflated.totalKeystrokes, 7);
-  assert.equal(inflated.grossWpm, normal.grossWpm);
+  assert.equal(longer.totalKeystrokes, 'cat extraordinarilylongword dog'.length);
+  assert.ok(longer.grossWpm > normal.grossWpm);
 });
 
-test('allowed errors are an exact 5 percent of capped equivalent words', () => {
+test('error allowance is the floored keystroke count divided by 100', () => {
   const score = scoring.calculateScore('abcdefghij', 'abcdefghij', 60, config, null, 'bsf');
   assert.equal(score.totalKeystrokes, 10);
-  assert.equal(score.allowedErrors, 0.1);
-  assert.equal(score.freeErrors, 0.1);
+  assert.equal(score.allowedErrors, 0);
+  assert.equal(score.freeErrors, 0);
+});
+
+test('requested formulas calculate gross speed, extra errors, penalty speed, net speed, and accuracy', () => {
+  const expected = Array(10).fill('a'.repeat(50)).join(' ');
+  const typed = Array(10).fill('b'.repeat(50)).join(' ');
+  const score = scoring.calculateScore(expected, typed, 60, config, typed.length, 'bsf');
+  assert.equal(score.totalKeystrokes, 509);
+  assert.equal(score.grossWpm, Number((509 * 60 / (5 * 60)).toFixed(2)));
+  assert.equal(score.allowedErrors, 5);
+  assert.equal(score.totalErrors, 10);
+  assert.equal(score.excessErrors, 5);
+  assert.equal(score.penaltyWpm, 50);
+  assert.equal(score.netWpm, Number((score.grossWpm - 50).toFixed(2)));
+  assert.equal(score.accuracy, Number(Math.max(0, 100 - 10 * 500 / 509).toFixed(2)));
+});
+
+test('accuracy never goes below zero and penalty speed rounds to two decimals', () => {
+  const expected = 'a '.repeat(100);
+  const typed = 'b '.repeat(100);
+  const score = scoring.calculateScore(expected, typed, 37, config, typed.length, 'bsf');
+  assert.equal(score.accuracy, 0);
+  assert.equal(score.penaltyWpm, Number(score.penaltyWpm.toFixed(2)));
 });
 
 
