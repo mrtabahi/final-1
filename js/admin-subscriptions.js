@@ -49,9 +49,9 @@
   async function loadMembershipTools() {
     const select=$('sub-member-candidate'); if(!select)return;
     const [people,plansResult,subs]=await Promise.all([
-      client().from('profiles').select('id,full_name,email').order('full_name').limit(1000),
+      client().from('profiles').select('id,full_name,email,phone').order('full_name').limit(1000),
       client().from('subscription_plans').select('id,name,duration_days,is_active').order('sort_order'),
-      client().from('user_subscriptions').select('id,user_id,plan_id,status,starts_at,ends_at,admin_note,profiles(full_name,email),subscription_plans(name)').order('created_at',{ascending:false}).limit(100)
+      client().from('user_subscriptions').select('id,user_id,plan_id,status,starts_at,ends_at,admin_note,profiles(full_name,email,phone),subscription_plans(name)').order('created_at',{ascending:false}).limit(100)
     ]);
     if(people.error)throw people.error;if(plansResult.error)throw plansResult.error;if(subs.error)throw subs.error;
     candidates=people.data||[];
