@@ -44,3 +44,23 @@
 .sub-admin-access-section .sub-admin-member>div:first-child{min-width:0;flex:1}
 .sub-admin-access-section .sub-admin-member p{overflow-wrap:anywhere}
 @media(max-width:600px){.sub-admin-access-section{grid-column:auto}.sub-member-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}.sub-member-actions label{grid-column:1/-1}.sub-member-actions .admin-btn{width:100%}}
+
+
+/* Hierarchical website access tree */
+.access-tree-wrap{margin:14px 0 20px;padding:16px;border:1px solid #dce6f4;border-radius:16px;background:linear-gradient(150deg,#f8faff,#fff)}
+.access-tree-heading h3{margin:0 0 5px;color:#172554;font-size:1rem}.access-tree-heading p{margin:0 0 14px;color:#64748b;font-size:.8rem;line-height:1.5}
+.feature-access-tree{display:grid;gap:8px}.access-tree-root{display:grid;gap:8px}
+.access-tree-node,.access-tree-branch>summary{display:flex;align-items:center;gap:10px;min-width:0;padding:10px 12px;border:1px solid #e2e8f0;border-radius:11px;background:white}
+.access-tree-node>span:first-child,.access-tree-branch>summary>span:first-child{font-size:.84rem;font-weight:750;color:#1e293b;min-width:0;overflow-wrap:anywhere}
+.access-tree-node code{font-size:.68rem;color:#94a3b8;overflow-wrap:anywhere}
+.access-tree-root-node{background:#eef2ff;border-color:#c7d2fe}.access-tree-root-node strong{font-size:1rem;color:#3730a3}.access-tree-root-node>span{flex:1;color:#6366f1;font-size:.75rem}
+.access-tree-branch{border:1px solid #dfe7f2;border-radius:12px;background:#fff;overflow:visible}
+.access-tree-branch>summary{cursor:pointer;list-style:none;background:#f8fafc}.access-tree-branch>summary::-webkit-details-marker{display:none}
+.access-tree-branch>summary>span:first-child{flex:1}.access-tree-branch>summary small{color:#64748b;font-size:.7rem;white-space:nowrap}
+.access-tree-chevron{color:#64748b}.access-tree-children{display:grid;gap:6px;padding:8px 10px 10px 18px}
+.access-tree-node.access-tree-leaf{padding:8px 10px}.access-tree-node.access-tree-leaf>span:first-child{flex:1}
+.access-tree-node.access-tree-test{margin-left:12px;padding:8px 10px;border-style:dashed}.access-tree-node.access-tree-test>span:first-child{flex:1}
+.access-tree-toggle{min-width:65px;padding:7px 10px!important;font-size:.7rem!important;font-weight:850!important;letter-spacing:.04em}
+.access-tree-empty{padding:8px;color:#94a3b8;font-size:.78rem}
+@media(hover:hover){.access-tree-branch:hover>summary{border-color:#a5b4fc;background:#eef2ff}.access-tree-branch:hover>.access-tree-children{display:grid}.access-tree-branch:not([open])>.access-tree-children{display:none}.access-tree-branch:hover:not([open])>.access-tree-children{display:grid}}
+@media(max-width:600px){.access-tree-wrap{padding:10px}.access-tree-node,.access-tree-branch>summary{gap:6px;padding:8px}.access-tree-node code{display:none}.access-tree-toggle{min-width:56px;padding:6px!important}.access-tree-node>span:first-child,.access-tree-branch>summary>span:first-child{font-size:.77rem}}
