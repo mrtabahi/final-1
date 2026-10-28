@@ -80,7 +80,7 @@
   async function sendPasswordReset(userId){
     const person=candidates.find(x=>x.id===userId);if(!person?.email){notify('Candidate email is unavailable; cannot send reset link.',true);return;}
     if(!confirm('Send a secure password-reset email to '+person.email+'? The password itself will never be visible to admins.'))return;
-    try{const {error}=await client().auth.resetPasswordForEmail(person.email,{redirectTo:'https://decoding-hcm.vercel.app/my_account.html?reset-password=1'});if(error)throw error;notify('Password reset email requested for '+person.email+'.');}
+    try{const {error}=await client().auth.resetPasswordForEmail(person.email,{redirectTo:'https://decoding-hcm.vercel.app/reset.html'});if(error)throw error;notify('Password reset email requested for '+person.email+'.');}
     catch(err){notify(err.message||'Could not request password reset.',true);}
   }
 
