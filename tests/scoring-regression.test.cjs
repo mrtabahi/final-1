@@ -197,3 +197,11 @@ test('BSF keeps each correct leading word in its original slot with repeated lat
     assert.equal(score.totalErrors, 0, typed);
   }
 });
+
+
+test('total correct word follows keystrokes divided by five minus total errors and rounds to two decimals', () => {
+  const score = scoring.calculateScore('one two three four', 'one two thx four', 37, config, 17, 'bsf', 3);
+  assert.equal(score.totalCorrectWord, Number((17 / 5 - score.totalErrors).toFixed(2)));
+  assert.equal(score.backspacePresses, 3);
+  assert.equal(score.netWpm, Number(score.netWpm.toFixed(2)));
+});
