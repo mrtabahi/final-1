@@ -90,13 +90,28 @@ test('capitalization and punctuation are reported as separate primary categories
 });
 
 
-test('gross speed uses all typed keystrokes without passage-length capping', () => {
+test('gross speed caps each typed word at its original passage word length', () => {
   const passage = 'cat dog';
   const normal = scoring.calculateScore(passage, 'cat dog', 60, config, null, 'bsf');
   const longer = scoring.calculateScore(passage, 'cat extraordinarilylongword dog', 60, config, null, 'bsf');
   assert.equal(normal.totalKeystrokes, 7);
-  assert.equal(longer.totalKeystrokes, 'cat extraordinarilylongword dog'.length);
-  assert.ok(longer.grossWpm > normal.grossWpm);
+  assert.equal(longer.totalKeystrokes, 7);
+  assert.equal(longer.grossWpm, normal.grossWpm);
+});
+
+test('incomplete words count actual typed length, while overlong words are capped', () => {
+  const passage = 'Nathuram is ready';
+  const incomplete = scoring.calculateScore(passage, 'Nathur', 60, config, null, 'bsf');
+  const overlong = scoring.calculateScore(passage, 'Nathurammmmmmmmmmmmmmmmmdmdmd', 60, config, null, 'bsf');
+  assert.equal(incomplete.totalKeystrokes, 6);
+  assert.equal(overlong.totalKeystrokes, 8);
+  assert.equal(overlong.grossWpm, Number((8 * 60 / (5 * 60)).toFixed(2)));
+});
+
+test('extra words and extra whitespace cannot inflate capped keystrokes', () => {
+  const passage = 'cat dog';
+  const score = scoring.calculateScore(passage, 'cat dog extraordinarilylongword          ', 60, config, null, 'bsf');
+  assert.equal(score.totalKeystrokes, 7);
 });
 
 test('error allowance is the floored keystroke count divided by 100', () => {
