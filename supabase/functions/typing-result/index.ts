@@ -19,6 +19,17 @@ function tokenize(text: string): string[] {
   return (text.match(/\S+/gu) || []);
 }
 
+function countCappedKeystrokes(passage: string, typedText: string): number {
+  const expectedWords = tokenize(passage), typedWords = tokenize(typedText);
+  let wordKeystrokes = 0;
+  for (let i = 0; i < typedWords.length; i++) {
+    if (i < expectedWords.length) wordKeystrokes += Math.min(typedWords[i].length, expectedWords[i].length);
+  }
+  const typedSeparators = (typedText.match(/\s/gu) || []).length;
+  const passageSeparators = (passage.match(/\s/gu) || []).length;
+  return wordKeystrokes + Math.min(typedSeparators, passageSeparators);
+}
+
 function alignWords(expected: string[], typed: string[]) {
   // Keep the exact typed prefix tied to the same original positions. A later
   // duplicate word must not cause an earlier correct sequence to be omitted.
@@ -101,7 +112,8 @@ function calculateScore(passage: string, typedText: string, seconds: number, tes
   const lastReachedAlignmentIndex = alignment.reduce((last, item, i) => item.type !== "delete" ? i : last, -1);
   const totalErrors = wordErrors;
   // Use all typed characters/keystrokes, matching the browser scoring engine.
-  const measuredKeystrokes = typedText.length;
+  // Keep server scoring authoritative and passage-bounded to prevent extra-character speed inflation.
+  const measuredKeystrokes = countCappedKeystrokes(passage, typedText);
   const equivalentTypedWords = measuredKeystrokes / 5;
   const penaltyPerError = Math.max(0, Math.min(100, Number(test.penalty_per_error ?? 10)));
   const freeErrors = Math.floor(measuredKeystrokes / 100);
