@@ -129,7 +129,7 @@ function downloadPDF(){
  doc.save('Decoding-HCM-Self-Test-Passage.pdf');
 }
 $('self-start').addEventListener('click',startTest);
-typed.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!allowBackspace){e.preventDefault();return;}if(e.key==='Backspace'&&allowBackspace&&!e.repeat)backspacePressCount++;});
+typed.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!allowBackspace){e.preventDefault();return;}if(e.key==='Backspace'&&allowBackspace&&startedAt!==null&&!e.repeat)backspacePressCount++;});
 typed.addEventListener('input',()=>{if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping()});
 function autoScrollTyping(){
  const style=getComputedStyle(typed),lineHeight=parseFloat(style.lineHeight)||28;
