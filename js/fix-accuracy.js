@@ -45,19 +45,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:Number($('fix-timer').value),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
       $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
       input.value='';input.disabled=false;input.readOnly=false;errorCount=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=true;typingFontSize=19.2;
-      $('fix-clock').textContent=currentConfig.duration?formatTime(currentConfig.duration):'FREE';
+      $('fix-clock').textContent='00:00:00';
       $('fix-passage-display').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
     }catch(err){alert(err.message||'Unable to start game.');}
   });
-  function formatTime(s){s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+  function formatTime(s){s=Math.max(0,Math.floor(s));return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
   function renderPassage(){
-    const host=$('fix-passage-display');host.innerHTML='';const chars=Array.from(activePassage);const typed=Array.from(input.value);host.style.display=passageHidden?'none':'block';host.classList.toggle('no-highlight',!highlightEnabled);host.style.fontSize=typingFontSize+'px';
-    chars.forEach((ch,i)=>{const span=document.createElement('span');span.className='passage-char';span.textContent=ch;if(i<typed.length)span.classList.add(typed[i]===ch?'char-correct':'char-incorrect');if(i===typed.length)span.classList.add('char-current');host.appendChild(span);});
+    const host=$('fix-passage-display');host.replaceChildren();host.style.display=passageHidden?'none':'block';host.classList.toggle('no-highlight',!highlightEnabled);host.style.fontSize=typingFontSize+'px';
+    const expected=String(activePassage),typed=String(input.value||''),re=/\\S+/gu,expWords=[...expected.matchAll(re)],typedWords=typed.match(/\\S+/gu)||[],committedCount=(/\\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
+    let cursor=0;
+    expWords.forEach((match,wordIndex)=>{
+      if(match.index>cursor)host.appendChild(document.createTextNode(expected.slice(cursor,match.index)));
+      const word=match[0],typedWord=typedWords[wordIndex]||'',wordNode=document.createElement('span');wordNode.className='fix-word';
+      const isCommitted=wordIndex<committedCount,isCurrent=wordIndex===committedCount;
+      Array.from(word).forEach((ch,charIndex)=>{const span=document.createElement('span');span.className='passage-char';span.textContent=ch;
+        if(isCommitted){if(charIndex>=typedWord.length||typedWord[charIndex]!==ch)span.classList.add('char-incorrect');else span.classList.add('char-correct');}
+        else if(isCurrent&&charIndex<typedWord.length)span.classList.add(typedWord[charIndex]===ch?'char-correct':'char-incorrect');
+        if(isCurrent&&charIndex===typedWord.length)span.classList.add('char-current');
+        wordNode.appendChild(span);
+      });
+      if(isCommitted&&typedWord.length>word.length){const extra=document.createElement('span');extra.className='char-incorrect';extra.textContent=' ['+typedWord.slice(word.length)+']';wordNode.appendChild(extra);}
+      host.appendChild(wordNode);cursor=match.index+word.length;
+      const next=expected.slice(cursor,expWords[wordIndex+1]?.index??expected.length);if(next)host.appendChild(document.createTextNode(next));cursor+=next.length;
+    });
+    if(!expWords.length)host.textContent=expected;
   }
   function tick(){
     if(finished)return;const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
     const remain=currentConfig.duration?Math.max(0,currentConfig.duration-elapsed):0;
-    $('fix-clock').textContent=currentConfig.duration?formatTime(remain):'FREE';
+    $('fix-clock').textContent=formatTime(currentConfig.duration?remain:elapsed);
     updateMetrics(elapsed);if(currentConfig.duration&&remain<=0)finish('Timer complete');
   }
   function updateMetrics(elapsed){
@@ -99,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
     const passed=reason!=='Maximum errors reached'&&errorCount<currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
     $('fix-result-status').textContent=passed?'QUALIFIED':'TRY AGAIN';$('fix-result-status').classList.toggle('try-again',!passed);
-    $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';$('fix-result-net').textContent=net.toFixed(2)+' WPM';$('fix-result-errors').textContent=String(errorCount);$('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';$('fix-result-time').textContent=formatTime(elapsed);$('fix-result-reason').textContent=reason;
+    $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';$('fix-result-net').textContent=net.toFixed(2)+' WPM';$('fix-result-errors').textContent=String(errorCount);$('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';$('fix-result-time').textContent=formatTime(elapsed);$('fix-result-typed-words').textContent=(String(input.value||'').length/5).toFixed(2);$('fix-result-keystrokes').textContent=String(String(input.value||'').length);$('fix-result-reason').textContent=reason;
     $('fix-result-min-gross').textContent=currentConfig.minGross.toFixed(2);$('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);$('fix-result-max-errors').textContent=currentConfig.maxErrors;
     $('fix-result-original').textContent=activePassage;$('fix-result-typed').textContent=input.value;
     game.hidden=true;result.hidden=false;if(reason==='Maximum errors reached')announce('Game over');
