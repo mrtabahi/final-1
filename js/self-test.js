@@ -130,7 +130,7 @@ function downloadPDF(){
 }
 $('self-start').addEventListener('click',startTest);
 typed.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!allowBackspace){e.preventDefault();return;}if(e.key==='Backspace'&&allowBackspace&&startedAt!==null&&!e.repeat)backspacePressCount++;});
-typed.addEventListener('input',()=>{if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping()});
+typed.addEventListener('input',()=>{if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping();if(!finished&&original.length>0&&typed.value.length>=original.length)finishTest()});
 function autoScrollTyping(){
  const style=getComputedStyle(typed),lineHeight=parseFloat(style.lineHeight)||28;
  const text=typed.value.slice(0,typed.selectionStart||typed.value.length);
