@@ -63,4 +63,9 @@ test('access dialogs use the shared stylesheet rather than an overriding inline 
   assert.match(css, /body\.feature-site-locked\{overflow:hidden!important\}/);
   assert.match(css, /\.feature-upgrade-dialog/);
 });
+test('admin dialogs stay compact unless the workflow explicitly needs a wide layout', () => {
+  const css = read('css/main.css');
+  assert.match(css, /\.admin-body \.admin-modal:not\(\.admin-modal-wide\)\{width:min\(100%,460px\)!important/);
+  assert.match(css, /\.admin-body \.admin-modal-wide\{width:min\(100%,850px\)!important/);
+});
 
