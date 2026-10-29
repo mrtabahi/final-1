@@ -231,3 +231,15 @@
 .admin-empty{background:#f8fafc!important;color:#475569!important;border-color:#cbd5e1!important}
 .admin-modal-backdrop{background:rgba(15,23,42,.48)!important}
 :where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:3px solid rgba(124,58,237,.5);outline-offset:2px}
+
+/* Account operations: clear status, reason and history controls. */
+.candidate-account-status-panel,.candidate-billing-history{margin-top:1rem}
+.candidate-account-status-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:end}
+.candidate-account-status-form label{display:grid;gap:7px;font-weight:700;color:#28324b}
+.candidate-account-status-form textarea{min-height:76px;resize:vertical}
+.candidate-account-status-form .admin-form-message{grid-column:1/-1;margin:0}
+.candidate-account-status-form button{justify-self:start}
+.candidate-account-status-panel .admin-panel-heading{align-items:center}
+.candidate-billing-history h3{margin:16px 0 10px;color:#28324b}
+#candidate-status-filter{min-width:170px}
+@media(max-width:700px){.candidate-account-status-form{grid-template-columns:1fr}.candidate-account-status-form .admin-form-message{grid-column:auto}.candidate-account-status-form button{width:100%}}
