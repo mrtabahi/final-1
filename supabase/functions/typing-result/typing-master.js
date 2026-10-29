@@ -71,6 +71,23 @@ const TypingMaster = {
     }
     return out;
   },
+  alignCharacters(expectedText, typedText) {
+    const expected=Array.from(String(expectedText??"")), typed=Array.from(String(typedText??""));
+    const n=expected.length,m=typed.length;
+    if((n+1)*(m+1)>2000000)return expected.map((ch,i)=>i<m&&ch===typed[i]?"correct":"incorrect");
+    const dp=Array.from({length:n+1},()=>Array(m+1).fill(0));
+    for(let i=0;i<=n;i++)dp[i][0]=i;
+    for(let j=0;j<=m;j++)dp[0][j]=j;
+    for(let i=1;i<=n;i++)for(let j=1;j<=m;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(expected[i-1]===typed[j-1]?0:1));
+    const statuses=new Array(n).fill("incorrect");let i=n,j=m;
+    while(i>0||j>0){
+      if(i>0&&j>0&&expected[i-1]===typed[j-1]&&dp[i][j]===dp[i-1][j-1]){statuses[i-1]="correct";i--;j--;}
+      else if(i>0&&j>0&&dp[i][j]===dp[i-1][j-1]+1){statuses[i-1]="incorrect";i--;j--;}
+      else if(i>0&&dp[i][j]===dp[i-1][j]+1){statuses[i-1]="incorrect";i--;}
+      else {if(i>0)statuses[i-1]="incorrect";j--;}
+    }
+    return statuses;
+  },
   positionalAlignment(expectedWords,typedWords) {
     const out=[],n=Math.max(expectedWords.length,typedWords.length);
     for(let i=0;i<n;i++){const e=expectedWords[i]??null,t=typedWords[i]??null;
