@@ -1,17 +1,79 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#102f52"><title>Premium Plans | Decoding HCM</title>
-<link rel="icon" href="/logo.png"><link rel="stylesheet" href="css/main.css?v=20261030-vibrant1"><link rel="stylesheet" href="css/subscription-public.css">
+<meta name="theme-color" content="#f7f5ff"><title>Premium Pass | Decoding HCM</title>
+<link rel="icon" href="/logo.png"><link rel="stylesheet" href="css/main.css?v=20261030-vibrant1"><link rel="stylesheet" href="css/subscription-public.css?v=20261030-premium-modal1">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head><body class="subscription-page">
+<style>
+body.subscription-page{background:radial-gradient(ellipse at 10% 0%,#e9edff 0,transparent 42%),radial-gradient(ellipse at 95% 10%,#f9e7f7 0,transparent 36%),#f7f8ff;color:#24324b}
+.premium-modal-shell{width:min(1540px,calc(100% - 48px));margin:38px auto 44px}
+.premium-modal{position:relative;overflow:hidden;border:1px solid #cbd5ff;border-radius:34px;padding:38px 44px;background:linear-gradient(120deg,rgba(255,255,255,.97),rgba(248,246,255,.97));box-shadow:0 30px 70px rgba(48,54,108,.12)}
+.premium-modal:before{content:"";position:absolute;right:-90px;top:-140px;width:380px;height:300px;background:radial-gradient(ellipse,#f4d9ff88,transparent 70%);pointer-events:none}
+.premium-modal-grid{position:relative;display:grid;grid-template-columns:minmax(310px,.9fr) minmax(0,1.45fr);gap:34px;align-items:center}
+.premium-modal-heading{display:flex;gap:14px;align-items:center;margin-bottom:15px}
+.premium-crown{display:grid;place-items:center;width:58px;height:58px;flex:0 0 58px;border-radius:19px;background:linear-gradient(145deg,#ffbf26,#f18a00);color:#fff;font-size:27px;box-shadow:0 12px 22px #ed9b3444}
+.premium-modal-heading h1{font-size:clamp(1.7rem,2.5vw,2.35rem);line-height:1.1;letter-spacing:-.04em;color:#813b18;margin:0}
+.premium-chip-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 24px}
+.premium-starting-price{padding:11px 20px;border-radius:999px;background:linear-gradient(100deg,#ffe37a,#ffc12e);color:#74380e;font-weight:900;box-shadow:0 8px 15px #f2b83d44}
+.premium-status{padding:9px 14px;border:1px solid #ffc2cc;border-radius:999px;background:#fff5f6;color:#c3264c;font-size:.82rem;font-weight:800}
+.premium-status:empty{display:none}
+.premium-intro{max-width:530px;color:#40516c;line-height:1.75;margin:0 0 18px}
+.premium-benefits{display:grid;gap:9px;list-style:none;padding:0;margin:0}
+.premium-benefits li{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid #f7e5d3;border-radius:15px;background:#ffffffc9;color:#34445f}
+.premium-benefits li:before{content:"✓";display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:50%;background:linear-gradient(145deg,#38d9a1,#079b72);color:#fff;font-weight:900}
+.premium-right{min-width:0}
+.premium-right .sub-section-head{display:none}
+.premium-right #premium-plan-count{display:none}
+.premium-right .sub-plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:stretch}
+.premium-right .sub-plan-card{position:relative;display:flex;flex-direction:column;min-width:0;padding:23px 15px 18px;border:1px solid #dce3ff;border-radius:27px;background:linear-gradient(160deg,#fff,#f8faff);box-shadow:0 12px 24px #343b7610;text-align:center}
+.premium-right .sub-plan-card.is-featured{border:2px solid #a86cff;box-shadow:0 0 0 4px #cba5ff33,0 16px 30px #7c3aed20;background:linear-gradient(160deg,#fff,#fbf4ff)}
+.premium-right .sub-plan-card .sub-eyebrow{color:#6a7892;font-size:.75rem;font-weight:900;letter-spacing:.08em}
+.premium-right .sub-plan-card h3{padding:0;margin:8px 0;color:#111a2d;font-size:clamp(1rem,1.3vw,1.3rem);overflow-wrap:anywhere}
+.premium-right .sub-plan-tagline{font-size:.79rem;min-height:2.2em;color:#667894}
+.premium-right .sub-plan-price{font-size:clamp(1.7rem,2.5vw,2.45rem);margin:5px 0;color:#10192d;letter-spacing:-.06em;overflow-wrap:anywhere}
+.premium-right .sub-plan-price small{display:block;font-size:.74rem;letter-spacing:0;margin-top:2px}
+.premium-right .sub-plan-duration{font-size:.76rem;color:#667894}
+.premium-right .sub-plan-divider,.premium-right .sub-plan-features{display:none}
+.premium-right .sub-plan-ribbon{position:static;order:8;display:block;margin:10px auto 0;max-width:100%;padding:7px 9px;border-radius:999px;background:linear-gradient(100deg,#5944ff,#c331c8);color:white;font-size:.68rem;line-height:1.2;white-space:normal}
+.premium-right .sub-plan-card .sub-btn{margin-top:auto;padding:10px 8px;border-radius:999px;font-size:.8rem;line-height:1.25;min-height:42px}
+.premium-right .sub-plan-card .sub-btn-light{background:#fff;color:#5541d9;border-color:#d8d5ff}
+.premium-right .sub-plan-card .sub-btn-primary{background:linear-gradient(100deg,#5548f5,#bd36c7);color:#fff;border:0;box-shadow:0 8px 16px #7947e533}
+.premium-right .sub-loading-card,.premium-right .sub-empty-card{grid-column:1/-1}
+.premium-current-mini{margin-top:17px;padding:12px 14px;border:1px solid #e5e7ff;border-radius:14px;background:#ffffffb8;color:#465570;font-size:.83rem;line-height:1.55}
+.premium-current-mini a{color:#5144d8;font-weight:800}
+.premium-footer{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;padding:20px;color:#73809a;font-size:.8rem}
+.premium-footer a{color:#5144d8;text-decoration:none}
+#premium-message{margin-top:14px;padding:0 4px;color:#087f5b;font-weight:700;font-size:.88rem}
+#premium-message.is-error{color:#b42345}
+@media(max-width:1050px){.premium-modal{padding:30px}.premium-modal-grid{grid-template-columns:1fr;gap:28px}.premium-intro{max-width:none}.premium-right .sub-plan-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:760px){.premium-modal-shell{width:calc(100% - 22px);margin:14px auto 24px}.premium-modal{padding:22px 16px;border-radius:23px}.premium-modal-grid{gap:22px}.premium-modal-heading{align-items:flex-start}.premium-crown{width:48px;height:48px;flex-basis:48px;border-radius:15px}.premium-modal-heading h1{font-size:1.65rem}.premium-right .sub-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.premium-right .sub-plan-card{padding:18px 11px;border-radius:21px}.premium-right .sub-plan-price{font-size:1.85rem}}
+@media(max-width:380px){.premium-right .sub-plan-grid{grid-template-columns:1fr}.premium-right .sub-plan-card{min-height:0}}
+</style>
+</head>
+<body class="subscription-page">
 <nav class="navbar"><a href="index.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="Decoding HCM"></div><div><div class="brand-title">DECODING HCM</div><div class="brand-subtitle">BSF HCM Preparation</div></div></a><ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="materials.html">PDF Library</a></li><li><a href="my_account.html">My Account</a></li></ul></nav>
-<main class="sub-public-shell">
-<section class="sub-hero"><div class="sub-eyebrow">YOUR PREPARATION, YOUR PACE</div><h1>Choose the plan that moves you forward.</h1><p>Clear pricing, simple access and your membership details in one place. Compare the options and choose what fits your preparation.</p><div class="sub-hero-actions"><a class="sub-btn sub-btn-primary" href="#available-plans">Explore plans <span aria-hidden="true">→</span></a><a class="sub-btn sub-btn-light" href="my_account.html">View my membership</a></div><div class="sub-trust-row"><span>✓ Transparent pricing</span><span>✓ Account-linked access</span><span>✓ Secure payment verification</span></div></section>
-<section class="sub-current" id="current-membership"><div class="sub-section-head"><div><span class="sub-eyebrow">MEMBERSHIP AT A GLANCE</span><h2>Your current access</h2><p>Sign in to view your active plan and expiry date.</p></div><a href="my_account.html">Open My Account ↗</a></div><div id="premium-current-state" class="sub-current-state" role="status" aria-live="polite">Checking your membership…</div></section>
-<section id="available-plans" class="sub-plans-section"><div class="sub-section-head"><div><span class="sub-eyebrow">SIMPLE PLANS, CLEAR BENEFITS</span><h2>Find your preparation plan</h2><p>Plan details shown here are managed by the platform administrator.</p></div><span class="sub-plan-count" id="premium-plan-count">Loading plans…</span></div><div id="premium-plan-grid" class="sub-plan-grid"><div class="sub-loading-card">Loading available plans…</div></div><p id="premium-message" class="sub-feedback" role="status" aria-live="polite"></p></section>
-<section class="sub-faq"><h2>Before you choose</h2><div class="sub-faq-grid"><article><strong>When does access start?</strong><p>Membership dates are shown in your account after the server confirms the subscription.</p></article><article><strong>Need help with access?</strong><p>Open My Account and share the plan name and status when contacting support.</p></article><article><strong>Is payment confirmed instantly?</strong><p>Paid access should only be unlocked after server-side payment verification.</p></article></div></section>
-</main><footer class="sub-footer"><span>© Decoding HCM · Preparation made clearer.</span><a href="terms-and-conditions.html">Terms</a><a href="cancellation-and-refunds.html">Cancellation &amp; refunds</a><a href="privacy-policy.html">Privacy</a></footer>
-<script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/premium.js"></script>
-<script src="/js/site-audio.js?v=20261029-audio1"></script>
+<main class="premium-modal-shell">
+<section class="premium-modal" aria-labelledby="premium-title">
+<div class="premium-modal-grid">
+<div class="premium-left">
+<div class="premium-modal-heading"><span class="premium-crown" aria-hidden="true">♕</span><h1 id="premium-title">PREMIUM PASS</h1></div>
+<div class="premium-chip-row"><span class="premium-starting-price" id="premium-starting-price">Plans from …</span><span class="premium-status" id="premium-status">Checking membership…</span></div>
+<p class="premium-intro">Unlock more focused practice with a plan that fits your preparation. Choose a duration, review the access details, and continue through secure checkout. Plan prices and availability are loaded live.</p>
+<ul class="premium-benefits"><li>Typing practice and available study materials</li><li>Access to eligible premium tests and features</li><li>Membership status linked to your account</li></ul>
+<div class="premium-current-mini" id="premium-current-state" role="status" aria-live="polite">Checking your membership…</div>
+</div>
+<div class="premium-right">
+<div class="sub-section-head"><div><span class="sub-eyebrow">PREMIUM PLANS</span><h2>Choose your duration</h2></div><span id="premium-plan-count">Loading plans…</span></div>
+<div id="premium-plan-grid" class="sub-plan-grid"><div class="sub-loading-card">Loading available plans…</div></div>
+<p id="premium-message" role="status" aria-live="polite"></p>
+</div>
+</div>
+</section>
+</main>
+<footer class="premium-footer"><span>© Decoding HCM</span><a href="terms-and-conditions.html">Terms</a><a href="cancellation-and-refunds.html">Cancellation &amp; refunds</a><a href="privacy-policy.html">Privacy</a></footer>
+<script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/premium.js?v=20261030-modal1"></script><script src="/js/site-audio.js?v=20261029-audio1"></script>
+<script>
+(()=>{const status=document.getElementById('premium-status');const state=document.getElementById('premium-current-state');const grid=document.getElementById('premium-plan-grid');const price=document.getElementById('premium-starting-price');const update=()=>{if(!state||!status)return;const active=state.textContent.toLowerCase().includes('membership active');status.textContent=active?'Premium active':state.textContent.toLowerCase().includes('not signed in')?'Sign in to activate':'Premium not active';};const observer=new MutationObserver(()=>{update();if(grid){const amounts=[...grid.querySelectorAll('.sub-plan-price')].map(el=>{const m=el.textContent.match(/[₹]s*[d,]+(?:.d+)?/);return m?Number(m[0].replace(/[^\d.]/g,'')):null}).filter(n=>n!==null);if(amounts.length)price.textContent='Plans from ₹'+Math.min(...amounts).toLocaleString('en-IN');}});if(state)observer.observe(state,{childList:true,subtree:true,characterData:true});if(grid)observer.observe(grid,{childList:true,subtree:true});})();
+</script>
 </body></html>
