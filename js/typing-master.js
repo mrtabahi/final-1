@@ -219,6 +219,7 @@ const TypingMaster = {
   getPerformanceLabel(score){return score.passed?{text:"TARGET ACHIEVED",class:"badge-success"}:{text:"KEEP PRACTISING",class:"badge-danger"};}
 };
 const ScoringEngine = TypingMaster;
+if (typeof globalThis !== "undefined") globalThis.TypingMaster = TypingMaster;
 if (typeof window !== "undefined") {
   window.TypingMaster = TypingMaster;
   window.ScoringEngine = TypingMaster;
