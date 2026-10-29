@@ -23,7 +23,7 @@ function refreshSaved(selected=''){
 }
 function updateLive(){
  const input=typed.value, elapsed=startedAt===null?0:Math.max(1,Math.min(duration,(Date.now()-startedAt)/1000));
- const score=ScoringEngine.calculateScore(original,input,elapsed||1,{freeErrorPct:.05,penaltyPerError:10},input.length,scoringFormula,backspacePressCount);
+ const score=TypingMaster.calculateScore(original,input,elapsed||1,{freeErrorPct:.05,penaltyPerError:10},input.length,scoringFormula,backspacePressCount);
  $('self-live-gross').textContent=score.grossWpm.toFixed(2);
  $('self-live-net').textContent=score.netWpm.toFixed(2);
  $('self-live-accuracy').textContent=score.accuracy.toFixed(2)+'%';
@@ -37,7 +37,7 @@ function renderPassage(){
  const statuses=new Array(original.length).fill('');
  const expectedTokens=[...original.matchAll(/\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
  const typedTokens=[...input.matchAll(/\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
- const alignment=ScoringEngine.alignWords(expectedTokens.map(x=>x.text),typedTokens.map(x=>x.text));
+ const alignment=TypingMaster.alignWords(expectedTokens.map(x=>x.text),typedTokens.map(x=>x.text));
  function mapWordChars(expected,typedWord,start){
   const n=expected.length,m=typedWord.length;
   const dp=Array.from({length:n+1},()=>Array(m+1).fill(0));
@@ -101,7 +101,7 @@ function finishTest(){
  totalElapsed=startedAt===null?0:Math.max(1,Math.min(duration,(Date.now()-startedAt)/1000));
  typed.disabled=true;
  const input=typed.value,config={freeErrorPct:.05,penaltyPerError:10};
- selfScores={bsf:ScoringEngine.calculateScore(original,input,totalElapsed,config,input.length,'bsf',backspacePressCount),crpf:ScoringEngine.calculateScore(original,input,totalElapsed,config,input.length,'crpf',backspacePressCount)};
+ selfScores=TypingMaster.calculateBoth(original,input,totalElapsed,config,input.length,backspacePressCount);
  renderSelfResult(selfScores[scoringFormula]||selfScores.bsf,input,true);
 }
 function renderSelfResult(score,input=typed.value,scroll=false){

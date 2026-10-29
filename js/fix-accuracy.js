@@ -1,8 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const authStatus = await TypingMaster.requireCandidateGuard();
+  if (!authStatus?.ok) return;
   const $ = id => document.getElementById(id);
   const folderSelect=$('fix-folder'), passageSelect=$('fix-passage-select'), customInput=$('fix-custom'), form=$('fix-setup-form');
   const setup=$('setup-panel'), game=$('game-panel'), result=$('result-panel'), input=$('fix-input');
-  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, wordIndex=0, checkedThrough=0, currentConfig=null, spokenVoice=null, passageHidden=false, highlightEnabled=true, typingFontSize=19.2;
+  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, typingFontSize=19.2;
   const tokenize = text => String(text||'').match(/\S+/gu)||[];
   const words = text => tokenize(text);
   function announce(text){ if(!currentConfig||currentConfig.voice!=='on'||!('speechSynthesis' in window))return; try{speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(String(text));utter.rate=1;utter.pitch=1;utter.lang='en-US';speechSynthesis.speak(utter);}catch(e){console.debug('Speech unavailable',e);} }
@@ -42,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const passage=await getPassage();activePassage=String(passage.passage||'').trim();if(!activePassage)throw new Error('Passage cannot be empty.');
       currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:Number($('fix-timer').value),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
       $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
-      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;wordIndex=0;checkedThrough=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=true;typingFontSize=19.2;
+      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=true;typingFontSize=19.2;
       $('fix-clock').textContent=currentConfig.duration?formatTime(currentConfig.duration):'FREE';
       $('fix-passage-display').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
     }catch(err){alert(err.message||'Unable to start game.');}
@@ -52,12 +54,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const host=$('fix-passage-display');host.innerHTML='';const chars=Array.from(activePassage);const typed=Array.from(input.value);host.style.display=passageHidden?'none':'block';host.classList.toggle('no-highlight',!highlightEnabled);host.style.fontSize=typingFontSize+'px';
     chars.forEach((ch,i)=>{const span=document.createElement('span');span.className='passage-char';span.textContent=ch;if(i<typed.length)span.classList.add(typed[i]===ch?'char-correct':'char-incorrect');if(i===typed.length)span.classList.add('char-current');host.appendChild(span);});
   }
-  function committedErrors(text){
-    const typed=words(text), expected=words(activePassage);let checked=0,errors=0;
-    for(let i=0;i<typed.length-1;i++){if(typed[i]!==expected[i])errors++;checked++;}
-    // The final word is committed only after a trailing space, not just because input ends.
-    return {typed,expected,checked,errors};
-  }
   function tick(){
     if(finished)return;const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
     const remain=currentConfig.duration?Math.max(0,currentConfig.duration-elapsed):0;
@@ -65,23 +61,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateMetrics(elapsed);if(currentConfig.duration&&remain<=0)finish('Timer complete');
   }
   function updateMetrics(elapsed){
-    const chars=Array.from(input.value).length;const gross=chars/5*60/Math.max(.001,elapsed);const net=Math.max(0,gross-errorCount*60/Math.max(.001,elapsed));
-    $('fix-live-gross').textContent=gross.toFixed(2);$('fix-live-net').textContent=net.toFixed(2);
-    $('fix-live-accuracy').textContent=(chars?Math.max(0,100-errorCount*100/Math.max(1,words(input.value).length)):100).toFixed(2)+'%';
+    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',0,false);
+    $('fix-live-gross').textContent=score.grossWpm.toFixed(2);$('fix-live-net').textContent=score.netWpm.toFixed(2);
+    $('fix-live-accuracy').textContent=score.accuracy.toFixed(2)+'%';
   }
   function processCommittedWords(){
-    const value=input.value;const typed=words(value),expected=words(activePassage);
-    const hasTrailingSpace=/\s$/u.test(value);
-    const upto=Math.max(0,typed.length-(hasTrailingSpace?0:1));
-    while(checkedThrough<upto&&!finished){
-      const index=checkedThrough;const got=typed[index]??'',want=expected[index]??'';
-      if(got!==want){errorCount++;$('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;}
-      checkedThrough++;
-      if(errorCount>=currentConfig.maxErrors){finish('Maximum errors reached');return;}
-      if(got!==want)announce(Math.max(1,currentConfig.maxErrors-errorCount+1));
-      if(checkedThrough>=expected.length){finish('Passage complete');return;}
-    }
-    if(hasTrailingSpace&&checkedThrough>=expected.length){finish('Passage complete');return;}
+    const value=input.value,hasTrailingSpace=/\s$/u.test(value),previousErrors=errorCount;
+    const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
+    const score=TypingMaster.calculateCommittedScore(activePassage,value,elapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',0,false);
+    errorCount=score.totalErrors;
+    $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
+    if(errorCount>previousErrors)announce(Math.max(1,currentConfig.maxErrors-previousErrors));
+    if(errorCount>=currentConfig.maxErrors){finish('Maximum errors reached');return;}
+    if(hasTrailingSpace&&words(value).length>=words(activePassage).length){finish('Passage complete');return;}
   }
   input.addEventListener('keydown',e=>{
     if(finished)return;
@@ -98,14 +90,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   function finish(reason){
     if(finished)return;
-    // At end-of-passage, commit the final word as the implicit final separator.
-    // During the test, words are still only scored after an actual Space press.
-    if(reason==='Passage complete'&&currentConfig){const tw=words(input.value),ew=words(activePassage);while(checkedThrough<tw.length){if(tw[checkedThrough]!==ew[checkedThrough])errorCount++;checkedThrough++;} $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;if(errorCount>=currentConfig.maxErrors)reason='Maximum errors reached';}
-    finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
     const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
-    const chars=Array.from(input.value).length,gross=chars/5*60/elapsed,net=Math.max(0,gross-errorCount*60/elapsed);
-    const typedWords=words(input.value),accuracy=typedWords.length?Math.max(0,100-errorCount/typedWords.length*100):100;
-    const passed=errorCount<currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
+    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',0,reason==='Passage complete');
+    errorCount=score.totalErrors;
+    if(errorCount>=currentConfig.maxErrors&&reason==='Passage complete')reason='Maximum errors reached';
+    finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
+    const gross=score.grossWpm,net=score.netWpm,accuracy=score.accuracy;
+    $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
+    const passed=reason!=='Maximum errors reached'&&errorCount<currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
     $('fix-result-status').textContent=passed?'QUALIFIED':'TRY AGAIN';$('fix-result-status').classList.toggle('try-again',!passed);
     $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';$('fix-result-net').textContent=net.toFixed(2)+' WPM';$('fix-result-errors').textContent=String(errorCount);$('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';$('fix-result-time').textContent=formatTime(elapsed);$('fix-result-reason').textContent=reason;
     $('fix-result-min-gross').textContent=currentConfig.minGross.toFixed(2);$('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);$('fix-result-max-errors').textContent=currentConfig.maxErrors;
