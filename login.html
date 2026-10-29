@@ -147,6 +147,7 @@ refreshRegistrationSetting();
 (async () => {
   const params = new URLSearchParams(location.search);
   if (params.get('error_description')) $('auth-message').textContent = params.get('error_description').replace(/\+/g, ' ');
+  if (params.get('registered') === '1') { $('auth-message').textContent = 'Account created successfully. Sign in with your email and password.'; $('tab-login').click(); $('login-id').value = params.get('email') || ''; }
   if (params.get('magic') !== '1' && params.get('oauth') !== '1') return;
   const { data } = await supabaseClient.auth.getSession();
   if (!data?.session?.user) return;
