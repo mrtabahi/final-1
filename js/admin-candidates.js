@@ -3,7 +3,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let candidates = [], filtered = [], selected = null, attempts = [], activityById = new Map();
+  let candidates = [], filtered = [], selected = null, attempts = [], activityById = new Map(), activityTotalsById = new Map();
   const date = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); };
   const dateTime = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString(); };
   const durationLabel = seconds => { const s=Math.max(0,Number(seconds)||0), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), r=s%60; return (h?h+'h ':'')+(m?m+'m ':'')+(!h&&!m?r+'s':'').trim() || '0s'; };
@@ -68,6 +68,7 @@
       if(error) throw error;
       candidates=data||[];
       activityById = new Map();
+      activityTotalsById = new Map();
       if (candidates.length) {
         const { data: activityRows, error: activityError } = await supabaseClient
           .from('candidate_activity_sessions')
@@ -78,6 +79,7 @@
         else for (const row of activityRows || []) {
           const key = String(row.user_id);
           if (!activityById.has(key)) activityById.set(key, row);
+          activityTotalsById.set(key, (activityTotalsById.get(key) || 0) + Math.max(0, Number(row.duration_seconds) || 0));
         }
       }
       // The profile email can be empty for older/imported accounts. Resolve the
@@ -116,7 +118,7 @@
     $('candidate-result-count').textContent=filtered.length+' candidate'+(filtered.length===1?'':'s');
     const pages=Math.max(1,Math.ceil(filtered.length/pageSize)); page=Math.min(page,pages-1);
     const shown=filtered.slice(page*pageSize,(page+1)*pageSize);
-    list.innerHTML=shown.length?shown.map(x=>`<article class="candidate-row"><div class="candidate-avatar">${esc(initials(x.full_name))}</div><div class="candidate-main"><strong>${esc(x.full_name||'Unnamed candidate')}</strong><span>${esc(x.email||'No email on profile')}</span><small>Joined ${esc(date(x.created_at))} · Last login ${esc(dateTime(activityById.get(String(x.id))?.started_at))} · ID ${esc(String(x.id).slice(0,8))}…</small></div><div class="candidate-row-meta"><span class="candidate-status ${x.phone_verified?'is-verified':'is-pending'}">${x.phone_verified?'✓ Phone verified':'Phone not verified'}</span><small>${esc(x.phone||'No phone provided')}</small><small>${(activityById.get(String(x.id)) && !activityById.get(String(x.id)).ended_at && Date.now()-new Date(activityById.get(String(x.id)).last_seen_at).getTime()<180000)?'🟢 Online now':'⚪ Offline'} · Online time ${esc(durationLabel(activityById.get(String(x.id))?.duration_seconds))}</small></div><button class="admin-btn admin-btn-secondary candidate-view-btn" type="button" data-candidate-view="${esc(x.id)}">View profile ↗</button></article>`).join(''):'<div class="admin-empty">No candidates match these filters.</div>';
+    list.innerHTML=shown.length?shown.map(x=>`<article class="candidate-row"><div class="candidate-avatar">${esc(initials(x.full_name))}</div><div class="candidate-main"><strong>${esc(x.full_name||'Unnamed candidate')}</strong><span>${esc(x.email||'No email on profile')}</span><small>Joined ${esc(date(x.created_at))} · Last activity ${esc(dateTime(activityById.get(String(x.id))?.last_seen_at || activityById.get(String(x.id))?.started_at))} · ID ${esc(String(x.id).slice(0,8))}…</small></div><div class="candidate-row-meta"><span class="candidate-status ${x.phone_verified?'is-verified':'is-pending'}">${x.phone_verified?'✓ Phone verified':'Phone not verified'}</span><small>${esc(x.phone||'No phone provided')}</small><small>${(activityById.get(String(x.id)) && !activityById.get(String(x.id)).ended_at && Date.now()-new Date(activityById.get(String(x.id)).last_seen_at).getTime()<180000)?'🟢 Online now':'⚪ Offline'} · Online time ${esc(durationLabel(activityTotalsById.get(String(x.id)) || 0))}</small></div><button class="admin-btn admin-btn-secondary candidate-view-btn" type="button" data-candidate-view="${esc(x.id)}">View profile ↗</button></article>`).join(''):'<div class="admin-empty">No candidates match these filters.</div>';
     $('candidate-page-label').textContent=filtered.length?'Showing '+(page*pageSize+1)+'–'+Math.min((page+1)*pageSize,filtered.length)+' of '+filtered.length:'No results';
     $('candidate-prev').disabled=page===0;$('candidate-next').disabled=page>=pages-1;
   }
