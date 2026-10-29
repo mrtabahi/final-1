@@ -15,164 +15,36 @@ function reply(status: number, body: unknown) {
   });
 }
 
-function tokenize(text: string): string[] {
-  return (text.match(/\S+/gu) || []);
-}
+// Canonical scoring implementation is shared with the browser at js/typing-master.js.
+// The Edge Function adapts database snake_case config to the same master API, then
+// persists the server-calculated result so clients cannot submit arbitrary scores.
+import "../../../js/typing-master.js";
 
-function countCappedKeystrokes(passage: string, typedText: string): number {
-  const expectedWords = tokenize(passage), typedWords = tokenize(typedText);
-  let wordKeystrokes = 0;
-  for (let i = 0; i < typedWords.length; i++) {
-    if (i < expectedWords.length) wordKeystrokes += Math.min(typedWords[i].length, expectedWords[i].length);
-  }
-  const typedSeparators = (typedText.match(/\s/gu) || []).length;
-  const passageSeparators = (passage.match(/\s/gu) || []).length;
-  return wordKeystrokes + Math.min(typedSeparators, passageSeparators);
-}
+const TypingMaster = (globalThis as unknown as { TypingMaster?: { calculateScore: (...args: unknown[]) => Record<string, any> } }).TypingMaster;
+if (!TypingMaster) throw new Error("Shared typing master engine failed to load.");
 
-function alignWords(expected: string[], typed: string[]) {
-  // Keep the exact typed prefix tied to the same original positions. A later
-  // duplicate word must not cause an earlier correct sequence to be omitted.
-  let prefix = 0;
-  while (prefix < expected.length && prefix < typed.length && expected[prefix] === typed[prefix]) prefix++;
-  const prefixMatches = Array.from({ length: prefix }, (_, i) => ({ type: "match", expected: expected[i], typed: typed[i] }));
-  expected = expected.slice(prefix); typed = typed.slice(prefix);
-  const n = expected.length, m = typed.length;
-  if ((n + 1) * (m + 1) > 2_000_000) throw new Error("Passage or typed text is too long to score safely.");
-  // Suffix edit-distance + forward traceback: duplicate words bind to the
-  // earliest expected occurrence on an equally optimal alignment, preventing
-  // later duplicates from making intervening words look omitted.
-  const dp: number[][] = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
-  for (let i = n; i >= 0; i--) dp[i][m] = n - i;
-  for (let j = m; j >= 0; j--) dp[n][j] = m - j;
-  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) {
-    if (expected[i] === typed[j]) dp[i][j] = dp[i + 1][j + 1];
-    else dp[i][j] = 1 + Math.min(dp[i + 1][j + 1], dp[i + 1][j], dp[i][j + 1]);
-  }
-  const result: Array<{type:string; expected:string|null; typed:string|null}> = [...prefixMatches];
-  let i = 0, j = 0;
-  while (i < n || j < m) {
-    if (i < n && j < m && expected[i] === typed[j] && dp[i][j] === dp[i + 1][j + 1]) {
-      result.push({ type: "match", expected: expected[i], typed: typed[j] }); i++; j++; continue;
-    }
-    const sub = i < n && j < m ? 1 + dp[i + 1][j + 1] : Infinity;
-    const del = i < n ? 1 + dp[i + 1][j] : Infinity;
-    const ins = j < m ? 1 + dp[i][j + 1] : Infinity;
-    const best = dp[i][j];
-    if (sub === best) { result.push({ type: "substitute", expected: expected[i], typed: typed[j] }); i++; j++; }
-    else if (del === best) { result.push({ type: "delete", expected: expected[i], typed: null }); i++; }
-    else if (ins === best) { result.push({ type: "insert", expected: null, typed: typed[j] }); j++; }
-    else throw new Error("Unable to align typed words");
-  }
-  return result;
-}
-
-function editDistance(a: string, b: string): number {
-  if (a.length > b.length) return editDistance(b, a);
-  let prev = Array.from({ length: a.length + 1 }, (_, i) => i);
-  let curr = new Array<number>(a.length + 1);
-  for (let j = 1; j <= b.length; j++) {
-    curr[0] = j;
-    for (let i = 1; i <= a.length; i++) {
-      curr[i] = Math.min(curr[i - 1] + 1, prev[i] + 1, prev[i - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-    }
-    [prev, curr] = [curr, prev];
-  }
-  return prev[a.length];
-}
-
-function calculateScore(passage: string, typedText: string, seconds: number, test: Record<string, unknown>, formula = "bsf", backspacePresses = 0) {
-  const expected = tokenize(passage), typed = tokenize(typedText);
-  const mode = formula.toLowerCase() === "crpf" ? "crpf" : "bsf";
-  let alignment: Array<{type:string; expected:string|null; typed:string|null}> = [];
-  let wordErrors = 0, correctWords = 0;
-  const doubleSpaceErrors = (typedText.match(/ {2,}/g) || []).length;
-  if (mode === "crpf") {
-    // CRPF uses strict original-position word comparison; spaces must not create phantom empty words and cascade into false errors.
-    const normalized = typedText.trim();
-    const slots = normalized.length ? normalized.split(" ") : [];
-    for (let i = 0; i < Math.max(expected.length, slots.length); i++) {
-      const e = expected[i] ?? null, t = slots[i] ?? null;
-      if (t === null) { alignment.push({type:"delete", expected:e, typed:null}); continue; }
-      if (t === "") { alignment.push({type:"delete", expected:e, typed:null}); wordErrors++; continue; }
-      if (e === null) { alignment.push({type:"insert", expected:null, typed:t}); wordErrors++; }
-      else if (e === t) { alignment.push({type:"match", expected:e, typed:t}); correctWords++; }
-      else { alignment.push({type:t === "" ? "delete" : "substitute", expected:e, typed:t}); wordErrors++; }
-    }
-  } else {
-    alignment = alignWords(expected, typed);
-    for (let i = 0; i < alignment.length; i++) {
-      const item = alignment[i];
-      if (item.type === "match") { correctWords++; continue; }
-      if (item.type === "delete" && !alignment.slice(i + 1).some(next => next.type !== "delete")) continue;
-      wordErrors++;
-    }
-    wordErrors += doubleSpaceErrors;
-  }
-  const lastReachedAlignmentIndex = alignment.reduce((last, item, i) => item.type !== "delete" ? i : last, -1);
-  const totalErrors = wordErrors;
-  // Use all typed characters/keystrokes, matching the browser scoring engine.
-  // Keep server scoring authoritative and passage-bounded to prevent extra-character speed inflation.
-  const measuredKeystrokes = countCappedKeystrokes(passage, typedText);
-  const equivalentTypedWords = measuredKeystrokes / 5;
-  const penaltyPerError = Math.max(0, Math.min(100, Number(test.penalty_per_error ?? 10)));
-  const freeErrors = Math.floor(measuredKeystrokes / 100);
-  const excessErrors = Math.max(0, totalErrors - freeErrors);
-  const elapsedSeconds = Math.max(seconds, 1);
-  const elapsedMinutes = elapsedSeconds / 60;
-  const penaltyWpm = Number((excessErrors * 600 / elapsedSeconds).toFixed(2));
-  const penaltyWords = excessErrors * penaltyPerError;
-  const grossWpm = Number((measuredKeystrokes * 60 / (5 * elapsedSeconds)).toFixed(2));
-  const netWpm = Number((grossWpm - penaltyWpm).toFixed(2));
-  const netWords = netWpm / 12;
-  let correctChars = 0, alignedPairs = 0, omittedErrorChars = 0;
-  for (let i = 0; i < alignment.length; i++) {
-    const item = alignment[i];
-    if (item.type === "delete" && item.expected !== null && i > lastReachedAlignmentIndex) continue;
-    if (item.type === "delete" && item.expected !== null) { omittedErrorChars += Math.min(5, item.expected.length); continue; }
-    if (item.expected === null || item.typed === null) continue;
-    correctChars += Math.max(0, item.typed.length - editDistance(item.expected, item.typed));
-    alignedPairs++;
-  }
-  const typedSeparators = (typedText.match(/\s/gu) || []).length;
-  correctChars += Math.min(typedSeparators, Math.max(0, typed.length - 1), Math.max(0, alignedPairs - 1));
-  correctChars = Math.max(0, Math.min(typedText.length, correctChars - omittedErrorChars));
-  const incorrectChars = Math.max(0, typedText.length - correctChars);
-  const accuracy = measuredKeystrokes > 0 ? Math.max(0, Number((100 - totalErrors * 500 / measuredKeystrokes).toFixed(2))) : 0;
-  // Primary categories are mutually exclusive; repeatedWords is a subset of extraWords.
-  const errorBreakdown = { omissions: 0, substitutions: 0, spellingErrors: 0, incompleteWords: 0, extraWords: 0, repeatedWords: 0, spacingErrors: mode === "bsf" ? doubleSpaceErrors : 0, capitalizationErrors: 0, punctuationErrors: 0, notReached: 0 };
-  for (let i = 0; i < alignment.length; i++) {
-    const item = alignment[i];
-    if (item.type === "delete" && item.expected !== null) {
-      const trailing = i > lastReachedAlignmentIndex;
-      if (trailing) errorBreakdown.notReached++;
-      else errorBreakdown.omissions++;
-    } else if (item.type === "insert") {
-      errorBreakdown.extraWords++;
-      if (i > 0 && alignment[i - 1].typed !== null && alignment[i - 1].typed === item.typed) errorBreakdown.repeatedWords++;
-    } else if (item.type === "substitute") {
-      const e = String(item.expected ?? ""), t = String(item.typed ?? "");
-      const lowerE = e.toLocaleLowerCase(), lowerT = t.toLocaleLowerCase();
-      const bareE = lowerE.replace(/[^\p{L}\p{N}]/gu, ""), bareT = lowerT.replace(/[^\p{L}\p{N}]/gu, "");
-      if (lowerE === lowerT && e !== t) errorBreakdown.capitalizationErrors++;
-      else if (bareE === bareT && e !== t) errorBreakdown.punctuationErrors++;
-      else if (t.length > 0 && t.length < e.length && lowerE.startsWith(lowerT)) errorBreakdown.incompleteWords++;
-      else if (editDistance(lowerE, lowerT) <= Math.max(1, Math.floor(Math.min(e.length, t.length) * 0.25))) errorBreakdown.spellingErrors++;
-      else errorBreakdown.substitutions++;
-    }
-  }
-  const targetWpm = test.target_wpm == null ? null : Number(test.target_wpm);
-  const minAccuracy = test.min_accuracy == null ? null : Number(test.min_accuracy);
-  const passedByWpm = targetWpm === null || netWpm >= targetWpm;
-  const passedByAccuracy = minAccuracy === null || accuracy >= minAccuracy;
-  const totalCorrectWord = Number((measuredKeystrokes / 5 - totalErrors).toFixed(2));
-  return {
-    formula: mode, totalTypedWords: typed.length, totalTypedChars: typedText.length, totalKeystrokes: measuredKeystrokes, backspacePresses: Math.max(0, Math.floor(Number(backspacePresses) || 0)), totalCorrectWord,
-    equivalentTypedWords: Number(equivalentTypedWords.toFixed(2)), correctChars, incorrectChars, correctWords,
-    wordErrors, doubleSpaceErrors, totalErrors, freeErrors: Number(freeErrors.toFixed(2)), excessErrors: Number(excessErrors.toFixed(2)), penaltyWords: Number(penaltyWords.toFixed(2)),
-    netWords: Number(netWords.toFixed(2)), grossWpm, netWpm, accuracy, elapsedMinutes: Number(elapsedMinutes.toFixed(2)), elapsedSeconds: Math.max(seconds, 1), attemptingTimeSeconds: elapsedSeconds, penaltyWpm, allowedErrors: freeErrors,
-    alignment: mode === "bsf" ? alignment.filter((item, i) => !(item.type === "delete" && i > lastReachedAlignmentIndex)) : alignment.filter((item, i) => !(item.type === "delete" && item.typed === null && i >= typed.length)), errorBreakdown, minAccuracy, targetWpm, passedByWpm, passedByAccuracy, passed: passedByWpm && passedByAccuracy,
-  };
+function calculateScore(
+  passage: string,
+  typedText: string,
+  seconds: number,
+  test: Record<string, unknown>,
+  formula = "bsf",
+  backspacePresses = 0
+) {
+  return TypingMaster.calculateScore(
+    passage,
+    typedText,
+    seconds,
+    {
+      freeErrorPct: Number(test.free_error_pct ?? 0.05),
+      penaltyPerError: Number(test.penalty_per_error ?? 10),
+      targetWpm: test.target_wpm == null ? null : Number(test.target_wpm),
+      minAccuracy: test.min_accuracy == null ? null : Number(test.min_accuracy)
+    },
+    null,
+    formula,
+    backspacePresses
+  );
 }
 
 Deno.serve(async (req) => {
