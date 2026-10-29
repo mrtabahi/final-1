@@ -90,12 +90,12 @@ document.addEventListener('DOMContentLoaded', async()=>{
         const fragment=document.createDocumentFragment();let cursor=0;
         expectedWords.forEach((match,wordIndex)=>{
             if(match.index>cursor)fragment.appendChild(document.createTextNode(passage.slice(cursor,match.index)));
-            const typedIndex=typedIndexByExpected.get(wordIndex),expected=splitGraphemes(match[0]),actual=splitGraphemes(typedIndex===undefined?'':typedWords[typedIndex]||''),word=document.createElement('span');
+            const typedIndex=typedIndexByExpected.get(wordIndex),expected=splitGraphemes(match[0]),actual=splitGraphemes(typedIndex===undefined?'':typedWords[typedIndex]||''),charStates=TypingMaster.alignCharacters(match[0],typedIndex===undefined?'':typedWords[typedIndex]||''),word=document.createElement('span');
             word.className='passage-word';const committed=(typedIndex!==undefined&&typedIndex<committedCount)||committedMissingExpected.has(wordIndex),current=typedIndex!==undefined&&typedIndex===committedCount;
             expected.forEach((character,charIndex)=>{
                 const span=document.createElement('span');span.className='passage-char';span.textContent=character;
-                if(committed)span.classList.add(charIndex<actual.length&&actual[charIndex]===character?'char-correct':'char-incorrect');
-                else if(current&&charIndex<actual.length)span.classList.add(actual[charIndex]===character?'char-correct':'char-incorrect');
+                if(committed)span.classList.add(charStates[charIndex]==='correct'?'char-correct':'char-incorrect');
+                else if(current&&charIndex<actual.length)span.classList.add(charStates[charIndex]==='correct'?'char-correct':'char-incorrect');
                 if(current&&charIndex===actual.length)span.classList.add('char-current');
                 word.appendChild(span);
             });
