@@ -65,7 +65,7 @@ const AuthManager = {
 
     const { data, error } = await supabaseClient
       .from('profiles')
-      .select('id, full_name, phone, phone_verified, email, role')
+      .select('id, full_name, phone, phone_verified, email, role, account_status')
       .eq('id', id)
       .maybeSingle();
 
@@ -98,6 +98,10 @@ const AuthManager = {
 
     if (!profile || profile.role !== 'candidate') {
       return { ok: false, reason: 'profile' };
+    }
+    if (['suspended','banned'].includes(profile.account_status)) {
+      await supabaseClient.auth.signOut();
+      return { ok: false, reason: 'suspended' };
     }
 
     // Enable this check if phone verification is mandatory.
@@ -203,6 +207,13 @@ const AuthManager = {
       await supabaseClient.auth.signInWithPassword(payload);
 
     if (error) throw error;
+    const profile = data?.user?.id ? await this.getProfile(data.user.id) : null;
+    if (['suspended','banned'].includes(profile?.account_status)) {
+      await supabaseClient.auth.signOut();
+      throw new Error(profile.account_status === 'banned'
+        ? 'This account has been banned. Contact support if you believe this is a mistake.'
+        : 'This account is temporarily suspended. Contact support for assistance.');
+    }
     return data;
   },
 
