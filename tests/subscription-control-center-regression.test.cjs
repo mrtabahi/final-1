@@ -33,7 +33,7 @@ test('public pricing and account UI are connected to subscription records', () =
   const accountScript = fs.readFileSync(path.join(root, 'js/my-subscription.js'), 'utf8');
   const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
-  assert.match(home, /href="premium\.html"/);
+  assert.match(home, /href="\/?premium\.html"/);
   assert.match(premium, /premium-plan-grid/);
   assert.match(premium, /js\/premium\.js/);
   assert.match(premiumScript, /functions\.invoke\('create-checkout'/);
