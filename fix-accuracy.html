@@ -5,7 +5,8 @@
 <meta name="theme-color" content="#123b63">
 <title>Fix Accuracy Game | Decoding HCM</title>
 <meta name="description" content="Practise typing accuracy with a custom error limit, speed targets and timer.">
-<link rel="icon" href="/logo.png"><link rel="stylesheet" href="css/main.css?v=20261029-fixaccuracy1">
+<link rel="icon" href="/logo.png"><link rel="stylesheet" href="css/main.css?v=20261029-fixaccuracy2">
+<link rel="stylesheet" href="css/typing.css?v=20261029-fixaccuracy2">
 <link rel="stylesheet" href="css/fix-accuracy.css?v=20261029-fixaccuracy1">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -18,8 +19,8 @@
 <h2 class="card-title">Game setup</h2>
 <form id="fix-setup-form">
 <div class="fix-grid">
-<div class="form-group"><label class="form-label" for="fix-folder">Passage folder</label><select id="fix-folder" class="form-control"><option value="">All active folders</option></select></div>
-<div class="form-group"><label class="form-label" for="fix-passage">Admin passage</label><select id="fix-passage" class="form-control"><option value="">Choose a passage…</option></select></div>
+<div class="form-group"><label class="form-label" for="fix-folder">Passage folder</label><select id="fix-folder" class="form-control" required><option value="">Please choose the folder</option></select></div>
+<div class="form-group"><label class="form-label" for="fix-passage-select">Admin passage</label><select id="fix-passage-select" class="form-control" disabled required><option value="">Please choose the folder first</option></select></div>
 </div>
 <div class="form-group"><label class="form-label" for="fix-custom">Or paste a custom passage</label><textarea id="fix-custom" class="form-control" rows="4" maxlength="50000" placeholder="Paste your own practice passage here. If filled, this will be used instead of the admin passage."></textarea></div>
 <div class="fix-grid">
@@ -38,9 +39,9 @@
 <section id="game-panel" class="card fix-card" hidden>
 <div class="fix-game-top"><div><span class="eyebrow">FIX ACCURACY</span><h2 id="fix-game-title">Typing passage</h2></div><div class="fix-clock" id="fix-clock">FREE</div></div>
 <div class="fix-error-box" aria-live="polite"><div><span>Typed Error</span><strong id="fix-typed-error">0</strong></div><div><span>Total Error</span><strong id="fix-total-error">0 / 5</strong></div></div>
-<div id="fix-passage" class="fix-passage" aria-label="Original passage"></div>
+<div id="fix-passage-display" class="passage-display" aria-label="Original passage"></div>
 <label class="form-label" for="fix-input">Type the passage below</label>
-<textarea id="fix-input" class="form-control fix-input" rows="5" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing here…" disabled></textarea>
+<textarea id="fix-input" class="typing-input" rows="5" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing here. Your timer begins with your first keystroke." disabled></textarea>
 <div class="fix-live-stats"><span>Gross <strong id="fix-live-gross">0.00</strong> WPM</span><span>Net <strong id="fix-live-net">0.00</strong> WPM</span><span>Accuracy <strong id="fix-live-accuracy">100.00%</strong></span></div>
 <div class="fix-actions"><button id="fix-submit" class="btn btn-primary" type="button">Submit / Finish</button><button id="fix-restart" class="btn btn-secondary" type="button">Back to setup</button></div>
 <p class="fix-help">A word counts as an error when Space is pressed and that word does not match the original word. Backspace changes are included before a word is checked.</p>
@@ -58,5 +59,5 @@
 </section>
 </main>
 <footer class="footer"><p>© Decoding HCM — All Rights Reserved</p></footer>
-<script src="js/config.js?v=20261023-typing-fix2"></script><script src="js/auth.js?v=20261026-auth-activity1"></script><script src="js/fix-accuracy.js?v=20261029-fixaccuracy1"></script>
+<script src="js/config.js?v=20261023-typing-fix2"></script><script src="js/auth.js?v=20261026-auth-activity1"></script><script src="js/fix-accuracy.js?v=20261029-fixaccuracy2"></script>
 </body></html>
