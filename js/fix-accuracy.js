@@ -75,9 +75,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const upto=Math.max(0,typed.length-(hasTrailingSpace?0:1));
     while(checkedThrough<upto&&!finished){
       const index=checkedThrough;const got=typed[index]??'',want=expected[index]??'';
-      if(got!==want){errorCount++;$('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;announce(Math.max(0,currentConfig.maxErrors-errorCount));}
+      if(got!==want){errorCount++;$('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;}
       checkedThrough++;
       if(errorCount>=currentConfig.maxErrors){finish('Maximum errors reached');return;}
+      if(got!==want)announce(Math.max(1,currentConfig.maxErrors-errorCount+1));
       if(checkedThrough>=expected.length){finish('Passage complete');return;}
     }
     if(hasTrailingSpace&&checkedThrough>=expected.length){finish('Passage complete');return;}
@@ -96,7 +97,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(!finished&&Array.from(input.value).length>=Array.from(activePassage).length)finish('Passage complete');
   });
   function finish(reason){
-    if(finished)return;finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
+    if(finished)return;
+    // At end-of-passage, commit the final word as the implicit final separator.
+    // During the test, words are still only scored after an actual Space press.
+    if(reason==='Passage complete'&&currentConfig){const tw=words(input.value),ew=words(activePassage);while(checkedThrough<tw.length){if(tw[checkedThrough]!==ew[checkedThrough])errorCount++;checkedThrough++;} $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;}
+    finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
     const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
     const chars=Array.from(input.value).length,gross=chars/5*60/elapsed,net=Math.max(0,gross-errorCount*60/elapsed);
     const typedWords=words(input.value),accuracy=typedWords.length?Math.max(0,100-errorCount/typedWords.length*100):100;
