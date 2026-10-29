@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#123b63">
-<title>Fix Accuracy Game | Decoding HCM</title>
+<title>Typing Game Game | Decoding HCM</title>
 <meta name="description" content="Practise typing accuracy with a custom error limit, speed targets and timer.">
 <link rel="icon" href="/logo.png"><link rel="stylesheet" href="css/main.css?v=20261029-fixaccuracy2">
 <link rel="stylesheet" href="css/typing.css?v=20261029-fixaccuracy2">
@@ -12,9 +12,9 @@
 </head>
 <body>
 <nav class="navbar"><a href="index.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="Decoding HCM"></div><div><div class="brand-title">DECODING HCM</div><div class="brand-subtitle">Typing Test Lab — BSF Preparation</div></div></a>
-<ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="fix-accuracy.html" aria-current="page">Fix Accuracy</a></li><li><a href="self-test.html">Self Test</a></li><li><a href="my_results.html">My Results</a></li><li><a href="dashboard.html">Start Preparation</a></li></ul></nav>
+<ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="/fix-accuracy.html" aria-current="page">Typing Game</a></li><li><a href="self-test.html">Self Test</a></li><li><a href="my_results.html">My Results</a></li><li><a href="dashboard.html">Start Preparation</a></li></ul></nav>
 <main class="container fix-wrap">
-<header class="fix-heading"><span class="eyebrow">ACCURACY TRAINING GAME</span><h1>Fix Accuracy</h1><p>Build accuracy under pressure. A word is checked only after you press Space.</p></header>
+<header class="fix-heading"><span class="eyebrow">ACCURACY TRAINING GAME</span><h1>Typing Game</h1><p class="fix-subtitle">Train precision, build consistency, and beat your own best score.</p><p>Build accuracy under pressure. A word is checked only after you press Space.</p></header>
 <section id="setup-panel" class="card fix-card">
 <h2 class="card-title">Game setup</h2>
 <form id="fix-setup-form">
@@ -28,18 +28,18 @@
 <div class="form-group"><label class="form-label" for="fix-max-errors">Maximum errors</label><input id="fix-max-errors" class="form-control" type="number" min="1" max="1000" value="5" required></div>
 <div class="form-group"><label class="form-label" for="fix-min-gross">Minimum Gross Speed (WPM)</label><input id="fix-min-gross" class="form-control" type="number" min="0" max="300" step="0.01" value="0" required></div>
 <div class="form-group"><label class="form-label" for="fix-min-net">Minimum Net Speed (WPM)</label><input id="fix-min-net" class="form-control" type="number" min="0" max="300" step="0.01" value="0" required></div>
-<div class="form-group"><label class="form-label" for="fix-timer">Timer</label><select id="fix-timer" class="form-control"><option value="free">Free — stop at max errors</option><option value="30">30 seconds</option><option value="60">1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option><option value="900">15 minutes</option><option value="1200">20 minutes</option><option value="1500">25 minutes</option><option value="1800">30 minutes</option></select></div>
+<div class="form-group"><label class="form-label" for="fix-timer">Timer</label><select id="fix-timer" class="form-control"><option value="free">Free practice — stopwatch</option><option value="30">30 seconds</option><option value="60">1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option><option value="900">15 minutes</option><option value="1200">20 minutes</option><option value="1500">25 minutes</option><option value="1800">30 minutes</option></select></div>
 <div class="form-group"><label class="form-label" for="fix-voice">Error countdown voice</label><select id="fix-voice" class="form-control"><option value="on">On</option><option value="off">Off</option></select></div>
 </div>
 <p class="fix-help">Changing Gross Speed automatically copies it to Net Speed. You can then edit Net Speed separately. Minimum speeds are used for the final qualification status.</p>
-<button class="btn btn-primary btn-block" type="submit">Start Fix Accuracy</button>
+<button class="btn btn-primary btn-block" type="submit">Start Typing Game</button>
 </form>
 <p id="fix-load-status" class="fix-help" role="status">Loading active passages…</p>
 </section>
 <section id="game-panel" class="card fix-card" hidden>
 <div class="fix-game-top"><div><span class="eyebrow">FIX ACCURACY</span><h2 id="fix-game-title">Typing passage</h2></div><div class="fix-clock" id="fix-clock">FREE</div></div>
 <div class="card typing-controls" aria-label="Typing game controls"><button type="button" id="fix-toggle-highlight" class="btn btn-secondary compact-tip-control">🖍 Highlight: On</button><button type="button" id="fix-toggle-passage" class="btn btn-secondary compact-tip-control">🙈 Hide passage</button><button type="button" id="fix-font-down" class="btn btn-secondary compact-tip-control">A−</button><button type="button" id="fix-font-up" class="btn btn-secondary compact-tip-control">A+</button></div>
-<div class="fix-error-box" aria-live="polite"><div><span>Typed Error</span><strong id="fix-typed-error">0</strong></div><div><span>Total Error</span><strong id="fix-total-error">0 / 5</strong></div></div>
+<div class="fix-error-box" aria-live="polite"><div><span>Typed Error</span><strong id="fix-typed-error">0</strong></div><div><span>Max Error</span><strong id="fix-total-error">0 / 5</strong></div></div>
 <div id="fix-passage-display" class="passage-display" aria-label="Original passage"></div>
 <label class="form-label" for="fix-input">Type the passage below</label>
 <textarea id="fix-input" class="typing-input" rows="5" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing here. Your timer begins with your first keystroke." disabled></textarea>
@@ -48,11 +48,11 @@
 <p class="fix-help">A word counts as an error when Space is pressed and that word does not match the original word. Backspace changes are included before a word is checked.</p>
 </section>
 <section id="result-panel" class="card fix-card" hidden>
-<div id="fix-result-status" class="fix-result-status">RESULT</div><h2 class="card-title">Fix Accuracy Result</h2>
+<div id="fix-result-status" class="fix-result-status">RESULT</div><h2 class="card-title">Typing Game Result</h2>
 <div class="fix-result-grid">
 <div><span>Gross Speed</span><strong id="fix-result-gross">0.00 WPM</strong></div><div><span>Net Speed</span><strong id="fix-result-net">0.00 WPM</strong></div>
 <div><span>Total Errors</span><strong id="fix-result-errors">0</strong></div><div><span>Accuracy</span><strong id="fix-result-accuracy">100.00%</strong></div>
-<div><span>Attempt Time</span><strong id="fix-result-time">00:00</strong></div><div><span>Finish Reason</span><strong id="fix-result-reason">Passage complete</strong></div>
+<div><span>Attempt Time</span><strong id="fix-result-time">00:00:00</strong></div><div><span>Total Typed Word</span><strong id="fix-result-typed-words">0.00</strong></div><div><span>Typed Keystrokes</span><strong id="fix-result-keystrokes">0</strong></div><div><span>Finish Reason</span><strong id="fix-result-reason">Passage complete</strong></div>
 </div>
 <div class="fix-result-thresholds"><p>Minimum Gross: <strong id="fix-result-min-gross">0</strong> WPM</p><p>Minimum Net: <strong id="fix-result-min-net">0</strong> WPM</p><p>Maximum Errors: <strong id="fix-result-max-errors">5</strong></p></div>
 <div class="fix-result-passage"><h3>Original Passage</h3><p id="fix-result-original"></p><h3>Your Typed Passage</h3><p id="fix-result-typed"></p></div>
