@@ -27,7 +27,13 @@ jobs:
         run: node --test tests/scoring-regression.test.cjs
       - name: Check admin command center JavaScript syntax
         run: node --check js/admin-command-center.js
-      - name: Check admin main JavaScript syntax\n        run: node --check js/admin.js\n      - name: Test site-wide polish and admin module safety\n        run: node --test tests/sitewide-polish-regression.test.cjs\n      - name: Test admin command center wiring
+      - name: Check admin main JavaScript syntax
+        run: node --check js/admin.js
+      - name: Check feature-access JavaScript syntax
+        run: node --check js/feature-access.js
+      - name: Test site-wide polish and admin module safety
+        run: node --test tests/sitewide-polish-regression.test.cjs
+      - name: Test admin command center wiring
         run: node --test tests/admin-command-center-regression.test.cjs
       - name: Check subscription UI JavaScript syntax
         run: node --check js/admin-subscriptions.js && node --check js/premium.js && node --check js/my-subscription.js
