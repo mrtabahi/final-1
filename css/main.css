@@ -1068,3 +1068,196 @@ body.subscription-page :is(.sub-plan-divider){background:rgba(103,232,249,.16)!i
 body.subscription-page .sub-plan-card .sub-btn-light{background:#102239!important;color:#d8eaff!important;border-color:#29445f!important}
 body.subscription-page .sub-footer{color:#9bb0c8!important;border-color:rgba(103,232,249,.14)!important}
 
+
+
+/* 2026-10-30 accessible vibrant redesign: light surfaces, vivid accents, readable content. */
+:root{
+  color-scheme:light;
+  --primary-blue:#4f46e5;
+  --primary-hover:#3730a3;
+  --accent-blue:#7c3aed;
+  --light-blue:#f5f3ff;
+  --bg-main:#ffffff;
+  --surface-card:#ffffff;
+  --border-color:#e2e8f0;
+  --text-main:#172033;
+  --text-muted:#475569;
+  --success-green:#15803d;
+  --error-red:#be123c;
+  --warning-amber:#b45309;
+  --vivid-yellow:#facc15;
+  --vivid-pink:#ec4899;
+  --vivid-green:#16a34a;
+  --vivid-orange:#f97316;
+  --vivid-violet:#7c3aed;
+  --vivid-cyan:#0891b2;
+  --surface-soft:#f8fafc;
+  --focus-ring:rgba(124,58,237,.28);
+}
+html{background:#fff}
+body,body.admin-body,body.recovery-page,body.subscription-page{
+  background:#fff!important;
+  color:#172033!important;
+}
+body:not(.admin-body) :is(h1,h2,h3,h4,h5,h6,.card-title,.brand-title){color:#172033!important}
+body:not(.admin-body) :is(p,small,.muted,.text-muted,.brand-subtitle){color:#475569}
+body:not(.admin-body) .navbar{
+  background:rgba(255,255,255,.96)!important;
+  color:#172033!important;
+  border-bottom:1px solid #e2e8f0!important;
+  box-shadow:0 5px 22px rgba(15,23,42,.07)!important;
+  backdrop-filter:blur(14px);
+}
+body:not(.admin-body) .brand-container,body:not(.admin-body) .nav-links a{color:#172033!important}
+body:not(.admin-body) .brand-title{font-weight:850;letter-spacing:-.035em}
+body:not(.admin-body) .brand-subtitle{opacity:1!important}
+body:not(.admin-body) .nav-links a{padding:.45rem .65rem;transition:background .18s,color .18s,box-shadow .18s}
+body:not(.admin-body) .nav-links a:hover,
+body:not(.admin-body) .nav-links a[aria-current=page]{
+  color:#6d28d9!important;background:#f5f3ff!important;
+  box-shadow:inset 0 -2px #a855f7,0 3px 12px rgba(168,85,247,.10);
+}
+body:not(.admin-body) :is(.card,.panel,.content-card,.auth-card,.login-card,.result-card,.test-card,.folder-card,.modal-content,.popup-content,.popup-card,.dialog-content,.sub-current,.sub-faq article,.feature-card,.dashboard-card,.self-test-card,.premium-card){
+  background:#fff!important;color:#172033!important;
+  border:1px solid #e2e8f0!important;border-radius:16px!important;
+  box-shadow:0 7px 24px rgba(15,23,42,.065),0 1px 2px rgba(15,23,42,.035)!important;
+}
+body:not(.admin-body) :is(.card,.test-card,.folder-card,.feature-card,.dashboard-card,.sub-plan-card):hover{
+  border-color:#c4b5fd!important;
+  box-shadow:0 10px 28px rgba(124,58,237,.10),0 0 0 1px rgba(168,85,247,.08)!important;
+}
+body:not(.admin-body) :is(input:not([type=checkbox]):not([type=radio]),select,textarea,.form-control){
+  background:#fff!important;color:#172033!important;
+  border:1px solid #cbd5e1!important;border-radius:10px!important;
+}
+body:not(.admin-body) :is(input,select,textarea,.form-control)::placeholder{color:#64748b!important;opacity:1}
+body:not(.admin-body) :is(input,select,textarea,.form-control):focus{
+  border-color:#7c3aed!important;box-shadow:0 0 0 3px rgba(124,58,237,.18)!important;outline:none!important;
+}
+body:not(.admin-body) :is(label,.form-label){color:#273449!important}
+body:not(.admin-body) :is(.btn,.button,.sub-btn){
+  border-radius:11px!important;font-weight:750!important;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important;
+}
+body:not(.admin-body) :is(.btn-primary,.sub-btn-primary,.feature-upgrade-primary){
+  background:linear-gradient(110deg,#7c3aed 0%,#db2777 54%,#f97316 100%)!important;
+  border:1px solid #7c3aed!important;color:#fff!important;
+  box-shadow:0 5px 16px rgba(219,39,119,.19)!important;
+}
+body:not(.admin-body) :is(.btn-primary,.sub-btn-primary,.feature-upgrade-primary):hover{
+  transform:translateY(-1px);filter:saturate(1.12);
+  box-shadow:0 7px 22px rgba(219,39,119,.25)!important;
+}
+body:not(.admin-body) :is(.btn-secondary,.sub-btn-light,.feature-upgrade-secondary){
+  background:#fff!important;color:#5b21b6!important;border:1px solid #c4b5fd!important;
+}
+body:not(.admin-body) .btn-danger{background:#be123c!important;color:#fff!important}
+body:not(.admin-body) .footer{background:#f8fafc!important;color:#475569!important;border-top:1px solid #e2e8f0}
+body:not(.admin-body) .footer a{color:#6d28d9!important}
+body:not(.admin-body) :is(.data-table th,.admin-table th){background:#f5f3ff!important;color:#312e81!important}
+body:not(.admin-body) :is(.data-table td,.data-table th){border-color:#e2e8f0!important}
+body:not(.admin-body) .data-table tr:hover{background:#fff7ed!important}
+body:not(.admin-body) :is(.badge,.pill,.status-pill){font-weight:750}
+body:not(.admin-body) .site-history-back{
+  background:#fff!important;color:#5b21b6!important;border:1px solid #c4b5fd!important;
+  box-shadow:0 4px 14px rgba(124,58,237,.10)!important;
+}
+/* Small, deliberate multicolour glow is reserved for accents; never glow body text. */
+body:not(.admin-body) :is(.typing-game-promo,.feature-card,.dashboard-card,.sub-plan-card){
+  box-shadow:0 7px 24px rgba(15,23,42,.06),inset 0 3px 0 #a855f7!important;
+}
+body:not(.admin-body) :is(.typing-game-promo,.feature-card,.dashboard-card,.sub-plan-card):nth-of-type(4n+1){border-top-color:#ec4899!important}
+body:not(.admin-body) :is(.typing-game-promo,.feature-card,.dashboard-card,.sub-plan-card):nth-of-type(4n+2){border-top-color:#16a34a!important}
+body:not(.admin-body) :is(.typing-game-promo,.feature-card,.dashboard-card,.sub-plan-card):nth-of-type(4n+3){border-top-color:#f97316!important}
+body:not(.admin-body) :is(.typing-game-promo,.feature-card,.dashboard-card,.sub-plan-card):nth-of-type(4n){border-top-color:#eab308!important}
+body:not(.admin-body) a:not(.btn):not(.button):not(.sub-btn){text-underline-offset:3px}
+body:not(.admin-body) a:not(.btn):not(.button):not(.sub-btn):not(.brand-container){color:#6d28d9}
+body:not(.admin-body) :is(.modal-overlay,.modal-backdrop,.popup-overlay,.dialog-overlay,.feature-upgrade-backdrop){
+  background:rgba(15,23,42,.48)!important;backdrop-filter:blur(5px)!important;
+}
+body:not(.admin-body) :is(.modal-content,.popup-content,.popup-card,.dialog-content,[role=dialog],.feature-upgrade-dialog,.feature-site-lock-card){
+  background:#fff!important;color:#172033!important;border:1px solid #ddd6fe!important;
+  box-shadow:0 22px 65px rgba(15,23,42,.2),0 0 0 1px rgba(168,85,247,.08)!important;
+}
+body:not(.admin-body) :is(.modal-content,.popup-content,.popup-card,.dialog-content,[role=dialog],.feature-upgrade-dialog,.feature-site-lock-card) :is(h1,h2,h3){color:#172033!important}
+body:not(.admin-body) :is(.modal-content,.popup-content,.popup-card,.dialog-content,[role=dialog],.feature-upgrade-dialog,.feature-site-lock-card) :is(p,small,label){color:#475569!important}
+.feature-upgrade-close{background:#fff!important;color:#6d28d9!important;border-color:#ddd6fe!important}
+.feature-upgrade-mark{background:#fdf2f8!important;color:#be185d!important;border-color:#fbcfe8!important}
+.feature-upgrade-copy,.feature-site-lock-card p{color:#475569!important}
+body.recovery-page .recovery-mark{background:#fdf2f8!important;color:#be185d!important;border-color:#f9a8d4!important;box-shadow:0 0 18px rgba(236,72,153,.10)!important}
+body.recovery-page .recovery-card button{background:linear-gradient(110deg,#7c3aed,#db2777)!important;color:#fff!important}
+body.recovery-page .recovery-back{color:#6d28d9!important}
+/* Admin: light canvas and dark copy make dense controls, tables and charts readable. */
+body.admin-body{
+  background:#f8fafc!important;color:#172033!important;
+}
+.admin-body .admin-sidebar{
+  background:#fff!important;border-right:1px solid #e2e8f0!important;
+  box-shadow:4px 0 18px rgba(15,23,42,.035);
+}
+.admin-body .admin-topbar{
+  background:rgba(255,255,255,.96)!important;border-bottom:1px solid #e2e8f0!important;
+  color:#172033!important;backdrop-filter:blur(12px);
+}
+.admin-body :is(.admin-panel,.admin-stat-card,.admin-module-notice,.admin-capability,.admin-quick-actions>button,.sub-admin-section,.sub-admin-member,.admin-roadmap,.admin-ledger-stat,.admin-roles-stat){
+  background:#fff!important;color:#172033!important;border:1px solid #e2e8f0!important;
+  box-shadow:0 5px 18px rgba(15,23,42,.045)!important;
+}
+.admin-body :is(.admin-panel h1,.admin-panel h2,.admin-panel h3,.admin-page-heading h1,.admin-capability strong,.admin-quick-actions strong,.admin-stat-card strong,.admin-modal-head h2){color:#172033!important}
+.admin-body :is(.admin-panel p,.admin-capability p,.admin-page-heading p,.admin-quick-actions small,.admin-form-field label,.admin-field-help){color:#475569!important}
+.admin-body :is(input:not([type=checkbox]):not([type=radio]),select,textarea,.admin-input,.admin-select){
+  background:#fff!important;color:#172033!important;border:1px solid #cbd5e1!important;
+}
+.admin-body :is(input,select,textarea):focus-visible{outline:3px solid rgba(124,58,237,.25)!important;outline-offset:1px}
+.admin-body :is(.admin-btn-primary,.admin-btn.admin-btn-primary){
+  background:linear-gradient(110deg,#7c3aed,#db2777 62%,#f97316)!important;
+  color:#fff!important;border-color:#7c3aed!important;box-shadow:0 4px 14px rgba(219,39,119,.16)!important;
+}
+.admin-body :is(.admin-btn-secondary,.admin-btn.admin-btn-secondary){
+  background:#fff!important;color:#5b21b6!important;border:1px solid #c4b5fd!important;
+}
+.admin-body .admin-nav-link{color:#334155!important}
+.admin-body .admin-nav-link:hover,.admin-body .admin-nav-link.active{
+  background:#f5f3ff!important;color:#5b21b6!important;
+}
+.admin-body .admin-nav-link.active{box-shadow:inset 3px 0 #a855f7!important}
+.admin-body :is(.admin-table th,.admin-table td,.admin-ledger-table th,.admin-ledger-table td,.admin-roles-table th,.admin-roles-table td){border-color:#e2e8f0!important}
+.admin-body :is(.admin-table th,.admin-ledger-table th,.admin-roles-table th){background:#f5f3ff!important;color:#312e81!important}
+.admin-body :is(.admin-table td,.admin-ledger-table td,.admin-roles-table td){color:#334155!important}
+.admin-body .admin-empty{background:#f8fafc!important;border:1px dashed #cbd5e1!important;color:#475569!important}
+.admin-body .admin-module-note{background:#f8fafc!important;border-color:#e2e8f0!important;color:#475569!important}
+.admin-body .admin-module-note strong{color:#172033!important}
+.admin-body .admin-security-note{background:#fffbeb!important;border-color:#fcd34d!important;color:#92400e!important}
+.admin-body .admin-ledger-stat span,.admin-body .admin-roles-stat span{color:#64748b!important}
+.admin-body .admin-ledger-stat strong,.admin-body .admin-roles-stat strong{color:#172033!important}
+.admin-body .admin-modal-backdrop{background:rgba(15,23,42,.48)!important}
+.admin-body .admin-modal,.admin-body .admin-modal-wide{
+  background:#fff!important;color:#172033!important;border:1px solid #ddd6fe!important;
+  box-shadow:0 22px 65px rgba(15,23,42,.2)!important;
+}
+.admin-body :is(.admin-bulk-setup,.admin-bulk-draft,.admin-modal-actions){background:#f8fafc!important;border-color:#e2e8f0!important;color:#334155!important}
+.admin-body .admin-form-message.is-error{background:#fff1f2!important;color:#9f1239!important}
+.admin-body .admin-ledger-status.is-paid,.admin-body .admin-ledger-status.is-succeeded{background:#dcfce7!important;color:#166534!important}
+.admin-body .admin-ledger-status.is-pending{background:#fef3c7!important;color:#92400e!important}
+.admin-body .admin-ledger-status.is-failed,.admin-body .admin-ledger-status.is-refunded{background:#ffe4e6!important;color:#9f1239!important}
+body.subscription-page :is(.sub-current,.sub-plans-section,.sub-faq,.sub-plan-card,.sub-current-state,.sub-loading-card,.sub-empty-card,.sub-faq-grid article,.account-membership-summary article,.account-membership-history>section){
+  background:#fff!important;color:#172033!important;border-color:#e2e8f0!important;
+  box-shadow:0 7px 24px rgba(15,23,42,.06)!important;
+}
+body.subscription-page :is(.sub-plan-count,.sub-plan-ribbon,.sub-account-status,.sub-plan-features li:before){
+  background:#fdf2f8!important;border-color:#fbcfe8!important;color:#9d174d!important;
+}
+body.subscription-page .sub-plan-price{color:#172033!important}
+body.subscription-page :is(.sub-plan-tagline,.sub-plan-duration,.sub-plan-features li,.sub-current-state,.sub-faq-grid article p,.sub-plan-card p){color:#475569!important}
+body.subscription-page .sub-plan-divider{background:#e2e8f0!important}
+body.subscription-page .sub-plan-card .sub-btn-light{background:#fff!important;color:#5b21b6!important;border-color:#c4b5fd!important}
+body.subscription-page .sub-footer{color:#475569!important;border-color:#e2e8f0!important}
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:3px solid rgba(124,58,237,.5);outline-offset:2px}
+@media(max-width:760px){
+  body:not(.admin-body) .navbar{background:#fff!important}
+  body:not(.admin-body) .nav-links{gap:.35rem}
+  body:not(.admin-body) .nav-links a{padding:.4rem .5rem}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
