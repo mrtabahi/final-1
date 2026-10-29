@@ -185,12 +185,14 @@
         if (error) throw error;
         folder = data;
       }
-      const { data: existingTests, error: testsError } = await supabaseClient.from('tests').select('title,passage').eq('folder_id', folder.id);
+      const { data: existingTests, error: testsError } = await supabaseClient.from('tests').select('title,passage,sort_order').eq('folder_id', folder.id);
       if (testsError) throw testsError;
       const existing = new Set((existingTests || []).map(t => t.title.trim().toLowerCase() + '|' + t.passage.trim()));
       const duplicates = included.filter(d => existing.has(d.title.trim().toLowerCase() + '|' + d.text.trim()));
       if (duplicates.length && !await window.showBrandedDialog(duplicates.length + ' exact duplicate test(s) already exist in this folder. Skip duplicates and continue?', {confirm:true})) return;
-      const rows = included.filter(d => !existing.has(d.title.trim().toLowerCase() + '|' + d.text.trim())).map(d => ({
+      const nextSortOrder = Math.max(-1, ...(existingTests || []).map(t => Number(t.sort_order ?? -1))) + 1;
+      const rows = included.filter(d => !existing.has(d.title.trim().toLowerCase() + '|' + d.text.trim())).map((d, index) => ({
+        sort_order: nextSortOrder + index,
         title: d.title.trim(), folder_id: folder.id, language: $('bulk-language').value,
         duration_minutes: Number($('bulk-duration').value) || 5,
         target_wpm: Number($('bulk-target-wpm').value) || 0,
