@@ -371,6 +371,9 @@
         const escHtml=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
         try {
             const {data,error}=await supabaseClient.from('ad_settings').select('id,ads_enabled,home_enabled,typing_listing_enabled,materials_enabled,density,updated_at').eq('id',1).maybeSingle();
+            const experienceResult=await supabaseClient.from('site_experience_settings').select('id,landing_page,audio_url,audio_loop,audio_enabled,audio_for_logged_in,updated_at').eq('id',1).maybeSingle();
+            if(experienceResult.error) throw new Error('Run migration 20261029120000_site_experience_settings.sql first: '+experienceResult.error.message);
+            const experience=experienceResult.data||{landing_page:'home',audio_url:null,audio_loop:true,audio_enabled:false,audio_for_logged_in:false};
             if(error) throw error;
             if (renderSequence !== viewRenderSequence || currentView !== 'settings') return;
             if(!data) throw new Error('The singleton ad_settings row (id=1) does not exist.');
@@ -386,12 +389,38 @@
               '<label class="admin-form-field admin-density-field"><span>Ad display density</span><select id="settings-density" class="admin-input"><option value="low" '+(data.density==='low'?'selected':'')+'>Low · less frequent</option><option value="normal" '+(data.density==='normal'?'selected':'')+'>Normal · balanced</option><option value="max" '+(data.density==='max'?'selected':'')+'>Maximum · most frequent</option></select><small>Density applies only to placements that read this setting.</small></label></section></div>'+
               '<div class="admin-settings-footer"><p id="settings-save-status" role="status">Last saved: '+escHtml(data.updated_at?new Date(data.updated_at).toLocaleString():'not available')+'</p><div><button type="button" class="admin-btn admin-btn-secondary" id="settings-reload">Discard changes</button> <button type="button" class="admin-btn admin-btn-primary" id="settings-save">Save settings</button></div></div>'+
               '<div class="admin-settings-note"><strong>Important</strong><span>These controls update the existing ad_settings table. Logo, theme, SEO, maintenance mode and email/payment integrations are not configured here because no backing settings fields are currently wired up.</span></div>';
+            let uploadedAudioUrl=experience.audio_url||null;
+            $('experience-audio-file')?.addEventListener('change',async event=>{
+              const file=event.target.files?.[0];if(!file)return;
+              if(!file.type.startsWith('audio/')){alert('Choose an audio file.');event.target.value='';return;}
+              if(file.size>10*1024*1024){alert('Please choose an audio file smaller than 10 MB.');event.target.value='';return;}
+              const status=$('settings-save-status');if(status)status.textContent='Uploading audio…';
+              try{
+                const ext=(file.name.split('.').pop()||'mp3').replace(/[^a-z0-9]/gi,'').toLowerCase()||'mp3';
+                const path='site-background/'+Date.now()+'-'+crypto.randomUUID()+'.'+ext;
+                const result=await supabaseClient.storage.from('public-site-audio').upload(path,file,{upsert:true,contentType:file.type||'audio/mpeg'});
+                if(result.error)throw result.error;
+                uploadedAudioUrl=supabaseClient.storage.from('public-site-audio').getPublicUrl(result.data.path).data.publicUrl;
+                $('experience-audio-current').textContent='New audio uploaded. Save settings to publish it.';
+                if(status)status.textContent='Audio uploaded. Save settings to activate it.';
+              }catch(error){if(status)status.textContent='Audio upload failed: '+(error.message||'Storage error');}
+            });
             $('settings-reload')?.addEventListener('click',renderWebsiteSettingsModule);
             $('settings-save')?.addEventListener('click',async()=>{
                 const save=$('settings-save'),status=$('settings-save-status');
                 const values={ads_enabled:Boolean(box.querySelector('[name="ads_enabled"]')?.checked),home_enabled:Boolean(box.querySelector('[name="home_enabled"]')?.checked),typing_listing_enabled:Boolean(box.querySelector('[name="typing_listing_enabled"]')?.checked),materials_enabled:Boolean(box.querySelector('[name="materials_enabled"]')?.checked),density:$('settings-density')?.value||'normal',updated_at:new Date().toISOString()};
                 save.disabled=true;save.textContent='Saving…';status.textContent='Saving settings…';
                 try {
+                    const expResult=await supabaseClient.from('site_experience_settings').update({
+                      landing_page:$('experience-landing')?.value||'home',
+                      audio_url:uploadedAudioUrl,
+                      audio_enabled:Boolean(box.querySelector('[name="experience-audio-enabled"]')?.checked),
+                      audio_loop:Boolean(box.querySelector('[name="experience-audio-loop"]')?.checked),
+                      audio_for_logged_in:Boolean(box.querySelector('[name="experience-audio-logged-in"]')?.checked),
+                      updated_at:new Date().toISOString()
+                    }).eq('id',1).select('id,updated_at').maybeSingle();
+                    if(expResult.error)throw expResult.error;
+                    if(!expResult.data)throw new Error('Site experience settings were not saved. Check admin permissions.');
                     const result=await supabaseClient.from('ad_settings').update(values).eq('id',1).select('id,updated_at').maybeSingle();
                     if(result.error) throw result.error;
                     if(!result.data) throw new Error('No row was updated. Check the current admin session and update policy.');
