@@ -1,6 +1,7 @@
 // Supabase Edge Function: server-authoritative typing attempt creation.
 // Deploy with: supabase functions deploy typing-result
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "../../../js/typing-master.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,7 +19,6 @@ function reply(status: number, body: unknown) {
 // Canonical scoring implementation is shared with the browser at js/typing-master.js.
 // The Edge Function adapts database snake_case config to the same master API, then
 // persists the server-calculated result so clients cannot submit arbitrary scores.
-import "../../../js/typing-master.js";
 
 const TypingMaster = (globalThis as unknown as { TypingMaster?: { calculateScore: (...args: unknown[]) => Record<string, any> } }).TypingMaster;
 if (!TypingMaster) throw new Error("Shared typing master engine failed to load.");
