@@ -112,7 +112,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-result-original').textContent=activePassage;$('fix-result-typed').textContent=input.value;
     game.hidden=true;result.hidden=false;if(reason==='Maximum errors reached')announce('Game over');
   }
-  $('fix-submit').addEventListener('click',()=>finish('Manually submitted'));
+  $('fix-toggle-highlight').addEventListener('click',()=>{highlightEnabled=!highlightEnabled;$('fix-toggle-highlight').textContent=highlightEnabled?'🖍 Highlight: On':'🖍 Highlight: Off';renderPassage();});
+  $('fix-toggle-passage').addEventListener('click',()=>{passageHidden=!passageHidden;$('fix-toggle-passage').textContent=passageHidden?'👁 Show passage':'🙈 Hide passage';renderPassage();});
+  $('fix-font-down').addEventListener('click',()=>{typingFontSize=Math.max(14.4,typingFontSize-1.6);renderPassage();input.style.fontSize=typingFontSize+'px';});
+  $('fix-font-up').addEventListener('click',()=>{typingFontSize=Math.min(32,typingFontSize+1.6);renderPassage();input.style.fontSize=typingFontSize+'px';});
+    $('fix-submit').addEventListener('click',()=>finish('Manually submitted'));
   $('fix-restart').addEventListener('click',()=>{if(interval)clearInterval(interval);game.hidden=true;result.hidden=true;setup.hidden=false;});
   $('fix-again').addEventListener('click',()=>{result.hidden=true;setup.hidden=false;});
   $('fix-print').addEventListener('click',()=>window.print());
