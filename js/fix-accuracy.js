@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const words = text => tokenize(text);
   function announce(text){ if(!currentConfig||currentConfig.voice!=='on'||!('speechSynthesis' in window))return; try{speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(String(text));utter.rate=1;utter.pitch=1;utter.lang='en-US';speechSynthesis.speak(utter);}catch(e){console.debug('Speech unavailable',e);} }
   function loadCatalog(){
-    if(!window.supabaseClient){$('fix-load-status').textContent='Passage service unavailable. You can still paste a custom passage.';return;}
+    if(typeof supabaseClient==='undefined'||!supabaseClient){$('fix-load-status').textContent='Passage service unavailable. You can still paste a custom passage.';return;}
     Promise.all([
       supabaseClient.from('folders').select('id,name,active').eq('active',true),
       supabaseClient.rpc('list_test_catalog',{p_folder_id:null})
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(finished)return;
     // At end-of-passage, commit the final word as the implicit final separator.
     // During the test, words are still only scored after an actual Space press.
-    if(reason==='Passage complete'&&currentConfig){const tw=words(input.value),ew=words(activePassage);while(checkedThrough<tw.length){if(tw[checkedThrough]!==ew[checkedThrough])errorCount++;checkedThrough++;} $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;}
+    if(reason==='Passage complete'&&currentConfig){const tw=words(input.value),ew=words(activePassage);while(checkedThrough<tw.length){if(tw[checkedThrough]!==ew[checkedThrough])errorCount++;checkedThrough++;} $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;if(errorCount>=currentConfig.maxErrors)reason='Maximum errors reached';}
     finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
     const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
     const chars=Array.from(input.value).length,gross=chars/5*60/elapsed,net=Math.max(0,gross-errorCount*60/elapsed);
