@@ -56,4 +56,11 @@ test('site-wide paywall preserves login, signup, password recovery, pricing and 
   assert.match(css, /\.feature-upgrade-backdrop\.is-open/);
   assert.match(css, /\.feature-site-lock-card/);
 });
+test('access dialogs use the shared stylesheet rather than an overriding inline legacy theme', () => {
+  const access = read('js/feature-access.js');
+  const css = read('css/main.css');
+  assert.doesNotMatch(access, /const css=document\.createElement\('style'\)/);
+  assert.match(css, /body\.feature-site-locked\{overflow:hidden!important\}/);
+  assert.match(css, /\.feature-upgrade-dialog/);
+});
 
