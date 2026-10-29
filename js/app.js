@@ -80,25 +80,33 @@ document.addEventListener('DOMContentLoaded', async()=>{
     function updateLiveMetrics(remainingSeconds){if(!engine||engine.isFinished)return;const elapsed=Math.max(.001,engine.startTimestamp?(performance.now()-engine.startTimestamp)/1000:.001);const remaining=remainingSeconds===undefined?Math.max(0,engine.durationSeconds-elapsed):remainingSeconds;const m=Math.floor(remaining/60).toString().padStart(2,'0'),s=Math.floor(remaining%60).toString().padStart(2,'0');$('timer-display').textContent=`${m}:${s}`;const liveFormula=selectedFormula==='crpf'?'crpf':'bsf';const st=TypingMaster.calculateScore(currentPassage?.passage||'',textarea.value,elapsed,activeScoringConfig,null,liveFormula,backspacePressCount);$('live-gross-wpm').textContent=Number(st.grossWpm||0).toFixed(2);$('live-net-wpm').textContent=Number(st.netWpm||0).toFixed(2);$('live-accuracy').textContent=`${Number(st.accuracy||0).toFixed(2)}%`;$('live-errors').textContent=st.totalErrors??0;const allowed=$('live-allowed-errors'),extra=$('live-extra-errors'),penalty=$('live-penalty-speed'),time=$('live-attempting-time');if(allowed)allowed.textContent=String(st.allowedErrors??st.freeErrors??0);if(extra)extra.textContent=String(st.excessErrors??0);if(penalty)penalty.textContent=Number(st.penaltyWpm??0).toFixed(2);if(time){const secs=Math.floor(elapsed);time.textContent=`${String(Math.floor(secs/60)).padStart(2,'0')}:${String(secs%60).padStart(2,'0')}`;}}
     function renderPassageProgress(typedValue=''){
         if(!display||!currentPassage||currentPassage.mode==='page')return;
-        const passage=String(currentPassage.passage||'');
-        const typed=String(typedValue||'');
-        const splitGraphemes=value=>typeof Intl!=='undefined'&&Intl.Segmenter
-            ?Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(value),part=>part.segment)
-            :Array.from(value);
-        const passageChars=splitGraphemes(passage);
-        const typedChars=splitGraphemes(typed);
-        const fragment=document.createDocumentFragment();
-        for(let i=0;i<passageChars.length;i++){
-            const span=document.createElement('span');
-            span.className='passage-char';
-            if(i<typedChars.length)span.classList.add(typedChars[i]===passageChars[i]?'char-correct':'char-incorrect');
-            
-            span.textContent=passageChars[i];
-            fragment.appendChild(span);
+        const passage=String(currentPassage.passage||''),typed=String(typedValue||'');
+        const splitGraphemes=value=>typeof Intl!=='undefined'&&Intl.Segmenter?Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(value),part=>part.segment):Array.from(value);
+        const expectedWords=[...passage.matchAll(/\S+/gu)],typedWords=typed.match(/\S+/gu)||[];
+        const committedCount=/\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1);
+        const fragment=document.createDocumentFragment();let cursor=0;
+        expectedWords.forEach((match,wordIndex)=>{
+            if(match.index>cursor)fragment.appendChild(document.createTextNode(passage.slice(cursor,match.index)));
+            const expected=splitGraphemes(match[0]),actual=splitGraphemes(typedWords[wordIndex]||''),word=document.createElement('span');
+            word.className='passage-word';const committed=wordIndex<committedCount,current=wordIndex===committedCount;
+            expected.forEach((character,charIndex)=>{
+                const span=document.createElement('span');span.className='passage-char';span.textContent=character;
+                if(committed)span.classList.add(charIndex<actual.length&&actual[charIndex]===character?'char-correct':'char-incorrect');
+                else if(current&&charIndex<actual.length)span.classList.add(actual[charIndex]===character?'char-correct':'char-incorrect');
+                if(current&&charIndex===actual.length)span.classList.add('char-current');
+                word.appendChild(span);
+            });
+            if(committed&&actual.length>expected.length){const extra=document.createElement('span');extra.className='char-incorrect';extra.textContent=' ['+actual.slice(expected.length).join('')+']';word.appendChild(extra);}
+            fragment.appendChild(word);cursor=match.index+match[0].length;
+            const next=passage.slice(cursor,expectedWords[wordIndex+1]?.index??passage.length);if(next)fragment.appendChild(document.createTextNode(next));cursor+=next.length;
+        });
+        if(!expectedWords.length)fragment.appendChild(document.createTextNode(passage));
+        display.replaceChildren(fragment);display.classList.toggle('no-highlight',!highlightEnabled);
+        if(autoScrollEnabled&&selectedTypingMode==='screen'&&!passageHidden){
+            const typedCount=splitGraphemes(typed).length;
+            if(typedCount===0)display.scrollTop=0;
+            else{const current=display.querySelector('.char-current')||display.lastElementChild;if(current){const box=display.getBoundingClientRect(),charBox=current.getBoundingClientRect(),lineHeight=parseFloat(getComputedStyle(display).lineHeight)||30;const currentLine=Math.floor((charBox.top-box.top+display.scrollTop)/lineHeight),firstVisibleLine=Math.floor(display.scrollTop/lineHeight),visibleLines=Math.max(1,Math.floor(display.clientHeight/lineHeight));if(currentLine>=firstVisibleLine+visibleLines-2&&currentLine>firstVisibleLine)display.scrollTop=Math.min(display.scrollHeight-display.clientHeight,display.scrollTop+lineHeight);}}
         }
-        display.replaceChildren(fragment);
-        display.classList.toggle('no-highlight',!highlightEnabled);
-        if(autoScrollEnabled&&selectedTypingMode==='screen'&&!passageHidden){if(typedChars.length===0){display.scrollTop=0;}else{const current=display.children[Math.min(typedChars.length,display.children.length-1)];if(current){const box=display.getBoundingClientRect();const charBox=current.getBoundingClientRect();const lineHeight=parseFloat(getComputedStyle(display).lineHeight)||30;const currentLine=Math.floor((charBox.top-box.top+display.scrollTop)/lineHeight);const firstVisibleLine=Math.floor(display.scrollTop/lineHeight);const visibleLines=Math.max(1,Math.floor(display.clientHeight/lineHeight));if(currentLine>=firstVisibleLine+visibleLines-2&&currentLine>firstVisibleLine){display.scrollTop=Math.min(display.scrollHeight-display.clientHeight,display.scrollTop+lineHeight);}}}}
     }
     lang.onchange=render;passageSelect.onchange=update;await loadTests();const requestedTestId=new URLSearchParams(location.search).get('test');if(requestedTestId){
         // The catalogue RPC intentionally returns metadata only. Fetch the protected
