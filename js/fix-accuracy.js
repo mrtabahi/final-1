@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const passage=await getPassage();activePassage=String(passage.passage||'').trim();if(!activePassage)throw new Error('Passage cannot be empty.');
       currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:($('fix-timer').value==='custom'?Math.max(1,Number($('fix-custom-minutes').value)||1)*60:Number($('fix-timer').value)),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
       $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
-      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;backspacePressCount=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=true;typingFontSize=19.2;
+      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;backspacePressCount=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=$('fix-highlight-setting').value==='on';typingFontSize=19.2;$('fix-toggle-highlight').textContent=highlightEnabled?'🖍 Highlight: On':'🖍 Highlight: Off';
       $('fix-clock').textContent='00:00:00';
       $('fix-passage-display').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
     }catch(err){alert(err.message||'Unable to start game.');}
@@ -109,6 +109,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Reaching the end of the original passage always auto-submits, even with time remaining.
     if(!finished&&Array.from(input.value).length>=Array.from(activePassage).length)finish('Passage complete');
   });
+  function renderResultComparison(expectedText,typedText){
+    const host=$('fix-result-typed');if(!host)return;host.replaceChildren();
+    const expected=String(expectedText||'').match(/\\S+/gu)||[],typed=String(typedText||'').match(/\\S+/gu)||[];
+    const aligned=TypingMaster.alignWords(expected,typed);let i=0;
+    const appendText=(text,cls)=>{const span=document.createElement('span');if(cls)span.className=cls;span.textContent=text;host.appendChild(span);};
+    while(i<aligned.length){
+      const item=aligned[i];
+      if(item.type==='match'){appendText(item.typed,'result-word-correct');i++;if(i<aligned.length)host.appendChild(document.createTextNode(' '));continue;}
+      const group=[];while(i<aligned.length&&aligned[i].type!=='match'){group.push(aligned[i]);i++;}
+      const expectedNotes=[];
+      group.forEach(entry=>{
+        if(entry.type==='insert'){appendText(entry.typed,'mistake-extra');host.appendChild(document.createTextNode(' '));}
+        else if(entry.type==='substitute'){appendText(entry.typed,'mistake-wrong');host.appendChild(document.createTextNode(' '));expectedNotes.push({text:entry.expected,type:'wrong'});}
+        else if(entry.type==='delete'){expectedNotes.push({text:entry.expected,type:'omitted'});}
+      });
+      if(expectedNotes.length){
+        const onlyOmitted=expectedNotes.every(note=>note.type==='omitted');
+        appendText('['+expectedNotes.map(note=>note.text).join(' ')+']',onlyOmitted?'mistake-omitted':'mistake-expected');
+        host.appendChild(document.createTextNode(' '));
+      }
+    }
+    if(!aligned.length)host.textContent='No typed text was entered.';
+    host.style.whiteSpace='pre-wrap';
+  }
   function finish(reason){
     if(finished)return;
     const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
@@ -122,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-result-status').textContent=passed?'QUALIFIED':'TRY AGAIN';$('fix-result-status').classList.toggle('try-again',!passed);
     $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';$('fix-result-net').textContent=net.toFixed(2)+' WPM';$('fix-result-errors').textContent=String(errorCount);$('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';$('fix-result-allowed').textContent=String(score.allowedErrors??score.freeErrors??0);$('fix-result-excess').textContent=String(score.excessErrors??0);$('fix-result-penalty').textContent=Number(score.penaltyWpm??0).toFixed(2);$('fix-result-correct-word').textContent=Number(score.totalCorrectWord??0).toFixed(2);$('fix-result-backspace').textContent=String(backspacePressCount);$('fix-result-time').textContent=formatTime(elapsed);$('fix-result-typed-words').textContent=(String(input.value||'').length/5).toFixed(2);$('fix-result-keystrokes').textContent=String(String(input.value||'').length);$('fix-result-reason').textContent=reason;
     $('fix-result-min-gross').textContent=currentConfig.minGross.toFixed(2);$('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);$('fix-result-max-errors').textContent=currentConfig.maxErrors;
-    $('fix-result-original').textContent=activePassage;$('fix-result-typed').textContent=input.value;
+    $('fix-result-original')?.replaceChildren();renderResultComparison(activePassage,input.value);
     game.hidden=true;result.hidden=false;if(reason==='Maximum errors reached')announce('Game over');
   }
   $('fix-toggle-highlight').addEventListener('click',()=>{highlightEnabled=!highlightEnabled;$('fix-toggle-highlight').textContent=highlightEnabled?'🖍 Highlight: On':'🖍 Highlight: Off';renderPassage();});

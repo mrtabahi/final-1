@@ -5,9 +5,9 @@
 <meta name="theme-color" content="#123b63">
 <title>Typing Game: Fix Accuracy | Decoding HCM</title>
 <meta name="description" content="Practise typing accuracy with a custom error limit, speed targets and timer.">
-<link rel="icon" href="/logo.png"><link rel="stylesheet" href="css/main.css?v=20261029-fixaccuracy2">
+<link rel="icon" href="/logo.png"><link rel="stylesheet" href="css/main.css?v=20261029-premium1">
 <link rel="stylesheet" href="css/typing.css?v=20261029-fixaccuracy2">
-<link rel="stylesheet" href="css/fix-accuracy.css?v=20261029-fixaccuracy1">
+<link rel="stylesheet" href="css/fix-accuracy.css?v=20261029-premium1">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -29,7 +29,7 @@
 <div class="form-group"><label class="form-label" for="fix-min-gross">Minimum Gross Speed (WPM)</label><input id="fix-min-gross" class="form-control" type="number" min="0" max="300" step="0.01" value="0" required></div>
 <div class="form-group"><label class="form-label" for="fix-min-net">Minimum Net Speed (WPM)</label><input id="fix-min-net" class="form-control" type="number" min="0" max="300" step="0.01" value="0" required></div>
 <div class="form-group"><label class="form-label" for="fix-timer">Timer</label><select id="fix-timer" class="form-control"><option value="free">Free practice — stopwatch</option><option value="30">30 seconds</option><option value="60">1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option><option value="900">15 minutes</option><option value="1200">20 minutes</option><option value="1500">25 minutes</option><option value="1800">30 minutes</option><option value="custom">Custom duration…</option></select></div><div class="form-group fix-custom-time-wrap" id="fix-custom-time-wrap" hidden><label class="form-label" for="fix-custom-minutes">Custom time (minutes)</label><input id="fix-custom-minutes" class="form-control" type="number" min="1" max="180" step="1" value="10"><small class="fix-help">Fixed countdown from your selected duration.</small></div>
-<div class="form-group"><label class="form-label" for="fix-voice">Error countdown voice</label><select id="fix-voice" class="form-control"><option value="on">On</option><option value="off">Off</option></select></div>
+<div class="form-group"><label class="form-label" for="fix-highlight-setting">Highlight typed text</label><select id="fix-highlight-setting" class="form-control"><option value="on" selected>On — show character feedback</option><option value="off">Off — plain passage</option></select></div><div class="form-group"><label class="form-label" for="fix-voice">Error countdown voice</label><select id="fix-voice" class="form-control"><option value="on">On</option><option value="off">Off</option></select></div>
 </div>
 <p class="fix-help">Changing Gross Speed automatically copies it to Net Speed. You can then edit Net Speed separately. Minimum speeds are used for the final qualification status.</p>
 <button class="btn btn-primary btn-block" type="submit">Start Fix Accuracy</button>
@@ -55,10 +55,10 @@
 <div><span>Attempt Time</span><strong id="fix-result-time">00:00:00</strong></div><div><span>Total Typed Word</span><strong id="fix-result-typed-words">0.00</strong></div><div><span>Typed Keystrokes</span><strong id="fix-result-keystrokes">0</strong></div><div><span>Finish Reason</span><strong id="fix-result-reason">Passage complete</strong></div>
 </div>
 <div class="fix-result-thresholds"><p>Minimum Gross: <strong id="fix-result-min-gross">0</strong> WPM</p><p>Minimum Net: <strong id="fix-result-min-net">0</strong> WPM</p><p>Maximum Errors: <strong id="fix-result-max-errors">5</strong></p></div>
-<div class="fix-result-passage"><h3>Original Passage</h3><p id="fix-result-original"></p><h3>Your Typed Passage</h3><p id="fix-result-typed"></p></div>
+<div class="fix-result-passage"><h3>Typed Passage — Mistakes Annotated</h3><p class="fix-result-legend"><span class="mistake-omitted">Blue: omitted word</span><span class="mistake-extra">Pink: extra word</span><span class="mistake-wrong">Red: wrong word</span></p><div id="fix-result-typed" class="fix-result-typed" aria-label="Typed passage with mistake annotations"></div></div>
 <div class="fix-actions"><button id="fix-again" class="btn btn-primary" type="button">Play Again</button><button id="fix-print" class="btn btn-secondary" type="button">Print Result</button><a class="btn btn-secondary" href="/Typing_test.html">Typing Tests</a></div>
 </section>
 </main>
 <footer class="footer"><p>© Decoding HCM — All Rights Reserved</p></footer>
-<script src="js/config.js?v=20261023-typing-fix2"></script><script src="js/auth.js?v=20261026-auth-activity1"></script><script src="supabase/functions/typing-result/typing-master.js?v=20261029-master3"></script><script src="js/fix-accuracy.js?v=20261029-master1"></script>
+<script src="js/config.js?v=20261023-typing-fix2"></script><script src="js/auth.js?v=20261026-auth-activity1"></script><script src="supabase/functions/typing-result/typing-master.js?v=20261029-master3"></script><script src="js/fix-accuracy.js?v=20261029-premium1"></script>
 </body></html>
