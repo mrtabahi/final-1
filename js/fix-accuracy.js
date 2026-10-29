@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const authStatus = await TypingMaster.requireCandidateGuard();
+  if (!authStatus?.ok) return;
   const $ = id => document.getElementById(id);
   const folderSelect=$('fix-folder'), passageSelect=$('fix-passage-select'), customInput=$('fix-custom'), form=$('fix-setup-form');
   const setup=$('setup-panel'), game=$('game-panel'), result=$('result-panel'), input=$('fix-input');
@@ -77,8 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
     if(errorCount>previousErrors)announce(Math.max(1,currentConfig.maxErrors-previousErrors));
     if(errorCount>=currentConfig.maxErrors){finish('Maximum errors reached');return;}
-    const typedCommitted=words(value.slice(0,hasTrailingSpace?value.length:value.search(/\s[^\s]*$/u)>=0?value.search(/\s[^\s]*$/u)+1:0));
-    if(hasTrailingSpace&&typedCommitted.length>=words(activePassage).length){finish('Passage complete');return;}
+    if(hasTrailingSpace&&words(value).length>=words(activePassage).length){finish('Passage complete');return;}
   }
   input.addEventListener('keydown',e=>{
     if(finished)return;
