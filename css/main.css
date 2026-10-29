@@ -1048,4 +1048,23 @@ body.feature-site-locked{overflow:hidden!important}
 .admin-body .admin-bulk-modal .admin-modal-actions{background:#0b1b2e!important}
 .admin-body :is(.admin-modal-actions,.admin-bulk-draft){border-color:rgba(103,232,249,.15)!important}
 .admin-body .admin-form-message.is-error{background:rgba(251,113,133,.1)!important;color:#fda4af!important}
+/* Page-specific light palettes used to win over the shared theme on recovery and subscription pages. */
+body.recovery-page{background:radial-gradient(ellipse at 10% 0%,rgba(34,211,238,.12),transparent 32rem),#07111f!important;color:#e7f3ff!important}
+body.recovery-page .recovery-mark{background:rgba(34,211,238,.1)!important;border:1px solid rgba(103,232,249,.24)!important;color:#67e8f9!important;box-shadow:0 0 22px rgba(34,211,238,.08)!important}
+body.recovery-page .recovery-card button{background:linear-gradient(115deg,#0e7490,#2563eb)!important;border:1px solid rgba(103,232,249,.35)!important;color:#fff!important}
+body.recovery-page .recovery-back{color:#67e8f9!important}
+body.subscription-page{background:radial-gradient(ellipse at 10% 0%,rgba(34,211,238,.08),transparent 34rem),#07111f!important;color:#e7f3ff!important}
+body.subscription-page :is(.sub-current,.sub-plans-section,.sub-faq,.sub-plan-card,.sub-current-state,.sub-loading-card,.sub-empty-card,.sub-faq-grid article,.account-membership-summary article,.account-membership-history>section){
+  background:linear-gradient(145deg,rgba(15,31,50,.98),rgba(9,23,39,.98))!important;
+  border-color:rgba(103,232,249,.17)!important;color:#e7f3ff!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.2)!important;
+}
+body.subscription-page :is(.sub-plan-count,.sub-plan-ribbon,.sub-account-status,.sub-plan-features li:before){
+  background:rgba(34,211,238,.1)!important;border-color:rgba(103,232,249,.22)!important;color:#a5f3fc!important;
+}
+body.subscription-page .sub-plan-price{color:#e7fbff!important}
+body.subscription-page :is(.sub-plan-tagline,.sub-plan-duration,.sub-plan-features li,.sub-current-state,.sub-faq-grid article p,.sub-plan-card p){color:#9bb0c8!important}
+body.subscription-page :is(.sub-plan-divider){background:rgba(103,232,249,.16)!important}
+body.subscription-page .sub-plan-card .sub-btn-light{background:#102239!important;color:#d8eaff!important;border-color:#29445f!important}
+body.subscription-page .sub-footer{color:#9bb0c8!important;border-color:rgba(103,232,249,.14)!important}
 
