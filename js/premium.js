@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', async () => {
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const money=(minor,currency='INR')=>new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
  const message=(text,error=false)=>{const el=$('premium-message');if(el){el.textContent=text;el.classList.toggle('is-error',error)}};
+ const couponInput=$('premium-coupon-code'),couponApply=$('premium-coupon-apply'),couponNote=$('premium-coupon-note');
+ couponApply?.addEventListener('click',()=>{const code=(couponInput?.value||'').trim().toUpperCase();if(!code){if(couponNote)couponNote.textContent='Enter a coupon code first.';return;}if(couponNote)couponNote.textContent='Coupon validation is not configured on the secure checkout service yet. No discount has been applied; plan prices remain unchanged.';});
  const {data:{user}}=await client.auth.getUser().catch(()=>({data:{user:null}}));
  const state=$('premium-current-state');
  if(user){
