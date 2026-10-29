@@ -359,3 +359,22 @@
 
 /* Two remaining setup controls after moving formula selection to the result card. */
 @media(min-width:761px){.self-setup-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+
+
+/* Premium self-test setup surface — no behaviour changes */
+#self-setup.self-setup{position:relative;isolation:isolate;overflow:hidden;max-width:980px;margin-inline:auto;padding:clamp(1rem,2.8vw,2rem);border:1px solid #7c9cff55;border-radius:22px;background:linear-gradient(145deg,#ffffff 0%,#f5f7ff 55%,#effcff 100%);box-shadow:0 20px 60px #142d5520,0 0 0 1px #ffffff inset}
+#self-setup.self-setup:before{content:"";position:absolute;z-index:-1;inset:0 0 auto;height:3px;background:linear-gradient(90deg,#22d3ee,#818cf8,#c084fc,#34d399);background-size:220% 100%;animation:selfSetupGlow 8s linear infinite}
+#self-setup .card-title{font-size:clamp(1.15rem,2.1vw,1.5rem);letter-spacing:-.03em}
+#self-setup .self-source{min-height:118px;border-radius:14px;border-color:#cbd5f5;background:#ffffffdf;box-shadow:inset 0 1px 2px #132b4d0a;transition:border-color .2s,box-shadow .2s}
+#self-setup .self-source:focus,#self-setup .form-control:focus{outline:none;border-color:#818cf8;box-shadow:0 0 0 3px #818cf82b,0 0 24px #22d3ee12}
+#self-setup .form-control{border-radius:12px;border-color:#cbd5e1;min-height:43px}
+#self-setup .form-label{font-weight:800;color:#293b5e;font-size:.86rem}
+#self-setup .self-saved-tools{gap:1rem;padding:1rem;border:1px solid #dbeafe;border-radius:15px;background:#eff6ff99}
+#self-setup .self-saved-actions .btn{border-radius:10px;transition:transform .18s,box-shadow .18s}
+#self-setup .self-saved-actions .btn:hover{transform:translateY(-2px);box-shadow:0 7px 18px #3341551a}
+#self-setup .self-setup-grid{gap:.85rem;margin:1rem 0}
+#self-setup .self-check{border:1px solid #dbeafe;border-radius:14px;background:#ffffffc9;padding:.8rem 1rem;box-shadow:0 6px 18px #1e3a8a08}
+#self-setup #self-start{min-height:48px;border-radius:13px;box-shadow:0 9px 24px #4f46e529;transition:transform .2s,box-shadow .2s}
+#self-setup #self-start:hover{transform:translateY(-2px);box-shadow:0 14px 30px #4f46e53b}
+@keyframes selfSetupGlow{to{background-position:220% 0}}
+@media(prefers-reduced-motion:reduce){#self-setup.self-setup:before{animation:none}#self-setup #self-start{transition:none}}
