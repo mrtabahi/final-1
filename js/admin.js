@@ -1752,7 +1752,11 @@ async function loadDashboard() {
             highlight_mode: highlightMode,
             hide_paragraph_mode: hideParagraphMode,
             active,
-            leaderboard_enabled: leaderboard
+            leaderboard_enabled: leaderboard,
+            // New tests are appended to the end of their folder by default.
+            sort_order: editingTestId
+              ? Number(cachedTests.find(item => String(item.id) === String(editingTestId))?.sort_order ?? 0)
+              : Math.max(-1, ...cachedTests.filter(item => String(item.folder_id || '') === String(folderId)).map(item => Number(item.sort_order ?? -1))) + 1
         };
         const query = editingTestId
             ? supabaseClient.from('tests').update(values).eq('id', editingTestId)
