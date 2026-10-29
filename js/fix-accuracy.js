@@ -55,11 +55,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderPassage(){
     const host=$('fix-passage-display');host.replaceChildren();host.style.display=passageHidden?'none':'block';host.classList.toggle('no-highlight',!highlightEnabled);host.style.fontSize=typingFontSize+'px';
     const expected=String(activePassage),typed=String(input.value||''),re=/\S+/gu,expWords=[...expected.matchAll(re)],typedWords=typed.match(/\S+/gu)||[],committedCount=(/\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
+    const typedIndexByExpected=new Map(),committedMissingExpected=new Set();let expectedCursor=0,typedCursor=0;
+    for(const item of TypingMaster.alignWords(expWords.map(match=>match[0]),typedWords)){if(item.type==='match'||item.type==='substitute'){typedIndexByExpected.set(expectedCursor,typedCursor);expectedCursor++;typedCursor++;}else if(item.type==='delete'){if(typedCursor<committedCount)committedMissingExpected.add(expectedCursor);expectedCursor++;}else if(item.type==='insert'){typedCursor++;}}
     let cursor=0;
     expWords.forEach((match,wordIndex)=>{
       if(match.index>cursor)host.appendChild(document.createTextNode(expected.slice(cursor,match.index)));
-      const word=match[0],typedWord=typedWords[wordIndex]||'',wordNode=document.createElement('span');wordNode.className='fix-word';
-      const isCommitted=wordIndex<committedCount,isCurrent=wordIndex===committedCount;
+      const typedIndex=typedIndexByExpected.get(wordIndex),word=match[0],typedWord=typedIndex===undefined?'':typedWords[typedIndex]||'',wordNode=document.createElement('span');wordNode.className='fix-word';
+      const isCommitted=(typedIndex!==undefined&&typedIndex<committedCount)||committedMissingExpected.has(wordIndex),isCurrent=typedIndex!==undefined&&typedIndex===committedCount;
       Array.from(word).forEach((ch,charIndex)=>{const span=document.createElement('span');span.className='passage-char';span.textContent=ch;
         if(isCommitted){if(charIndex>=typedWord.length||typedWord[charIndex]!==ch)span.classList.add('char-incorrect');else span.classList.add('char-correct');}
         else if(isCurrent&&charIndex<typedWord.length)span.classList.add(typedWord[charIndex]===ch?'char-correct':'char-incorrect');
