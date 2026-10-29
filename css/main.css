@@ -1037,4 +1037,4 @@ body.admin-body{
 @keyframes featureDialogIn{from{opacity:0;transform:translateY(7px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:480px){.feature-upgrade-dialog,.feature-site-lock-card{padding:18px 15px 15px;border-radius:14px}.feature-upgrade-actions>*{flex:1}}
 @media(prefers-reduced-motion:reduce){.feature-upgrade-dialog,.feature-site-lock-card{animation:none}}
-
+body.feature-site-locked{overflow:hidden!important}
