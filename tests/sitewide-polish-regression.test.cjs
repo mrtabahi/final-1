@@ -12,7 +12,7 @@ test('shared theme includes compact neon surfaces, form focus and reduced-motion
   const css = read('css/main.css');
   assert.match(css, /--neon-cyan:\s*#22d3ee/i);
   assert.match(css, /body:not\(\.admin-body\).*background/s);
-  assert.match(css, /width:\\s*min\\(440px,calc\\(100vw - 24px\\)\\)/);
+  assert.match(css, /width:\s*min\(440px,calc\(100vw - 24px\)\)/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /\.admin-ledger-table/);
 });
