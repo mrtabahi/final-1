@@ -11,3 +11,25 @@
 .fix-live-stats>span{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:.65rem .8rem}.fix-result-grid>div{background:linear-gradient(145deg,#fff,#eff6ff);border-color:#cbdcf0}
 @keyframes fixTitleIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.fix-heading h1{animation:none}}
+
+
+/* Animated Fix Accuracy hero artwork */
+.fix-heading{display:flex;align-items:center;justify-content:space-between;gap:clamp(1rem,4vw,3rem);text-align:left;padding:clamp(1.5rem,4vw,3rem);min-height:245px}
+.fix-hero-copy{position:relative;z-index:2;max-width:650px}.fix-hero-copy>p{max-width:56ch}
+.fix-hero-cta{display:inline-flex;align-items:center;gap:.65rem;margin-top:1rem;padding:.8rem 1.1rem;border-radius:12px;background:#d1fae5;color:#064e3b;text-decoration:none;font-weight:850;box-shadow:0 8px 22px #031d3b33;transition:transform .2s,box-shadow .2s}
+.fix-hero-cta:hover{transform:translateY(-2px);box-shadow:0 12px 26px #031d3b44}
+.fix-hero-art{position:relative;isolation:isolate;flex:0 0 245px;height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:1px solid #b5e8ff55;border-radius:24px;background:linear-gradient(145deg,#071b30cc,#143f70dd);box-shadow:0 18px 45px #06152d55,inset 0 1px #ffffff2b;text-decoration:none;overflow:hidden;animation:fixArtFloat 4s ease-in-out infinite}
+.fix-art-label{font-size:2.8rem;font-weight:1000;letter-spacing:.2em;color:#a7f3d0;text-shadow:0 0 24px #34d39988;z-index:1}
+.fix-key-row{display:flex;gap:5px;z-index:1}.fix-key-row i{font-style:normal;display:grid;place-items:center;width:31px;height:32px;border-radius:7px;background:linear-gradient(145deg,#f8fafc,#b8d2eb);color:#123b63;font-weight:900;box-shadow:0 4px 0 #6888ad;animation:fixKeyPulse 1.8s ease-in-out infinite}.fix-key-row i:nth-child(2){animation-delay:.12s}.fix-key-row i:nth-child(3){animation-delay:.24s}.fix-key-row i:nth-child(4){animation-delay:.36s}.fix-key-row i:nth-child(5){animation-delay:.48s}
+.fix-art-cursor{width:3px;height:23px;background:#6ee7b7;box-shadow:0 0 18px #6ee7b7;position:absolute;top:49px;right:43px;animation:fixCursorBlink .7s steps(2,start) infinite}
+.fix-art-caption{font-size:.65rem;letter-spacing:.2em;font-weight:900;color:#c7e7ff;z-index:1}
+.fix-orbit{position:absolute;border:1px solid #93c5fd55;border-radius:50%;width:190px;height:190px;animation:fixOrbit 9s linear infinite}.fix-orbit-a{top:-90px;left:-55px}.fix-orbit-b{right:-85px;bottom:-115px;width:220px;height:220px;animation-direction:reverse}
+#fix-setup-form .fix-custom-time-wrap{padding:1rem;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe}
+#fix-setup-form .fix-custom-time-wrap[hidden]{display:none}
+.fix-passage-display.no-highlight .char-incorrect,.fix-passage-display.no-highlight .char-correct,.fix-passage-display.no-highlight .char-current{color:inherit;background:transparent;border-bottom:0}
+@keyframes fixArtFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes fixKeyPulse{0%,100%{transform:translateY(0);filter:brightness(1)}50%{transform:translateY(3px);filter:brightness(1.15)}}
+@keyframes fixCursorBlink{50%{opacity:0}}
+@keyframes fixOrbit{to{transform:rotate(360deg)}}
+@media(max-width:640px){.fix-heading{align-items:stretch;flex-direction:column;text-align:center}.fix-hero-art{flex-basis:auto;width:min(100%,300px);height:170px;margin:0 auto}.fix-hero-copy>p{margin-inline:auto}.fix-hero-cta{justify-content:center}}
+@media(prefers-reduced-motion:reduce){.fix-hero-art,.fix-key-row i,.fix-art-cursor,.fix-orbit{animation:none}.fix-hero-cta{transition:none}}
