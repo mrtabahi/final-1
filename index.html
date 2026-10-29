@@ -893,10 +893,10 @@
     <script src="js/ads-loader.js?v=20261023-admin-controls"></script>
     <script src="js/home.js?v=20261024-announcement-layout1"></script>
 
-<script src="js/auth.js"></script>
+<script src="js/auth.js?v=20261030-account-controls1"></script>
 <script defer src="js/pro-menu.js?v=20261025-pro-home1"></script>
 <script>document.getElementById("site-history-back")?.addEventListener("click",()=>{if(window.history.length>1)window.history.back();else window.location.href="/index.html";});</script>
-<script src="/js/account-nav.js?v=20261027-auth-nav1"></script><script src="js/feature-access.js?v=20261030-access5"></script>
+<script src="/js/account-nav.js?v=20261027-auth-nav1"></script><script src="js/feature-access.js?v=20261030-access6"></script>
 <script id="site-experience-landing">
 (async()=>{try{if(!window.supabaseClient)return;const r=await window.supabaseClient.from('site_experience_settings').select('landing_page').eq('id',1).maybeSingle();if(r.error)return;const page=r.data?.landing_page||'home';const targets={login:'/login.html', 'typing-test':'/Typing_test.html'};const target=targets[page];if(target&&location.pathname==='/'&&location.pathname!==target)location.replace(target);}catch(e){console.debug('Landing page preference unavailable:',e?.message||e);}})();
 </script><script src="/js/site-audio.js?v=20261029-audio1"></script>
