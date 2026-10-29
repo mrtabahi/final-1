@@ -12,6 +12,11 @@ test('admin access controls and member lifecycle actions are wired', () => {
   const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
   const materials = fs.readFileSync(path.join(root, 'js/materials.js'), 'utf8');
   const secureMigration = fs.readFileSync(path.join(root, 'supabase/migrations/20261028190000_enforce_paid_test_access.sql'), 'utf8');
+  const accountControls = fs.readFileSync(path.join(root, 'supabase/migrations/20261030120000_admin_account_controls.sql'), 'utf8');
+  const candidates = fs.readFileSync(path.join(root, 'js/admin-candidates.js'), 'utf8');
+  const auth = fs.readFileSync(path.join(root, 'js/auth.js'), 'utf8');
+  const adminCore = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
+  const bulkPdf = fs.readFileSync(path.join(root, 'js/admin-bulk-pdf.js'), 'utf8');
 
   assert.match(admin, /feature-access-form/);
   assert.match(admin, /toggleAccessRule/);
@@ -45,4 +50,14 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(materials, /get_material_link/);
   assert.match(secureMigration, /tests_candidate_select/);
   assert.match(secureMigration, /get_test_for_candidate/);
+  assert.match(accountControls, /admin_set_candidate_status/);
+  assert.match(accountControls, /candidate_account_status_changed/);
+  assert.match(candidates, /candidate-status-filter/);
+  assert.match(candidates, /renderAccountStatusControls/);
+  assert.match(candidates, /renderBillingHistory/);
+  assert.match(candidates, /candidate_activity_sessions/);
+  assert.match(auth, /account_status/);
+  assert.match(admin, /featureResources/);
+  assert.match(adminCore, /sort_order: editingTestId/);
+  assert.match(bulkPdf, /sort_order: nextSortOrder \+ index/);
 });
