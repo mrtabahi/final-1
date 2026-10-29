@@ -1038,3 +1038,14 @@ body.admin-body{
 @media(max-width:480px){.feature-upgrade-dialog,.feature-site-lock-card{padding:18px 15px 15px;border-radius:14px}.feature-upgrade-actions>*{flex:1}}
 @media(prefers-reduced-motion:reduce){.feature-upgrade-dialog,.feature-site-lock-card{animation:none}}
 body.feature-site-locked{overflow:hidden!important}
+/* Admin form dialogs: compact by default; retain a wider canvas only for bulk workflows. */
+.admin-body .admin-modal-backdrop{background:rgba(2,8,23,.8)!important;backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;z-index:100000!important}
+.admin-body .admin-modal:not(.admin-modal-wide){width:min(100%,460px)!important;max-height:min(84dvh,720px)!important;overflow-y:auto!important;padding:clamp(14px,2.5vw,22px)!important;background:linear-gradient(145deg,#102239,#091525)!important;color:#e7f3ff!important;border:1px solid rgba(103,232,249,.28)!important;border-radius:16px!important;box-shadow:0 24px 72px rgba(0,0,0,.48),0 0 24px rgba(34,211,238,.08)!important}
+.admin-body .admin-modal-wide{width:min(100%,850px)!important;max-height:min(88dvh,900px)!important;overflow-y:auto!important;padding:clamp(12px,2vw,20px)!important;background:linear-gradient(145deg,#102239,#091525)!important;color:#e7f3ff!important;border:1px solid rgba(103,232,249,.28)!important;border-radius:16px!important}
+.admin-body :is(.admin-modal-head h2,.admin-bulk-review-heading strong,.admin-bulk-draft-head strong){color:#e7f3ff!important}
+.admin-body :is(.admin-form-field label,.admin-modal-intro,.admin-field-help,.admin-bulk-review-heading small,.admin-bulk-draft-head>span){color:#9bb0c8!important}
+.admin-body :is(.admin-bulk-setup,.admin-bulk-draft,.admin-modal-actions){background:rgba(8,21,37,.78)!important;border-color:rgba(103,232,249,.16)!important;color:#cbdcf0!important}
+.admin-body .admin-bulk-modal .admin-modal-actions{background:#0b1b2e!important}
+.admin-body :is(.admin-modal-actions,.admin-bulk-draft){border-color:rgba(103,232,249,.15)!important}
+.admin-body .admin-form-message.is-error{background:rgba(251,113,133,.1)!important;color:#fda4af!important}
+
