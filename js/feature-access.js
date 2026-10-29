@@ -5,6 +5,8 @@
   const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   let rules=[],premium=false,ready=false,popupReturnFocus=null;
+  // Hide protected page content until the access decision has completed.
+  document.documentElement.classList.add('feature-access-pending');
   function closePopup(){
     const el=document.getElementById('feature-upgrade-modal');
     if(!el||!el.classList.contains('is-open'))return;
@@ -77,7 +79,7 @@
       .feature-paid-kicker{font-size:.7rem;font-weight:900;letter-spacing:.1em;color:#7048d8}
       .feature-paid-teaser strong{font-size:1.05rem}.feature-paid-teaser p{margin:0;color:#536078}
       .feature-paid-teaser button{border:0;border-radius:999px;padding:8px 14px;background:linear-gradient(100deg,#5d4af4,#c039c8);color:#fff;font-weight:900}
-      body.feature-site-locked>*:not(.feature-site-lock):not(script):not(style){visibility:hidden}
+      html.feature-access-pending body>*:not(script):not(style){visibility:hidden!important}\n      html.feature-access-pending body:after{content:'Checking access…';position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;background:#f8f7ff;color:#34415c;font-weight:800}\n      body.feature-site-locked>*:not(.feature-site-lock):not(script):not(style){visibility:hidden}
       body.feature-site-locked .feature-site-lock{visibility:visible;position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:20px;background:#f8f7ff}
       .feature-site-lock-card{width:min(100%,480px);padding:32px;border:1px solid #d7d5ff;border-radius:26px;background:#fff;box-shadow:0 24px 70px #25244a20;text-align:center;color:#25314a}
       @media(max-width:760px){.navbar .nav-links{justify-content:flex-start;gap:9px 13px}.feature-upgrade-dialog{padding:26px 20px}}
@@ -95,6 +97,7 @@
       if(user){const {data}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(price_minor)').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(10);premium=(data||[]).some(s=>(!s.starts_at||new Date(s.starts_at)<=new Date())&&(!s.ends_at||new Date(s.ends_at)>new Date())&&Number(s.subscription_plans?.price_minor||0)>0);}
       ready=true;
       applyPublicAccessLabels();
+      document.documentElement.classList.remove('feature-access-pending');
       // Several pages dynamically render large lists. Coalesce DOM updates so one
       // render burst triggers one label pass instead of repeated full-document scans.
       let labelRefreshTimer=null;
@@ -115,7 +118,7 @@
       const pageRule=findRule('menu',currentPage)||findRule('menu','/'+currentPage)||(pageFeatureKey&&findRule('feature',pageFeatureKey));
       const effectivePageRule=pageRule||site;
       if(effectivePageRule&&!effectivePageRule.is_free&&!premium&&!alwaysPublicPages.has(currentPage)){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark" aria-hidden="true">✦</span><h1>Premium access required</h1><p>'+esc(effectivePageRule.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}
-    }catch(e){console.warn('Feature access check unavailable; no client-side lock applied.');}
+    }catch(e){console.error('Feature access verification failed; protected content remains hidden.',e);document.documentElement.classList.remove('feature-access-pending');document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Access check unavailable</h1><p>We could not verify your access. Please refresh or sign in again. Paid content remains locked until access is verified.</p><a class="feature-upgrade-primary" href="premium.html">View Premium Pass</a></div></div>');}
   }
   function applyPublicAccessLabels(){
     document.querySelectorAll('a[data-folder-id].category-card').forEach(card=>{
