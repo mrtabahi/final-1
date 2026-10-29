@@ -63,7 +63,7 @@
     const list=$('candidate-list'); if(!list || typeof supabaseClient==='undefined' || !supabaseClient) return;
     list.innerHTML='<div class="admin-empty">Loading candidate profiles…</div>';
     try {
-      const {data,error}=await supabaseClient.from('profiles').select('id,full_name,email,phone,phone_verified,role,created_at').eq('role','candidate').order('created_at',{ascending:false}).limit(2000);
+      const {data,error}=await supabaseClient.from('profiles').select('id,full_name,email,phone,phone_verified,role,created_at,account_status,account_status_reason,account_status_changed_at').eq('role','candidate').order('created_at',{ascending:false}).limit(2000);
       if(error) throw error;
       candidates=data||[];
       activityById = new Map();
@@ -139,8 +139,33 @@
           '</tbody></table></div>' : '<div class="admin-empty">No activity sessions recorded yet. Tracking starts after deployment when candidates visit while signed in.</div>') + '</section>';
       const avg=attempts.length?attempts.reduce((s,a)=>s+Number(a.net_wpm||0),0)/attempts.length:0;
       body.innerHTML=`<div class="candidate-profile-summary"><div class="candidate-avatar large">${esc(initials(selected.full_name))}</div><div><h3>${esc(selected.full_name||'Unnamed candidate')}</h3><p>${esc(selected.email||'No email')} · ${esc(selected.phone||'No phone')}</p><small>Joined ${esc(date(selected.created_at))} · ${selected.phone_verified?'Phone verified':'Phone not verified'}</small></div></div><div class="candidate-detail-stats"><article><span>Attempts loaded</span><strong>${attempts.length}</strong></article><article><span>Average net WPM</span><strong>${avg.toFixed(2)}</strong></article><article><span>Average accuracy</span><strong>${attempts.length?(attempts.reduce((s,a)=>s+Number(a.accuracy||0),0)/attempts.length).toFixed(2)+'%':'—'}</strong></article></div><div class="candidate-history-heading"><h3>Recent typing attempts</h3><span>Latest 50 records</span></div>${attempts.length?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>Date</th><th>Test</th><th>Language</th><th>Net WPM</th><th>Accuracy</th><th>Errors</th></tr></thead><tbody>'+attempts.map(a=>'<tr><td>'+esc(date(a.created_at))+'</td><td>'+esc(a.tests?.title||'Practice test')+'</td><td>'+esc(a.language||'—')+'</td><td>'+Number(a.net_wpm||0).toFixed(2)+'</td><td>'+Number(a.accuracy||0).toFixed(2)+'%</td><td>'+Number(a.total_errors||0)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="admin-empty">No submitted attempts found for this candidate.</div>'}${activityHtml}`;
-      await renderCandidatePermissions(selected);
+      await renderAccountStatusControls(selected);\n      await renderCandidatePermissions(selected);
     } catch(e) { body.innerHTML='<div class="admin-error">Could not load attempt history: '+esc(e.message)+'</div>'; }
+  }
+
+  async function renderAccountStatusControls(candidate) {
+    const body=$('candidate-detail-content'); if(!body)return;
+    const section=document.createElement('section');
+    section.className='admin-panel candidate-account-status-panel';
+    const status=String(candidate.account_status||'active');
+    section.innerHTML='<div class="admin-panel-heading"><div><h2>Account access control</h2><p>Suspend or ban this candidate, or restore access. Changes are audited server-side.</p></div><span class="candidate-status '+(status==='active'?'is-verified':'is-pending')+'">'+esc(status.toUpperCase())+'</span></div><form class="candidate-account-status-form"><label>Account status<select class="admin-select" name="status"><option value="active">Active — allow access</option><option value="suspended">Suspended — temporary block</option><option value="banned">Banned — block access</option></select></label><label>Reason for audit log<textarea name="reason" class="admin-input" rows="2" maxlength="500" placeholder="Required for suspensions/bans; explain the reason"></textarea></label><p class="admin-form-message" role="status" aria-live="polite"></p><button type="submit" class="admin-btn admin-btn-primary">Save account status</button></form>';
+    const form=section.querySelector('form'), select=form.elements.status, reason=form.elements.reason, msg=form.querySelector('[role=status]'), button=form.querySelector('button[type=submit]');
+    select.value=status;reason.value=candidate.account_status_reason||'';
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();const next=select.value,why=reason.value.trim();
+      if(next!=='active'&&!why){msg.textContent='Enter a reason before suspending or banning an account.';msg.className='admin-form-message is-error';reason.focus();return;}
+      if(!await window.confirm('Confirm account status change to '+next.toUpperCase()+' for '+(candidate.email||candidate.id)+'?'))return;
+      button.disabled=true;msg.textContent='Saving and recording audit event…';
+      try{
+        const {data,error}=await supabaseClient.rpc('admin_set_candidate_status',{p_user_id:candidate.id,p_status:next,p_reason:why});
+        if(error)throw error;
+        candidate.account_status=next;candidate.account_status_reason=why;
+        msg.textContent='Account status updated and audit event recorded.';msg.className='admin-form-message is-success';
+        await load();await showDetail(candidate.id);
+      }catch(error){msg.textContent=error.message||'Could not update account status.';msg.className='admin-form-message is-error';}
+      finally{button.disabled=false;}
+    });
+    body.appendChild(section);
   }
   const permissionDefinitions = [
     ['folder_tests','Folders & Tests','Create and manage folders and typing tests.'],
