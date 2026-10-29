@@ -28,4 +28,5 @@ body.recovery-page{min-height:100vh;background:radial-gradient(ellipse at 8% 4%,
 </section></main><script src="js/config.js"></script><script>
 const form=document.getElementById('email-form'),email=document.getElementById('reset-email'),button=document.getElementById('send-reset'),message=document.getElementById('reset-message');
 form.addEventListener('submit',async event=>{event.preventDefault();message.textContent='';if(!supabaseClient){message.textContent='Authentication could not load. Refresh and try again.';return;}button.disabled=true;button.textContent='Sending secure link…';try{const {error}=await supabaseClient.auth.resetPasswordForEmail(email.value.trim().toLowerCase(),{redirectTo:new URL('/reset.html',window.location.origin).toString()});if(error)throw error;message.textContent='If this email is registered, a password reset link has been sent. Check your Inbox and Spam folders.';form.reset();}catch(error){message.textContent=error.message||'Could not request a reset link. Please try again later.';}finally{button.disabled=false;button.textContent='Send password reset link';}});
-</script></body></html>
+</script><script src="/js/site-audio.js?v=20261029-audio1"></script>
+</body></html>
