@@ -20,17 +20,15 @@
     premiumDialogReturnFocus=null;
   }
   function openPremiumDialog(){
-    closePopup();if(document.getElementById('feature-premium-dialog'))return;
-    premiumDialogReturnFocus=document.activeElement;
-    premiumDialogPreviousOverflow=document.documentElement.style.overflow;
-    const wrap=document.createElement('div');wrap.id='feature-premium-dialog';
-    wrap.className='feature-upgrade-backdrop feature-premium-backdrop is-open';
-    wrap.innerHTML='<section class="feature-upgrade-dialog feature-premium-frame-dialog" role="dialog" aria-modal="true" aria-label="Premium Pass"><button type="button" class="feature-upgrade-close" aria-label="Close Premium Pass">×</button><iframe title="Premium Pass plans" src="premium.html?dialog=1" loading="eager"></iframe></section>';
-    document.body.appendChild(wrap);document.documentElement.style.overflow='hidden';
-    wrap.querySelector('.feature-upgrade-close').addEventListener('click',closePremiumDialog);
-    wrap.addEventListener('click',event=>{if(event.target===wrap)closePremiumDialog();});
-    wrap.querySelector('.feature-upgrade-close').focus({preventScroll:true});
-    window.addEventListener('message',function closeMessage(event){if(event.origin!==location.origin||event.data?.type!=='premium-dialog-close')return;window.removeEventListener('message',closeMessage);closePremiumDialog();});
+    closePopup();
+    // Do not iframe premium.html: production sends X-Frame-Options: DENY,
+    // which makes the old embedded checkout render as a blank white panel.
+    // Open the same canonical Premium Pass page as a full-screen purchase dialog.
+    const returnTo=location.href;
+    const target=new URL('premium.html',location.href);
+    target.searchParams.set('dialog','1');
+    target.searchParams.set('return',returnTo);
+    location.assign(target.toString());
   }
   function popup(message){
     let el=document.getElementById('feature-upgrade-modal');
@@ -165,7 +163,14 @@
     document.querySelectorAll('a[href]').forEach(a=>{const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());const rule=findRule('menu',file)||findRule('menu',norm(href));if(rule&&!rule.is_free&&!premium&&/start_test\.html\?test=/i.test(href))return;});
   }
   document.addEventListener('click',e=>{
-    const a=e.target.closest('a,button,[data-access-key]');if(!a||!ready)return;
+    const a=e.target.closest('a,button,[data-access-key]');if(!a)return;
+    if(a.matches('a[href]')){
+      const destination=new URL(a.href,location.href);
+      if(destination.origin===location.origin&&norm(destination.pathname.split('/').pop())==='premium.html'&&norm(location.pathname.split('/').pop())!=='premium.html'){
+        e.preventDefault();e.stopImmediatePropagation();openPremiumDialog();return;
+      }
+    }
+    if(!ready)return;
     let rule=null;
     const custom=a.getAttribute('data-access-key');if(custom){const [type,...rest]=custom.split(':');rule=findRule(type,rest.join(':'));}
     const testId=a.getAttribute('data-test-id')||a.closest('[data-test-id]')?.getAttribute('data-test-id');
