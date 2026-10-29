@@ -60,6 +60,43 @@
     if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
     else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
   });
+  function installAccessStyles(){
+    if(document.getElementById('feature-access-ui-styles'))return;
+    const style=document.createElement('style');style.id='feature-access-ui-styles';
+    style.textContent=`
+      .navbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+      .navbar .brand-container{flex:0 0 auto}
+      .navbar .nav-links{display:flex;flex:1 1 100%;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 18px;min-width:0;overflow:visible}
+      .navbar .nav-links li{display:block;flex:0 0 auto}
+      .navbar .nav-links a{display:inline-flex;align-items:center;gap:5px;white-space:normal}
+      .feature-upgrade-badge{display:inline-flex;align-items:center;justify-content:center;margin-left:5px;padding:2px 6px;border-radius:999px;background:linear-gradient(100deg,#6b4df6,#c23acb);color:#fff;font-size:9px;font-weight:900;line-height:1.35;letter-spacing:.04em;white-space:nowrap;vertical-align:middle}
+      .feature-upgrade-button{cursor:pointer}
+      .feature-upgrade-backdrop{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(24,31,55,.58);backdrop-filter:blur(8px)}
+      .feature-upgrade-backdrop.is-open{display:flex}
+      .feature-upgrade-dialog{position:relative;width:min(100%,460px);padding:30px;border:1px solid #d9d8ff;border-radius:26px;background:linear-gradient(145deg,#fff,#f8f5ff);box-shadow:0 30px 90px #10152b55;color:#202a42;text-align:center}
+      .feature-upgrade-close{position:absolute;right:12px;top:10px;width:36px;height:36px;border:0;border-radius:50%;background:#efedff;color:#4c3cc9;font-size:25px;cursor:pointer}
+      .feature-upgrade-mark{display:grid;place-items:center;width:52px;height:52px;margin:0 auto 14px;border-radius:17px;background:linear-gradient(135deg,#ffbf35,#f38b08);color:#fff;font-size:25px}
+      .feature-upgrade-dialog h2{margin:0 0 10px;color:#28304b}
+      .feature-upgrade-copy{color:#526079;line-height:1.6}
+      .feature-upgrade-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:22px}
+      .feature-upgrade-primary,.feature-upgrade-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 17px;border-radius:999px;font:inherit;font-weight:800;cursor:pointer;text-decoration:none}
+      .feature-upgrade-primary{border:0;background:linear-gradient(100deg,#5d4af4,#c039c8);color:#fff}
+      .feature-upgrade-secondary{border:1px solid #d9dcef;background:#fff;color:#46516a}
+      .feature-premium-frame-dialog{width:min(1200px,96vw);height:min(850px,92dvh);padding:0;overflow:hidden;border-radius:26px}
+      .feature-premium-frame-dialog>.feature-upgrade-close{z-index:2}
+      .feature-premium-frame-dialog iframe{display:block;width:100%;height:100%;border:0;background:#f7f8ff}
+      .feature-paid-teaser{display:grid;justify-items:start;gap:8px;padding:18px;border:1px solid #ddd6fe;border-radius:16px;background:linear-gradient(120deg,#fff,#faf5ff);color:#26324a}
+      .feature-paid-kicker{font-size:.7rem;font-weight:900;letter-spacing:.1em;color:#7048d8}
+      .feature-paid-teaser strong{font-size:1.05rem}.feature-paid-teaser p{margin:0;color:#536078}
+      .feature-paid-teaser button{border:0;border-radius:999px;padding:8px 14px;background:linear-gradient(100deg,#5d4af4,#c039c8);color:#fff;font-weight:900}
+      body.feature-site-locked>*:not(.feature-site-lock):not(script):not(style){visibility:hidden}
+      body.feature-site-locked .feature-site-lock{visibility:visible;position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:20px;background:#f8f7ff}
+      .feature-site-lock-card{width:min(100%,480px);padding:32px;border:1px solid #d7d5ff;border-radius:26px;background:#fff;box-shadow:0 24px 70px #25244a20;text-align:center;color:#25314a}
+      @media(max-width:760px){.navbar .nav-links{justify-content:flex-start;gap:9px 13px}.feature-upgrade-dialog{padding:26px 20px}.feature-premium-frame-dialog{width:calc(100vw - 18px);height:92dvh;border-radius:18px}}
+    `;
+    document.head.appendChild(style);
+  }
+  installAccessStyles();
   function findRule(type,key){return rules.find(r=>r.resource_type===type&&norm(r.resource_key)===norm(key));}
   function blocked(rule){if(!rule||rule.is_free||premium)return false;popup(rule.upgrade_message);return true;}
   async function init(){
@@ -110,11 +147,16 @@
     document.querySelectorAll('[data-test-id]').forEach(card=>{
       const testId=card.getAttribute('data-test-id');const folderId=card.getAttribute('data-folder-id');
       const rule=findRule('test',testId)||findRule('folder',folderId);
-      const link=card.querySelector('.test-start,[data-test-start],a[href*="start_test.html"]');
-      if(!link)return;
-      if(rule&&!rule.is_free&&!premium){if(link.textContent.trim()!=='UPGRADE'){link.dataset.originalLabel=link.innerHTML;link.textContent='UPGRADE';}link.classList.add('feature-upgrade-button');link.setAttribute('aria-label','Upgrade to access '+(card.querySelector('h2')?.textContent||'this test'));}
-      else if(link.dataset.originalLabel){link.innerHTML=link.dataset.originalLabel;}
-      else if(!link.dataset.originalLabel){link.dataset.originalLabel=link.innerHTML;}
+      if(rule&&!rule.is_free&&!premium){
+        if(!card.dataset.paidPreviewHidden){
+          card.dataset.originalPaidMarkup=card.innerHTML;card.dataset.paidPreviewHidden='true';
+          card.innerHTML='<div class="feature-paid-teaser"><span class="feature-paid-kicker">PREMIUM ACCESS</span><strong>Locked test</strong><p>Upgrade your pass to unlock this test.</p><button type="button" class="feature-upgrade-button">UPGRADE</button></div>';
+        }
+        card.classList.add('feature-content-locked');
+      }else{
+        card.classList.remove('feature-content-locked');
+        if(card.dataset.paidPreviewHidden&&card.dataset.originalPaidMarkup){card.innerHTML=card.dataset.originalPaidMarkup;delete card.dataset.originalPaidMarkup;delete card.dataset.paidPreviewHidden;}
+      }
     });
     document.querySelectorAll('a[href]').forEach(a=>{const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());const rule=findRule('menu',file)||findRule('menu',norm(href));if(rule&&!rule.is_free&&!premium&&/start_test\.html\?test=/i.test(href))return;});
   }
