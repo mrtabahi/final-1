@@ -68,4 +68,10 @@ test('admin dialogs stay compact unless the workflow explicitly needs a wide lay
   assert.match(css, /\.admin-body \.admin-modal:not\(\.admin-modal-wide\)\{width:min\(100%,460px\)!important/);
   assert.match(css, /\.admin-body \.admin-modal-wide\{width:min\(100%,850px\)!important/);
 });
+test('recovery and subscription pages override their legacy light palettes for theme consistency', () => {
+  const css = read('css/main.css');
+  assert.match(css, /body\.recovery-page\{[^}]*background:[^}]*!important/);
+  assert.match(css, /body\.subscription-page\{[^}]*background:[^}]*!important/);
+  assert.match(css, /body\.subscription-page :is\(\.sub-current,\.sub-plans-section,\.sub-faq,\.sub-plan-card/);
+});
 
