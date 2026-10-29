@@ -145,10 +145,23 @@
       await renderAccountStatusControls(selected);
       await renderCandidatePermissions(selected);
       await renderBillingHistory(selected);
+      await renderAccountAuditHistory(selected);
     } catch(e) { body.innerHTML='<div class="admin-error">Could not load attempt history: '+esc(e.message)+'</div>'; }
   }
 
 
+
+  async function renderAccountAuditHistory(candidate) {
+    const body=$('candidate-detail-content');if(!body)return;
+    const panel=document.createElement('section');panel.className='admin-panel candidate-audit-history';panel.style.marginTop='1rem';
+    panel.innerHTML='<div class="admin-panel-heading"><div><h2>Administrative history</h2><p>Recorded admin changes linked to this account.</p></div></div><div class="admin-empty">Loading audit history…</div>';body.appendChild(panel);
+    try{
+      const {data,error}=await supabaseClient.from('admin_audit_logs').select('action,target_type,target_id,details,created_at,actor_id').eq('target_id',String(candidate.id)).order('created_at',{ascending:false}).limit(100);
+      if(error)throw error;
+      const rows=data||[];
+      panel.innerHTML='<div class="admin-panel-heading"><div><h2>Administrative history</h2><p>Recorded admin changes linked to this account.</p></div><span class="site-content-count">'+rows.length+' events</span></div>'+(rows.length?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>When</th><th>Action</th><th>Details</th><th>Admin ID</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(dateTime(r.created_at))+'</td><td>'+esc(r.action)+'</td><td>'+esc(JSON.stringify(r.details||{}))+'</td><td>'+esc(String(r.actor_id||'—').slice(0,8))+'</td></tr>').join('')+'</tbody></table></div>':'<div class="admin-empty">No administrative events recorded for this account yet.</div>');
+    }catch(error){panel.innerHTML='<div class="admin-panel-heading"><h2>Administrative history</h2></div><div class="admin-error">Audit history unavailable: '+esc(error.message||'permission issue')+'</div>';}
+  }
   async function renderBillingHistory(candidate) {
     const body=$('candidate-detail-content');if(!body)return;
     const panel=document.createElement('section');panel.className='admin-panel candidate-billing-history';panel.style.marginTop='1rem';
