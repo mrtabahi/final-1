@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const sandbox = {};
-vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname, '../js/scoring.js'), 'utf8') + '\nthis.ScoringEngine = ScoringEngine;', sandbox);
-const scoring = sandbox.ScoringEngine;
+vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname, '../js/typing-master.js'), 'utf8') + '\nthis.TypingMaster = TypingMaster;', sandbox);
+const scoring = sandbox.TypingMaster;
 const config = { freeErrorPct: 0.05, penaltyPerError: 10 };
 
 test('perfect same-position passage has identical BSF and CRPF metrics', () => {
