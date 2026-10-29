@@ -47,4 +47,13 @@ test('home page internal HTML links point to files that exist in the repository'
   const missing = [...new Set(localTargets)].filter(target => !fs.existsSync(path.join(root, target)));
   assert.deepEqual(missing, [], 'missing internal links: ' + missing.join(', '));
 });
+test('site-wide paywall preserves login, signup, password recovery, pricing and legal routes', () => {
+  const access = read('js/feature-access.js');
+  assert.match(access, /alwaysPublicPages=new Set\(\[[^\]]*'login\.html'[^\]]*'forgot\.html'[^\]]*'reset\.html'[^\]]*'premium\.html'[^\]]*'privacy-policy\.html'/);
+  assert.match(access, /event\.key==='Escape'/);
+  assert.match(access, /aria-describedby="feature-upgrade-copy"/);
+  const css = read('css/main.css');
+  assert.match(css, /\.feature-upgrade-backdrop\.is-open/);
+  assert.match(css, /\.feature-site-lock-card/);
+});
 
