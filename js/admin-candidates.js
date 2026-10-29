@@ -143,6 +143,25 @@
     } catch(e) { body.innerHTML='<div class="admin-error">Could not load attempt history: '+esc(e.message)+'</div>'; }
   }
 
+
+  async function renderBillingHistory(candidate) {
+    const body=$('candidate-detail-content');if(!body)return;
+    const panel=document.createElement('section');panel.className='admin-panel candidate-billing-history';panel.style.marginTop='1rem';
+    panel.innerHTML='<div class="admin-panel-heading"><div><h2>Subscription &amp; payment history</h2><p>Membership entitlements and order ledger; payment records are read-only here.</p></div></div><div class="admin-empty">Loading billing history…</div>';
+    body.appendChild(panel);
+    try{
+      const [subs,orders]=await Promise.all([
+        supabaseClient.from('user_subscriptions').select('id,status,starts_at,ends_at,admin_note,subscription_plans(name)').eq('user_id',candidate.id).order('created_at',{ascending:false}).limit(50),
+        supabaseClient.from('orders').select('id,status,provider,currency,total_minor,discount_minor,duration_days,created_at,expires_at').eq('user_id',candidate.id).order('created_at',{ascending:false}).limit(50)
+      ]);
+      if(subs.error)throw subs.error;if(orders.error)throw orders.error;
+      const fmt=v=>v?new Date(v).toLocaleString():'—';
+      const money=(minor,currency='INR')=>new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
+      const subRows=(subs.data||[]).map(s=>'<tr><td>'+esc(s.subscription_plans?.name||'Plan')+'</td><td>'+esc(s.status)+'</td><td>'+esc(fmt(s.starts_at))+'</td><td>'+esc(fmt(s.ends_at))+'</td><td>'+esc(s.admin_note||'—')+'</td></tr>').join('');
+      const orderRows=(orders.data||[]).map(o=>'<tr><td>'+esc(fmt(o.created_at))+'</td><td>'+esc(o.provider||'—')+'</td><td>'+esc(o.status)+'</td><td>'+esc(money(o.total_minor,o.currency||'INR'))+'</td><td>'+esc(o.duration_days||'—')+' days</td><td>'+esc(fmt(o.expires_at))+'</td></tr>').join('');
+      panel.innerHTML='<div class="admin-panel-heading"><div><h2>Subscription &amp; payment history</h2><p>Membership entitlements and order ledger · read-only payment records</p></div></div><h3>Memberships ('+(subs.data||[]).length+')</h3>'+(subRows?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>Plan</th><th>Status</th><th>Starts</th><th>Ends</th><th>Admin note</th></tr></thead><tbody>'+subRows+'</tbody></table></div>':'<div class="admin-empty">No subscription records found.</div>')+'<h3 style="margin-top:1.25rem">Orders ('+(orders.data||[]).length+')</h3>'+(orderRows?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>Date</th><th>Provider</th><th>Status</th><th>Total</th><th>Duration</th><th>Expires</th></tr></thead><tbody>'+orderRows+'</tbody></table></div>':'<div class="admin-empty">No order records found.</div>');
+    }catch(error){panel.innerHTML='<div class="admin-panel-heading"><h2>Subscription &amp; payment history</h2></div><div class="admin-error">Billing history unavailable: '+esc(error.message||'permission or schema issue')+'</div>';}
+  }
   async function renderAccountStatusControls(candidate) {
     const body=$('candidate-detail-content'); if(!body)return;
     const section=document.createElement('section');
