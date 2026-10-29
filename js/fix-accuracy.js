@@ -60,11 +60,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     let cursor=0;
     expWords.forEach((match,wordIndex)=>{
       if(match.index>cursor)host.appendChild(document.createTextNode(expected.slice(cursor,match.index)));
-      const typedIndex=typedIndexByExpected.get(wordIndex),word=match[0],typedWord=typedIndex===undefined?'':typedWords[typedIndex]||'',wordNode=document.createElement('span');wordNode.className='fix-word';
+      const typedIndex=typedIndexByExpected.get(wordIndex),word=match[0],typedWord=typedIndex===undefined?'':typedWords[typedIndex]||'',charStates=TypingMaster.alignCharacters(word,typedWord),wordNode=document.createElement('span');wordNode.className='fix-word';
       const isCommitted=(typedIndex!==undefined&&typedIndex<committedCount)||committedMissingExpected.has(wordIndex),isCurrent=typedIndex!==undefined&&typedIndex===committedCount;
       Array.from(word).forEach((ch,charIndex)=>{const span=document.createElement('span');span.className='passage-char';span.textContent=ch;
-        if(isCommitted){if(charIndex>=typedWord.length||typedWord[charIndex]!==ch)span.classList.add('char-incorrect');else span.classList.add('char-correct');}
-        else if(isCurrent&&charIndex<typedWord.length)span.classList.add(typedWord[charIndex]===ch?'char-correct':'char-incorrect');
+        if(isCommitted)span.classList.add(charStates[charIndex]==='correct'?'char-correct':'char-incorrect');
+        else if(isCurrent&&charIndex<typedWord.length)span.classList.add(charStates[charIndex]==='correct'?'char-correct':'char-incorrect');
         if(isCurrent&&charIndex===typedWord.length)span.classList.add('char-current');
         wordNode.appendChild(span);
       });
