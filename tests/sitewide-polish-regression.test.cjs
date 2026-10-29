@@ -12,7 +12,7 @@ test('shared theme includes compact neon surfaces, form focus and reduced-motion
   const css = read('css/main.css');
   assert.match(css, /--neon-cyan:\s*#22d3ee/i);
   assert.match(css, /body:not\(\.admin-body\).*background/s);
-  assert.match(css, /max-width:\s*min\(440px,calc\(100vw - 24px\)\)/);
+  assert.match(css, /width:\\s*min\\(440px,calc\\(100vw - 24px\\)\\)/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /\.admin-ledger-table/);
 });
@@ -40,3 +40,11 @@ test('payment module does not mutate payment or refund state from the browser', 
   assert.match(moduleSource, /read-only/i);
   assert.match(moduleSource, /coupon-code table is configured/i);
 });
+test('home page internal HTML links point to files that exist in the repository', () => {
+  const html = read('index.html');
+  const localTargets = [...html.matchAll(/href=["']\/(?!\/)([^"'?#]+\.html)(?:[?#][^"']*)?["']/g)]
+    .map(match => match[1]);
+  const missing = [...new Set(localTargets)].filter(target => !fs.existsSync(path.join(root, target)));
+  assert.deepEqual(missing, [], 'missing internal links: ' + missing.join(', '));
+});
+
