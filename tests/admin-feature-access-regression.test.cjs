@@ -29,6 +29,17 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(admin, /pageResources/);
   assert.match(gate, /typeof supabaseClient!=='undefined'/);
   assert.match(gate, /applyPublicAccessLabels/);
+  assert.match(gate, /feature-upgrade-badge/);
+  assert.match(gate, /premium.html\?dialog=1/);
+  assert.doesNotMatch(gate, /if\(!rule&&testId\)rule=\{is_free:false/);
+  assert.match(gate, /if\(testRule&&!testRule\.is_free&&!premium\)/);
+  assert.match(admin, /\['fix-accuracy\.html','Typing Game'\]/);
+  assert.match(admin, /\['typing-game','Typing Game'\]/);
+  const mainCss = fs.readFileSync(path.join(root, 'css/main.css'), 'utf8');
+  const premiumPage = fs.readFileSync(path.join(root, 'premium.html'), 'utf8');
+  assert.match(mainCss, /Navigation resilience: never hide menu items/);
+  assert.match(premiumPage, /dialog-mode/);
+  assert.match(premiumPage, /premium-dialog-close/);
   assert.match(app, /get_test_for_candidate/);
   assert.match(testList, /list_test_catalog/);
   assert.match(materials, /get_material_link/);
