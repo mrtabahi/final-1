@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const sandbox = {};
-vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname, '../js/typing-master.js'), 'utf8') + '\nthis.TypingMaster = TypingMaster;', sandbox);
+vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname, '../supabase/functions/typing-result/typing-master.js'), 'utf8') + '\nthis.TypingMaster = TypingMaster;', sandbox);
 const scoring = sandbox.TypingMaster;
 const config = { freeErrorPct: 0.05, penaltyPerError: 10 };
 
