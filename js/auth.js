@@ -215,7 +215,7 @@ const AuthManager = {
       throw new Error(accessSettings.registration_paused_message || 'New account creation is temporarily paused. Please try again later.');
     }
 
-    if (!normalizedEmail || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(normalizedEmail) || !normalizedPhone || !password) {
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || !normalizedPhone || !password) {
       throw new Error('Enter a valid email, mobile number and password.');
     }
     if (String(password).length < 8) {
