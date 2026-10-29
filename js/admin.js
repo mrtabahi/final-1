@@ -377,7 +377,7 @@
             if(error) throw error;
             if (renderSequence !== viewRenderSequence || currentView !== 'settings') return;
             if(!data) throw new Error('The singleton ad_settings row (id=1) does not exist.');
-            const toggle=(key,label,desc)=>'<label class="admin-setting-row"><span><strong>'+label+'</strong><small>'+desc+'</small></span><input type="checkbox" name="'+key+'" '+(data[key]?'checked':'')+'><span class="admin-switch" aria-hidden="true"></span></label>';
+            const toggle=(key,label,desc)=>{const v=key.startsWith('experience-')?({ 'experience-audio-enabled':experience.audio_enabled,'experience-audio-loop':experience.audio_loop,'experience-audio-logged-in':experience.audio_for_logged_in }[key]):data[key];return '<label class="admin-setting-row"><span><strong>'+label+'</strong><small>'+desc+'</small></span><input type="checkbox" name="'+key+'" '+(v?'checked':'')+'><span class="admin-switch" aria-hidden="true"></span></label>';};
             box.innerHTML=
               '<section class="admin-settings-hero"><div><span class="admin-settings-eyebrow">SITE CONTROL CENTER</span><h2>Website configuration</h2><p>Changes are saved to the connected Supabase settings row.</p></div><span class="admin-settings-live"><i></i> Connected</span></section>'+
               '<div class="admin-settings-grid"><section class="admin-panel admin-settings-card"><div class="admin-settings-card-title"><span class="admin-settings-icon">◈</span><div><h2>Public page visibility</h2><p>Choose which site sections are available.</p></div></div>'+
