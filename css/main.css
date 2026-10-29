@@ -996,3 +996,45 @@ body.admin-body{
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
 }
 
+/* Access-control dialogs are injected by feature-access.js; keep them styled even on standalone pages. */
+.feature-upgrade-backdrop{
+  position:fixed!important;inset:0!important;z-index:100000!important;
+  display:none;place-items:center;padding:12px!important;
+  background:rgba(2,8,23,.78)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.feature-upgrade-backdrop.is-open{display:grid!important}
+.feature-upgrade-dialog,.feature-site-lock-card{
+  position:relative;width:min(420px,calc(100vw - 24px));max-width:calc(100vw - 24px);
+  max-height:min(82dvh,620px);overflow:auto;padding:22px 20px 18px;
+  border:1px solid rgba(103,232,249,.32);border-radius:17px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(34,211,238,.11),transparent 60%),linear-gradient(145deg,#102239,#081525);
+  color:#e7f3ff;box-shadow:0 24px 72px rgba(0,0,0,.48),0 0 30px rgba(34,211,238,.09);
+  text-align:left;animation:featureDialogIn .18s ease-out both;
+}
+.feature-upgrade-close{
+  position:absolute;right:10px;top:10px;display:grid;place-items:center;width:32px;height:32px;
+  border:1px solid rgba(103,232,249,.2);border-radius:9px;background:rgba(8,21,37,.85);color:#c8f7ff;
+  font-size:1.25rem;cursor:pointer;
+}
+.feature-upgrade-mark{display:inline-grid;place-items:center;width:34px;height:34px;border:1px solid rgba(103,232,249,.26);border-radius:11px;background:rgba(34,211,238,.08);color:#67e8f9;font-size:1.15rem}
+.feature-upgrade-dialog h2,.feature-site-lock-card h1{margin:12px 36px 8px 0;color:#f0fbff;font-size:clamp(1.15rem,3vw,1.45rem);line-height:1.2;letter-spacing:-.025em}
+.feature-upgrade-copy,.feature-site-lock-card p{margin:0;color:#a9bdd2;font-size:.9rem;line-height:1.55}
+.feature-upgrade-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:17px}
+.feature-upgrade-primary,.feature-upgrade-secondary{
+  display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 13px;
+  border-radius:10px;font-size:.84rem;font-weight:750;text-decoration:none;cursor:pointer;
+}
+.feature-upgrade-primary{border:1px solid rgba(103,232,249,.38);background:linear-gradient(115deg,#0e7490,#2563eb);color:#fff!important;box-shadow:0 6px 18px rgba(14,116,144,.18)}
+.feature-upgrade-secondary{border:1px solid #29445f;background:#102239;color:#d8eaff}
+.feature-upgrade-button{border:1px solid rgba(251,191,36,.3)!important;color:#fcd34d!important}
+.feature-site-lock{
+  position:fixed!important;inset:0!important;z-index:99999!important;display:grid!important;place-items:center;
+  padding:12px!important;background:rgba(2,8,23,.82)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.feature-site-lock-card{width:min(420px,calc(100vw - 24px));text-align:center}
+.feature-site-lock-card h1{margin:12px 0 8px}
+.feature-site-lock-card .feature-upgrade-primary{margin-top:16px}
+@keyframes featureDialogIn{from{opacity:0;transform:translateY(7px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:480px){.feature-upgrade-dialog,.feature-site-lock-card{padding:18px 15px 15px;border-radius:14px}.feature-upgrade-actions>*{flex:1}}
+@media(prefers-reduced-motion:reduce){.feature-upgrade-dialog,.feature-site-lock-card{animation:none}}
+
