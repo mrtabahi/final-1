@@ -49,6 +49,20 @@ body.subscription-page{background:radial-gradient(ellipse at 10% 0%,#e9edff 0,tr
 @media(max-width:1050px){.premium-modal{padding:30px}.premium-modal-grid{grid-template-columns:1fr;gap:28px}.premium-intro{max-width:none}.premium-right .sub-plan-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:760px){.premium-modal-shell{width:calc(100% - 22px);margin:14px auto 24px}.premium-modal{padding:22px 16px;border-radius:23px}.premium-modal-grid{gap:22px}.premium-modal-heading{align-items:flex-start}.premium-crown{width:48px;height:48px;flex-basis:48px;border-radius:15px}.premium-modal-heading h1{font-size:1.65rem}.premium-right .sub-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.premium-right .sub-plan-card{padding:18px 11px;border-radius:21px}.premium-right .sub-plan-price{font-size:1.85rem}}
 @media(max-width:380px){.premium-right .sub-plan-grid{grid-template-columns:1fr}.premium-right .sub-plan-card{min-height:0}}
+/* Original responsive premium layout; when embedded, behave like a true dialog. */
+.navbar{display:flex;flex-wrap:wrap;gap:12px}
+.navbar .nav-links{display:flex;flex:1 1 100%;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 18px;overflow:visible}
+.navbar .nav-links li{display:block;flex:0 0 auto}
+.navbar .nav-links a{white-space:normal}
+body.dialog-mode{min-height:0;overflow-x:hidden}
+body.dialog-mode .navbar,body.dialog-mode .premium-footer{display:none!important}
+body.dialog-mode .premium-modal-shell{width:100%;margin:0;padding:10px;max-width:none}
+body.dialog-mode .premium-modal{min-height:calc(100dvh - 20px);display:flex;align-items:center;padding:26px;border-radius:22px;box-shadow:none}
+body.dialog-mode .premium-modal-grid{width:100%;grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr);gap:22px}
+body.dialog-mode .premium-right .sub-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.dialog-mode .premium-dialog-close{position:fixed;z-index:20;top:18px;right:18px;width:38px;height:38px;border:1px solid #ddd6fe;border-radius:50%;background:#fff;color:#4f46e5;font-size:24px;cursor:pointer;box-shadow:0 5px 18px #20204a18}
+@media(max-width:900px){body.dialog-mode .premium-modal-grid{grid-template-columns:1fr;gap:16px}body.dialog-mode .premium-modal{padding:24px 18px}}
+@media(max-width:600px){body.dialog-mode .premium-modal-shell{padding:6px}body.dialog-mode .premium-modal{min-height:calc(100dvh - 12px);padding:22px 14px}body.dialog-mode .premium-modal-grid{gap:15px}body.dialog-mode .premium-right .sub-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body class="subscription-page">
@@ -75,5 +89,8 @@ body.subscription-page{background:radial-gradient(ellipse at 10% 0%,#e9edff 0,tr
 <script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/premium.js?v=20261030-modal1"></script><script src="/js/site-audio.js?v=20261029-audio1"></script>
 <script>
 (()=>{const status=document.getElementById('premium-status');const state=document.getElementById('premium-current-state');const grid=document.getElementById('premium-plan-grid');const price=document.getElementById('premium-starting-price');const update=()=>{if(!state||!status)return;const active=state.textContent.toLowerCase().includes('membership active');status.textContent=active?'Premium active':state.textContent.toLowerCase().includes('not signed in')?'Sign in to activate':'Premium not active';};const observer=new MutationObserver(()=>{update();if(grid){const amounts=[...grid.querySelectorAll('.sub-plan-price')].map(el=>{const m=el.textContent.match(/[₹]s*[d,]+(?:.d+)?/);return m?Number(m[0].replace(/[^\d.]/g,'')):null}).filter(n=>n!==null);if(amounts.length)price.textContent='Plans from ₹'+Math.min(...amounts).toLocaleString('en-IN');}});if(state)observer.observe(state,{childList:true,subtree:true,characterData:true});if(grid)observer.observe(grid,{childList:true,subtree:true});})();
+</script>
+<script>
+(()=>{if(new URLSearchParams(location.search).get('dialog')!=='1')return;document.body.classList.add('dialog-mode');const close=document.createElement('button');close.type='button';close.className='premium-dialog-close';close.setAttribute('aria-label','Close Premium Pass dialog');close.textContent='×';close.addEventListener('click',()=>{if(window.parent!==window)window.parent.postMessage({type:'premium-dialog-close'},location.origin);else history.back();});document.body.appendChild(close);})();
 </script>
 </body></html>
