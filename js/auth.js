@@ -108,6 +108,22 @@ const AuthManager = {
     return { ok: true, user, profile };
   },
 
+  async ensureCandidateProfile(user) {
+    if (!user?.id) throw new Error('Google account session is missing.');
+    let profile = await this.getProfile(user.id);
+    if (profile) return profile;
+    const metadata = user.user_metadata || {};
+    const fullName = String(metadata.full_name || metadata.name || user.email?.split('@')[0] || 'Candidate').trim();
+    const phone = String(metadata.phone || '').trim() || null;
+    const { error } = await supabaseClient.from('profiles').upsert({
+      id: user.id, full_name: fullName, email: user.email || null, phone, role: 'candidate'
+    }, { onConflict: 'id' });
+    if (error) throw error;
+    profile = await this.getProfile(user.id);
+    if (!profile || profile.role !== 'candidate') throw new Error('Candidate profile could not be initialized.');
+    return profile;
+  },
+
   async getAccessSettings() {
     const { data, error } = await supabaseClient
       .from('site_access_settings')

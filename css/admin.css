@@ -191,3 +191,14 @@
  #view-module .admin-embedded-tool .admin-tool-content .grid-2 { grid-template-columns:minmax(0,1fr); }
  #view-module .admin-embedded-tool .admin-tool-content .materials-admin-actions { display:flex; flex-wrap:wrap; }
 }
+
+/* Landing/audio control surface */
+.admin-experience-card{position:relative;overflow:hidden;border:1px solid #67e8f955!important;background:linear-gradient(145deg,#0c1830,#111f3d 65%,#14294a)!important;color:#eaf4ff;box-shadow:0 16px 42px #02061730,0 0 24px #22d3ee0b}
+.admin-experience-card:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,#22d3ee,#818cf8,#c084fc,#34d399);background-size:220% 100%;animation:adminExperienceGlow 8s linear infinite}
+.admin-experience-card .admin-settings-card-title h2,.admin-experience-card .admin-settings-card-title p,.admin-experience-card .admin-form-field>span,.admin-experience-card .admin-form-field small,.admin-experience-card #experience-audio-current{color:#e0f2fe}
+.admin-experience-card .admin-input{border-radius:11px;border:1px solid #6b8bb866;background:#0b1830;color:#f0f9ff;min-height:42px}
+.admin-experience-card .admin-settings-toggles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:9px;margin-top:14px}
+.admin-experience-card .admin-setting-row{border:1px solid #7dd3fc2b;border-radius:13px;background:#ffffff08;padding:11px;transition:border-color .2s,box-shadow .2s}
+.admin-experience-card .admin-setting-row:hover{border-color:#67e8f988;box-shadow:0 0 20px #22d3ee10}
+@keyframes adminExperienceGlow{to{background-position:220% 0}}
+@media(prefers-reduced-motion:reduce){.admin-experience-card:before{animation:none}}
