@@ -244,3 +244,38 @@ test('master formula selector and paired formula helper use the same canonical c
   assert.equal(both.crpf.totalErrors, 0);
   assert.equal(both.bsf.backspacePresses, 2);
 });
+
+test('empty typed input reports no measured speed and treats the untouched passage as not reached', () => {
+  const score = scoring.calculateScore('one two three', '', 0, config, null, 'bsf');
+  assert.equal(score.totalKeystrokes, 0);
+  assert.equal(score.grossWpm, 0);
+  assert.equal(score.netWpm, 0);
+  assert.equal(score.accuracy, 0);
+  assert.equal(score.totalErrors, 0);
+  assert.equal(score.errorBreakdown.notReached, 3);
+  assert.equal(score.errorBreakdown.omissions, 0);
+  assert.equal(score.elapsedSeconds, 1);
+});
+
+test('zero and negative durations are clamped to one second before speed calculations', () => {
+  for (const duration of [0, -5]) {
+    const score = scoring.calculateScore('a', 'a', duration, config, null, 'bsf');
+    assert.equal(score.elapsedSeconds, 1);
+    assert.equal(score.elapsedMinutes, 0.02);
+    assert.equal(score.grossWpm, 12);
+    assert.equal(score.netWpm, 12);
+    assert.equal(score.accuracy, 100);
+  }
+});
+
+test('Unicode words preserve exact-match accuracy and count their UTF-16 code units consistently', () => {
+  const passage = 'café 東京';
+  const score = scoring.calculateScore(passage, passage, 60, config, null, 'bsf');
+  assert.equal(score.totalKeystrokes, 7);
+  assert.equal(score.grossWpm, 1.4);
+  assert.equal(score.totalErrors, 0);
+  assert.equal(score.correctChars, passage.length);
+  assert.equal(score.incorrectChars, 0);
+  assert.equal(score.accuracy, 100);
+});
+
