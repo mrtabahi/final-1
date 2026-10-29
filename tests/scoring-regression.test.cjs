@@ -220,3 +220,27 @@ test('total correct word follows keystrokes divided by five minus total errors a
   assert.equal(score.backspacePresses, 3);
   assert.equal(score.netWpm, Number(score.netWpm.toFixed(2)));
 });
+
+
+test('master committed scoring waits for Space before counting the current word error', () => {
+  const unfinished = scoring.calculateCommittedScore('one two three', 'one thx', 60, config, 'bsf', 0, false);
+  const committed = scoring.calculateCommittedScore('one two three', 'one thx ', 60, config, 'bsf', 0, false);
+  assert.equal(unfinished.totalErrors, 0);
+  assert.equal(committed.totalErrors, 1);
+  assert.equal(unfinished.totalKeystrokes, scoring.calculateScore('one two three', 'one thx', 60, config).totalKeystrokes);
+});
+
+test('master committed scoring can finalize the last word on passage completion', () => {
+  const score = scoring.calculateCommittedScore('one two', 'one thx', 60, config, 'bsf', 0, true);
+  assert.equal(score.totalErrors, 1);
+  assert.equal(score.totalCorrectWord, Number((score.totalKeystrokes / 5 - 1).toFixed(2)));
+});
+
+test('master formula selector and paired formula helper use the same canonical calculations', () => {
+  assert.equal(scoring.normalizeFormula('CRPF'), 'crpf');
+  assert.equal(scoring.normalizeFormula('unknown'), 'bsf');
+  const both = scoring.calculateBoth('one two three', 'one two three', 60, config, null, 2);
+  assert.equal(both.bsf.totalErrors, 0);
+  assert.equal(both.crpf.totalErrors, 0);
+  assert.equal(both.bsf.backspacePresses, 2);
+});
