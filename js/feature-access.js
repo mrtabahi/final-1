@@ -137,7 +137,8 @@
       const file=norm(href.split(/[?#]/)[0].split('/').pop());
       const custom=a.getAttribute('data-access-key');
       const customId=custom&&custom.startsWith('feature:')?custom.slice(8):null;
-      const rule=(customId&&findRule('feature',customId))||findRule('menu',file)||findRule('menu',norm(href));
+      const featureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library'}[file]);
+      const rule=(customId&&findRule('feature',customId))||(featureKey&&findRule('feature',featureKey))||findRule('menu',file)||findRule('menu',norm(href));
       let badge=a.querySelector(':scope > .feature-upgrade-badge');
       if(rule&&!rule.is_free&&!premium){
         if(!badge){badge=document.createElement('span');badge.className='feature-upgrade-badge';badge.textContent='UPGRADE';badge.setAttribute('aria-label','Premium feature');a.appendChild(badge);}
@@ -171,7 +172,7 @@
     if(!rule&&testId)rule={is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};
     if(!rule&&folderId)rule={is_free:false,upgrade_message:'Upgrade your plan to unlock this folder.'};
     if(!rule&&custom&&custom.startsWith('feature:'))rule=findRule('feature',custom.slice(8))||{is_free:false,upgrade_message:'Upgrade your plan to unlock this premium material.'};
-    if(!rule&&a.matches('a[href]')){const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());rule=findRule('menu',file)||findRule('menu',norm(href));}
+    if(!rule&&a.matches('a[href]')){const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());const featureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library'}[file]);rule=(featureKey&&findRule('feature',featureKey))||findRule('menu',file)||findRule('menu',norm(href));}
     if(rule&&!rule.is_free&&!premium){e.preventDefault();e.stopImmediatePropagation();popup(rule.upgrade_message);}
   },true);
   document.addEventListener('DOMContentLoaded',init);if(document.readyState!=='loading')init();
