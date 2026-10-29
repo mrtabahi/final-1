@@ -74,4 +74,20 @@ test('recovery and subscription pages override their legacy light palettes for t
   assert.match(css, /body\.subscription-page\{[^}]*background:[^}]*!important/);
   assert.match(css, /body\.subscription-page :is\(\.sub-current,\.sub-plans-section,\.sub-faq,\.sub-plan-card/);
 });
+test('all local HTML links across the site resolve to existing files', () => {
+  const pages = fs.readdirSync(root).filter(name => name.toLowerCase().endsWith('.html'));
+  const missing = [];
+  for (const page of pages) {
+    const html = read(page);
+    for (const match of html.matchAll(/href=["']([^"'<>]+)["']/g)) {
+      const href = match[1].trim();
+      if (/^(?:https?:|mailto:|tel:|javascript:|data:|#|\/\/)/i.test(href)) continue;
+      const clean = href.split(/[?#]/)[0];
+      if (!clean.toLowerCase().endsWith('.html')) continue;
+      const target = clean.replace(/^\/+/, '');
+      if (!fs.existsSync(path.join(root, target))) missing.push(page + ' -> ' + href);
+    }
+  }
+  assert.deepEqual(missing, [], 'broken local HTML links: ' + missing.join(', '));
+});
 
