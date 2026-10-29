@@ -86,7 +86,7 @@
 
   const accessLabels={};
   const pageResources=[
-    ['index.html','Home'],['Typing_test.html','Typing Tests'],['self-test.html','Self Test'],
+    ['index.html','Home'],['Typing_test.html','Typing Tests'],['fix-accuracy.html','Typing Game'],['self-test.html','Self Test'],
     ['materials.html','PDF Library'],['dashboard.html','Start Preparation'],['start_test.html','Typing Test Player'],
     ['my_results.html','My Results'],['leaderboard.html','Leaderboard'],['my_account.html','My Account'],['premium.html','Plans & Pricing']
   ];
@@ -142,11 +142,11 @@
     select.innerHTML='<option value="">Loading resources…</option>';
     let options=[];
     try{
-      if(type==='site')options=[['*','Whole website'],...['index.html','Typing_test.html','self-test.html','materials.html','dashboard.html','start_test.html','my_results.html','leaderboard.html','my_account.html','premium.html'].map(x=>[x,x])];
+      if(type==='site')options=[['*','Whole website'],...['index.html','Typing_test.html','fix-accuracy.html','self-test.html','materials.html','dashboard.html','start_test.html','my_results.html','leaderboard.html','my_account.html','premium.html'].map(x=>[x,x])];
       else if(type==='menu')options=pageResources.map(([key,label])=>[key,label]);
       else if(type==='folder'){const {data,error}=await client().from('folders').select('id,name').order('sort_order').order('name');if(error)throw error;options=(data||[]).map(x=>[x.id,x.name]);}
       else if(type==='test'){const {data,error}=await client().from('tests').select('id,title').order('sort_order').order('title').limit(1000);if(error)throw error;options=(data||[]).map(x=>[x.id,x.title]);}
-      else if(type==='feature'){const {data,error}=await client().from('study_materials').select('id,title').order('sort_order').order('title').limit(1000);if(error)throw error;options=(data||[]).map(x=>[x.id,x.title]);}
+      else if(type==='feature'){options=[['typing-game','Typing Game'],['self-test','Self Test'],['pdf-library','PDF Library'],['live-test','Live Test'],['hard-symbol-tests','Hard & Symbol Tests']];const {data,error}=await client().from('study_materials').select('id,title').order('sort_order').order('title').limit(1000);if(error)throw error;options=options.concat((data||[]).map(x=>[x.id,'Study material · '+x.title]));}
       select.innerHTML='<option value="">Choose a resource…</option>'+options.map(([v,label])=>'<option value="'+esc(v)+'">'+esc(label)+'</option>').join('');
       if(!options.length)select.innerHTML='<option value="">No resources found</option>';
     }catch(err){select.innerHTML='<option value="">Could not load resources</option>';notify(err.message||'Could not load resource list.',true);}
