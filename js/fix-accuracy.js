@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
-  const folderSelect=$('fix-folder'), passageSelect=$('fix-passage'), customInput=$('fix-custom'), form=$('fix-setup-form');
+  const folderSelect=$('fix-folder'), passageSelect=$('fix-passage-select'), customInput=$('fix-custom'), form=$('fix-setup-form');
   const setup=$('setup-panel'), game=$('game-panel'), result=$('result-panel'), input=$('fix-input');
-  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, wordIndex=0, checkedThrough=0, currentConfig=null, spokenVoice=null;
+  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, wordIndex=0, checkedThrough=0, currentConfig=null, spokenVoice=null, passageHidden=false, highlightEnabled=true, typingFontSize=19.2;
   const tokenize = text => String(text||'').match(/\S+/gu)||[];
   const words = text => tokenize(text);
   function announce(text){ if(!currentConfig||currentConfig.voice!=='on'||!('speechSynthesis' in window))return; try{speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(String(text));utter.rate=1;utter.pitch=1;utter.lang='en-US';speechSynthesis.speak(utter);}catch(e){console.debug('Speech unavailable',e);} }
@@ -17,23 +17,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(tr.error){console.warn('Passage catalog:',tr.error);$('fix-load-status').textContent='Could not load admin passages. Custom passage is available.';return;}
       const activeIds=new Set(folders.map(f=>String(f.id)));
       passages=(tr.data||[]).filter(p=>!p.folder_id||activeIds.has(String(p.folder_id)));
-      folderSelect.innerHTML='<option value="">All active folders</option>';
+      folderSelect.innerHTML='<option value="">Please choose the folder</option>';
       folders.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.name||('Folder '+f.id);folderSelect.appendChild(o);});
-      renderPassages();$('fix-load-status').textContent=passages.length+' active admin passage(s) loaded. You can also paste a custom passage.';
+      passageSelect.disabled=true;passageSelect.innerHTML='<option value="">Please choose the folder first</option>';renderPassages();$('fix-load-status').textContent=folders.length+' active folder(s) loaded. Choose a folder to see its passages, or paste a custom passage.';
     }).catch(e=>{$('fix-load-status').textContent='Could not load admin passages. Custom passage is available.';console.warn(e);});
   }
-  function renderPassages(){const selected=folderSelect.value;const list=passages.filter(p=>!selected||String(p.folder_id)===String(selected));passageSelect.innerHTML='<option value="">Choose a passage…</option>';list.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.title||('Passage '+p.id);passageSelect.appendChild(o);});}
-  folderSelect.addEventListener('change',renderPassages);
+  function renderPassages(){const selected=folderSelect.value;passageSelect.innerHTML='';if(!selected){passageSelect.disabled=true;passageSelect.innerHTML='<option value="">Please choose the folder first</option>';return;}passageSelect.disabled=false;const list=passages.filter(p=>String(p.folder_id)===String(selected));passageSelect.innerHTML='<option value="">Please choose a passage</option>';list.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.title||('Passage '+p.id);passageSelect.appendChild(o);});if(!list.length){passageSelect.innerHTML='<option value="">No passages in this folder</option>';}}
+  folderSelect.addEventListener('change',()=>{renderPassages();});
   $('fix-min-gross').addEventListener('input',()=>{if(!$('fix-min-net').dataset.manual)$('fix-min-net').value=$('fix-min-gross').value;});
   $('fix-min-net').addEventListener('input',()=>{$('fix-min-net').dataset.manual='true';});
   $('fix-min-gross').addEventListener('change',()=>{if(!$('fix-min-net').dataset.manual)$('fix-min-net').value=$('fix-min-gross').value;});
   $('fix-min-gross').addEventListener('input',()=>{if($('fix-min-net').dataset.manual==='true')return;$('fix-min-net').value=$('fix-min-gross').value;});
   async function getPassage(){
     const custom=customInput.value.trim();if(custom)return {title:'Custom passage',passage:custom};
-    if(!passageSelect.value)throw new Error('Choose an admin passage or paste a custom passage.');
+    if(!folderSelect.value)throw new Error('Please choose a folder first, or paste a custom passage.');if(!passageSelect.value)throw new Error('Please choose a passage from the selected folder, or paste a custom passage.');
     const {data,error}=await supabaseClient.rpc('get_test_for_candidate',{p_test_id:passageSelect.value});
     if(error)throw error;const row=Array.isArray(data)?data[0]:data;
-    if(!row||!row.passage)throw new Error('This passage is unavailable for your account. Choose another passage or paste a custom passage.');
+    if(!row||!row.passage)throw new Error('This passage could not be loaded. Check that it is active and accessible, then choose another passage or paste a custom passage.');
     return row;
   }
   form.addEventListener('submit',async e=>{
@@ -42,15 +42,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const passage=await getPassage();activePassage=String(passage.passage||'').trim();if(!activePassage)throw new Error('Passage cannot be empty.');
       currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:Number($('fix-timer').value),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
       $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
-      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;wordIndex=0;checkedThrough=0;finished=false;startedAt=0;
+      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;wordIndex=0;checkedThrough=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=true;typingFontSize=19.2;
       $('fix-clock').textContent=currentConfig.duration?formatTime(currentConfig.duration):'FREE';
-      $('fix-passage').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
+      $('fix-passage-display').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
     }catch(err){alert(err.message||'Unable to start game.');}
   });
   function formatTime(s){s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
   function renderPassage(){
-    const host=$('fix-passage');host.innerHTML='';const chars=Array.from(activePassage);const typed=Array.from(input.value);
-    chars.forEach((ch,i)=>{const span=document.createElement('span');span.className='fix-char';span.textContent=ch;if(i<typed.length)span.classList.add(typed[i]===ch?'fix-correct':'fix-wrong');if(i===typed.length)span.classList.add('fix-current');host.appendChild(span);});
+    const host=$('fix-passage-display');host.innerHTML='';const chars=Array.from(activePassage);const typed=Array.from(input.value);host.style.display=passageHidden?'none':'block';host.classList.toggle('no-highlight',!highlightEnabled);host.style.fontSize=typingFontSize+'px';
+    chars.forEach((ch,i)=>{const span=document.createElement('span');span.className='passage-char';span.textContent=ch;if(i<typed.length)span.classList.add(typed[i]===ch?'char-correct':'char-incorrect');if(i===typed.length)span.classList.add('char-current');host.appendChild(span);});
   }
   function committedErrors(text){
     const typed=words(text), expected=words(activePassage);let checked=0,errors=0;
@@ -112,7 +112,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-result-original').textContent=activePassage;$('fix-result-typed').textContent=input.value;
     game.hidden=true;result.hidden=false;if(reason==='Maximum errors reached')announce('Game over');
   }
-  $('fix-submit').addEventListener('click',()=>finish('Manually submitted'));
+  $('fix-toggle-highlight').addEventListener('click',()=>{highlightEnabled=!highlightEnabled;$('fix-toggle-highlight').textContent=highlightEnabled?'🖍 Highlight: On':'🖍 Highlight: Off';renderPassage();});
+  $('fix-toggle-passage').addEventListener('click',()=>{passageHidden=!passageHidden;$('fix-toggle-passage').textContent=passageHidden?'👁 Show passage':'🙈 Hide passage';renderPassage();});
+  $('fix-font-down').addEventListener('click',()=>{typingFontSize=Math.max(14.4,typingFontSize-1.6);renderPassage();input.style.fontSize=typingFontSize+'px';});
+  $('fix-font-up').addEventListener('click',()=>{typingFontSize=Math.min(32,typingFontSize+1.6);renderPassage();input.style.fontSize=typingFontSize+'px';});
+    $('fix-submit').addEventListener('click',()=>finish('Manually submitted'));
   $('fix-restart').addEventListener('click',()=>{if(interval)clearInterval(interval);game.hidden=true;result.hidden=true;setup.hidden=false;});
   $('fix-again').addEventListener('click',()=>{result.hidden=true;setup.hidden=false;});
   $('fix-print').addEventListener('click',()=>window.print());
