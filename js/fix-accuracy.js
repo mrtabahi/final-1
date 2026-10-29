@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     try{
       const passage=await getPassage();activePassage=String(passage.passage||'').trim();if(!activePassage)throw new Error('Passage cannot be empty.');
-      currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:Number($('fix-timer').value),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
+      currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:($('fix-timer').value==='custom'?Math.max(1,Number($('fix-custom-minutes').value)||1)*60:Number($('fix-timer').value)),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
       $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
       input.value='';input.disabled=false;input.readOnly=false;errorCount=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=true;typingFontSize=19.2;
       $('fix-clock').textContent='00:00:00';
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function finish(reason){
     if(finished)return;
     const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
-    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',0,reason==='Passage complete');
+    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',0,true);
     errorCount=score.totalErrors;
     if(errorCount>=currentConfig.maxErrors&&reason==='Passage complete')reason='Maximum errors reached';
     finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
