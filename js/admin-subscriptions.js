@@ -100,9 +100,18 @@
   async function setTreeRule(type,key,isFree){
     try{
       const {data:{user}}=await client().auth.getUser();
-      const {error}=await client().from('feature_access_rules').upsert({resource_type:type,resource_key:String(key),is_free:isFree,upgrade_message:'Upgrade your plan to unlock this content.',updated_by:user?.id,updated_at:new Date().toISOString()},{onConflict:'resource_type,resource_key'});
-      if(error)throw error;
-      notify(prettyResource(type,key)+' is now '+(isFree?'FREE':'PAID')+'.');
+      const payload={is_free:isFree,upgrade_message:'Upgrade your plan to unlock this content.',updated_by:user?.id,updated_at:new Date().toISOString()};
+      const writes=[client().from('feature_access_rules').upsert({...payload,resource_type:type,resource_key:String(key)},{onConflict:'resource_type,resource_key'})];
+      // A folder is a parent entitlement: applying Paid/Free updates every
+      // currently assigned test. Individual test overrides can be changed later.
+      if(type==='folder'){
+        const {data:children,error}=await client().from('tests').select('id').eq('folder_id',key);
+        if(error)throw error;
+        for(const child of (children||[])) writes.push(client().from('feature_access_rules').upsert({...payload,resource_type:'test',resource_key:String(child.id)},{onConflict:'resource_type,resource_key'}));
+      }
+      const results=await Promise.all(writes);
+      const failed=results.find(result=>result.error);if(failed?.error)throw failed.error;
+      notify(prettyResource(type,key)+' and '+(type==='folder'?'its current tests ':'')+'are now '+(isFree?'FREE':'PAID')+'.');
       await Promise.all([loadAccessRules(),loadAccessTree()]);
     }catch(err){notify(err.message||'Could not update access. Check administrator login and database permissions.',true);}
   }
@@ -118,14 +127,14 @@
       if(fe)throw fe;if(te)throw te;if(re)throw re;
       const allRules=rules||[];
       const ruleFor=(type,key)=>allRules.find(r=>r.resource_type===type&&String(r.resource_key).toLowerCase()===String(key).toLowerCase());
-      const toggle=(type,key)=>{const r=ruleFor(type,key);return '<button type="button" class="admin-btn '+(r?.is_free?'admin-btn-secondary':'admin-btn-primary')+' access-tree-toggle" data-tree-type="'+esc(type)+'" data-tree-key="'+esc(key)+'" data-tree-free="'+(r?.is_free?'true':'false')+'">'+(r?.is_free?'FREE':'PAID')+'</button>';};
+      const toggle=(type,key,inherited=null)=>{const own=ruleFor(type,key);const r=own||inherited;const status=r?.is_free?'FREE':'PAID';const hint=own?'Explicit setting':(inherited?'Inherited from folder':'Default: paid');return '<span class="access-tree-state"><small>'+hint+'</small><button type="button" class="admin-btn '+(r?.is_free?'admin-btn-secondary':'admin-btn-primary')+' access-tree-toggle" data-tree-type="'+esc(type)+'" data-tree-key="'+esc(key)+'" data-tree-free="'+(r?.is_free?'true':'false')+'">'+status+'</button></span>';};
       accessLabels['site:*']='Whole website';
       const menuNodes=pageResources.map(([key,label])=>{accessLabels['menu:'+key]=label;return '<div class="access-tree-node access-tree-leaf"><span>'+esc(label)+'</span><code>'+esc(key)+'</code>'+toggle('menu',key)+'</div>';}).join('');
       const folderNodes=(folders||[]).map(folder=>{
         accessLabels['folder:'+folder.id]=folder.name;
         const children=(tests||[]).filter(t=>t.folder_id===folder.id).map(test=>{
           accessLabels['test:'+test.id]=test.title;
-          return '<div class="access-tree-node access-tree-test"><span>'+esc(test.title)+'</span>'+toggle('test',test.id)+'</div>';
+          const folderRule=ruleFor('folder',folder.id);return '<div class="access-tree-node access-tree-test"><span>'+esc(test.title)+'</span>'+toggle('test',test.id,folderRule)+'</div>';
         }).join('')||'<div class="access-tree-empty">No tests in this folder</div>';
         return '<details class="access-tree-branch"><summary><span>'+esc(folder.name)+'</span><small>'+(tests||[]).filter(t=>t.folder_id===folder.id).length+' tests</small>'+toggle('folder',folder.id)+'</summary><div class="access-tree-children">'+children+'</div></details>';
       }).join('');
