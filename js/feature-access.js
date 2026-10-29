@@ -3,12 +3,42 @@
   const db=()=>window.supabaseClient||(typeof supabaseClient!=='undefined'?supabaseClient:null);
   const norm=v=>String(v||'').trim().replace(/^\/+|\/+$/g,'').toLowerCase();
   const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let rules=[],premium=false,ready=false;
+
+  let rules=[],premium=false,ready=false,popupReturnFocus=null;
+  function closePopup(){
+    const el=document.getElementById('feature-upgrade-modal');
+    if(!el||!el.classList.contains('is-open'))return;
+    el.classList.remove('is-open');
+    if(popupReturnFocus&&typeof popupReturnFocus.focus==='function')popupReturnFocus.focus({preventScroll:true});
+    popupReturnFocus=null;
+  }
   function popup(message){
     let el=document.getElementById('feature-upgrade-modal');
-    if(!el){el=document.createElement('div');el.id='feature-upgrade-modal';el.className='feature-upgrade-backdrop';el.innerHTML='<section class="feature-upgrade-dialog" role="dialog" aria-modal="true" aria-labelledby="feature-upgrade-title"><button type="button" class="feature-upgrade-close" aria-label="Close">×</button><div class="feature-upgrade-mark">✦</div><h2 id="feature-upgrade-title">Upgrade your plan</h2><p class="feature-upgrade-copy"></p><div class="feature-upgrade-actions"><a class="feature-upgrade-primary" href="premium.html">Explore plans</a><button type="button" class="feature-upgrade-secondary">Maybe later</button></div></section>';document.body.appendChild(el);el.querySelectorAll('.feature-upgrade-close,.feature-upgrade-secondary').forEach(b=>b.addEventListener('click',()=>el.classList.remove('is-open')));el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('is-open')});}
-    el.querySelector('.feature-upgrade-copy').textContent=message||'Upgrade your plan to unlock this content.';el.classList.add('is-open');
+    if(!el){
+      el=document.createElement('div');
+      el.id='feature-upgrade-modal';
+      el.className='feature-upgrade-backdrop';
+      el.innerHTML='<section class="feature-upgrade-dialog" role="dialog" aria-modal="true" aria-labelledby="feature-upgrade-title" aria-describedby="feature-upgrade-copy"><button type="button" class="feature-upgrade-close" aria-label="Close upgrade dialog">×</button><div class="feature-upgrade-mark" aria-hidden="true">✦</div><h2 id="feature-upgrade-title">Upgrade your plan</h2><p class="feature-upgrade-copy" id="feature-upgrade-copy"></p><div class="feature-upgrade-actions"><a class="feature-upgrade-primary" href="premium.html">Explore plans</a><button type="button" class="feature-upgrade-secondary">Maybe later</button></div></section>';
+      document.body.appendChild(el);
+      el.querySelectorAll('.feature-upgrade-close,.feature-upgrade-secondary').forEach(button=>button.addEventListener('click',closePopup));
+      el.addEventListener('click',event=>{if(event.target===el)closePopup();});
+    }
+    if(!el.classList.contains('is-open'))popupReturnFocus=document.activeElement;
+    el.querySelector('.feature-upgrade-copy').textContent=message||'Upgrade your plan to unlock this content.';
+    el.classList.add('is-open');
+    el.querySelector('.feature-upgrade-close')?.focus({preventScroll:true});
   }
+  document.addEventListener('keydown',event=>{
+    const backdrop=document.getElementById('feature-upgrade-modal');
+    if(!backdrop?.classList.contains('is-open'))return;
+    if(event.key==='Escape'){event.preventDefault();closePopup();return;}
+    if(event.key!=='Tab')return;
+    const focusable=[...backdrop.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled])')].filter(el=>el.getClientRects().length);
+    if(!focusable.length){event.preventDefault();return;}
+    const first=focusable[0],last=focusable[focusable.length-1];
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  });
   function findRule(type,key){return rules.find(r=>r.resource_type===type&&norm(r.resource_key)===norm(key));}
   function blocked(rule){if(!rule||rule.is_free||premium)return false;popup(rule.upgrade_message);return true;}
   async function init(){
@@ -33,7 +63,9 @@
       const site=findRule('site',location.pathname.split('/').pop()||'index.html')||findRule('site','*');
       const requestedTest=new URLSearchParams(location.search).get('test');
       if(requestedTest){let testRule=findRule('test',requestedTest);if(!testRule){const {data:testMeta}=await client.from('tests').select('folder_id').eq('id',requestedTest).maybeSingle();if(testMeta?.folder_id)testRule=findRule('folder',testMeta.folder_id);}testRule=testRule||{is_free:false,upgrade_message:'Upgrade your plan to unlock this premium test.'};if(!testRule.is_free&&!premium){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Upgrade your plan</h1><p>'+esc(testRule.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}}
-      if(site&&!site.is_free&&!premium&&!['premium.html','login.html','signup.html','my_account.html'].includes(location.pathname.split('/').pop())){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium access required</h1><p>'+esc(site.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}
+      const currentPage=norm(location.pathname.split('/').pop()||'index.html');
+      const alwaysPublicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
+      if(site&&!site.is_free&&!premium&&!alwaysPublicPages.has(currentPage)){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark" aria-hidden="true">✦</span><h1>Premium access required</h1><p>'+esc(site.upgrade_message)+'</p><a class="feature-upgrade-primary" href="premium.html">Explore plans</a></div></div>');return;}
     }catch(e){console.warn('Feature access check unavailable; no client-side lock applied.');}
   }
   function applyPublicAccessLabels(){
