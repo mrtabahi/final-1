@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
   const folderSelect=$('fix-folder'), passageSelect=$('fix-passage-select'), customInput=$('fix-custom'), form=$('fix-setup-form');
   const setup=$('setup-panel'), game=$('game-panel'), result=$('result-panel'), input=$('fix-input');
-  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, wordIndex=0, checkedThrough=0, currentConfig=null, spokenVoice=null, passageHidden=false, highlightEnabled=true, typingFontSize=19.2;
+  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, typingFontSize=19.2;
   const tokenize = text => String(text||'').match(/\S+/gu)||[];
   const words = text => tokenize(text);
   function announce(text){ if(!currentConfig||currentConfig.voice!=='on'||!('speechSynthesis' in window))return; try{speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(String(text));utter.rate=1;utter.pitch=1;utter.lang='en-US';speechSynthesis.speak(utter);}catch(e){console.debug('Speech unavailable',e);} }
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const passage=await getPassage();activePassage=String(passage.passage||'').trim();if(!activePassage)throw new Error('Passage cannot be empty.');
       currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:Number($('fix-timer').value),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
       $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
-      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;wordIndex=0;checkedThrough=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=true;typingFontSize=19.2;
+      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=true;typingFontSize=19.2;
       $('fix-clock').textContent=currentConfig.duration?formatTime(currentConfig.duration):'FREE';
       $('fix-passage-display').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
     }catch(err){alert(err.message||'Unable to start game.');}
@@ -53,12 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderPassage(){
     const host=$('fix-passage-display');host.innerHTML='';const chars=Array.from(activePassage);const typed=Array.from(input.value);host.style.display=passageHidden?'none':'block';host.classList.toggle('no-highlight',!highlightEnabled);host.style.fontSize=typingFontSize+'px';
     chars.forEach((ch,i)=>{const span=document.createElement('span');span.className='passage-char';span.textContent=ch;if(i<typed.length)span.classList.add(typed[i]===ch?'char-correct':'char-incorrect');if(i===typed.length)span.classList.add('char-current');host.appendChild(span);});
-  }
-  function committedErrors(text){
-    const typed=words(text), expected=words(activePassage);let checked=0,errors=0;
-    for(let i=0;i<typed.length-1;i++){if(typed[i]!==expected[i])errors++;checked++;}
-    // The final word is committed only after a trailing space, not just because input ends.
-    return {typed,expected,checked,errors};
   }
   function tick(){
     if(finished)return;const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
