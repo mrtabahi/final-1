@@ -106,7 +106,7 @@ function finishTest(){
 }
 function renderSelfResult(score,input=typed.value,scroll=false){
  if(!score)return;
- $('self-gross').textContent=Number(score.grossWpm||0).toFixed(2);$('self-net').textContent=Number(score.netWpm||0).toFixed(2);$('self-accuracy').textContent=Number(score.accuracy||0).toFixed(2)+'%';$('self-errors').textContent=String(score.totalErrors??0);$('self-free-errors').textContent=String(score.allowedErrors??score.freeErrors??0);$('self-penalty').textContent=Number(score.penaltyWords||0).toFixed(2);$('self-correct').textContent=String(score.correctChars??0);$('self-count').textContent=String(score.totalKeystrokes??input.length);
+ $('self-gross').textContent=Number(score.grossWpm||0).toFixed(2);$('self-net').textContent=Number(score.netWpm||0).toFixed(2);$('self-accuracy').textContent=Number(score.accuracy||0).toFixed(2)+'%';$('self-errors').textContent=String(score.totalErrors??0);$('self-free-errors').textContent=String(score.allowedErrors??score.freeErrors??0);$('self-penalty').textContent=Number(score.penaltyWords||0).toFixed(2);$('self-correct').textContent=String(score.correctChars??0);$('self-count').textContent=String(score.totalKeystrokes??input.length);if($('self-typed-words'))$('self-typed-words').textContent=(Number(score.totalKeystrokes??input.length)/5).toFixed(2);
  const status=$('self-report-id');if(status){status.textContent=score.passed?'Qualified':'Try again';status.style.color=score.passed?'#166534':'#b91c1c';}const formulaStatus=$('self-report-formula');if(formulaStatus)formulaStatus.textContent=scoringFormula.toUpperCase();
  [['self-formula-bsf','bsf'],['self-formula-crpf','crpf']].forEach(([id,mode])=>{const button=$(id);if(button){button.classList.toggle('is-active',mode===scoringFormula);button.setAttribute('aria-pressed',String(mode===scoringFormula));}});
  const values={'self-total-correct-word':Number(score.totalCorrectWord||0).toFixed(2),'self-backspace-presses':String(score.backspacePresses??backspacePressCount),'self-total-keystrokes':String(score.totalKeystrokes??input.length),'self-allowed-errors':String(score.allowedErrors??score.freeErrors??0),'self-extra-errors':String(score.excessErrors??0),'self-penalty-speed':Number(score.penaltyWpm||0).toFixed(2),'self-attempt-time':formatTime(totalElapsed)};Object.entries(values).forEach(([id,value])=>{const node=$(id);if(node)node.textContent=value;});
@@ -123,7 +123,7 @@ function downloadPDF(){
  doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('Decoding HCM Typing',pageWidth/2,42,{align:'center'});
  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Self Test',pageWidth/2,59,{align:'center'});
  doc.setDrawColor(190,200,210);doc.line(margin,72,pageWidth-margin,72);
- doc.setFont('times','normal');doc.setFontSize(14);
+ doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('Total Typed Word: '+(String(typed.value||'').length/5).toFixed(2),margin,88);doc.setFont('times','normal');doc.setFontSize(14);
  const lines=doc.splitTextToSize(original,pageWidth-margin*2);let y=96;const lineHeight=18;
  for(const line of lines){if(y>pageHeight-margin){doc.addPage();y=margin}doc.text(line,margin,y);y+=lineHeight}
  doc.save('Decoding-HCM-Self-Test-Passage.pdf');
