@@ -36,7 +36,8 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(gate, /typeof supabaseClient!=='undefined'/);
   assert.match(gate, /applyPublicAccessLabels/);
   assert.match(gate, /feature-upgrade-badge/);
-  assert.match(gate, /target\.searchParams\.set\('dialog','1'\)/);\n  assert.doesNotMatch(gate, /<iframe title=\"Premium Pass plans\"/);
+  assert.match(gate, /target\.searchParams\.set\('dialog','1'\)/);
+  assert.doesNotMatch(gate, /<iframe title=\"Premium Pass plans\"/);
   assert.doesNotMatch(gate, /if\(!rule&&testId\)rule=\{is_free:false/);
   assert.match(gate, /if\(testRule&&!testRule\.is_free&&!premium\)/);
   assert.match(admin, /\['fix-accuracy\.html','Typing Game'\]/);
