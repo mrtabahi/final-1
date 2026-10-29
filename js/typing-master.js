@@ -178,8 +178,8 @@ const TypingMaster = {
   calculateCommittedScore(expectedText, typedText, durationSeconds, config = {}, formula = "bsf", backspacePresses = 0, finalizeCurrentWord = false) {
     const source = String(typedText ?? "");
     let committedText = source;
-    if (!finalizeCurrentWord && !/\\s$/u.test(source)) {
-      const lastSeparator = Math.max(source.lastIndexOf(" "), source.lastIndexOf("\\n"), source.lastIndexOf("\\r"), source.lastIndexOf("\\t"), source.lastIndexOf("\\f"), source.lastIndexOf("\\v"));
+    if (!finalizeCurrentWord && !/\s$/u.test(source)) {
+      const lastSeparator = Math.max(source.lastIndexOf(" "), source.lastIndexOf("\n"), source.lastIndexOf("\r"), source.lastIndexOf("\t"), source.lastIndexOf("\f"), source.lastIndexOf("\v"));
       committedText = lastSeparator < 0 ? "" : source.slice(0, lastSeparator + 1);
     }
     const fullScore = this.calculateScore(expectedText, source, durationSeconds, config, null, formula, backspacePresses);
