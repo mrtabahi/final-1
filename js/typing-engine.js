@@ -15,7 +15,7 @@
 *   to match the server-authoritative result exactly.
 *
 * IMPORTANT:
-* The ScoringEngine is responsible for:
+* The TypingMaster is responsible for:
 * - Error calculation
 * - 5% permissible errors
 * - 10-word penalty
@@ -78,7 +78,7 @@ class TypingEngine {
          * This is intentionally kept separately from
          * typedText.length.
          *
-         * ScoringEngine can use this value for:
+         * TypingMaster can use this value for:
          *
          * 5 key depressions = 1 equivalent word
          */
@@ -670,7 +670,7 @@ class TypingEngine {
          * SEND KEYSTROKES TO SCORING ENGINE
          * ---------------------------------------------------------
          *
-         * ScoringEngine should use:
+         * TypingMaster should use:
          *
          * totalKeystrokes / 5
          *
@@ -678,7 +678,7 @@ class TypingEngine {
          */
 
         const score =
-            ScoringEngine.calculateScore(
+            TypingMaster.calculateScore(
                 this.passageText,
                 this.typedText,
                 elapsedSeconds,
