@@ -279,3 +279,12 @@ test('Unicode words preserve exact-match accuracy and count their UTF-16 code un
   assert.equal(score.accuracy, 100);
 });
 
+test('current allowance remains keystroke-based even when freeErrorPct config differs', () => {
+  const passage = 'a'.repeat(100);
+  const zeroPct = scoring.calculateScore(passage, passage, 60, {freeErrorPct: 0}, null, 'bsf');
+  const twentyPct = scoring.calculateScore(passage, passage, 60, {freeErrorPct: 0.2}, null, 'bsf');
+  assert.equal(zeroPct.totalKeystrokes, 100);
+  assert.equal(zeroPct.allowedErrors, 1);
+  assert.equal(twentyPct.allowedErrors, 1);
+});
+
