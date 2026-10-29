@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   function renderPassages(){const selected=folderSelect.value;passageSelect.innerHTML='';if(!selected){passageSelect.disabled=true;passageSelect.innerHTML='<option value="">Please choose the folder first</option>';return;}passageSelect.disabled=false;const list=passages.filter(p=>String(p.folder_id)===String(selected));passageSelect.innerHTML='<option value="">Please choose a passage</option>';list.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.title||('Passage '+p.id);passageSelect.appendChild(o);});if(!list.length){passageSelect.innerHTML='<option value="">No passages in this folder</option>';}}
   folderSelect.addEventListener('change',()=>{renderPassages();});
+  $('fix-timer').addEventListener('change',()=>{const wrap=$('fix-custom-time-wrap');if(wrap)wrap.hidden=$('fix-timer').value!=='custom';});
+  const customTimeWrap=$('fix-custom-time-wrap');if(customTimeWrap)customTimeWrap.hidden=$('fix-timer').value!=='custom';
   $('fix-min-gross').addEventListener('input',()=>{if(!$('fix-min-net').dataset.manual)$('fix-min-net').value=$('fix-min-gross').value;});
   $('fix-min-net').addEventListener('input',()=>{$('fix-min-net').dataset.manual='true';});
   $('fix-min-gross').addEventListener('change',()=>{if(!$('fix-min-net').dataset.manual)$('fix-min-net').value=$('fix-min-gross').value;});
@@ -52,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function formatTime(s){s=Math.max(0,Math.floor(s));return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
   function renderPassage(){
     const host=$('fix-passage-display');host.replaceChildren();host.style.display=passageHidden?'none':'block';host.classList.toggle('no-highlight',!highlightEnabled);host.style.fontSize=typingFontSize+'px';
-    const expected=String(activePassage),typed=String(input.value||''),re=/\S+/gu,expWords=[...expected.matchAll(re)],typedWords=typed.match(/\S+/gu)||[],committedCount=(/\\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
+    const expected=String(activePassage),typed=String(input.value||''),re=/\S+/gu,expWords=[...expected.matchAll(re)],typedWords=typed.match(/\S+/gu)||[],committedCount=(/\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
     let cursor=0;
     expWords.forEach((match,wordIndex)=>{
       if(match.index>cursor)host.appendChild(document.createTextNode(expected.slice(cursor,match.index)));
