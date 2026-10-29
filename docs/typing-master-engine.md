@@ -1,10 +1,10 @@
 # Typing Master Engine
 
-**Canonical scoring file:** `js/typing-master.js`
+**Canonical scoring file:** `supabase/functions/typing-result/typing-master.js`
 
 ## Rule for future changes
 
-Change the scoring/error-counting formulas in `js/typing-master.js` only. Do not create per-test copies of Gross Speed, Net Speed, Accuracy, error allowance, penalty, Total Correct Word, alignment, or error-breakdown formulas.
+Change the scoring/error-counting formulas in `supabase/functions/typing-result/typing-master.js` only. Do not create per-test copies of Gross Speed, Net Speed, Accuracy, error allowance, penalty, Total Correct Word, alignment, or error-breakdown formulas.
 
 The master is loaded by:
 - Typing Test: `start_test.html` → `js/typing-engine.js` and `js/app.js`
@@ -12,7 +12,7 @@ The master is loaded by:
 - Fix Accuracy game: `fix-accuracy.html` → `js/fix-accuracy.js`
 - Supabase authoritative result validation: `supabase/functions/typing-result/index.ts` imports this same file.
 
-The old `js/scoring.js` is only a compatibility shim; it no longer contains a second formula implementation.
+The old `js/scoring.js` and `js/typing-master.js` are compatibility shims; neither contains a second formula implementation.
 
 ## Public API
 
