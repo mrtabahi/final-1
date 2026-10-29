@@ -577,6 +577,12 @@ class TypingEngine {
 
         this.typedText = newText;
         this.totalKeystrokes = newText.length;
+
+        // Automatically submit when the candidate reaches the passage length.
+        // This applies to every standard Typing Test, not only Fix Accuracy.
+        if (this.passageText.length > 0 && newText.length >= this.passageText.length) {
+            this.stop("passage-complete");
+        }
     }
 
 
