@@ -43,4 +43,16 @@ test('public pricing and account UI are connected to subscription records', () =
   assert.match(accountScript, /user_subscriptions/);
   assert.match(accountScript, /LAST SUCCESSFUL PAYMENT/);
 });
-test('premium purchase entry points share one non-iframe dialog and provide a safe return path', () => {\n  const root = path.join(__dirname, '..');\n  const gate = fs.readFileSync(path.join(root, 'js/feature-access.js'), 'utf8');\n  const premium = fs.readFileSync(path.join(root, 'premium.html'), 'utf8');\n  const premiumScript = fs.readFileSync(path.join(root, 'js/premium.js'), 'utf8');\n  assert.match(gate, /location\\.assign\\(target\\.toString\\(\\)\\)/);\n  assert.doesNotMatch(gate, /<iframe title=\\"Premium Pass plans\\"/);\n  assert.match(gate, /X-Frame-Options: DENY/);\n  assert.match(premium, /premium-dialog-cancel/);\n  assert.match(premium, /premium-coupon-code/);\n  assert.match(premium, /Coupon redemption is not enabled yet/);\n  assert.match(premiumScript, /Coupon validation is not configured/);\n});\n
+test('premium purchase entry points share one non-iframe dialog and provide a safe return path', () => {
+  const root = path.join(__dirname, '..');
+  const gate = fs.readFileSync(path.join(root, 'js/feature-access.js'), 'utf8');
+  const premium = fs.readFileSync(path.join(root, 'premium.html'), 'utf8');
+  const premiumScript = fs.readFileSync(path.join(root, 'js/premium.js'), 'utf8');
+  assert.match(gate, /location\.assign\(target\.toString\(\)\)/);
+  assert.doesNotMatch(gate, /<iframe title=\"Premium Pass plans\"/);
+  assert.match(gate, /X-Frame-Options: DENY/);
+  assert.match(premium, /premium-dialog-cancel/);
+  assert.match(premium, /premium-coupon-code/);
+  assert.match(premium, /Coupon redemption is not enabled yet/);
+  assert.match(premiumScript, /Coupon validation is not configured/);
+});
