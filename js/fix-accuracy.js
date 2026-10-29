@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function formatTime(s){s=Math.max(0,Math.floor(s));return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
   function renderPassage(){
     const host=$('fix-passage-display');host.replaceChildren();host.style.display=passageHidden?'none':'block';host.classList.toggle('no-highlight',!highlightEnabled);host.style.fontSize=typingFontSize+'px';
-    const expected=String(activePassage),typed=String(input.value||''),re=/\\S+/gu,expWords=[...expected.matchAll(re)],typedWords=typed.match(/\\S+/gu)||[],committedCount=(/\\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
+    const expected=String(activePassage),typed=String(input.value||''),re=/\S+/gu,expWords=[...expected.matchAll(re)],typedWords=typed.match(/\S+/gu)||[],committedCount=(/\\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
     let cursor=0;
     expWords.forEach((match,wordIndex)=>{
       if(match.index>cursor)host.appendChild(document.createTextNode(expected.slice(cursor,match.index)));
