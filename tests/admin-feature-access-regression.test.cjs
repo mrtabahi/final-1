@@ -13,6 +13,7 @@ test('admin access controls and member lifecycle actions are wired', () => {
   const materials = fs.readFileSync(path.join(root, 'js/materials.js'), 'utf8');
   const secureMigration = fs.readFileSync(path.join(root, 'supabase/migrations/20261028190000_enforce_paid_test_access.sql'), 'utf8');
   const accountControls = fs.readFileSync(path.join(root, 'supabase/migrations/20261030120000_admin_account_controls.sql'), 'utf8');
+  const softRemoval = fs.readFileSync(path.join(root, 'supabase/migrations/20261030130000_candidate_soft_removal.sql'), 'utf8');
   const candidates = fs.readFileSync(path.join(root, 'js/admin-candidates.js'), 'utf8');
   const auth = fs.readFileSync(path.join(root, 'js/auth.js'), 'utf8');
   const adminCore = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
@@ -52,6 +53,9 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(secureMigration, /get_test_for_candidate/);
   assert.match(accountControls, /admin_set_candidate_status/);
   assert.match(accountControls, /candidate_account_status_changed/);
+  assert.match(softRemoval, /'removed'/);
+  assert.match(softRemoval, /candidate_account_status_changed/);
+  assert.match(auth, /account_status !== 'active'/);
   assert.match(candidates, /candidate-status-filter/);
   assert.match(candidates, /renderAccountStatusControls/);
   assert.match(candidates, /renderBillingHistory/);
