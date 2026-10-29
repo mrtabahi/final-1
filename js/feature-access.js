@@ -5,6 +5,7 @@
   const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   let rules=[],premium=false,ready=false,popupReturnFocus=null;
+  let premiumDialogReturnFocus=null, premiumDialogPreviousOverflow='';
   function closePopup(){
     const el=document.getElementById('feature-upgrade-modal');
     if(!el||!el.classList.contains('is-open'))return;
@@ -12,15 +13,35 @@
     if(popupReturnFocus&&typeof popupReturnFocus.focus==='function')popupReturnFocus.focus({preventScroll:true});
     popupReturnFocus=null;
   }
+  function closePremiumDialog(){
+    const el=document.getElementById('feature-premium-dialog');if(!el)return;
+    el.remove();document.documentElement.style.overflow=premiumDialogPreviousOverflow;
+    if(premiumDialogReturnFocus&&typeof premiumDialogReturnFocus.focus==='function')premiumDialogReturnFocus.focus({preventScroll:true});
+    premiumDialogReturnFocus=null;
+  }
+  function openPremiumDialog(){
+    closePopup();if(document.getElementById('feature-premium-dialog'))return;
+    premiumDialogReturnFocus=document.activeElement;
+    premiumDialogPreviousOverflow=document.documentElement.style.overflow;
+    const wrap=document.createElement('div');wrap.id='feature-premium-dialog';
+    wrap.className='feature-upgrade-backdrop feature-premium-backdrop is-open';
+    wrap.innerHTML='<section class="feature-upgrade-dialog feature-premium-frame-dialog" role="dialog" aria-modal="true" aria-label="Premium Pass"><button type="button" class="feature-upgrade-close" aria-label="Close Premium Pass">×</button><iframe title="Premium Pass plans" src="premium.html?dialog=1" loading="eager"></iframe></section>';
+    document.body.appendChild(wrap);document.documentElement.style.overflow='hidden';
+    wrap.querySelector('.feature-upgrade-close').addEventListener('click',closePremiumDialog);
+    wrap.addEventListener('click',event=>{if(event.target===wrap)closePremiumDialog();});
+    wrap.querySelector('.feature-upgrade-close').focus({preventScroll:true});
+    window.addEventListener('message',function closeMessage(event){if(event.origin!==location.origin||event.data?.type!=='premium-dialog-close')return;window.removeEventListener('message',closeMessage);closePremiumDialog();});
+  }
   function popup(message){
     let el=document.getElementById('feature-upgrade-modal');
     if(!el){
       el=document.createElement('div');
       el.id='feature-upgrade-modal';
       el.className='feature-upgrade-backdrop';
-      el.innerHTML='<section class="feature-upgrade-dialog" role="dialog" aria-modal="true" aria-labelledby="feature-upgrade-title" aria-describedby="feature-upgrade-copy"><button type="button" class="feature-upgrade-close" aria-label="Close upgrade dialog">×</button><div class="feature-upgrade-mark" aria-hidden="true">✦</div><h2 id="feature-upgrade-title">Upgrade your plan</h2><p class="feature-upgrade-copy" id="feature-upgrade-copy"></p><div class="feature-upgrade-actions"><a class="feature-upgrade-primary" href="premium.html">Explore plans</a><button type="button" class="feature-upgrade-secondary">Maybe later</button></div></section>';
+      el.innerHTML='<section class="feature-upgrade-dialog" role="dialog" aria-modal="true" aria-labelledby="feature-upgrade-title" aria-describedby="feature-upgrade-copy"><button type="button" class="feature-upgrade-close" aria-label="Close upgrade dialog">×</button><div class="feature-upgrade-mark" aria-hidden="true">✦</div><h2 id="feature-upgrade-title">Premium feature</h2><p class="feature-upgrade-copy" id="feature-upgrade-copy"></p><div class="feature-upgrade-actions"><button type="button" class="feature-upgrade-primary feature-upgrade-open-premium">Okay, view Premium Pass</button><button type="button" class="feature-upgrade-secondary">Cancel</button></div></section>';
       document.body.appendChild(el);
       el.querySelectorAll('.feature-upgrade-close,.feature-upgrade-secondary').forEach(button=>button.addEventListener('click',closePopup));
+      el.querySelector('.feature-upgrade-open-premium').addEventListener('click',openPremiumDialog);
       el.addEventListener('click',event=>{if(event.target===el)closePopup();});
     }
     if(!el.classList.contains('is-open'))popupReturnFocus=document.activeElement;
@@ -80,13 +101,11 @@
       const custom=a.getAttribute('data-access-key');
       const customId=custom&&custom.startsWith('feature:')?custom.slice(8):null;
       const rule=(customId&&findRule('feature',customId))||findRule('menu',file)||findRule('menu',norm(href));
+      let badge=a.querySelector(':scope > .feature-upgrade-badge');
       if(rule&&!rule.is_free&&!premium){
-        if(a.dataset.originalAccessLabel===undefined)a.dataset.originalAccessLabel=a.innerHTML;
-        if(a.textContent.trim()!=='UPGRADE')a.textContent='UPGRADE';
+        if(!badge){badge=document.createElement('span');badge.className='feature-upgrade-badge';badge.textContent='UPGRADE';badge.setAttribute('aria-label','Premium feature');a.appendChild(badge);}
         a.classList.add('feature-upgrade-button');
-      }else if(a.dataset.originalAccessLabel!==undefined){
-        a.innerHTML=a.dataset.originalAccessLabel;delete a.dataset.originalAccessLabel;a.classList.remove('feature-upgrade-button');
-      }
+      }else{badge?.remove();a.classList.remove('feature-upgrade-button');}
     });
     document.querySelectorAll('[data-test-id]').forEach(card=>{
       const testId=card.getAttribute('data-test-id');const folderId=card.getAttribute('data-folder-id');
