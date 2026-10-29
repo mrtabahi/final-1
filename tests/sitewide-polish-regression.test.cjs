@@ -91,3 +91,16 @@ test('all local HTML links across the site resolve to existing files', () => {
   assert.deepEqual(missing, [], 'broken local HTML links: ' + missing.join(', '));
 });
 
+test('manual registration accepts normal email addresses and rejects malformed ones', () => {
+  const auth = read('js/auth.js');
+  const start = auth.indexOf('async register({');
+  const end = auth.indexOf('// OTP for phone sign-in', start);
+  assert.ok(start >= 0 && end > start, 'registration function boundaries exist');
+  const registration = auth.slice(start, end);
+  const patternMatch = registration.match(/!\/(.+?)\/\.test\(normalizedEmail\)/);
+  assert.ok(patternMatch, 'registration email validation regex exists');
+  const emailPattern = new RegExp(patternMatch[1]);
+  assert.equal(emailPattern.test('qa.user@example.com'), true);
+  assert.equal(emailPattern.test('not-an-email'), false);
+  assert.equal(emailPattern.test('missing-domain@'), false);
+});
