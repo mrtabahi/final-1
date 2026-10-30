@@ -36,7 +36,11 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(gate, /typeof supabaseClient!=='undefined'/);
   assert.match(gate, /applyPublicAccessLabels/);
   assert.match(gate, /feature-upgrade-badge/);
-  assert.match(gate, /target\.searchParams\.set\('dialog','1'\)/);
+  assert.match(gate, /PremiumModal\.open\(\)/);
+  assert.match(admin, /typing_test\.html/);
+  assert.match(admin, /resource_type:'folder'/);
+  assert.match(admin, /resource_type:'test'/);
+  assert.match(gate, /findRule\('menu','Typing_test\.html'\)/);
   assert.doesNotMatch(gate, /<iframe title=\"Premium Pass plans\"/);
   assert.doesNotMatch(gate, /if\(!rule&&testId\)rule=\{is_free:false/);
   assert.match(gate, /if\(testRule&&!testRule\.is_free&&!premium\)/);
@@ -45,8 +49,8 @@ test('admin access controls and member lifecycle actions are wired', () => {
   const mainCss = fs.readFileSync(path.join(root, 'css/main.css'), 'utf8');
   const premiumPage = fs.readFileSync(path.join(root, 'premium.html'), 'utf8');
   assert.match(mainCss, /Navigation resilience: never hide menu items/);
-  assert.match(premiumPage, /dialog-mode/);
-  assert.match(premiumPage, /premium-dialog-close/);
+  assert.match(premiumPage, /openPremium=1/);
+  assert.match(premiumPage, /premium-dialog-cancel/);
   assert.match(app, /get_test_for_candidate/);
   assert.match(testList, /list_test_catalog/);
   assert.match(materials, /get_material_link/);
