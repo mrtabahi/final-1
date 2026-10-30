@@ -31,7 +31,9 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(migration, /Admins manage access rules/);
   assert.match(migration, /feature_access_audit/);
   assert.match(gate, /Upgrade your plan/);
-  assert.match(gate, /user_subscriptions/);
+  assert.match(gate, /has_active_paid_subscription/);
+  assert.match(gate, /feature-nav-toggle/);
+  assert.match(gate, /feature-nav-open/);
   assert.match(testList, /data-test-id/);
   assert.match(materials, /data-access-key="feature:/);
   assert.match(admin, /feature-access-tree/);
