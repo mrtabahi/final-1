@@ -18,7 +18,7 @@
   function openPremiumDialog(){
     closePopup();
     if(!window.PremiumModal){
-      if(!premiumModalLoading){premiumModalLoading=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/js/premium-modal.js?v=20261030-modal-fast2';script.onload=resolve;script.onerror=()=>reject(new Error('Premium modal failed to load'));document.head.appendChild(script);});}
+      if(!premiumModalLoading){premiumModalLoading=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/js/premium-modal.js?v=20261030-modal-gold3';script.onload=resolve;script.onerror=()=>reject(new Error('Premium modal failed to load'));document.head.appendChild(script);});}
       premiumModalLoading.then(()=>window.PremiumModal.open()).catch(()=>popup('Premium plans are temporarily unavailable. Please try again.'));
       return;
     }
