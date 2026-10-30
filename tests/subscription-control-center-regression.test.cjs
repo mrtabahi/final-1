@@ -49,10 +49,10 @@ test('premium purchase entry points use one responsive modal and preserve checko
   const premium = fs.readFileSync(path.join(root, 'premium.html'), 'utf8');
   const premiumScript = fs.readFileSync(path.join(root, 'js/premium.js'), 'utf8');
   const modal = fs.readFileSync(path.join(root, 'js/premium-modal.js'), 'utf8');
-  assert.match(gate, /PremiumModal\\.open\\(\\)/);
-  assert.match(gate, /premium-modal\\.js/);
+  assert.match(gate, /PremiumModal\.open\(\)/);
+  assert.match(gate, /premium-modal\.js/);
   assert.doesNotMatch(gate, /<iframe title="Premium Pass plans"/);
-  assert.match(premium, /location\\.replace\\("my_account\\.html\\?openPremium=1"\\)/);
+  assert.match(premium, /location\.replace\("my_account\.html\?openPremium=1"\)/);
   assert.match(premium, /premium-dialog-cancel/);
   assert.match(premium, /premium-coupon-code/);
   assert.match(premium, /Coupon discount applies only after secure validation/);
