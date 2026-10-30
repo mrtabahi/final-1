@@ -58,9 +58,12 @@
     if(document.getElementById('feature-access-ui-styles'))return;
     const style=document.createElement('style');style.id='feature-access-ui-styles';
     style.textContent=`
-      .navbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+      .navbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;position:relative}
       .navbar .brand-container{flex:0 0 auto}
       .navbar .nav-links{display:flex;flex:1 1 100%;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 18px;min-width:0;overflow:visible}
+      .feature-nav-toggle{display:none;align-items:center;justify-content:center;flex-direction:column;gap:5px;width:44px;height:42px;margin-left:auto;border:1px solid #ffffff55;border-radius:12px;background:#123b63;color:#fff;cursor:pointer}
+      .feature-nav-toggle span{display:block;width:20px;height:2px;border-radius:2px;background:currentColor;transition:transform .18s,opacity .18s}
+      .feature-nav-toggle[aria-expanded=true] span:first-child{transform:translateY(7px) rotate(45deg)}.feature-nav-toggle[aria-expanded=true] span:nth-child(2){opacity:0}.feature-nav-toggle[aria-expanded=true] span:last-child{transform:translateY(-7px) rotate(-45deg)}
       .navbar .nav-links li{display:block;flex:0 0 auto}
       .navbar .nav-links a{display:inline-flex;align-items:center;gap:5px;white-space:normal}
       .feature-upgrade-badge{display:inline-flex;align-items:center;justify-content:center;margin-left:5px;padding:2px 6px;border-radius:999px;background:linear-gradient(100deg,#6b4df6,#c23acb);color:#fff;font-size:9px;font-weight:900;line-height:1.35;letter-spacing:.04em;white-space:nowrap;vertical-align:middle}
@@ -83,11 +86,19 @@
       html.feature-access-pending body>*:not(script):not(style){visibility:hidden!important}\n      html.feature-access-pending body:after{content:'Checking access…';position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;background:#f8f7ff;color:#34415c;font-weight:800}\n      body.feature-site-locked>*:not(.feature-site-lock):not(script):not(style){visibility:hidden}
       body.feature-site-locked .feature-site-lock{visibility:visible;position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:20px;background:rgba(10,19,37,.86);backdrop-filter:blur(12px)}
       .feature-site-lock-card{width:min(100%,540px);padding:38px 32px;border:1px solid #f0d9a3;border-radius:26px;background:linear-gradient(145deg,#fff,#fff8e9);box-shadow:0 30px 90px #0008;text-align:center;color:#172b49}.feature-site-lock-card h1{font-size:clamp(1.35rem,3vw,1.8rem);letter-spacing:-.03em;color:#142746}.feature-site-lock-card p{color:#59677c;line-height:1.6}
-      @media(max-width:760px){.navbar .nav-links{justify-content:flex-start;gap:9px 13px}.feature-upgrade-dialog{padding:26px 20px}}
+      @media(max-width:760px){.navbar{display:flex;flex-direction:row;align-items:center;gap:10px;padding:12px 14px}.navbar .brand-container{min-width:0;max-width:calc(100% - 58px)}.feature-nav-toggle{display:inline-flex;flex:0 0 44px}.navbar .nav-links{display:none;order:3;flex:0 0 100%;width:100%;max-height:min(70vh,520px);overflow-y:auto;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;padding:8px 0 4px;border-top:1px solid #ffffff30}.navbar .nav-links.feature-nav-open{display:flex}.navbar .nav-links li{width:100%;display:block}.navbar .nav-links a{display:flex;width:100%;align-items:center;justify-content:space-between;padding:11px 12px;border-radius:9px;white-space:normal}.feature-upgrade-badge{margin-left:8px;flex:0 0 auto}.feature-upgrade-dialog{padding:26px 20px}}
     `;
     document.head.appendChild(style);
   }
   installAccessStyles();
+  function installMobileNavigation(){
+    const nav=document.querySelector('.navbar');const links=nav?.querySelector('.nav-links');if(!nav||!links||nav.querySelector('.feature-nav-toggle'))return;
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='feature-nav-toggle';toggle.setAttribute('aria-label','Open navigation menu');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls','site-navigation');toggle.innerHTML='<span></span><span></span><span></span>';
+    if(!links.id)links.id='site-navigation';
+    toggle.addEventListener('click',()=>{const open=toggle.getAttribute('aria-expanded')!=='true';toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu');links.classList.toggle('feature-nav-open',open);});
+    links.addEventListener('click',event=>{if(event.target.closest('a')){links.classList.remove('feature-nav-open');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-label','Open navigation menu');}});
+    nav.insertBefore(toggle,links);
+  }
   function findRule(type,key){return rules.find(r=>r.resource_type===type&&norm(r.resource_key)===norm(key));}
   function blocked(rule){if(!rule||rule.is_free||premium)return false;popup(rule.upgrade_message);return true;}
   async function init(){
@@ -110,8 +121,19 @@
       if(sessionResult?.error)throw sessionResult.error;
       if(rr.error)throw rr.error;
       rules=rr.data||[];
-      if(user){const {data}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(price_minor)').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(10);premium=(data||[]).some(s=>(!s.starts_at||new Date(s.starts_at)<=new Date())&&(!s.ends_at||new Date(s.ends_at)>new Date())&&Number(s.subscription_plans?.price_minor||0)>0);}
+      if(user){
+        const {data:subscriptions,error:subscriptionError}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(price_minor)').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(20);
+        if(subscriptionError)throw subscriptionError;
+        const now=Date.now();
+        premium=(subscriptions||[]).some(s=>{
+          const plan=Array.isArray(s.subscription_plans)?s.subscription_plans[0]:s.subscription_plans;
+          const starts=s.starts_at?new Date(s.starts_at).getTime():0;
+          const ends=s.ends_at?new Date(s.ends_at).getTime():Infinity;
+          return s.status==='active'&&starts<=now&&ends>now&&Number(plan?.price_minor||0)>0;
+        });
+      }
       ready=true;
+      installMobileNavigation();
       applyPublicAccessLabels();
       // Several pages dynamically render large lists. Coalesce DOM updates so one
       // render burst triggers one label pass instead of repeated full-document scans.
