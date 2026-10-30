@@ -6,10 +6,8 @@ let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, 
 let SAVED_KEY='decodingHcmSelfTestPassagesV1:guest';
 const LEGACY_SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
 const typingDefaults=TypingExperienceConfig;
-let scoringFormula=typingDefaults.defaults.scoring.defaultFormula, selfFontSize=17.3, selfScores={};
-function applySelfFontSize(){passage.style.fontSize=selfFontSize+'px';typed.style.fontSize=selfFontSize+'px';}
-$('self-font-down')?.addEventListener('click',()=>{selfFontSize=Math.max(14,selfFontSize-1.5);applySelfFontSize()});
-$('self-font-up')?.addEventListener('click',()=>{selfFontSize=Math.min(32,selfFontSize+1.5);applySelfFontSize()});
+let scoringFormula=typingDefaults.defaults.scoring.defaultFormula, selfScores={};
+const selfFontControls=TypingWorkspaceControls.bindFontControls({downButton:$('self-font-down'),upButton:$('self-font-up'),targets:[passage,typed],initialSize:17.3,min:14,max:32,step:1.5});
 function readSaved(){try{const data=JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');return Array.isArray(data)?data.filter(x=>x&&typeof x.text==='string').slice(0,MAX_SAVED):[]}catch(_){return[]}}
 function writeSaved(items){try{localStorage.setItem(SAVED_KEY,JSON.stringify(items.slice(0,MAX_SAVED)));return true}catch(_){$('self-save-message').textContent='Browser storage is unavailable. Check your privacy/storage settings.';return false}}
 function refreshSaved(selected=''){
