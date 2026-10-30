@@ -19,7 +19,7 @@ window.initPremiumPurchase = async (root=document) => {
   if(error){state.textContent='Your membership details are temporarily unavailable. Open My Account and try again later.';}
   else if(data){const active=data.status==='active'&&(!data.ends_at||new Date(data.ends_at)>new Date());state.innerHTML='<strong>'+(active?'Membership active':'Membership '+esc(data.status||'pending'))+'</strong><br>'+esc(data.subscription_plans?.name||'Plan')+' · '+(data.starts_at?'Starts '+new Date(data.starts_at).toLocaleDateString():'Start date pending')+' · '+(data.ends_at?'Valid until '+new Date(data.ends_at).toLocaleDateString():'No expiry date recorded')+'<br><a href="my_account.html">View subscription details →</a>';}
   else state.innerHTML='<strong>No subscription found yet.</strong><br>Compare the plans below, or visit <a href="my_account.html">My Account</a> to review your profile.';
- }else{state.innerHTML='<strong>Not signed in.</strong><br><a href="login.html?redirect=premium.html">Sign in</a> to connect a plan to your account.</a>';}
+ }else{state.innerHTML='<strong>Not signed in.</strong><br><a href="login.html?redirect=premium.html">Sign in</a> to connect a plan to your account.';}
  const {data:plans,error}=planResult;
  if(error){grid.innerHTML='<div class="sub-empty-card">Plans are temporarily unavailable. Please refresh in a moment.</div>'; $('premium-plan-count').textContent='Unavailable';return;}
  $('premium-plan-count').textContent=(plans||[]).length+' plans';
