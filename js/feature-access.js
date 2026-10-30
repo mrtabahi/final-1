@@ -16,14 +16,9 @@
   }
   function openPremiumDialog(){
     closePopup();
-    // Do not iframe premium.html: production sends X-Frame-Options: DENY,
-    // which makes the old embedded checkout render as a blank white panel.
-    // Open the same canonical Premium Pass page as a full-screen purchase dialog.
-    const returnTo=location.href;
-    const target=new URL('premium.html',location.href);
-    target.searchParams.set('dialog','1');
-    target.searchParams.set('return',returnTo);
-    location.assign(target.toString());
+    // Use one shared in-page purchase modal. Never navigate to a separate Premium page.
+    if(window.PremiumModal){window.PremiumModal.open().catch(()=>popup('Premium plans are temporarily unavailable. Please try again.'));return;}
+    popup('Premium plans are loading. Please try again in a moment.');
   }
   function popup(message){
     let el=document.getElementById('feature-upgrade-modal');
@@ -31,10 +26,10 @@
       el=document.createElement('div');
       el.id='feature-upgrade-modal';
       el.className='feature-upgrade-backdrop';
-      el.innerHTML='<section class="feature-upgrade-dialog" role="dialog" aria-modal="true" aria-labelledby="feature-upgrade-title" aria-describedby="feature-upgrade-copy"><button type="button" class="feature-upgrade-close" aria-label="Close upgrade dialog">×</button><div class="feature-upgrade-mark" aria-hidden="true">✦</div><h2 id="feature-upgrade-title">Premium feature</h2><p class="feature-upgrade-copy" id="feature-upgrade-copy"></p><div class="feature-upgrade-actions"><button type="button" class="feature-upgrade-primary feature-upgrade-open-premium">Okay, view Premium Pass</button><button type="button" class="feature-upgrade-secondary">Cancel</button></div></section>';
+      el.innerHTML='<section class="feature-upgrade-dialog" role="dialog" aria-modal="true" aria-labelledby="feature-upgrade-title" aria-describedby="feature-upgrade-copy"><button type="button" class="feature-upgrade-close" aria-label="Close upgrade dialog">×</button><div class="feature-upgrade-mark" aria-hidden="true">✦</div><h2 id="feature-upgrade-title">Premium feature</h2><p class="feature-upgrade-copy" id="feature-upgrade-copy"></p><div class="feature-upgrade-actions"><button type="button" class="feature-upgrade-primary feature-upgrade-open-premium">View plans</button><button type="button" class="feature-upgrade-secondary">Cancel</button></div></section>';
       document.body.appendChild(el);
       el.querySelectorAll('.feature-upgrade-close,.feature-upgrade-secondary').forEach(button=>button.addEventListener('click',closePopup));
-      el.querySelector('.feature-upgrade-open-premium').addEventListener('click',openPremiumDialog);
+      el.querySelector('.feature-upgrade-open-premium').addEventListener('click',()=>{closePopup();openPremiumDialog();});
       el.addEventListener('click',event=>{if(event.target===el)closePopup();});
     }
     if(!el.classList.contains('is-open'))popupReturnFocus=document.activeElement;
@@ -84,7 +79,7 @@
       .feature-site-lock-card{width:min(100%,480px);padding:32px;border:1px solid #d7d5ff;border-radius:26px;background:#fff;box-shadow:0 24px 70px #25244a20;text-align:center;color:#25314a}
       @media(max-width:760px){.navbar .nav-links{justify-content:flex-start;gap:9px 13px}.feature-upgrade-dialog{padding:26px 20px}}
     `;
-    document.head.appendChild(style);
+    style.textContent+=\n      '.premium-global-backdrop{position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(7,15,32,.72);backdrop-filter:blur(9px)}'+\n      '.premium-global-dialog{position:relative;width:min(1120px,100%);max-height:calc(100dvh - 36px);overflow:auto;border:1px solid #d7e0ef;border-radius:24px;background:#101f3b;color:#fff;box-shadow:0 30px 100px #0008}'+\n      '.premium-global-dialog .premium-modal-shell{width:100%;max-width:none;margin:0;padding:24px}'+\n      '.premium-global-dialog .premium-modal{min-height:0!important;display:block!important;padding:26px!important;border:1px solid #344767!important;border-radius:18px!important;background:linear-gradient(145deg,#172b4e,#0d1a31)!important;box-shadow:none!important;color:#fff}'+\n      '.premium-global-dialog .premium-modal-grid{grid-template-columns:1fr!important;gap:18px!important}'+\n      '.premium-global-dialog .premium-left{display:none!important}'+\n      '.premium-global-dialog .premium-right .sub-plan-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important;gap:12px!important}'+\n      '.premium-global-dialog .sub-plan-card{background:#fff!important;color:#152440!important;border:1px solid #d8e0ee!important;border-radius:16px!important;padding:18px!important;min-height:0!important}'+\n      '.premium-global-dialog .sub-plan-card h3,.premium-global-dialog .sub-plan-price{color:#152440!important}'+\n      '.premium-global-dialog .sub-plan-tagline{display:none!important}'+\n      '.premium-global-dialog .sub-plan-ribbon{background:#f5bd42!important;color:#172747!important}'+\n      '.premium-global-dialog .sub-btn-primary{background:#f5bd42!important;color:#172747!important;box-shadow:none!important}'+\n      '.premium-global-dialog .sub-btn-light{border:1px solid #29446c!important;color:#1b3154!important}'+\n      '.premium-global-dialog .premium-coupon{background:#132747!important;border-color:#405474!important}'+\n      '.premium-global-dialog .premium-coupon label{color:#fff!important}'+\n      '.premium-global-dialog .premium-coupon-note{color:#c2cde0!important}'+\n      '.premium-global-dialog .premium-coupon button{background:#f5bd42!important;color:#172747!important}'+\n      '.premium-global-dialog #premium-message{color:#f6d27b!important}'+\n      '.premium-global-close{position:sticky;float:right;top:10px;margin:10px 12px -48px 0;z-index:5;width:38px;height:38px;border:1px solid #61718a;border-radius:50%;background:#f5bd42;color:#172747;font-size:25px;cursor:pointer}'+\n      '@media(max-width:600px){.premium-global-backdrop{padding:7px}.premium-global-dialog{max-height:calc(100dvh - 14px);border-radius:16px}.premium-global-dialog .premium-modal-shell{padding:12px}.premium-global-dialog .premium-modal{padding:16px!important}.premium-global-dialog .premium-right .sub-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.premium-global-dialog .sub-plan-card{padding:13px!important}.premium-global-dialog .sub-plan-price{font-size:1.55rem!important}}';\n    document.head.appendChild(style);
   }
   installAccessStyles();
   function findRule(type,key){return rules.find(r=>r.resource_type===type&&norm(r.resource_key)===norm(key));}
