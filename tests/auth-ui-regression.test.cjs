@@ -38,6 +38,20 @@ test('Google signup respects registration pause and uses Google display name', (
   assert.ok(html.includes('AuthManager.updateName(googleName)'));
 });
 
+test('Google OAuth redirects back to the current website origin and handles callback safely', () => {
+  const auth = read('js/auth.js');
+  const html = read('login.html');
+  assert.ok(auth.includes("new URL('/login.html', window.location.origin)"));
+  assert.ok(auth.includes("callback.searchParams.set('oauth', '1')"));
+  assert.ok(auth.includes("redirectTo: callback.toString()"));
+  assert.ok(auth.includes("provider: 'google'"));
+  assert.ok(html.includes("params.get('oauth') !== '1'"));
+  assert.ok(html.includes("supabaseClient.auth.getSession()"));
+  assert.ok(html.includes("AuthManager.ensureCandidateProfile(data.session.user)"));
+  assert.ok(html.includes("location.replace(safeTarget)"));
+  assert.ok(html.includes("await supabaseClient.auth.signOut()"));
+});
+
 test('site navigation rewrites My Account links based on auth state', () => {
   const nav = read('js/account-nav.js');
   assert.ok(nav.includes('my_account.html'));
