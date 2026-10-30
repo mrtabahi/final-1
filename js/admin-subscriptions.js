@@ -90,6 +90,15 @@
     ['materials.html','PDF Library'],['dashboard.html','Start Preparation'],['start_test.html','Typing Test Player'],
     ['my_results.html','My Results'],['leaderboard.html','Leaderboard'],['my_account.html','My Account'],['premium.html','Plans & Pricing']
   ];
+  const menuFeatureChildren={
+    'fix-accuracy.html':['typing-game'],
+    'self-test.html':['self-test'],
+    'materials.html':['pdf-library','calculation-pdf'],
+    'dashboard.html':['setup-box','typing-interface','typing-formats','custom-passages','calculation-pdf'],
+    'start_test.html':['typing-interface'],
+    'my_results.html':['test-results-history'],
+    'leaderboard.html':['leaderboard-tools']
+  };
   const featureResources=[
     ['self-test','Self Test content'],['typing-game','Typing Game content'],['live-test','Live Test access'],
     ['hard-symbol-tests','Hard & Symbol Tests'],['setup-box','Test setup box'],['typing-interface','Typing interface'],
@@ -109,6 +118,11 @@
         if(error)throw error;
         for(const child of (children||[])) writes.push(client().from('feature_access_rules').upsert({...payload,resource_type:'test',resource_key:String(child.id)},{onConflict:'resource_type,resource_key'}));
       }
+      // Parent menu rules cascade to their linked feature controls. Each child remains individually editable afterwards.
+      if(type==='menu'){
+        const childFeatures=menuFeatureChildren[String(key).toLowerCase()]||[];
+        for(const featureKey of childFeatures)writes.push(client().from('feature_access_rules').upsert({...payload,resource_type:'feature',resource_key:featureKey},{onConflict:'resource_type,resource_key'}));
+      }
       // The Typing Tests menu is the parent of all test folders and their tests.
       if(type==='menu'&&String(key).toLowerCase()==='typing_test.html'){
         const {data:folders,error:folderError}=await client().from('folders').select('id');if(folderError)throw folderError;
@@ -118,7 +132,8 @@
       }
       const results=await Promise.all(writes);
       const failed=results.find(result=>result.error);if(failed?.error)throw failed.error;
-      notify(prettyResource(type,key)+' and '+(type==='folder'?'its current tests ':'')+'are now '+(isFree?'FREE':'PAID')+'.');
+      const childCount=Math.max(0,writes.length-1);
+      notify(prettyResource(type,key)+(childCount?' and '+childCount+' linked item(s)':'')+' are now '+(isFree?'FREE':'PAID')+'. Individual child overrides can still be changed below.');
       await Promise.all([loadAccessRules(),loadAccessTree()]);
     }catch(err){notify(err.message||'Could not update access. Check administrator login and database permissions.',true);}
   }
@@ -136,7 +151,7 @@
       const ruleFor=(type,key)=>allRules.find(r=>r.resource_type===type&&String(r.resource_key).toLowerCase()===String(key).toLowerCase());
       const toggle=(type,key,inherited=null)=>{const own=ruleFor(type,key);const r=own||inherited;const status=r?.is_free?'FREE':'PAID';const hint=own?'Explicit setting':(inherited?'Inherited from folder':'Default: paid');return '<span class="access-tree-state"><small>'+hint+'</small><button type="button" class="admin-btn '+(r?.is_free?'admin-btn-secondary':'admin-btn-primary')+' access-tree-toggle" data-tree-type="'+esc(type)+'" data-tree-key="'+esc(key)+'" data-tree-free="'+(r?.is_free?'true':'false')+'">'+status+'</button></span>';};
       accessLabels['site:*']='Whole website';
-      const menuNodes=pageResources.map(([key,label])=>{accessLabels['menu:'+key]=label;return '<div class="access-tree-node access-tree-leaf"><span>'+esc(label)+'</span><code>'+esc(key)+'</code>'+toggle('menu',key)+'</div>';}).join('');
+      const menuNodes=pageResources.map(([key,label])=>{accessLabels['menu:'+key]=label;const linked=(menuFeatureChildren[key.toLowerCase()]||[]).map(k=>ruleFor('feature',k)).filter(Boolean);const inherited=linked.length?{is_free:linked.every(r=>r.is_free)}:null;return '<div class="access-tree-node access-tree-leaf"><span>'+esc(label)+'</span><code>'+esc(key)+'</code>'+toggle('menu',key,inherited)+'</div>';}).join('');
       const folderNodes=(folders||[]).map(folder=>{
         accessLabels['folder:'+folder.id]=folder.name;
         const children=(tests||[]).filter(t=>t.folder_id===folder.id).map(test=>{
