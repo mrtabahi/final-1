@@ -74,15 +74,15 @@
       .feature-upgrade-copy{color:#526079;line-height:1.6}
       .feature-upgrade-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:22px}
       .feature-upgrade-primary,.feature-upgrade-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 17px;border-radius:999px;font:inherit;font-weight:800;cursor:pointer;text-decoration:none}
-      .feature-upgrade-primary{border:0;background:linear-gradient(100deg,#5d4af4,#c039c8);color:#fff}
+      .feature-upgrade-primary{border:0;background:linear-gradient(105deg,#6c36e8 0%,#d52688 58%,#ff8a25 100%);color:#fff;box-shadow:0 9px 22px #bb388c35}.feature-upgrade-secondary{border:1px solid #d8c8ee;background:#fff;color:#5d329b}
       .feature-upgrade-secondary{border:1px solid #d9dcef;background:#fff;color:#46516a}
       .feature-paid-teaser{display:grid;justify-items:start;gap:8px;padding:18px;border:1px solid #ddd6fe;border-radius:16px;background:linear-gradient(120deg,#fff,#faf5ff);color:#26324a}
       .feature-paid-kicker{font-size:.7rem;font-weight:900;letter-spacing:.1em;color:#7048d8}
       .feature-paid-teaser strong{font-size:1.05rem}.feature-paid-teaser p{margin:0;color:#536078}
       .feature-paid-teaser button{border:0;border-radius:999px;padding:8px 14px;background:linear-gradient(100deg,#5d4af4,#c039c8);color:#fff;font-weight:900}
       html.feature-access-pending body>*:not(script):not(style){visibility:hidden!important}\n      html.feature-access-pending body:after{content:'Checking access…';position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;background:#f8f7ff;color:#34415c;font-weight:800}\n      body.feature-site-locked>*:not(.feature-site-lock):not(script):not(style){visibility:hidden}
-      body.feature-site-locked .feature-site-lock{visibility:visible;position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:20px;background:#f8f7ff}
-      .feature-site-lock-card{width:min(100%,480px);padding:32px;border:1px solid #d7d5ff;border-radius:26px;background:#fff;box-shadow:0 24px 70px #25244a20;text-align:center;color:#25314a}
+      body.feature-site-locked .feature-site-lock{visibility:visible;position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:20px;background:rgba(10,19,37,.86);backdrop-filter:blur(12px)}
+      .feature-site-lock-card{width:min(100%,540px);padding:38px 32px;border:1px solid #f0d9a3;border-radius:26px;background:linear-gradient(145deg,#fff,#fff8e9);box-shadow:0 30px 90px #0008;text-align:center;color:#172b49}.feature-site-lock-card h1{font-size:clamp(1.35rem,3vw,1.8rem);letter-spacing:-.03em;color:#142746}.feature-site-lock-card p{color:#59677c;line-height:1.6}
       @media(max-width:760px){.navbar .nav-links{justify-content:flex-start;gap:9px 13px}.feature-upgrade-dialog{padding:26px 20px}}
     `;
     document.head.appendChild(style);
@@ -97,15 +97,17 @@
       const publicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
       if(!publicPages.has(current)){
         document.body.classList.add('feature-site-locked');
-        document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Access verification required</h1><p>We could not verify your plan. Protected content is hidden until access is confirmed.</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View Premium plans</button></div></div>');
+        document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium feature</h1><p>We could not verify your plan right now. This content stays protected; please view plans or try again shortly.</p><div class="feature-upgrade-actions"><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View plans</button><button type="button" class="feature-upgrade-secondary" id="locked-page-cancel">Cancel</button></div></div></div>');
+        document.getElementById('locked-page-cancel')?.addEventListener('click',()=>history.length>1?history.back():location.assign('/index.html'));
         document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);
       }
       document.documentElement.classList.remove('feature-access-pending');
     };
     if(!client){lockUnavailable();return;}
     try{
-      const [{data:{user},error:authError},rr]=await Promise.all([client.auth.getUser(),client.from('feature_access_rules').select('resource_type,resource_key,is_free,upgrade_message')]);
-      if(authError)throw authError;
+      const [sessionResult,rr]=await Promise.all([client.auth.getSession(),client.from('feature_access_rules').select('resource_type,resource_key,is_free,upgrade_message')]);
+      const user=sessionResult?.data?.session?.user||null;
+      if(sessionResult?.error)throw sessionResult.error;
       if(rr.error)throw rr.error;
       rules=rr.data||[];
       if(user){const {data}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(price_minor)').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(10);premium=(data||[]).some(s=>(!s.starts_at||new Date(s.starts_at)<=new Date())&&(!s.ends_at||new Date(s.ends_at)>new Date())&&Number(s.subscription_plans?.price_minor||0)>0);}
@@ -134,7 +136,8 @@
       if(effectivePageRule&&!effectivePageRule.is_free&&!premium&&!alwaysPublicPages.has(currentPage)){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark" aria-hidden="true">✦</span><h1>Premium access required</h1><p>'+esc(effectivePageRule.upgrade_message)+'</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">Explore plans</button></div></div>');document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);}
       document.documentElement.classList.remove('feature-access-pending');
       if(new URLSearchParams(location.search).get('openPremium')==='1')openPremiumDialog();
-    }catch(e){console.error('Feature access verification failed; protected content remains hidden.',e);document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Access check unavailable</h1><p>We could not verify your access. Please refresh or sign in again. Paid content remains locked until access is verified.</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View Premium Pass</button></div></div>');document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);document.documentElement.classList.remove('feature-access-pending');}
+    }catch(e){console.error('Feature access verification failed; protected content remains hidden.',e);document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium feature</h1><p>Access verification is temporarily unavailable. This content remains protected until your plan is confirmed.</p><div class="feature-upgrade-actions"><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View plans</button><button type="button" class="feature-upgrade-secondary" id="locked-page-cancel">Cancel</button></div></div></div>');
+      document.getElementById('locked-page-cancel')?.addEventListener('click',()=>history.length>1?history.back():location.assign('/index.html'));document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);document.documentElement.classList.remove('feature-access-pending');}
   }
   function applyPublicAccessLabels(){
     document.querySelectorAll('a[data-folder-id].category-card').forEach(card=>{
@@ -148,7 +151,9 @@
       const custom=a.getAttribute('data-access-key');
       const customId=custom&&custom.startsWith('feature:')?custom.slice(8):null;
       const featureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats'}[file]);
-      const rule=(customId&&findRule('feature',customId))||(featureKey&&findRule('feature',featureKey))||findRule('menu',file)||findRule('menu',norm(href));
+      const linkLabel=norm(a.textContent.replace(/UPGRADE/g,''));
+      const labelAliases=linkLabel.includes('preparation')?['preparation','start preparation','setup box']:linkLabel.includes('typing game')?['typing game']:[];
+      const rule=(customId&&findRule('feature',customId))||(featureKey&&findRule('feature',featureKey))||findRule('menu',file)||findRule('menu',norm(href))||labelAliases.map(key=>findRule('menu',key)||findRule('feature',key)).find(Boolean);
       let badge=a.querySelector(':scope > .feature-upgrade-badge');
       if(rule&&!rule.is_free&&!premium){
         if(!badge){badge=document.createElement('span');badge.className='feature-upgrade-badge';badge.textContent='UPGRADE';badge.setAttribute('aria-label','Premium feature');a.appendChild(badge);}
