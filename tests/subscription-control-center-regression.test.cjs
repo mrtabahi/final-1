@@ -64,6 +64,6 @@ test('premium purchase entry points use one responsive modal and preserve checko
   assert.match(modal, /grid-template-columns:repeat\\(3,minmax\\(0,1fr\\)\\)!important/);
   const game = fs.readFileSync(path.join(root, 'fix-accuracy.html'), 'utf8');
   assert.match(game, /feature-access-pending/);
-  assert.match(gate, /if\\(rr\\.error\\)throw rr\\.error/);
+  assert.match(gate, /if\(rr\.error\)throw rr\.error/);
   assert.match(gate, /Access verification required/);
 });
