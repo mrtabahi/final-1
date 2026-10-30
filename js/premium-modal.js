@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let opening=null,backdrop=null,returnFocus=null;
-function close(){if(!backdrop)return;backdrop.remove();backdrop=null;document.body.style.overflow='';if(returnFocus?.focus)returnFocus.focus({preventScroll:true});returnFocus=null;}
+function close(){if(!backdrop)return;document.removeEventListener('keydown',onKey);backdrop.remove();backdrop=null;document.body.style.overflow='';if(returnFocus?.focus)returnFocus.focus({preventScroll:true});returnFocus=null;}
 async function open(){if(backdrop){return;}if(opening)return opening;returnFocus=document.activeElement;opening=(async()=>{
  const response=await fetch('/premium.html?fragment=1',{credentials:'same-origin',cache:'no-store'});if(!response.ok)throw new Error('Premium plans could not be loaded.');
  const html=await response.text(),doc=new DOMParser().parseFromString(html,'text/html');
