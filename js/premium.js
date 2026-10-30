@@ -1,5 +1,5 @@
-document.addEventListener('DOMContentLoaded', async () => {
- const $=id=>document.getElementById(id), client=(typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
+window.initPremiumPurchase = async (root=document) => {
+ const $=id=>root.querySelector('#'+id), client=(typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const money=(minor,currency='INR')=>new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
  const message=(text,error=false)=>{const el=$('premium-message');if(el){el.textContent=text;el.classList.toggle('is-error',error)}};
