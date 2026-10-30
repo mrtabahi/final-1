@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#f7f5ff"><title>Premium Pass | Decoding HCM</title>
+<meta name="theme-color" content="#172747"><title>Premium Pass | Decoding HCM</title><script>if(new URLSearchParams(location.search).get("fragment")!=="1"){location.replace("my_account.html?openPremium=1");}</script>
 <link rel="icon" href="/logo.png"><link rel="stylesheet" href="css/main.css?v=20261030-vibrant1"><link rel="stylesheet" href="css/subscription-public.css?v=20261030-premium-modal1">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -114,14 +114,14 @@ body.dialog-mode .premium-modal-grid{grid-template-columns:minmax(250px,.72fr) m
 <div class="premium-left">
 <div class="premium-modal-heading"><span class="premium-crown" aria-hidden="true">♕</span><h1 id="premium-title">PREMIUM PASS</h1></div>
 <div class="premium-chip-row"><span class="premium-starting-price" id="premium-starting-price">Plans from …</span><span class="premium-status" id="premium-status">Checking membership…</span></div>
-<p class="premium-intro">Unlock more focused practice with a plan that fits your preparation. Choose a duration, review the access details, and continue through secure checkout. Plan prices and availability are loaded live.</p>
-<ul class="premium-benefits"><li>Typing practice and available study materials</li><li>Access to eligible premium tests and features</li><li>Membership status linked to your account</li></ul>
-<div class="premium-current-mini" id="premium-current-state" role="status" aria-live="polite">Checking your membership…</div>
+
+
+<div class="premium-current-mini" id="premium-current-state" role="status" aria-live="polite">Checking membership…</div>
 </div>
 <div class="premium-right">
-<div class="sub-section-head"><div><span class="sub-eyebrow">PREMIUM PLANS</span><h2>Choose your duration</h2></div><span id="premium-plan-count">Loading plans…</span></div>
+<div class="sub-section-head"><div><span class="sub-eyebrow">CHOOSE YOUR PLAN</span></div><span id="premium-plan-count">Loading…</span></div>
 <div id="premium-plan-grid" class="sub-plan-grid"><div class="sub-loading-card">Loading available plans…</div></div>
-<div class="premium-coupon"><label for="premium-coupon-code">🎟️ Have a coupon code?</label><input id="premium-coupon-code" type="text" maxlength="40" autocomplete="off" placeholder="ENTER COUPON CODE"><button id="premium-coupon-apply" type="button">Apply</button><p class="premium-coupon-note" id="premium-coupon-note" role="status">Coupon discounts are applied only after server-side validation. Coupon redemption is not enabled yet.</p></div><p id="premium-message" role="status" aria-live="polite"></p>
+<div class="premium-coupon"><label for="premium-coupon-code">🎟️ Have a coupon code?</label><input id="premium-coupon-code" type="text" maxlength="40" autocomplete="off" placeholder="ENTER COUPON CODE"><button id="premium-coupon-apply" type="button">Apply</button><p class="premium-coupon-note" id="premium-coupon-note" role="status">Coupon discount applies only after secure validation.</p></div><p id="premium-message" role="status" aria-live="polite"></p>
 </div>
 </div>
 </section>
@@ -132,6 +132,6 @@ body.dialog-mode .premium-modal-grid{grid-template-columns:minmax(250px,.72fr) m
 (()=>{const status=document.getElementById('premium-status');const state=document.getElementById('premium-current-state');const grid=document.getElementById('premium-plan-grid');const price=document.getElementById('premium-starting-price');const update=()=>{if(!state||!status)return;const active=state.textContent.toLowerCase().includes('membership active');status.textContent=active?'Premium active':state.textContent.toLowerCase().includes('not signed in')?'Sign in to activate':'Premium not active';};const observer=new MutationObserver(()=>{update();if(grid){const amounts=[...grid.querySelectorAll('.sub-plan-price')].map(el=>{const m=el.textContent.match(/[₹]s*[d,]+(?:.d+)?/);return m?Number(m[0].replace(/[^\d.]/g,'')):null}).filter(n=>n!==null);if(amounts.length)price.textContent='Plans from ₹'+Math.min(...amounts).toLocaleString('en-IN');}});if(state)observer.observe(state,{childList:true,subtree:true,characterData:true});if(grid)observer.observe(grid,{childList:true,subtree:true});})();
 </script>
 <script>
-(()=>{const params=new URLSearchParams(location.search);if(params.get('dialog')!=='1')return;document.body.classList.add('dialog-mode');const returnTo=params.get('return');const goBack=()=>{if(history.length>1){history.back();return;}if(returnTo){try{const u=new URL(returnTo,location.origin);if(u.origin===location.origin){location.replace(u.href);return;}}catch(_){}}location.replace('my_account.html');};const close=document.createElement('button');close.type='button';close.className='premium-dialog-close';close.setAttribute('aria-label','Close Premium Pass');close.textContent='×';close.addEventListener('click',goBack);document.body.appendChild(close);const cancel=document.createElement('button');cancel.type='button';cancel.className='premium-dialog-cancel';cancel.textContent='Cancel';cancel.addEventListener('click',goBack);document.body.appendChild(cancel);})();
+(()=>{const params=new URLSearchParams(location.search);if(params.get('fragment')==='1')return;document.body.classList.add('dialog-mode');const returnTo=params.get('return');const goBack=()=>{if(history.length>1){history.back();return;}if(returnTo){try{const u=new URL(returnTo,location.origin);if(u.origin===location.origin){location.replace(u.href);return;}}catch(_){}}location.replace('my_account.html');};const close=document.createElement('button');close.type='button';close.className='premium-dialog-close';close.setAttribute('aria-label','Close Premium Pass');close.textContent='×';close.addEventListener('click',goBack);document.body.appendChild(close);const cancel=document.createElement('button');cancel.type='button';cancel.className='premium-dialog-cancel';cancel.textContent='Cancel';cancel.addEventListener('click',goBack);document.body.appendChild(cancel);})();
 </script>
 </body></html>
