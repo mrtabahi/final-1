@@ -1,0 +1,56 @@
+/* Shared Master Typing Workspace — presentation only; each activity keeps its own scoring and submission flow. */
+:root{--master-typing-gap:clamp(.55rem,1.2vw,.9rem)}
+/* Give the actual work area the width; keep setup and result pages comfortably readable. */
+#typing-section,.self-workspace,#game-panel{width:100%;min-width:0}
+#typing-section .card,.self-workspace .card,#game-panel.fix-card{min-width:0}
+#passage-container,.self-passage,#fix-passage-display{
+  height:clamp(190px,27vh,330px);min-height:170px;max-height:38vh;overflow:auto;
+  overscroll-behavior:contain;scrollbar-gutter:stable;padding:clamp(.75rem,1.5vw,1.15rem);
+  font-size:clamp(1rem,1.15vw,1.2rem);line-height:1.72;overflow-wrap:anywhere
+}
+#typing-textarea,.self-typed,#fix-input{
+  display:block;width:100%;height:clamp(210px,30vh,390px);min-height:190px;max-height:44vh;
+  padding:clamp(.8rem,1.5vw,1.15rem);font-size:clamp(1rem,1.15vw,1.2rem);
+  line-height:1.7;resize:vertical;overscroll-behavior:contain
+}
+/* Small, dense metric tiles preserve room for passage and typing. */
+#live-metrics-panel .live-metrics-grid,.self-live-metrics,.fix-live-stats{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:.5rem;
+  margin:.7rem 0;min-width:0
+}
+#live-metrics-panel .stat-box,.self-live-metrics>div,.fix-live-stats>span{
+  min-width:0;padding:.55rem .65rem;border:1px solid #d8e3ef;border-radius:10px;
+  background:#f7faff;text-align:center
+}
+#live-metrics-panel .stat-value,.self-live-metrics strong{font-size:clamp(1.05rem,1.6vw,1.4rem);line-height:1.15;font-variant-numeric:tabular-nums}
+#live-metrics-panel .stat-label,.self-live-metrics span{font-size:.68rem;line-height:1.25;letter-spacing:.025em}
+.fix-live-stats>span{font-size:.78rem;display:flex;justify-content:center;align-items:center;gap:.3rem;flex-wrap:wrap}
+#typing-section .typing-controls,.self-toolbar,.self-toolbar-actions,.fix-game-top{gap:var(--master-typing-gap)}
+#typing-section .typing-controls{padding:.65rem; margin-bottom:.55rem}
+#typing-section .typing-controls .btn,.self-toolbar-actions .btn,#game-panel .typing-controls .btn{min-height:38px;padding:.45rem .65rem;font-size:.82rem}
+#typing-section .exam-header{gap:.75rem;flex-wrap:wrap;padding:.75rem 1rem}
+#typing-section .timer-box,.self-timer-block strong,.fix-clock{font-variant-numeric:tabular-nums}
+#game-panel .fix-error-box{margin:.55rem 0;gap:.5rem}
+#game-panel .fix-error-box>div{padding:.55rem .75rem}
+@media(min-width:900px){
+  #typing-section,#game-panel{max-width:1440px;margin-inline:auto}
+  #typing-section .passage-display,#game-panel #fix-passage-display{height:clamp(220px,29vh,360px)}
+  #typing-section .typing-input,#game-panel #fix-input{height:clamp(230px,32vh,420px)}
+}
+@media(max-width:700px){
+  #typing-section,.selftest-container,.fix-wrap{padding-left:.55rem!important;padding-right:.55rem!important}
+  #typing-section .exam-header{align-items:flex-start}
+  #typing-section .exam-heading{flex:1 1 55%}
+  #typing-section .timer-box{font-size:1.2rem;padding:.35rem .7rem}
+  #passage-container,.self-passage,#fix-passage-display{height:clamp(155px,22vh,245px);min-height:145px;max-height:30vh;padding:.7rem;font-size:1rem;line-height:1.65}
+  #typing-textarea,.self-typed,#fix-input{height:clamp(190px,27vh,310px);min-height:175px;max-height:36vh;padding:.75rem;font-size:1rem;line-height:1.65}
+  #live-metrics-panel .live-metrics-grid,.self-live-metrics,.fix-live-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:.38rem}
+  #live-metrics-panel .stat-box,.self-live-metrics>div,.fix-live-stats>span{padding:.45rem .3rem;border-radius:8px}
+  #live-metrics-panel .stat-value,.self-live-metrics strong{font-size:1.05rem}
+  #live-metrics-panel .stat-label,.self-live-metrics span{font-size:.62rem}
+  #game-panel .fix-error-box>div{padding:.55rem}
+}
+@media(max-width:380px){
+  #live-metrics-panel .live-metrics-grid,.self-live-metrics,.fix-live-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){#typing-section *,#game-panel *{scroll-behavior:auto}}
