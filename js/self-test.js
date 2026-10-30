@@ -5,7 +5,8 @@ const setup=$('self-setup'), workspace=$('self-workspace'), source=$('source-tex
 let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, inputHidden=false, allowBackspace=true, totalElapsed=0, backspacePressCount=0;
 let SAVED_KEY='decodingHcmSelfTestPassagesV1:guest';
 const LEGACY_SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
-let scoringFormula='bsf', selfFontSize=17.3, selfScores={};
+const typingDefaults=TypingExperienceConfig;
+let scoringFormula=typingDefaults.defaults.scoring.defaultFormula, selfFontSize=17.3, selfScores={};
 function applySelfFontSize(){passage.style.fontSize=selfFontSize+'px';typed.style.fontSize=selfFontSize+'px';}
 $('self-font-down')?.addEventListener('click',()=>{selfFontSize=Math.max(14,selfFontSize-1.5);applySelfFontSize()});
 $('self-font-up')?.addEventListener('click',()=>{selfFontSize=Math.min(32,selfFontSize+1.5);applySelfFontSize()});
@@ -23,7 +24,7 @@ function refreshSaved(selected=''){
 }
 function updateLive(){
  const input=typed.value, elapsed=startedAt===null?0:Math.max(1,Math.min(duration,(Date.now()-startedAt)/1000));
- const score=TypingMaster.calculateScore(original,input,elapsed||1,{freeErrorPct:.05,penaltyPerError:10},input.length,scoringFormula,backspacePressCount);
+ const score=TypingMaster.calculateScore(original,input,elapsed||1,typingDefaults.getScoringConfig(),input.length,scoringFormula,backspacePressCount);
  $('self-live-gross').textContent=score.grossWpm.toFixed(2);
  $('self-live-net').textContent=score.netWpm.toFixed(2);
  $('self-live-accuracy').textContent=score.accuracy.toFixed(2)+'%';
@@ -89,7 +90,7 @@ function finishTest(){
  if(finished)return;finished=true;if(timerId)window.clearInterval(timerId);timerId=null;
  totalElapsed=startedAt===null?0:Math.max(1,Math.min(duration,(Date.now()-startedAt)/1000));
  typed.disabled=true;
- const input=typed.value,config={freeErrorPct:.05,penaltyPerError:10};
+ const input=typed.value,config=typingDefaults.getScoringConfig();
  selfScores=TypingMaster.calculateBoth(original,input,totalElapsed,config,input.length,backspacePressCount);
  renderSelfResult(selfScores[scoringFormula]||selfScores.bsf,input,true);
 }
