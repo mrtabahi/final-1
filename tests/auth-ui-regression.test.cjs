@@ -62,10 +62,18 @@ test('password reset emails a link and reset page asks for new password plus con
   const reset = read('reset.html');
   assert.ok(forgot.includes('resetPasswordForEmail'));
   assert.ok(forgot.includes("new URL('/reset.html',window.location.origin)"));
+  assert.ok(forgot.includes('resetPasswordForEmail'));
+  assert.ok(forgot.includes('If this email is registered'));
   assert.ok(!forgot.includes('phone-form') && !forgot.includes('otp-form'));
   assert.ok(reset.includes('id="new-password"'));
   assert.ok(reset.includes('id="confirm-password"'));
+  assert.ok(reset.includes("event === 'PASSWORD_RECOVERY'"));
   assert.ok(reset.includes('auth.updateUser({password})'));
+  assert.ok(reset.includes('Passwords do not match.'));
+  assert.ok(reset.includes('This reset link is invalid or expired.'));
+  assert.ok(reset.includes("window.location.href = 'login.html?passwordReset=success'"));
+  assert.ok(!forgot.includes('decoding-hcm.vercel.app'));
+  assert.ok(!reset.includes('decoding-hcm.vercel.app'));
 });
 
 
