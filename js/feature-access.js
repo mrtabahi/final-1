@@ -124,7 +124,7 @@
   }
   function applyPublicAccessLabels(){
     document.querySelectorAll('a[data-folder-id].category-card').forEach(card=>{
-      const rule=findRule('folder',card.getAttribute('data-folder-id'));
+      const rule=findRule('folder',card.getAttribute('data-folder-id'))||findRule('menu','Typing_test.html');
       const label=card.querySelector('.category-foot>span:first-child');
       if(rule&&!rule.is_free&&!premium&&label&&label.textContent.trim()!=='UPGRADE ↗')label.innerHTML='UPGRADE <span aria-hidden="true">↗</span>';
     });
@@ -143,7 +143,7 @@
     });
     document.querySelectorAll('[data-test-id]').forEach(card=>{
       const testId=card.getAttribute('data-test-id');const folderId=card.getAttribute('data-folder-id');
-      const rule=findRule('test',testId)||findRule('folder',folderId);
+      const rule=findRule('test',testId)||findRule('folder',folderId)||findRule('menu','Typing_test.html');
       if(rule&&!rule.is_free&&!premium){
         if(!card.dataset.paidPreviewHidden){
           card.dataset.originalPaidMarkup=card.innerHTML;card.dataset.paidPreviewHidden='true';
@@ -171,7 +171,7 @@
     const testId=a.getAttribute('data-test-id')||a.closest('[data-test-id]')?.getAttribute('data-test-id');
     const folderId=a.getAttribute('data-folder-id')||a.closest('[data-folder-id]')?.getAttribute('data-folder-id')||new URLSearchParams((a.getAttribute('href')||'').split('?')[1]||'').get('folder');
     if(!rule&&testId)rule=findRule('test',testId);
-    if(!rule&&folderId)rule=findRule('folder',folderId);
+    if(!rule&&folderId)rule=findRule('folder',folderId)||findRule('menu','Typing_test.html');
     if(!rule&&custom&&custom.startsWith('feature:'))rule=findRule('feature',custom.slice(8));
     if(!rule&&a.matches('a[href]')){const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());const featureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats'}[file]);rule=(featureKey&&findRule('feature',featureKey))||findRule('menu',file)||findRule('menu',norm(href));}
     if(rule&&!rule.is_free&&!premium){e.preventDefault();e.stopImmediatePropagation();popup(rule.upgrade_message);}
