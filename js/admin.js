@@ -185,7 +185,12 @@
         }
         if (view === 'payments') {
             updatePageHeader(view);
-            renderPlannedModule(view, {title:'Payments & Coupons',subtitle:'Payment ledger and coupon tools'});
+            renderPaymentsModule(renderSequence);
+            return;
+        }
+        if (view === 'roles') {
+            updatePageHeader(view);
+            renderRolesModule(renderSequence);
             return;
         }
         if (view === 'content') {
@@ -244,7 +249,7 @@
         if(subtitle) subtitle.textContent=item.subtitle;
         // These modules render their own complete interface. Never replace
         // their content with the generic roadmap panel during navigation.
-        const ownsRenderer = ['dashboard','tests','attempts','candidates','logins','content','analytics','security','settings','materials','leaderboard','adsense','subscriptions'].includes(view);
+        const ownsRenderer = ['dashboard','tests','attempts','candidates','logins','content','analytics','security','settings','materials','leaderboard','adsense','subscriptions','payments','roles'].includes(view);
         if (!ownsRenderer) renderPlannedModule(view,item);
     }
 
@@ -492,6 +497,125 @@
             if (renderSequence !== viewRenderSequence || currentView !== view) return;
             contentBox.innerHTML = '<div class="admin-empty" role="alert">Unable to load this tool: ' + esc(error.message || 'Unknown error') + '. Please refresh the admin panel.</div>';
             console.error('Admin tool load failed:', error);
+        }
+    }
+
+
+
+    function downloadAdminCsv(filename, headers, rows) {
+        const quote = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+        const csv = [headers, ...rows].map(row => row.map(quote).join(',')).join('\r\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+    }
+
+    async function renderPaymentsModule(renderSequence = viewRenderSequence) {
+        const heading=$('module-title'), sub=$('module-subtitle'), box=$('module-capabilities');
+        const status=$('module-status-title'), copy=$('module-status-copy');
+        if(heading) heading.textContent='Payments & Coupons';
+        if(sub) sub.textContent='Order ledger, payment status and safe reconciliation visibility.';
+        if(status) status.textContent='Order ledger · read-only';
+        if(copy) copy.textContent='This view reads existing order records only. Payment confirmation and refunds are not exposed as client-side actions.';
+        if(!box) return;
+        box.innerHTML='<div class="admin-empty" role="status">Loading order ledger…</div>';
+        try {
+            const {data,error}=await supabaseClient.from('orders')
+                .select('id,provider_order_id,currency,total_minor,status,created_at,updated_at,subscription_plans(name)')
+                .order('created_at',{ascending:false}).limit(250);
+            if(error) throw error;
+            if(renderSequence!==viewRenderSequence || currentView!=='payments') return;
+            const rows=data||[];
+            const money=row=>new Intl.NumberFormat('en-IN',{style:'currency',currency:/^[A-Z]{3}$/.test(row.currency||'')?row.currency:'INR',maximumFractionDigits:2}).format(Number(row.total_minor||0)/100);
+            const totals=rows.reduce((acc,row)=>{const state=String(row.status||'unknown').toLowerCase();acc[state]=(acc[state]||0)+1;if(state==='paid')acc.paidAmount+=Number(row.total_minor||0);return acc;},{paidAmount:0});
+            const escStatus=value=>esc(String(value||'unknown').toLowerCase());
+            const renderRows=list=>list.length?list.map(row=>{
+                const plan=Array.isArray(row.subscription_plans)?row.subscription_plans[0]:row.subscription_plans;
+                const statusText=String(row.status||'unknown').toLowerCase();
+                return '<tr><td><strong>'+esc(String(row.id||'').slice(0,8))+'</strong><small style="display:block;color:#91abc5">'+esc(row.provider_order_id||'No provider order ID')+'</small></td><td>'+esc(plan?.name||'Plan unavailable')+'</td><td><span class="admin-ledger-status is-'+escStatus(statusText)+'">'+esc(statusText)+'</span></td><td>'+esc(money(row))+'</td><td>'+esc(formatDate(row.created_at))+'</td></tr>';
+            }).join(''):'<tr><td colspan="5">No orders match these filters.</td></tr>';
+            box.innerHTML=
+              '<div class="admin-ledger-summary">'+
+                '<div class="admin-ledger-stat"><span>Orders loaded</span><strong>'+rows.length+'</strong></div>'+
+                '<div class="admin-ledger-stat"><span>Paid orders</span><strong>'+Number(totals.paid||0)+'</strong></div>'+
+                '<div class="admin-ledger-stat"><span>Pending</span><strong>'+Number(totals.pending||0)+'</strong></div>'+
+                '<div class="admin-ledger-stat"><span>Recorded paid value</span><strong>'+esc(new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(totals.paidAmount/100))+'</strong></div>'+
+              '</div>'+
+              '<div class="admin-ledger-toolbar"><input type="search" id="admin-ledger-search" aria-label="Search orders" placeholder="Search order, plan or provider ID…"><select id="admin-ledger-status" aria-label="Filter order status"><option value="">All statuses</option><option>paid</option><option>free</option><option>pending</option><option>failed</option><option>refunded</option><option>cancelled</option></select><button type="button" class="admin-btn admin-btn-secondary" id="admin-ledger-refresh">↻ Refresh</button><button type="button" class="admin-btn admin-btn-primary" id="admin-ledger-export">↓ Export CSV</button></div>'+
+              '<div class="admin-ledger-table-wrap"><table class="admin-ledger-table"><thead><tr><th>Order</th><th>Plan</th><th>Status</th><th>Total</th><th>Created</th></tr></thead><tbody id="admin-ledger-rows">'+renderRows(rows)+'</tbody></table></div>'+
+              '<p class="admin-module-note"><strong>Coupon tools:</strong> No coupon-code table is configured in the current database, so coupon create/edit controls are intentionally not simulated. <button type="button" class="admin-btn admin-btn-secondary" id="admin-ledger-open-plans">Open plan controls</button></p>'+
+              '<p class="admin-module-note">This ledger uses the order records accessible to the current admin session and loads the latest 250 rows. Refund/payment-transaction details remain protected until a server-authorized, audited workflow is available.</p>';
+            const search=$('admin-ledger-search'), filter=$('admin-ledger-status'), body=$('admin-ledger-rows');
+            const applyFilters=()=>{
+                const q=(search.value||'').trim().toLowerCase(), state=(filter.value||'').toLowerCase();
+                const filtered=rows.filter(row=>{
+                    const plan=Array.isArray(row.subscription_plans)?row.subscription_plans[0]:row.subscription_plans;
+                    const hay=[row.id,row.provider_order_id,plan?.name,row.status].join(' ').toLowerCase();
+                    return (!q||hay.includes(q))&&(!state||String(row.status||'').toLowerCase()===state);
+                });
+                body.innerHTML=renderRows(filtered);
+                return filtered;
+            };
+            search.addEventListener('input',applyFilters);filter.addEventListener('change',applyFilters);
+            $('admin-ledger-refresh').addEventListener('click',()=>renderPaymentsModule(renderSequence));
+            $('admin-ledger-export').addEventListener('click',()=>{
+                const list=applyFilters();
+                downloadAdminCsv('decoding-hcm-orders.csv',['Order ID','Provider order ID','Plan','Status','Currency','Total minor units','Created at'],list.map(row=>{
+                    const plan=Array.isArray(row.subscription_plans)?row.subscription_plans[0]:row.subscription_plans;
+                    return [row.id,row.provider_order_id,plan?.name,row.status,row.currency,row.total_minor,row.created_at];
+                }));
+            });
+            $('admin-ledger-open-plans').addEventListener('click',()=>showAdminView('subscriptions'));
+        } catch(error) {
+            if(renderSequence!==viewRenderSequence || currentView!=='payments') return;
+            box.innerHTML='<div class="admin-error" role="alert">Could not load the order ledger: '+esc(error.message||error)+'. No payment status or refund action has been performed.</div><button type="button" class="admin-btn admin-btn-secondary" id="admin-ledger-retry">Try again</button><p class="admin-module-note">If access is denied, verify the admin-only database policy before changing permissions. Do not make transaction tables public to fix this screen.</p>';
+            $('admin-ledger-retry')?.addEventListener('click',()=>renderPaymentsModule(renderSequence));
+        }
+    }
+
+    async function renderRolesModule(renderSequence = viewRenderSequence) {
+        const heading=$('module-title'), sub=$('module-subtitle'), box=$('module-capabilities');
+        const status=$('module-status-title'), copy=$('module-status-copy');
+        if(heading) heading.textContent='Roles & Permissions';
+        if(sub) sub.textContent='Current account-role inventory and guarded administration workflow.';
+        if(status) status.textContent='Role inventory · changes guarded';
+        if(copy) copy.textContent='The current schema supports candidate/admin roles. Role mutations stay inside the existing head-admin-gated candidate workflow.';
+        if(!box) return;
+        box.innerHTML='<div class="admin-empty" role="status">Loading role inventory…</div>';
+        try {
+            const {data,error}=await supabaseClient.from('profiles')
+                .select('id,full_name,role,created_at')
+                .order('created_at',{ascending:false}).limit(500);
+            if(error) throw error;
+            if(renderSequence!==viewRenderSequence || currentView!=='roles') return;
+            const rows=data||[];
+            const admins=rows.filter(row=>row.role==='admin').length;
+            const candidates=rows.filter(row=>row.role==='candidate').length;
+            const renderRows=list=>list.length?list.map(row=>'<tr><td>'+esc(row.full_name||'Unnamed candidate')+'</td><td><code>'+esc(String(row.id||'').slice(0,8))+'</code></td><td><span class="admin-ledger-status '+(row.role==='admin'?'is-succeeded':'')+'">'+esc(row.role||'unknown')+'</span></td><td>'+esc(formatDate(row.created_at))+'</td></tr>').join(''):'<tr><td colspan="4">No profiles match these filters.</td></tr>';
+            box.innerHTML=
+              '<div class="admin-roles-summary"><div class="admin-roles-stat"><span>Profiles loaded</span><strong>'+rows.length+'</strong></div><div class="admin-roles-stat"><span>Administrators</span><strong>'+admins+'</strong></div><div class="admin-roles-stat"><span>Candidates</span><strong>'+candidates+'</strong></div></div>'+
+              '<div class="admin-roles-toolbar"><input id="admin-roles-search" type="search" aria-label="Search role inventory" placeholder="Search name or profile ID…"><select id="admin-roles-filter" aria-label="Filter by role"><option value="">All roles</option><option value="admin">Administrators</option><option value="candidate">Candidates</option></select><button type="button" id="admin-roles-refresh" class="admin-btn admin-btn-secondary">↻ Refresh</button><button type="button" id="admin-roles-manage" class="admin-btn admin-btn-primary">Manage in Candidates →</button></div>'+
+              '<div class="admin-roles-table-wrap"><table class="admin-roles-table"><thead><tr><th>Name</th><th>Profile ID</th><th>Role</th><th>Created</th></tr></thead><tbody id="admin-roles-rows">'+renderRows(rows)+'</tbody></table></div>'+
+              '<p class="admin-module-note"><strong>Permission boundary:</strong> the database role constraint only supports <code>candidate</code> and <code>admin</code>. Owner/content-manager/support templates are not created here because no corresponding role/permission schema is configured. Use the existing head-admin checks for actual role changes.</p>';
+            const search=$('admin-roles-search'),filter=$('admin-roles-filter'),body=$('admin-roles-rows');
+            const applyFilters=()=>{
+                const q=(search.value||'').trim().toLowerCase(),role=filter.value;
+                const list=rows.filter(row=>(!role||row.role===role)&&(!q||[row.full_name,row.id].join(' ').toLowerCase().includes(q)));
+                body.innerHTML=renderRows(list);return list;
+            };
+            search.addEventListener('input',applyFilters);filter.addEventListener('change',applyFilters);
+            $('admin-roles-refresh').addEventListener('click',()=>renderRolesModule(renderSequence));
+            $('admin-roles-manage').addEventListener('click',()=>showAdminView('candidates'));
+        } catch(error) {
+            if(renderSequence!==viewRenderSequence || currentView!=='roles') return;
+            box.innerHTML='<div class="admin-error" role="alert">Could not load role inventory: '+esc(error.message||error)+'. Existing role controls remain unchanged.</div><button type="button" class="admin-btn admin-btn-secondary" id="admin-roles-retry">Try again</button><p class="admin-module-note">Check the authenticated admin policy for profiles. Do not expose profile data to anonymous users to make this screen load.</p>';
+            $('admin-roles-retry')?.addEventListener('click',()=>renderRolesModule(renderSequence));
         }
     }
 
@@ -1628,7 +1752,11 @@ async function loadDashboard() {
             highlight_mode: highlightMode,
             hide_paragraph_mode: hideParagraphMode,
             active,
-            leaderboard_enabled: leaderboard
+            leaderboard_enabled: leaderboard,
+            // New tests are appended to the end of their folder by default.
+            sort_order: editingTestId
+              ? Number(cachedTests.find(item => String(item.id) === String(editingTestId))?.sort_order ?? 0)
+              : Math.max(-1, ...cachedTests.filter(item => String(item.folder_id || '') === String(folderId)).map(item => Number(item.sort_order ?? -1))) + 1
         };
         const query = editingTestId
             ? supabaseClient.from('tests').update(values).eq('id', editingTestId)

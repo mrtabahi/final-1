@@ -33,7 +33,7 @@ test('public pricing and account UI are connected to subscription records', () =
   const accountScript = fs.readFileSync(path.join(root, 'js/my-subscription.js'), 'utf8');
   const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
-  assert.match(home, /href="premium\.html"/);
+  assert.match(home, /href="\/?premium\.html"/);
   assert.match(premium, /premium-plan-grid/);
   assert.match(premium, /js\/premium\.js/);
   assert.match(premiumScript, /functions\.invoke\('create-checkout'/);
@@ -42,4 +42,22 @@ test('public pricing and account UI are connected to subscription records', () =
   assert.match(account, /js\/my-subscription\.js/);
   assert.match(accountScript, /user_subscriptions/);
   assert.match(accountScript, /LAST SUCCESSFUL PAYMENT/);
+});
+test('premium purchase entry points use one responsive modal and preserve checkout safety', () => {
+  const root = path.join(__dirname, '..');
+  const gate = fs.readFileSync(path.join(root, 'js/feature-access.js'), 'utf8');
+  const premium = fs.readFileSync(path.join(root, 'premium.html'), 'utf8');
+  const premiumScript = fs.readFileSync(path.join(root, 'js/premium.js'), 'utf8');
+  const modal = fs.readFileSync(path.join(root, 'js/premium-modal.js'), 'utf8');
+  assert.match(gate, /PremiumModal\.open\(\)/);
+  assert.match(gate, /premium-modal\.js/);
+  assert.doesNotMatch(gate, /<iframe title="Premium Pass plans"/);
+  assert.match(premium, /location\.replace\("my_account\.html\?openPremium=1"\)/);
+  assert.match(premium, /premium-dialog-cancel/);
+  assert.match(premium, /premium-coupon-code/);
+  assert.match(premium, /Coupon discount applies only after secure validation/);
+  assert.match(premiumScript, /Coupon validation is not configured/);
+  assert.match(modal, /role="dialog"/);
+  assert.match(modal, /premium-global-backdrop/);
+  assert.match(modal, /initPremiumPurchase/);
 });

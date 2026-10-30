@@ -21,12 +21,22 @@ jobs:
           node-version: 20
       - name: Test privileged RPC grants migration
         run: node --test tests/privileged-rpc-grants-regression.test.cjs
+      - name: Test compact credential-only login page
+        run: node --test tests/login-page-regression.test.cjs
+      - name: Test canonical typing scoring formulas
+        run: node --test tests/scoring-regression.test.cjs
       - name: Check admin command center JavaScript syntax
         run: node --check js/admin-command-center.js
+      - name: Check admin main JavaScript syntax
+        run: node --check js/admin.js
+      - name: Check feature-access JavaScript syntax
+        run: node --check js/feature-access.js
+      - name: Test site-wide polish and admin module safety
+        run: node --test tests/sitewide-polish-regression.test.cjs
       - name: Test admin command center wiring
         run: node --test tests/admin-command-center-regression.test.cjs
       - name: Check subscription UI JavaScript syntax
-        run: node --check js/admin-subscriptions.js && node --check js/premium.js && node --check js/my-subscription.js
+        run: node --check js/admin-subscriptions.js && node --check js/premium.js && node --check js/premium-modal.js && node --check js/my-subscription.js
       - name: Test subscription control center wiring
         run: node --test tests/subscription-control-center-regression.test.cjs
       - name: Check feature access and admin membership JavaScript syntax

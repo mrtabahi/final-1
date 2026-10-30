@@ -86,17 +86,39 @@
 
   const accessLabels={};
   const pageResources=[
-    ['index.html','Home'],['Typing_test.html','Typing Tests'],['self-test.html','Self Test'],
+    ['index.html','Home'],['Typing_test.html','Typing Tests'],['fix-accuracy.html','Typing Game'],['self-test.html','Self Test'],
     ['materials.html','PDF Library'],['dashboard.html','Start Preparation'],['start_test.html','Typing Test Player'],
     ['my_results.html','My Results'],['leaderboard.html','Leaderboard'],['my_account.html','My Account'],['premium.html','Plans & Pricing']
+  ];
+  const featureResources=[
+    ['self-test','Self Test content'],['typing-game','Typing Game content'],['live-test','Live Test access'],
+    ['hard-symbol-tests','Hard & Symbol Tests'],['setup-box','Test setup box'],['typing-interface','Typing interface'],
+    ['calculation-pdf','Calculation PDF'],['typing-formats','Typing formats'],['custom-passages','Custom passage uploads'],
+    ['test-results-history','Detailed results & history'],['leaderboard-tools','Leaderboard features'],['pdf-library','PDF calculations & library']
   ];
   const prettyResource=(type,key)=>accessLabels[type+':'+key]||((type==='site'&&key==='*')?'Whole website':key);
   async function setTreeRule(type,key,isFree){
     try{
       const {data:{user}}=await client().auth.getUser();
-      const {error}=await client().from('feature_access_rules').upsert({resource_type:type,resource_key:String(key),is_free:isFree,upgrade_message:'Upgrade your plan to unlock this content.',updated_by:user?.id,updated_at:new Date().toISOString()},{onConflict:'resource_type,resource_key'});
-      if(error)throw error;
-      notify(prettyResource(type,key)+' is now '+(isFree?'FREE':'PAID')+'.');
+      const payload={is_free:isFree,upgrade_message:'Upgrade your plan to unlock this content.',updated_by:user?.id,updated_at:new Date().toISOString()};
+      const writes=[client().from('feature_access_rules').upsert({...payload,resource_type:type,resource_key:String(key)},{onConflict:'resource_type,resource_key'})];
+      // A folder is a parent entitlement: applying Paid/Free updates every
+      // currently assigned test. Individual test overrides can be changed later.
+      if(type==='folder'){
+        const {data:children,error}=await client().from('tests').select('id').eq('folder_id',key);
+        if(error)throw error;
+        for(const child of (children||[])) writes.push(client().from('feature_access_rules').upsert({...payload,resource_type:'test',resource_key:String(child.id)},{onConflict:'resource_type,resource_key'}));
+      }
+      // The Typing Tests menu is the parent of all test folders and their tests.
+      if(type==='menu'&&String(key).toLowerCase()==='typing_test.html'){
+        const {data:folders,error:folderError}=await client().from('folders').select('id');if(folderError)throw folderError;
+        const {data:tests,error:testError}=await client().from('tests').select('id');if(testError)throw testError;
+        for(const folder of (folders||[]))writes.push(client().from('feature_access_rules').upsert({...payload,resource_type:'folder',resource_key:String(folder.id)},{onConflict:'resource_type,resource_key'}));
+        for(const test of (tests||[]))writes.push(client().from('feature_access_rules').upsert({...payload,resource_type:'test',resource_key:String(test.id)},{onConflict:'resource_type,resource_key'}));
+      }
+      const results=await Promise.all(writes);
+      const failed=results.find(result=>result.error);if(failed?.error)throw failed.error;
+      notify(prettyResource(type,key)+' and '+(type==='folder'?'its current tests ':'')+'are now '+(isFree?'FREE':'PAID')+'.');
       await Promise.all([loadAccessRules(),loadAccessTree()]);
     }catch(err){notify(err.message||'Could not update access. Check administrator login and database permissions.',true);}
   }
@@ -112,19 +134,19 @@
       if(fe)throw fe;if(te)throw te;if(re)throw re;
       const allRules=rules||[];
       const ruleFor=(type,key)=>allRules.find(r=>r.resource_type===type&&String(r.resource_key).toLowerCase()===String(key).toLowerCase());
-      const toggle=(type,key)=>{const r=ruleFor(type,key);return '<button type="button" class="admin-btn '+(r?.is_free?'admin-btn-secondary':'admin-btn-primary')+' access-tree-toggle" data-tree-type="'+esc(type)+'" data-tree-key="'+esc(key)+'" data-tree-free="'+(r?.is_free?'true':'false')+'">'+(r?.is_free?'FREE':'PAID')+'</button>';};
+      const toggle=(type,key,inherited=null)=>{const own=ruleFor(type,key);const r=own||inherited;const status=r?.is_free?'FREE':'PAID';const hint=own?'Explicit setting':(inherited?'Inherited from folder':'Default: paid');return '<span class="access-tree-state"><small>'+hint+'</small><button type="button" class="admin-btn '+(r?.is_free?'admin-btn-secondary':'admin-btn-primary')+' access-tree-toggle" data-tree-type="'+esc(type)+'" data-tree-key="'+esc(key)+'" data-tree-free="'+(r?.is_free?'true':'false')+'">'+status+'</button></span>';};
       accessLabels['site:*']='Whole website';
       const menuNodes=pageResources.map(([key,label])=>{accessLabels['menu:'+key]=label;return '<div class="access-tree-node access-tree-leaf"><span>'+esc(label)+'</span><code>'+esc(key)+'</code>'+toggle('menu',key)+'</div>';}).join('');
       const folderNodes=(folders||[]).map(folder=>{
         accessLabels['folder:'+folder.id]=folder.name;
         const children=(tests||[]).filter(t=>t.folder_id===folder.id).map(test=>{
           accessLabels['test:'+test.id]=test.title;
-          return '<div class="access-tree-node access-tree-test"><span>'+esc(test.title)+'</span>'+toggle('test',test.id)+'</div>';
+          const folderRule=ruleFor('folder',folder.id)||ruleFor('menu','Typing_test.html');return '<div class="access-tree-node access-tree-test"><span>'+esc(test.title)+'</span>'+toggle('test',test.id,folderRule)+'</div>';
         }).join('')||'<div class="access-tree-empty">No tests in this folder</div>';
-        return '<details class="access-tree-branch"><summary><span>'+esc(folder.name)+'</span><small>'+(tests||[]).filter(t=>t.folder_id===folder.id).length+' tests</small>'+toggle('folder',folder.id)+'</summary><div class="access-tree-children">'+children+'</div></details>';
+        return '<details class="access-tree-branch"><summary><span>'+esc(folder.name)+'</span><small>'+(tests||[]).filter(t=>t.folder_id===folder.id).length+' tests</small>'+toggle('folder',folder.id,ruleFor('menu','Typing_test.html'))+'</summary><div class="access-tree-children">'+children+'</div></details>';
       }).join('');
-      const siteRule=ruleFor('site','*');
-      tree.innerHTML='<div class="access-tree-root"><div class="access-tree-node access-tree-root-node"><strong>Decoding HCM</strong><span>Entire website</span>'+toggle('site','*')+'</div><details class="access-tree-branch" open><summary><span>Website menus &amp; pages</span><small>'+pageResources.length+' pages</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+menuNodes+'</div></details><details class="access-tree-branch"><summary><span>Typing Tests</span><small>'+(folders||[]).length+' folders</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+folderNodes+'</div></details></div>';
+      const featureNodes=featureResources.map(([key,label])=>{accessLabels['feature:'+key]=label;return '<div class="access-tree-node access-tree-leaf"><span>'+esc(label)+'</span><code>'+esc(key)+'</code>'+toggle('feature',key)+'</div>';}).join('');
+      tree.innerHTML='<div class="access-tree-root"><div class="access-tree-node access-tree-root-node"><strong>Decoding HCM</strong><span>Entire website</span>'+toggle('site','*')+'</div><details class="access-tree-branch" open><summary><span>Website menus &amp; pages</span><small>'+pageResources.length+' pages</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+menuNodes+'</div></details><details class="access-tree-branch"><summary><span>Typing Tests</span><small>'+(folders||[]).length+' folders</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+folderNodes+'</div></details><details class="access-tree-branch" open><summary><span>Individual features &amp; interfaces</span><small>'+featureResources.length+' controls</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+featureNodes+'</div></details></div>';
       tree.querySelectorAll('[data-tree-type]').forEach(button=>button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const type=button.dataset.treeType,key=button.dataset.treeKey,isFree=button.dataset.treeFree!=='true';setTreeRule(type,key,isFree);}));
     }catch(err){tree.innerHTML='<div class="admin-error">Could not load access tree: '+esc(err.message||err)+'</div>';}
   }
@@ -142,11 +164,11 @@
     select.innerHTML='<option value="">Loading resources…</option>';
     let options=[];
     try{
-      if(type==='site')options=[['*','Whole website'],...['index.html','Typing_test.html','self-test.html','materials.html','dashboard.html','start_test.html','my_results.html','leaderboard.html','my_account.html','premium.html'].map(x=>[x,x])];
+      if(type==='site')options=[['*','Whole website'],...['index.html','Typing_test.html','fix-accuracy.html','self-test.html','materials.html','dashboard.html','start_test.html','my_results.html','leaderboard.html','my_account.html','premium.html'].map(x=>[x,x])];
       else if(type==='menu')options=pageResources.map(([key,label])=>[key,label]);
       else if(type==='folder'){const {data,error}=await client().from('folders').select('id,name').order('sort_order').order('name');if(error)throw error;options=(data||[]).map(x=>[x.id,x.name]);}
       else if(type==='test'){const {data,error}=await client().from('tests').select('id,title').order('sort_order').order('title').limit(1000);if(error)throw error;options=(data||[]).map(x=>[x.id,x.title]);}
-      else if(type==='feature'){const {data,error}=await client().from('study_materials').select('id,title').order('sort_order').order('title').limit(1000);if(error)throw error;options=(data||[]).map(x=>[x.id,x.title]);}
+      else if(type==='feature'){options=[['typing-game','Typing Game'],['self-test','Self Test'],['pdf-library','PDF Library'],['live-test','Live Test'],['hard-symbol-tests','Hard & Symbol Tests']];const {data,error}=await client().from('study_materials').select('id,title').order('sort_order').order('title').limit(1000);if(error)throw error;options=options.concat((data||[]).map(x=>[x.id,'Study material · '+x.title]));}
       select.innerHTML='<option value="">Choose a resource…</option>'+options.map(([v,label])=>'<option value="'+esc(v)+'">'+esc(label)+'</option>').join('');
       if(!options.length)select.innerHTML='<option value="">No resources found</option>';
     }catch(err){select.innerHTML='<option value="">Could not load resources</option>';notify(err.message||'Could not load resource list.',true);}

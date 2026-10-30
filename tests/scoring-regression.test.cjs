@@ -170,7 +170,7 @@ test('BSF duplicate at end does not make earlier correct words look omitted', ()
     'bsf'
   );
   assert.deepEqual(
-    score.alignment.filter(item => item.type === 'match').map(item => item.expected),
+    Array.from(score.alignment.filter(item => item.type === 'match').map(item => item.expected)),
     ['alpha', 'same', 'beta', 'gamma']
   );
   assert.equal(score.errorBreakdown.omissions, 1);
@@ -182,7 +182,7 @@ test('BSF treats a short prefix as a spelling/incomplete error without shifting 
   assert.equal(score.alignment[0].type, 'substitute');
   assert.equal(score.alignment[0].expected, 'the');
   assert.equal(score.alignment[0].typed, 'th');
-  assert.deepEqual(score.alignment.filter(item => item.type === 'match').map(item => item.expected), ['quick', 'brown']);
+  assert.deepEqual(Array.from(score.alignment.filter(item => item.type === 'match').map(item => item.expected)), ['quick', 'brown']);
   assert.equal(score.errorBreakdown.incompleteWords, 1);
   assert.equal(score.errorBreakdown.omissions, 0);
 });
@@ -196,7 +196,7 @@ test('BSF does not count unreached trailing words as errors', () => {
 
 test('BSF keeps early duplicate-word alignment when later duplicate also exists', () => {
   const score = scoring.calculateScore('Why the cat comming and why cat dancing', 'Why the cat comming', 60, config, null, 'bsf');
-  assert.deepEqual(score.alignment.filter(item => item.type === 'match').map(item => item.expected), ['Why', 'the', 'cat', 'comming']);
+  assert.deepEqual(Array.from(score.alignment.filter(item => item.type === 'match').map(item => item.expected)), ['Why', 'the', 'cat', 'comming']);
   assert.equal(score.errorBreakdown.omissions, 0);
   assert.equal(score.totalErrors, 0);
 });
@@ -206,7 +206,7 @@ test('BSF keeps each correct leading word in its original slot with repeated lat
   const passage = 'Why the cat comming and why cat dancing';
   for (const typed of ['Why', 'Why the', 'Why the cat', 'Why the cat comming', 'Why the cat comming and why']) {
     const score = scoring.calculateScore(passage, typed, 60, config, null, 'bsf');
-    const matched = score.alignment.filter(item => item.type === 'match').map(item => item.expected);
+    const matched = Array.from(score.alignment.filter(item => item.type === 'match').map(item => item.expected));
     assert.deepEqual(matched, typed.split(/\s+/));
     assert.equal(score.errorBreakdown.omissions, 0, typed);
     assert.equal(score.totalErrors, 0, typed);
@@ -215,8 +215,9 @@ test('BSF keeps each correct leading word in its original slot with repeated lat
 
 
 test('total correct word follows keystrokes divided by five minus total errors and rounds to two decimals', () => {
-  const score = scoring.calculateScore('one two three four', 'one two thx four', 37, config, 17, 'bsf', 3);
-  assert.equal(score.totalCorrectWord, Number((17 / 5 - score.totalErrors).toFixed(2)));
+  const score = scoring.calculateScore('one two three four', 'one two thx four', 37, config, null, 'bsf', 3);
+  assert.equal(score.totalKeystrokes, 16);
+  assert.equal(score.totalCorrectWord, Number((16 / 5 - score.totalErrors).toFixed(2)));
   assert.equal(score.backspacePresses, 3);
   assert.equal(score.netWpm, Number(score.netWpm.toFixed(2)));
 });
@@ -244,3 +245,47 @@ test('master formula selector and paired formula helper use the same canonical c
   assert.equal(both.crpf.totalErrors, 0);
   assert.equal(both.bsf.backspacePresses, 2);
 });
+
+test('empty typed input reports no measured speed and treats the untouched passage as not reached', () => {
+  const score = scoring.calculateScore('one two three', '', 0, config, null, 'bsf');
+  assert.equal(score.totalKeystrokes, 0);
+  assert.equal(score.grossWpm, 0);
+  assert.equal(score.netWpm, 0);
+  assert.equal(score.accuracy, 0);
+  assert.equal(score.totalErrors, 0);
+  assert.equal(score.errorBreakdown.notReached, 3);
+  assert.equal(score.errorBreakdown.omissions, 0);
+  assert.equal(score.elapsedSeconds, 1);
+});
+
+test('zero and negative durations are clamped to one second before speed calculations', () => {
+  for (const duration of [0, -5]) {
+    const score = scoring.calculateScore('a', 'a', duration, config, null, 'bsf');
+    assert.equal(score.elapsedSeconds, 1);
+    assert.equal(score.elapsedMinutes, 0.02);
+    assert.equal(score.grossWpm, 12);
+    assert.equal(score.netWpm, 12);
+    assert.equal(score.accuracy, 100);
+  }
+});
+
+test('Unicode words preserve exact-match accuracy and count their UTF-16 code units consistently', () => {
+  const passage = 'café 東京';
+  const score = scoring.calculateScore(passage, passage, 60, config, null, 'bsf');
+  assert.equal(score.totalKeystrokes, 7);
+  assert.equal(score.grossWpm, 1.4);
+  assert.equal(score.totalErrors, 0);
+  assert.equal(score.correctChars, passage.length);
+  assert.equal(score.incorrectChars, 0);
+  assert.equal(score.accuracy, 100);
+});
+
+test('current allowance remains keystroke-based even when freeErrorPct config differs', () => {
+  const passage = 'a'.repeat(100);
+  const zeroPct = scoring.calculateScore(passage, passage, 60, {freeErrorPct: 0}, null, 'bsf');
+  const twentyPct = scoring.calculateScore(passage, passage, 60, {freeErrorPct: 0.2}, null, 'bsf');
+  assert.equal(zeroPct.totalKeystrokes, 100);
+  assert.equal(zeroPct.allowedErrors, 1);
+  assert.equal(twentyPct.allowedErrors, 1);
+});
+

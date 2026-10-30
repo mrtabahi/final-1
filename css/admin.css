@@ -202,3 +202,44 @@
 .admin-experience-card .admin-setting-row:hover{border-color:#67e8f988;box-shadow:0 0 20px #22d3ee10}
 @keyframes adminExperienceGlow{to{background-position:220% 0}}
 @media(prefers-reduced-motion:reduce){.admin-experience-card:before{animation:none}}
+
+
+/* Vibrant accessible admin palette: bright surfaces and high-contrast text. */
+:root{--admin-ink:#172033;--admin-muted:#475569;--admin-line:#e2e8f0;--admin-canvas:#f8fafc;--admin-card:#fff;--admin-navy:#fff;--admin-indigo:#7c3aed;--admin-indigo-soft:#f5f3ff;--admin-green:#15803d;--admin-amber:#b45309;--admin-shadow:0 8px 24px rgba(15,23,42,.06)}
+.admin-body{background:#f8fafc!important;color:#172033!important}
+.admin-sidebar{background:#fff!important;color:#172033!important;border-right:1px solid #e2e8f0!important;box-shadow:4px 0 18px rgba(15,23,42,.035)}
+.admin-brand{color:#172033!important;border-bottom-color:#e2e8f0!important}
+.admin-brand small,.admin-nav-section{color:#64748b!important}
+.admin-nav-link{color:#334155!important;border-color:transparent!important}
+.admin-nav-link:hover,.admin-nav-link.active{background:#f5f3ff!important;color:#5b21b6!important}
+.admin-nav-link.active{box-shadow:inset 3px 0 #a855f7!important}
+.admin-topbar{background:rgba(255,255,255,.97)!important;color:#172033!important;border-bottom:1px solid #e2e8f0!important}
+.admin-panel,.admin-stat-card,.admin-module-notice,.admin-capability,.admin-roadmap,.admin-modal{background:#fff!important;color:#172033!important;border-color:#e2e8f0!important}
+.admin-body :is(h1,h2,h3,h4,strong,.admin-page-heading){color:#172033}
+.admin-body :is(p,small,.admin-muted,.admin-page-heading p){color:#475569}
+.admin-body :is(input,select,textarea,.admin-input,.admin-select){background:#fff!important;color:#172033!important;border-color:#cbd5e1!important}
+.admin-body :is(input,select,textarea):focus-visible{outline:3px solid rgba(124,58,237,.3)!important;outline-offset:1px}
+.admin-btn-primary,.admin-btn.admin-btn-primary{background:linear-gradient(110deg,#7c3aed,#db2777 62%,#f97316)!important;color:#fff!important;border-color:#7c3aed!important;box-shadow:0 4px 14px rgba(219,39,119,.16)}
+.admin-btn-secondary,.admin-btn.admin-btn-secondary{background:#fff!important;color:#5b21b6!important;border:1px solid #c4b5fd!important}
+.admin-table th{background:#f5f3ff!important;color:#312e81!important}
+.admin-table td{color:#334155!important;border-color:#e2e8f0!important}
+.admin-capability{background:#fff!important;border-top:3px solid #a855f7!important}
+.admin-stat-card:nth-of-type(4n+1){border-top:3px solid #ec4899!important}
+.admin-stat-card:nth-of-type(4n+2){border-top:3px solid #16a34a!important}
+.admin-stat-card:nth-of-type(4n+3){border-top:3px solid #f97316!important}
+.admin-stat-card:nth-of-type(4n){border-top:3px solid #eab308!important}
+.admin-empty{background:#f8fafc!important;color:#475569!important;border-color:#cbd5e1!important}
+.admin-modal-backdrop{background:rgba(15,23,42,.48)!important}
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:3px solid rgba(124,58,237,.5);outline-offset:2px}
+
+/* Account operations: clear status, reason and history controls. */
+.candidate-account-status-panel,.candidate-billing-history{margin-top:1rem}
+.candidate-account-status-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:end}
+.candidate-account-status-form label{display:grid;gap:7px;font-weight:700;color:#28324b}
+.candidate-account-status-form textarea{min-height:76px;resize:vertical}
+.candidate-account-status-form .admin-form-message{grid-column:1/-1;margin:0}
+.candidate-account-status-form button{justify-self:start}
+.candidate-account-status-panel .admin-panel-heading{align-items:center}
+.candidate-billing-history h3{margin:16px 0 10px;color:#28324b}
+#candidate-status-filter{min-width:170px}
+@media(max-width:700px){.candidate-account-status-form{grid-template-columns:1fr}.candidate-account-status-form .admin-form-message{grid-column:auto}.candidate-account-status-form button{width:100%}}

@@ -65,7 +65,7 @@ const AuthManager = {
 
     const { data, error } = await supabaseClient
       .from('profiles')
-      .select('id, full_name, phone, phone_verified, email, role')
+      .select('id, full_name, phone, phone_verified, email, role, account_status')
       .eq('id', id)
       .maybeSingle();
 
@@ -98,6 +98,10 @@ const AuthManager = {
 
     if (!profile || profile.role !== 'candidate') {
       return { ok: false, reason: 'profile' };
+    }
+    if (profile.account_status && profile.account_status !== 'active') {
+      await supabaseClient.auth.signOut();
+      return { ok: false, reason: profile.account_status };
     }
 
     // Enable this check if phone verification is mandatory.
@@ -203,6 +207,15 @@ const AuthManager = {
       await supabaseClient.auth.signInWithPassword(payload);
 
     if (error) throw error;
+    const profile = data?.user?.id ? await this.getProfile(data.user.id) : null;
+    if (profile?.account_status && profile.account_status !== 'active') {
+      await supabaseClient.auth.signOut();
+      throw new Error(profile.account_status === 'banned'
+        ? 'This account has been banned. Contact support if you believe this is a mistake.'
+        : profile.account_status === 'removed'
+          ? 'This account has been removed from active users. Contact support if you believe this is a mistake.'
+          : 'This account is temporarily suspended. Contact support for assistance.');
+    }
     return data;
   },
 
@@ -215,7 +228,7 @@ const AuthManager = {
       throw new Error(accessSettings.registration_paused_message || 'New account creation is temporarily paused. Please try again later.');
     }
 
-    if (!normalizedEmail || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(normalizedEmail) || !normalizedPhone || !password) {
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || !normalizedPhone || !password) {
       throw new Error('Enter a valid email, mobile number and password.');
     }
     if (String(password).length < 8) {

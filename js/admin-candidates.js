@@ -3,7 +3,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let candidates = [], filtered = [], selected = null, attempts = [], activityById = new Map();
+  let candidates = [], filtered = [], selected = null, attempts = [], activityById = new Map(), activityTotalsById = new Map();
   const date = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); };
   const dateTime = v => { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString(); };
   const durationLabel = seconds => { const s=Math.max(0,Number(seconds)||0), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), r=s%60; return (h?h+'h ':'')+(m?m+'m ':'')+(!h&&!m?r+'s':'').trim() || '0s'; };
@@ -20,7 +20,7 @@
         <form class="account-admin-card" id="account-verify-form"><h3>Verify user email</h3><p>Use only after you have independently confirmed the email address belongs to the user.</p><label>User email<input name="email" type="email" required autocomplete="email" placeholder="user@example.com"></label><button class="admin-btn admin-btn-secondary" type="submit">Mark email verified</button></form>
       </div><p class="account-admin-status" id="account-admin-status" role="status" aria-live="polite">Account actions are securely checked by the server. Passwords are never displayed.</p></section>
       <div class="candidate-stats"><article><span>Registered candidates</span><strong id="candidate-total">—</strong><small>Candidate-role profiles</small></article><article><span>Profiles with email</span><strong id="candidate-email-total">—</strong><small>Contact coverage</small></article><article><span>Phone verified</span><strong id="candidate-verified-total">—</strong><small>Based on profile verification flag</small></article></div>
-      <section class="admin-panel candidate-directory-panel"><div class="admin-panel-heading"><div><h2>Candidate accounts</h2><p>Search by name, email, phone or profile ID.</p></div><span class="site-content-count" id="candidate-result-count">Loading…</span></div><div class="candidate-toolbar"><label class="admin-search">⌕ <input id="candidate-search" type="search" placeholder="Search candidates…"></label><select class="admin-select" id="candidate-verification-filter" aria-label="Phone verification filter"><option value="">All verification states</option><option value="verified">Phone verified</option><option value="unverified">Not verified</option></select><button class="admin-btn admin-btn-secondary" id="candidate-clear-search" type="button">Clear</button></div><div id="candidate-list" class="candidate-list"><div class="admin-empty">Loading candidate directory…</div></div><div class="candidate-pagination"><span id="candidate-page-label">—</span><div><button class="admin-btn admin-btn-secondary" id="candidate-prev" type="button" disabled>← Previous</button><button class="admin-btn admin-btn-secondary" id="candidate-next" type="button" disabled>Next →</button></div></div></section>
+      <section class="admin-panel candidate-directory-panel"><div class="admin-panel-heading"><div><h2>Candidate accounts</h2><p>Search by name, email, phone or profile ID.</p></div><span class="site-content-count" id="candidate-result-count">Loading…</span></div><div class="candidate-toolbar"><label class="admin-search">⌕ <input id="candidate-search" type="search" placeholder="Search candidates…"></label><select class="admin-select" id="candidate-verification-filter" aria-label="Phone verification filter"><option value="">All verification states</option><option value="verified">Phone verified</option><option value="unverified">Not verified</option></select><select class="admin-select" id="candidate-status-filter" aria-label="Account status filter"><option value="">All account statuses</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="banned">Banned — blocked</option><option value="removed">Removed — archived from active users</option></select><button class="admin-btn admin-btn-secondary" id="candidate-clear-search" type="button">Clear</button></div><div id="candidate-list" class="candidate-list"><div class="admin-empty">Loading candidate directory…</div></div><div class="candidate-pagination"><span id="candidate-page-label">—</span><div><button class="admin-btn admin-btn-secondary" id="candidate-prev" type="button" disabled>← Previous</button><button class="admin-btn admin-btn-secondary" id="candidate-next" type="button" disabled>Next →</button></div></div></section>
       <section class="admin-panel candidate-detail-panel" id="candidate-detail" hidden><div class="admin-panel-heading"><div><h2>Candidate overview</h2><p>Profile and submitted test history</p></div><button class="admin-btn admin-btn-secondary" id="candidate-close-detail" type="button">Close details</button></div><div id="candidate-detail-content"></div></section>
       <p class="candidate-security-footnote"><span>🔒</span><span><strong>Privacy-first controls</strong><br>Passwords and authentication tokens are never displayed. Suspend/ban controls are intentionally not shown until a secure server-side workflow is implemented.</span></p>`;
     $('candidate-refresh').addEventListener('click', load);
@@ -29,6 +29,7 @@
     bindAccountForm('account-verify-form','verify_email');
     $('candidate-search').addEventListener('input', () => { page = 0; applyFilters(); });
     $('candidate-verification-filter').addEventListener('change', () => { page = 0; applyFilters(); });
+    $('candidate-status-filter').addEventListener('change', () => { page = 0; applyFilters(); });
     $('candidate-clear-search').addEventListener('click', () => { $('candidate-search').value=''; $('candidate-verification-filter').value=''; page=0; applyFilters(); });
     $('candidate-prev').addEventListener('click', () => { page=Math.max(0,page-1); renderList(); });
     $('candidate-next').addEventListener('click', () => { page=Math.min(Math.ceil(filtered.length/pageSize)-1,page+1); renderList(); });
@@ -63,10 +64,11 @@
     const list=$('candidate-list'); if(!list || typeof supabaseClient==='undefined' || !supabaseClient) return;
     list.innerHTML='<div class="admin-empty">Loading candidate profiles…</div>';
     try {
-      const {data,error}=await supabaseClient.from('profiles').select('id,full_name,email,phone,phone_verified,role,created_at').eq('role','candidate').order('created_at',{ascending:false}).limit(2000);
+      const {data,error}=await supabaseClient.from('profiles').select('id,full_name,email,phone,phone_verified,role,created_at,account_status,account_status_reason,account_status_changed_at').eq('role','candidate').order('created_at',{ascending:false}).limit(2000);
       if(error) throw error;
       candidates=data||[];
       activityById = new Map();
+      activityTotalsById = new Map();
       if (candidates.length) {
         const { data: activityRows, error: activityError } = await supabaseClient
           .from('candidate_activity_sessions')
@@ -77,6 +79,7 @@
         else for (const row of activityRows || []) {
           const key = String(row.user_id);
           if (!activityById.has(key)) activityById.set(key, row);
+          activityTotalsById.set(key, (activityTotalsById.get(key) || 0) + Math.max(0, Number(row.duration_seconds) || 0));
         }
       }
       // The profile email can be empty for older/imported accounts. Resolve the
@@ -106,8 +109,8 @@
     }
   }
   function applyFilters() {
-    const q=$('candidate-search').value.trim().toLowerCase(), v=$('candidate-verification-filter').value;
-    filtered=candidates.filter(x=>(!q||[x.full_name,x.email,x.phone,x.id].some(t=>String(t||'').toLowerCase().includes(q)))&&(!v||(v==='verified'?x.phone_verified:!x.phone_verified)));
+    const q=$('candidate-search').value.trim().toLowerCase(), v=$('candidate-verification-filter').value, status=$('candidate-status-filter')?.value||'';
+    filtered=candidates.filter(x=>(!q||[x.full_name,x.email,x.phone,x.id].some(t=>String(t||'').toLowerCase().includes(q)))&&(!v||(v==='verified'?x.phone_verified:!x.phone_verified))&&(!status||String(x.account_status||'active')===status));
     renderList();
   }
   function renderList() {
@@ -115,7 +118,7 @@
     $('candidate-result-count').textContent=filtered.length+' candidate'+(filtered.length===1?'':'s');
     const pages=Math.max(1,Math.ceil(filtered.length/pageSize)); page=Math.min(page,pages-1);
     const shown=filtered.slice(page*pageSize,(page+1)*pageSize);
-    list.innerHTML=shown.length?shown.map(x=>`<article class="candidate-row"><div class="candidate-avatar">${esc(initials(x.full_name))}</div><div class="candidate-main"><strong>${esc(x.full_name||'Unnamed candidate')}</strong><span>${esc(x.email||'No email on profile')}</span><small>Joined ${esc(date(x.created_at))} · Last login ${esc(dateTime(activityById.get(String(x.id))?.started_at))} · ID ${esc(String(x.id).slice(0,8))}…</small></div><div class="candidate-row-meta"><span class="candidate-status ${x.phone_verified?'is-verified':'is-pending'}">${x.phone_verified?'✓ Phone verified':'Phone not verified'}</span><small>${esc(x.phone||'No phone provided')}</small><small>${(activityById.get(String(x.id)) && !activityById.get(String(x.id)).ended_at && Date.now()-new Date(activityById.get(String(x.id)).last_seen_at).getTime()<180000)?'🟢 Online now':'⚪ Offline'} · Online time ${esc(durationLabel(activityById.get(String(x.id))?.duration_seconds))}</small></div><button class="admin-btn admin-btn-secondary candidate-view-btn" type="button" data-candidate-view="${esc(x.id)}">View profile ↗</button></article>`).join(''):'<div class="admin-empty">No candidates match these filters.</div>';
+    list.innerHTML=shown.length?shown.map(x=>`<article class="candidate-row"><div class="candidate-avatar">${esc(initials(x.full_name))}</div><div class="candidate-main"><strong>${esc(x.full_name||'Unnamed candidate')}</strong><span>${esc(x.email||'No email on profile')}</span><small>Joined ${esc(date(x.created_at))} · Last activity ${esc(dateTime(activityById.get(String(x.id))?.last_seen_at || activityById.get(String(x.id))?.started_at))} · ID ${esc(String(x.id).slice(0,8))}…</small></div><div class="candidate-row-meta"><span class="candidate-status ${x.phone_verified?'is-verified':'is-pending'}">${x.phone_verified?'✓ Phone verified':'Phone not verified'}</span><small>${esc(x.phone||'No phone provided')}</small><small>${(activityById.get(String(x.id)) && !activityById.get(String(x.id)).ended_at && Date.now()-new Date(activityById.get(String(x.id)).last_seen_at).getTime()<180000)?'🟢 Online now':'⚪ Offline'} · Online time ${esc(durationLabel(activityTotalsById.get(String(x.id)) || 0))}</small></div><button class="admin-btn admin-btn-secondary candidate-view-btn" type="button" data-candidate-view="${esc(x.id)}">View profile ↗</button></article>`).join(''):'<div class="admin-empty">No candidates match these filters.</div>';
     $('candidate-page-label').textContent=filtered.length?'Showing '+(page*pageSize+1)+'–'+Math.min((page+1)*pageSize,filtered.length)+' of '+filtered.length:'No results';
     $('candidate-prev').disabled=page===0;$('candidate-next').disabled=page>=pages-1;
   }
@@ -139,8 +142,67 @@
           '</tbody></table></div>' : '<div class="admin-empty">No activity sessions recorded yet. Tracking starts after deployment when candidates visit while signed in.</div>') + '</section>';
       const avg=attempts.length?attempts.reduce((s,a)=>s+Number(a.net_wpm||0),0)/attempts.length:0;
       body.innerHTML=`<div class="candidate-profile-summary"><div class="candidate-avatar large">${esc(initials(selected.full_name))}</div><div><h3>${esc(selected.full_name||'Unnamed candidate')}</h3><p>${esc(selected.email||'No email')} · ${esc(selected.phone||'No phone')}</p><small>Joined ${esc(date(selected.created_at))} · ${selected.phone_verified?'Phone verified':'Phone not verified'}</small></div></div><div class="candidate-detail-stats"><article><span>Attempts loaded</span><strong>${attempts.length}</strong></article><article><span>Average net WPM</span><strong>${avg.toFixed(2)}</strong></article><article><span>Average accuracy</span><strong>${attempts.length?(attempts.reduce((s,a)=>s+Number(a.accuracy||0),0)/attempts.length).toFixed(2)+'%':'—'}</strong></article></div><div class="candidate-history-heading"><h3>Recent typing attempts</h3><span>Latest 50 records</span></div>${attempts.length?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>Date</th><th>Test</th><th>Language</th><th>Net WPM</th><th>Accuracy</th><th>Errors</th></tr></thead><tbody>'+attempts.map(a=>'<tr><td>'+esc(date(a.created_at))+'</td><td>'+esc(a.tests?.title||'Practice test')+'</td><td>'+esc(a.language||'—')+'</td><td>'+Number(a.net_wpm||0).toFixed(2)+'</td><td>'+Number(a.accuracy||0).toFixed(2)+'%</td><td>'+Number(a.total_errors||0)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="admin-empty">No submitted attempts found for this candidate.</div>'}${activityHtml}`;
+      await renderAccountStatusControls(selected);
       await renderCandidatePermissions(selected);
+      await renderBillingHistory(selected);
+      await renderAccountAuditHistory(selected);
     } catch(e) { body.innerHTML='<div class="admin-error">Could not load attempt history: '+esc(e.message)+'</div>'; }
+  }
+
+
+
+  async function renderAccountAuditHistory(candidate) {
+    const body=$('candidate-detail-content');if(!body)return;
+    const panel=document.createElement('section');panel.className='admin-panel candidate-audit-history';panel.style.marginTop='1rem';
+    panel.innerHTML='<div class="admin-panel-heading"><div><h2>Administrative history</h2><p>Recorded admin changes linked to this account.</p></div></div><div class="admin-empty">Loading audit history…</div>';body.appendChild(panel);
+    try{
+      const {data,error}=await supabaseClient.from('admin_audit_logs').select('action,target_type,target_id,details,created_at,actor_id').eq('target_id',String(candidate.id)).order('created_at',{ascending:false}).limit(100);
+      if(error)throw error;
+      const rows=data||[];
+      panel.innerHTML='<div class="admin-panel-heading"><div><h2>Administrative history</h2><p>Recorded admin changes linked to this account.</p></div><span class="site-content-count">'+rows.length+' events</span></div>'+(rows.length?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>When</th><th>Action</th><th>Details</th><th>Admin ID</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(dateTime(r.created_at))+'</td><td>'+esc(r.action)+'</td><td>'+esc(JSON.stringify(r.details||{}))+'</td><td>'+esc(String(r.actor_id||'—').slice(0,8))+'</td></tr>').join('')+'</tbody></table></div>':'<div class="admin-empty">No administrative events recorded for this account yet.</div>');
+    }catch(error){panel.innerHTML='<div class="admin-panel-heading"><h2>Administrative history</h2></div><div class="admin-error">Audit history unavailable: '+esc(error.message||'permission issue')+'</div>';}
+  }
+  async function renderBillingHistory(candidate) {
+    const body=$('candidate-detail-content');if(!body)return;
+    const panel=document.createElement('section');panel.className='admin-panel candidate-billing-history';panel.style.marginTop='1rem';
+    panel.innerHTML='<div class="admin-panel-heading"><div><h2>Subscription &amp; payment history</h2><p>Membership entitlements and order ledger; payment records are read-only here.</p></div></div><div class="admin-empty">Loading billing history…</div>';
+    body.appendChild(panel);
+    try{
+      const [subs,orders]=await Promise.all([
+        supabaseClient.from('user_subscriptions').select('id,status,starts_at,ends_at,admin_note,subscription_plans(name)').eq('user_id',candidate.id).order('created_at',{ascending:false}).limit(50),
+        supabaseClient.from('orders').select('id,status,provider,currency,total_minor,discount_minor,duration_days,created_at,expires_at').eq('user_id',candidate.id).order('created_at',{ascending:false}).limit(50)
+      ]);
+      if(subs.error)throw subs.error;if(orders.error)throw orders.error;
+      const fmt=v=>v?new Date(v).toLocaleString():'—';
+      const money=(minor,currency='INR')=>new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
+      const subRows=(subs.data||[]).map(s=>'<tr><td>'+esc(s.subscription_plans?.name||'Plan')+'</td><td>'+esc(s.status)+'</td><td>'+esc(fmt(s.starts_at))+'</td><td>'+esc(fmt(s.ends_at))+'</td><td>'+esc(s.admin_note||'—')+'</td></tr>').join('');
+      const orderRows=(orders.data||[]).map(o=>'<tr><td>'+esc(fmt(o.created_at))+'</td><td>'+esc(o.provider||'—')+'</td><td>'+esc(o.status)+'</td><td>'+esc(money(o.total_minor,o.currency||'INR'))+'</td><td>'+esc(o.duration_days||'—')+' days</td><td>'+esc(fmt(o.expires_at))+'</td></tr>').join('');
+      panel.innerHTML='<div class="admin-panel-heading"><div><h2>Subscription &amp; payment history</h2><p>Membership entitlements and order ledger · read-only payment records</p></div></div><h3>Memberships ('+(subs.data||[]).length+')</h3>'+(subRows?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>Plan</th><th>Status</th><th>Starts</th><th>Ends</th><th>Admin note</th></tr></thead><tbody>'+subRows+'</tbody></table></div>':'<div class="admin-empty">No subscription records found.</div>')+'<h3 style="margin-top:1.25rem">Orders ('+(orders.data||[]).length+')</h3>'+(orderRows?'<div class="candidate-history-table-wrap"><table class="admin-table candidate-history-table"><thead><tr><th>Date</th><th>Provider</th><th>Status</th><th>Total</th><th>Duration</th><th>Expires</th></tr></thead><tbody>'+orderRows+'</tbody></table></div>':'<div class="admin-empty">No order records found.</div>');
+    }catch(error){panel.innerHTML='<div class="admin-panel-heading"><h2>Subscription &amp; payment history</h2></div><div class="admin-error">Billing history unavailable: '+esc(error.message||'permission or schema issue')+'</div>';}
+  }
+  async function renderAccountStatusControls(candidate) {
+    const body=$('candidate-detail-content'); if(!body)return;
+    const section=document.createElement('section');
+    section.className='admin-panel candidate-account-status-panel';
+    const status=String(candidate.account_status||'active');
+    section.innerHTML='<div class="admin-panel-heading"><div><h2>Account access control</h2><p>Suspend or ban this candidate, or restore access. Changes are audited server-side.</p></div><span class="candidate-status '+(status==='active'?'is-verified':'is-pending')+'">'+esc(status.toUpperCase())+'</span></div><form class="candidate-account-status-form"><label>Account status<select class="admin-select" name="status"><option value="active">Active — allow access</option><option value="suspended">Suspended — temporary block</option><option value="banned">Banned — block access</option></select></label><label>Reason for audit log<textarea name="reason" class="admin-input" rows="2" maxlength="500" placeholder="Required for suspensions/bans; explain the reason"></textarea></label><p class="admin-form-message" role="status" aria-live="polite"></p><button type="submit" class="admin-btn admin-btn-primary">Save account status</button></form>';
+    const form=section.querySelector('form'), select=form.elements.status, reason=form.elements.reason, msg=form.querySelector('[role=status]'), button=form.querySelector('button[type=submit]');
+    select.value=status;reason.value=candidate.account_status_reason||'';
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();const next=select.value,why=reason.value.trim();
+      if(next!=='active'&&!why){msg.textContent='Enter a reason before suspending or banning an account.';msg.className='admin-form-message is-error';reason.focus();return;}
+      if(!await window.confirm('Confirm account status change to '+next.toUpperCase()+' for '+(candidate.email||candidate.id)+'?'))return;
+      button.disabled=true;msg.textContent='Saving and recording audit event…';
+      try{
+        const {data,error}=await supabaseClient.rpc('admin_set_candidate_status',{p_user_id:candidate.id,p_status:next,p_reason:why});
+        if(error)throw error;
+        candidate.account_status=next;candidate.account_status_reason=why;
+        msg.textContent='Account status updated and audit event recorded.';msg.className='admin-form-message is-success';
+        await load();await showDetail(candidate.id);
+      }catch(error){msg.textContent=error.message||'Could not update account status.';msg.className='admin-form-message is-error';}
+      finally{button.disabled=false;}
+    });
+    body.appendChild(section);
   }
   const permissionDefinitions = [
     ['folder_tests','Folders & Tests','Create and manage folders and typing tests.'],
