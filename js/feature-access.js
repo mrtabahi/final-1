@@ -122,15 +122,9 @@
       if(rr.error)throw rr.error;
       rules=rr.data||[];
       if(user){
-        const {data:subscriptions,error:subscriptionError}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(price_minor)').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(20);
-        if(subscriptionError)throw subscriptionError;
-        const now=Date.now();
-        premium=(subscriptions||[]).some(s=>{
-          const plan=Array.isArray(s.subscription_plans)?s.subscription_plans[0]:s.subscription_plans;
-          const starts=s.starts_at?new Date(s.starts_at).getTime():0;
-          const ends=s.ends_at?new Date(s.ends_at).getTime():Infinity;
-          return s.status==='active'&&starts<=now&&ends>now&&Number(plan?.price_minor||0)>0;
-        });
+        const {data:hasPaidAccess,error:entitlementError}=await client.rpc('has_active_paid_subscription');
+        if(entitlementError)throw entitlementError;
+        premium=hasPaidAccess===true;
       }
       ready=true;
       installMobileNavigation();
