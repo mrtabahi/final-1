@@ -91,10 +91,23 @@
   function findRule(type,key){return rules.find(r=>r.resource_type===type&&norm(r.resource_key)===norm(key));}
   function blocked(rule){if(!rule||rule.is_free||premium)return false;popup(rule.upgrade_message);return true;}
   async function init(){
-    const client=db();if(!client)return;
+    const client=db();
+    const lockUnavailable=()=>{
+      const current=norm(location.pathname.split('/').pop()||'index.html');
+      const publicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
+      if(!publicPages.has(current)){
+        document.body.classList.add('feature-site-locked');
+        document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Access verification required</h1><p>We could not verify your plan. Protected content is hidden until access is confirmed.</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View Premium plans</button></div></div>');
+        document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);
+      }
+      document.documentElement.classList.remove('feature-access-pending');
+    };
+    if(!client){lockUnavailable();return;}
     try{
-      const [{data:{user}},rr]=await Promise.all([client.auth.getUser(),client.from('feature_access_rules').select('resource_type,resource_key,is_free,upgrade_message')]);
-      rules=rr.error?[]:(rr.data||[]);
+      const [{data:{user},error:authError},rr]=await Promise.all([client.auth.getUser(),client.from('feature_access_rules').select('resource_type,resource_key,is_free,upgrade_message')]);
+      if(authError)throw authError;
+      if(rr.error)throw rr.error;
+      rules=rr.data||[];
       if(user){const {data}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(price_minor)').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(10);premium=(data||[]).some(s=>(!s.starts_at||new Date(s.starts_at)<=new Date())&&(!s.ends_at||new Date(s.ends_at)>new Date())&&Number(s.subscription_plans?.price_minor||0)>0);}
       ready=true;
       applyPublicAccessLabels();
@@ -115,12 +128,13 @@
       const currentPage=norm(location.pathname.split('/').pop()||'index.html');
       const alwaysPublicPages=new Set(['login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
       const pageFeatureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats'}[currentPage]);
-      const pageRule=findRule('menu',currentPage)||findRule('menu','/'+currentPage)||(pageFeatureKey&&findRule('feature',pageFeatureKey));
+      const routeAliases=({'fix-accuracy.html':['typing-game','fix-accuracy'],'self-test.html':['self-test'],'materials.html':['pdf-library'],'dashboard.html':['setup-box'],'start_test.html':['typing-interface']}[currentPage]||[]);
+      const pageRule=findRule('menu',currentPage)||findRule('menu','/'+currentPage)||(pageFeatureKey&&findRule('feature',pageFeatureKey))||routeAliases.map(key=>findRule('feature',key)).find(Boolean);
       const effectivePageRule=pageRule||site;
       if(effectivePageRule&&!effectivePageRule.is_free&&!premium&&!alwaysPublicPages.has(currentPage)){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark" aria-hidden="true">✦</span><h1>Premium access required</h1><p>'+esc(effectivePageRule.upgrade_message)+'</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">Explore plans</button></div></div>');document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);}
       document.documentElement.classList.remove('feature-access-pending');
       if(new URLSearchParams(location.search).get('openPremium')==='1')openPremiumDialog();
-    }catch(e){console.error('Feature access verification failed; protected content remains hidden.',e);document.documentElement.classList.remove('feature-access-pending');document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Access check unavailable</h1><p>We could not verify your access. Please refresh or sign in again. Paid content remains locked until access is verified.</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View Premium Pass</button></div></div>');document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);}
+    }catch(e){console.error('Feature access verification failed; protected content remains hidden.',e);document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Access check unavailable</h1><p>We could not verify your access. Please refresh or sign in again. Paid content remains locked until access is verified.</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View Premium Pass</button></div></div>');document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);}
   }
   function applyPublicAccessLabels(){
     document.querySelectorAll('a[data-folder-id].category-card').forEach(card=>{
