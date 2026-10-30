@@ -62,4 +62,4 @@ window.initPremiumPurchase = async (root=document) => {
    throw new Error(data?.error||data?.message||'Secure checkout is not available yet. No payment has been taken.');
   }catch(err){console.error(err);message(err.message||'Checkout is temporarily unavailable. No payment has been taken.',true);btn.disabled=false;btn.innerHTML='Try again <span aria-hidden="true">→</span>';}
  }));
-});
+};
