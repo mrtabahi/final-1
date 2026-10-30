@@ -14,8 +14,14 @@
     if(popupReturnFocus&&typeof popupReturnFocus.focus==='function')popupReturnFocus.focus({preventScroll:true});
     popupReturnFocus=null;
   }
+  let premiumModalLoading=null;
   function openPremiumDialog(){
     closePopup();
+    if(!window.PremiumModal){
+      if(!premiumModalLoading){premiumModalLoading=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/js/premium-modal.js?v=20261030-global-modal1';script.onload=resolve;script.onerror=()=>reject(new Error('Premium modal failed to load'));document.head.appendChild(script);});}
+      premiumModalLoading.then(()=>window.PremiumModal.open()).catch(()=>popup('Premium plans are temporarily unavailable. Please try again.'));
+      return;
+    }
     // Use one shared in-page purchase modal. Never navigate to a separate Premium page.
     if(window.PremiumModal){window.PremiumModal.open().catch(()=>popup('Premium plans are temporarily unavailable. Please try again.'));return;}
     popup('Premium plans are loading. Please try again in a moment.');
