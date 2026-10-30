@@ -109,6 +109,13 @@
         if(error)throw error;
         for(const child of (children||[])) writes.push(client().from('feature_access_rules').upsert({...payload,resource_type:'test',resource_key:String(child.id)},{onConflict:'resource_type,resource_key'}));
       }
+      // The Typing Tests menu is the parent of all test folders and their tests.
+      if(type==='menu'&&String(key).toLowerCase()==='typing_test.html'){
+        const {data:folders,error:folderError}=await client().from('folders').select('id');if(folderError)throw folderError;
+        const {data:tests,error:testError}=await client().from('tests').select('id');if(testError)throw testError;
+        for(const folder of (folders||[]))writes.push(client().from('feature_access_rules').upsert({...payload,resource_type:'folder',resource_key:String(folder.id)},{onConflict:'resource_type,resource_key'}));
+        for(const test of (tests||[]))writes.push(client().from('feature_access_rules').upsert({...payload,resource_type:'test',resource_key:String(test.id)},{onConflict:'resource_type,resource_key'}));
+      }
       const results=await Promise.all(writes);
       const failed=results.find(result=>result.error);if(failed?.error)throw failed.error;
       notify(prettyResource(type,key)+' and '+(type==='folder'?'its current tests ':'')+'are now '+(isFree?'FREE':'PAID')+'.');
@@ -134,9 +141,9 @@
         accessLabels['folder:'+folder.id]=folder.name;
         const children=(tests||[]).filter(t=>t.folder_id===folder.id).map(test=>{
           accessLabels['test:'+test.id]=test.title;
-          const folderRule=ruleFor('folder',folder.id);return '<div class="access-tree-node access-tree-test"><span>'+esc(test.title)+'</span>'+toggle('test',test.id,folderRule)+'</div>';
+          const folderRule=ruleFor('folder',folder.id)||ruleFor('menu','Typing_test.html');return '<div class="access-tree-node access-tree-test"><span>'+esc(test.title)+'</span>'+toggle('test',test.id,folderRule)+'</div>';
         }).join('')||'<div class="access-tree-empty">No tests in this folder</div>';
-        return '<details class="access-tree-branch"><summary><span>'+esc(folder.name)+'</span><small>'+(tests||[]).filter(t=>t.folder_id===folder.id).length+' tests</small>'+toggle('folder',folder.id)+'</summary><div class="access-tree-children">'+children+'</div></details>';
+        return '<details class="access-tree-branch"><summary><span>'+esc(folder.name)+'</span><small>'+(tests||[]).filter(t=>t.folder_id===folder.id).length+' tests</small>'+toggle('folder',folder.id,ruleFor('menu','Typing_test.html'))+'</summary><div class="access-tree-children">'+children+'</div></details>';
       }).join('');
       const featureNodes=featureResources.map(([key,label])=>{accessLabels['feature:'+key]=label;return '<div class="access-tree-node access-tree-leaf"><span>'+esc(label)+'</span><code>'+esc(key)+'</code>'+toggle('feature',key)+'</div>';}).join('');
       tree.innerHTML='<div class="access-tree-root"><div class="access-tree-node access-tree-root-node"><strong>Decoding HCM</strong><span>Entire website</span>'+toggle('site','*')+'</div><details class="access-tree-branch" open><summary><span>Website menus &amp; pages</span><small>'+pageResources.length+' pages</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+menuNodes+'</div></details><details class="access-tree-branch"><summary><span>Typing Tests</span><small>'+(folders||[]).length+' folders</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+folderNodes+'</div></details><details class="access-tree-branch" open><summary><span>Individual features &amp; interfaces</span><small>'+featureResources.length+' controls</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+featureNodes+'</div></details></div>';
