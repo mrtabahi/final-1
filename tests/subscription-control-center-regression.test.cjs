@@ -53,6 +53,6 @@ test('premium purchase entry points share one non-iframe dialog and provide a sa
   assert.match(gate, /X-Frame-Options: DENY/);
   assert.match(premium, /premium-dialog-cancel/);
   assert.match(premium, /premium-coupon-code/);
-  assert.match(premium, /Coupon redemption is not enabled yet/);
+  assert.match(premium, /Coupon discount applies only after secure validation/);
   assert.match(premiumScript, /Coupon validation is not configured/);
 });
