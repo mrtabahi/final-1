@@ -21,6 +21,9 @@ test('admin access controls and member lifecycle actions are wired', () => {
 
   assert.match(admin, /feature-access-form/);
   assert.match(admin, /toggleAccessRule/);
+  assert.match(admin, /menuFeatureChildren/);
+  assert.match(admin, /childFeatures=menuFeatureChildren/);
+  assert.match(admin, /Individual child overrides can still be changed below/);
   assert.match(admin, /saveMembershipExpiry/);
   assert.match(admin, /expireMembership/);
   assert.match(admin, /resetPasswordForEmail/);
