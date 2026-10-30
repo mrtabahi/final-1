@@ -31,7 +31,7 @@ Improve the typing experience safely by progressively sharing workspace controls
 - Vercel preview for commit `e1c1ac1103ab600d34f6a4817839ebf653a999d9` was READY:
   https://final-1-abti6ynmn-decoding-hcn.vercel.app
 - Latest tracked Vercel status reported build-rate-limit failure (upgrade/rate-limit target); latest branch commit preview not confirmed. Recheck deployment list and latest commit after the limit clears.
-- GitHub Actions Security regression tests for prior head `188018d055c7611075f03c2d73ac462a654d1bdd` were IN_PROGRESS at last check. Recheck the current PR head and rerun/fix as needed.
+- Latest tracked head after this work: `86b461a9552ad401e99d5027a6ec13b77ef583a2`. GitHub Actions Security regression tests run #316 (`41127581157`) was IN_PROGRESS at last check. Vercel status for this head is FAILURE due to build-rate-limit. Recheck both after the limit clears.
 - Production deployment on `main` was READY at last check; no production release from this branch.
 
 ## Other open PRs / security follow-up
