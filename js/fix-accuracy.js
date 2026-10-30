@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const authStatus = await TypingMaster.requireCandidateGuard();
   if (!authStatus?.ok) return;
   const $ = id => document.getElementById(id);
+  const typingDefaults=TypingExperienceConfig;
   const folderSelect=$('fix-folder'), passageSelect=$('fix-passage-select'), customInput=$('fix-custom'), form=$('fix-setup-form');
   const setup=$('setup-panel'), game=$('game-panel'), result=$('result-panel'), input=$('fix-input');
   let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, typingFontSize=19.2, backspacePressCount=0;
@@ -81,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateMetrics(elapsed);if(currentConfig.duration&&remain<=0)finish('Timer complete');
   }
   function updateMetrics(elapsed){
-    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',backspacePressCount,false);
+    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,typingDefaults.getScoringConfig(),'bsf',backspacePressCount,false);
     $('fix-live-gross').textContent=score.grossWpm.toFixed(2);$('fix-live-net').textContent=score.netWpm.toFixed(2);
     $('fix-live-accuracy').textContent=score.accuracy.toFixed(2)+'%';
   }
