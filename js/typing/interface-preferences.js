@@ -18,8 +18,8 @@
   };
   async function load() {
     try {
-      if (!window.supabaseClient) return publish('master');
-      const { data, error } = await window.supabaseClient
+      if (typeof supabaseClient === 'undefined' || !supabaseClient) return publish('master');
+      const { data, error } = await supabaseClient
         .from('site_experience_settings')
         .select('typing_interface_preferences')
         .eq('id', 1)
