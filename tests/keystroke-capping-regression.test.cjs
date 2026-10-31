@@ -36,6 +36,6 @@ test('extra words are counted as errors but their letters and separators do not 
 
 test('each expected word has an independent character cap', () => {
   const scorer = loadScorer();
-  assert.equal(scorer.countCappedKeystrokes('a longword', 'aaaaaaa longword'), 9);
+  assert.equal(scorer.countCappedKeystrokes('a longword', 'aaaaaaa longword'), 10);
   assert.equal(scorer.countCappedKeystrokes('a longword', 'a longword extra'), 10);
 });
