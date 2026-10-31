@@ -78,3 +78,13 @@
 #fix-passage-display.no-highlight .word-current{border:0!important;background:transparent!important;color:inherit!important}
 .fix-result-original{font:500 clamp(1rem,1.5vw,1.12rem)/1.9 ui-monospace,SFMono-Regular,Menlo,monospace;color:#d8eaff;white-space:pre-wrap;overflow-wrap:anywhere;letter-spacing:.01em;padding:.8rem 0 1.1rem;border-bottom:1px solid #ffffff25;margin-bottom:1rem}
 .fix-result-original::selection,.fix-result-typed::selection{background:#2563eb;color:#fff}
+
+
+/* Result analysis parity with the main typing scorecard. */
+.fix-error-analysis{margin:1.1rem 0;padding:1rem;border:1px solid #dbe5ef;border-radius:14px;background:#f8fbff}
+.fix-error-analysis h3{margin:0 0 .85rem;color:#173b5c}
+.fix-error-analysis-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.55rem}
+.fix-error-analysis-grid>div{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.65rem .75rem;border:1px solid #e0e8f0;border-radius:9px;background:#fff}
+.fix-error-analysis-grid span{font-size:.86rem;color:#526579}
+.fix-error-analysis-grid strong{font-variant-numeric:tabular-nums;color:#153a5b}
+.fix-error-analysis>p{margin:.75rem 0 0;color:#617286;font-size:.82rem}
