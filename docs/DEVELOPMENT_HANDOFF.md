@@ -181,3 +181,9 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - Renamed result metric labels to Total Mistakes and Words (Strokes / 5) to align with screenshot terminology. Existing allowance, excess errors, penalty WPM, correct words, gross/net, accuracy, keystrokes, attempt time, qualification and annotated passage comparison remain present.
 - Added regression coverage and refreshed Fix Accuracy JS/CSS cache versions. Changes are present in commits da3d8b10, 41072f82, 84bd7338, 677e23f1, 36517988.
 - CI and a fresh Vercel preview for these latest changes are pending; no browser visual run has been completed.
+
+
+## 2026-10-31 Scorecard metric consistency correction
+- A parity audit found Fix Accuracy displayed raw input.value.length for keystrokes and typed words, while the canonical score engine intentionally caps measured keystrokes to passage-bounded characters/separators. This could make the scorecard disagree with Gross WPM and the main Typing Test for extra text.
+- Fixed Fix Accuracy to display score.totalKeystrokes and score.equivalentTypedWords (with canonical fallback) and canonical backspacePresses. Refreshed JS cache version and added regression coverage.
+- Commit: b5debc7650c4a691ce4750847d1fb0b909b76cc7; cache/test commits: 912fa0d69fe6d378eaacebf1915719655143f0f3, 2b803f0a99ff94ceb526831fc87d7fab20981240.
