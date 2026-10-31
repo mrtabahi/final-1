@@ -1,6 +1,6 @@
 # Development handoff and pending-work register
 
-Last updated: 2026-10-31 (latest update: typing lifecycle regression coverage)
+Last updated: 2026-10-31 (latest update: shared passage visibility/highlight controls)
 Repository: [mrtabahi/final-1](https://github.com/mrtabahi/final-1)
 Working branch: `fix/custom-domain-seo`
 Pull request: [#96](https://github.com/mrtabahi/final-1/pull/96) — open; do not merge without explicit user approval.
@@ -13,9 +13,9 @@ Improve the typing experience safely by progressively sharing workspace controls
 - Canonical scoring engine remains `supabase/functions/typing-result/typing-master.js`; no formula changed.
 - Shared defaults/metadata: `js/typing/master-config.js`, `js/typing/activity-registry.js`.
 - Shared responsive presentation: `css/master-typing-interface.css`.
-- Added `js/typing/workspace-controls.js` with a reusable, bounded font-size controller.
-- Self Test uses the shared font controller for passage and typing input.
-- Fix Accuracy uses the shared font controller for passage and typing input; retains its existing font range/step and reinitializes at 19.2px per new attempt.
+- Added `js/typing/workspace-controls.js` with reusable bounded font sizing, element visibility, display, and class-state helpers.
+- Self Test uses shared font and visibility/highlight helpers for passage and typing panels.
+- Fix Accuracy uses shared font and passage display/highlight helpers; retains its existing font range/step and reinitializes at 19.2px per new attempt.
 - Added tests for shared config, admin site-experience controls, and shared font controls.
 - Admin Website Settings missing site-experience UI controls restored in `js/admin.js`; existing `site_experience_settings` persistence is reused.
 - No database migration, production schema change, scoring formula change, or production deploy was performed.
@@ -41,6 +41,13 @@ Improve the typing experience safely by progressively sharing workspace controls
 - Keep both PRs tracked; do not merge without explicit approval.
 - Security advisor follow-ups previously noted: public leaderboard security-definer view; leaked-password protection disabled; unindexed foreign keys; multiple permissive RLS policies; RLS init/performance warnings. Re-audit before making changes. Leaderboard is lower priority; do not risk breaking it.
 
+## Latest typing workspace presentation update
+- Added shared `setHidden`, `setDisplay`, and `setClassState` helpers to `js/typing/workspace-controls.js`.
+- Integrated them into Self Test and Fix Accuracy without changing timer/scoring/submission logic.
+- Added unit tests for hide/show, display restoration, and highlight class toggling in `tests/typing-workspace-controls.test.cjs`.
+- Updated both HTML pages to load the refreshed helper asset version.
+- CI run #319 for prior commit `ee6235823812604780f6f0fa6e10409df2663793` passed; exact-head CI for this update remains to be checked.
+
 ## Latest typing lifecycle test update
 - Added regression cases in `tests/typing-engine-lifecycle-regression.test.cjs` for first printable key (including Space), modifier-only keys, Backspace disabled/enabled behavior, and passage-completion single submission.
 - Commit: `f167322f6ecbf8c015714fed767d2b51ab706404`.
@@ -48,7 +55,7 @@ Improve the typing experience safely by progressively sharing workspace controls
 
 ## Remaining typing-workspace tasks
 1. Extract shared passage/input layout and common keyboard/input helpers only after a behavior-parity test plan exists.
-2. Timer lifecycle regression coverage now includes single-start behavior, first printable key/Space start, disabled/enabled Backspace semantics, duration completion, destroy cleanup, and passage-completion single-submit. Still add cancel/restart plus highlight and passage visibility coverage.
+2. Timer lifecycle regression coverage includes single-start, first printable key/Space, modifier keys, Backspace semantics, duration completion, destroy cleanup, and passage-completion single-submit. Shared presentation tests now cover hide/show, display restoration, and highlight class toggling. Still add cancel/restart integration coverage.
 3. Audit the main exam typing page against Self Test and Fix Accuracy; keep exam-specific server config and result submission untouched.
 4. Verify font controller behavior in browser at desktop/mobile sizes, including reset/restart.
 5. Review test scripts and run the complete relevant test suite once CI is available.
@@ -62,8 +69,8 @@ Improve the typing experience safely by progressively sharing workspace controls
 5. Add restore-defaults/versioning only after existing persistence flow is fully tested.
 
 ## Release checklist (must remain open until verified)
-- [ ] Vercel preview for exact latest PR head `f167322f6ecbf8c015714fed767d2b51ab706404` reaches READY (latest check: BUILDING; rate-limit appears resolved).
-- [ ] GitHub Actions checks pass for exact latest PR head (not yet reported for `f167322f6ecbf8c015714fed767d2b51ab706404`; previous head run #317 passed).
+- [ ] Vercel preview for exact latest PR head reaches READY; recheck after latest commits.
+- [ ] GitHub Actions checks pass for exact latest PR head (run #319 passed for previous head `ee6235823812604780f6f0fa6e10409df2663793`; recheck latest).
 - [ ] Browser smoke tests on preview: canonical URLs, sitemap, robots.txt, manual signup/login, password reset, payment return flow.
 - [ ] Admin Website Settings: load, edit, save, reload, audio upload/type/size validation.
 - [ ] Typing smoke tests: exam, Self Test, Fix Accuracy; score parity and edge cases.
