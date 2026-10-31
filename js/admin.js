@@ -376,9 +376,11 @@
         const escHtml=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
         try {
             const {data,error}=await supabaseClient.from('ad_settings').select('id,ads_enabled,home_enabled,typing_listing_enabled,materials_enabled,density,updated_at').eq('id',1).maybeSingle();
-            const experienceResult=await supabaseClient.from('site_experience_settings').select('id,landing_page,audio_url,audio_loop,audio_enabled,audio_for_logged_in,updated_at').eq('id',1).maybeSingle();
+            const experienceResult=await supabaseClient.from('site_experience_settings').select('id,landing_page,audio_url,audio_loop,audio_enabled,audio_for_logged_in,typing_interface_preferences,updated_at').eq('id',1).maybeSingle();
             if(experienceResult.error) throw new Error('Run migration 20261029120000_site_experience_settings.sql first: '+experienceResult.error.message);
-            const experience=experienceResult.data||{landing_page:'home',audio_url:null,audio_loop:true,audio_enabled:false,audio_for_logged_in:false};
+            const experience=experienceResult.data||{landing_page:'home',audio_url:null,audio_loop:true,audio_enabled:false,audio_for_logged_in:false,typing_interface_preferences:{default:'master',overrides:{}}};
+            const interfacePrefs=experience.typing_interface_preferences||{default:'master',overrides:{}};
+            const interfaceOptions=(key)=>['master','screen','pdf'].map(value=>'<option value="'+value+'" '+((interfacePrefs.overrides?.[key]||'master')===value?'selected':'')+'>'+(value==='master'?'Master Interface':value==='screen'?'Screen to Screen':'PDF to Screen')+'</option>').join('');
             if(error) throw error;
             if (renderSequence !== viewRenderSequence || currentView !== 'settings') return;
             if(!data) throw new Error('The singleton ad_settings row (id=1) does not exist.');
@@ -400,6 +402,10 @@
               toggle('experience-audio-loop','Loop background audio','Repeat the selected audio track.')+
               toggle('experience-audio-logged-in','Play for signed-in users','Include signed-in visitors when background audio is enabled.')+
               '</section>'+
+              '<section class="admin-panel admin-settings-card" style="margin-top:18px"><div class="admin-settings-card-title"><span class="admin-settings-icon">▣</span><div><h2>Typing workspace interface</h2><p>Master Interface is the default. Overrides apply only to the selected activity and do not change exam duration, scoring, or submission rules.</p></div></div>'+
+              '<div class="admin-form-field"><label for="typing-interface-exam">Main Typing Test interface</label><select id="typing-interface-exam" class="admin-input">'+interfaceOptions('exam')+'</select></div>'+
+              '<div class="admin-form-field"><label for="typing-interface-self-test">Self Test interface</label><select id="typing-interface-self-test" class="admin-input">'+interfaceOptions('self-test')+'</select></div>'+
+              '<div class="admin-form-field"><label for="typing-interface-fix-accuracy">Fix Accuracy interface</label><select id="typing-interface-fix-accuracy" class="admin-input">'+interfaceOptions('fix-accuracy')+'</select></div></section>'+
               '<div class="admin-settings-footer"><p id="settings-save-status" role="status">Last saved: '+escHtml(data.updated_at?new Date(data.updated_at).toLocaleString():'not available')+'</p><div><button type="button" class="admin-btn admin-btn-secondary" id="settings-reload">Discard changes</button> <button type="button" class="admin-btn admin-btn-primary" id="settings-save">Save settings</button></div></div>'+
               '<div class="admin-settings-note"><strong>Important</strong><span>These controls update the existing ad_settings table. Logo, theme, SEO, maintenance mode and email/payment integrations are not configured here because no backing settings fields are currently wired up.</span></div>';
             let uploadedAudioUrl=experience.audio_url||null;
@@ -430,6 +436,7 @@
                       audio_enabled:Boolean(box.querySelector('[name="experience-audio-enabled"]')?.checked),
                       audio_loop:Boolean(box.querySelector('[name="experience-audio-loop"]')?.checked),
                       audio_for_logged_in:Boolean(box.querySelector('[name="experience-audio-logged-in"]')?.checked),
+                      typing_interface_preferences:{default:'master',overrides:{exam:$('typing-interface-exam')?.value||'master','self-test':$('typing-interface-self-test')?.value||'master','fix-accuracy':$('typing-interface-fix-accuracy')?.value||'master'}},
                       updated_at:new Date().toISOString()
                     }).eq('id',1).select('id,updated_at').maybeSingle();
                     if(expResult.error)throw expResult.error;
