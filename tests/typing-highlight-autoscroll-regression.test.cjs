@@ -88,3 +88,41 @@ test('Fix Accuracy auto-scroll uses a non-visual position marker when highlight 
   assert.match(source, /passageHidden\|\|typingMode!=='screen'/u);
   assert.match(source, /if\(highlightEnabled\)wordNode\.classList\.add\('word-current'\)/u);
 });
+
+
+test('all three typing activities expose fullscreen and typing-mode controls', () => {
+  const root = path.join(__dirname, '..');
+  const html = {
+    exam: fs.readFileSync(path.join(root, 'start_test.html'), 'utf8'),
+    self: fs.readFileSync(path.join(root, 'self-test.html'), 'utf8'),
+    fix: fs.readFileSync(path.join(root, 'fix-accuracy.html'), 'utf8')
+  };
+  assert.match(html.exam, /id="btn-fullscreen"/u);
+  assert.match(html.exam, /id="btn-mode-switch"/u);
+  assert.match(html.self, /id="self-fullscreen"/u);
+  assert.match(html.self, /id="self-mode-switch"/u);
+  assert.match(html.fix, /id="fix-fullscreen"/u);
+  assert.match(html.fix, /id="fix-mode-switch"/u);
+  const scripts = {
+    exam: fs.readFileSync(path.join(root, 'js/app.js'), 'utf8'),
+    self: fs.readFileSync(path.join(root, 'js/self-test.js'), 'utf8'),
+    fix: fs.readFileSync(path.join(root, 'js/fix-accuracy.js'), 'utf8')
+  };
+  assert.match(scripts.exam, /requestFullscreen\(/u);
+  assert.match(scripts.exam, /selectedTypingMode=selectedTypingMode==='page'\?'screen':'page'/u);
+  assert.match(scripts.self, /workspace\.requestFullscreen\(/u);
+  assert.match(scripts.self, /typingMode=typingMode==='screen'\?'offscreen':'screen'/u);
+  assert.match(scripts.fix, /game\.requestFullscreen\(/u);
+  assert.match(scripts.fix, /typingMode=typingMode==='screen'\?'offscreen':'screen'/u);
+});
+
+test('admin preference save writes activity overrides and resolver reads the same keys', () => {
+  const root = path.join(__dirname, '..');
+  const admin = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
+  const resolver = fs.readFileSync(path.join(root, 'js/typing/interface-preferences.js'), 'utf8');
+  assert.match(admin, /typing_interface_preferences:\{default:'master',overrides:\{exam:/u);
+  assert.match(admin, /'self-test':\$\('typing-interface-self-test'\)/u);
+  assert.match(admin, /'fix-accuracy':\$\('typing-interface-fix-accuracy'\)/u);
+  assert.match(resolver, /prefs\?\.overrides\?\.\[activity\]/u);
+  assert.match(resolver, /publish\(allowed\.has\(override\)/u);
+});
