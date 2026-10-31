@@ -239,3 +239,18 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - The previous successful run #391 was for SHA `6cbad20bd6a939a2b480e7d80fcc50d09063b278`, but only its listed workflow steps are evidence; it did not run the full test glob.
 - Vercel preview `https://final-1-git-fix-custom-domain-seo-decoding-hcn.vercel.app` is READY for commit `1d993d7bab053235efd3ba0e7973b64d2bcff84f`, not current branch head. Vercel's deployment API reported the free daily deployment cap (>100 deployments/day), so no further preview build should be requested until the limit resets.
 - Remaining external-only checks: real browser interaction (desktop/mobile, all three fullscreen controls, highlight OFF + scroll edge cases), authenticated Admin preference round-trip on staging, and fresh preview for current head after the deployment cap resets. Do not apply production migrations, deploy production, or merge PR #96 without explicit approval.
+
+
+## 2026-10-31 follow-up completion after Vercel limit reset
+- Fixed full-suite failures exposed after expanding CI coverage:
+  - corrected the VM source separator in the typing-engine lifecycle test;
+  - removed an accidental literal newline escape from the workspace-controls test;
+  - removed the signup full-name field and stale name reference from the manual signup handler, keeping email + mobile + password + confirmation;
+  - aligned login-page regression expectations with no-name signup;
+  - corrected lifecycle timer assertions to account for the engine's immediate initial tick.
+- Latest confirmed full CI run: `Security regression tests` run #399 (`41185474889`) completed SUCCESS for commit `48f110904056d951b6d8eed393438dafad4a8165`. The complete `node --test tests/*.test.cjs` step passed (89 tests, 0 failures); all prior focused checks also passed.
+- Vercel preview deployment is READY for that exact commit: `https://final-1-f9md3w4yd-decoding-hcn.vercel.app` (deployment `dpl_HPZK5HPgmrNCVyq36kK1NsChVomT`). This is a preview only; no production promotion or domain assignment was performed.
+- Staging preference record was re-read (read-only): id=1, `{"default":"master","overrides":{}}`. No database writes were made during this verification.
+- Still requires a real authenticated Admin browser session to prove save → reload → resolver round-trip; static tests verify save/resolver key parity but are not an authenticated integration test.
+- Still requires interactive browser coverage for desktop/mobile scrolling, font resizing, hidden/offscreen modes, and fullscreen enter/exit. Source-level regression tests pass, but they do not substitute for real browser interaction.
+- PR #96 remains OPEN and UNMERGED. Production branch `main`, production database, and production deployment remain untouched.
