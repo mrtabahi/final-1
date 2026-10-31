@@ -65,7 +65,7 @@ function renderPassage(){
   for(let j=i;j<end;j++){
    const cls=highlight?statuses[j]:'';
    const value=esc(original[j]);
-   html+=cls?'<span class="'+cls+'">'+value+'</span>':value;
+   html+='<span class="'+(cls||'self-char')+'" data-char-index="'+j+'">'+value+'</span>';
   }
   html+='</span>';i=end;
  }
@@ -125,17 +125,17 @@ $('self-start').addEventListener('click',startTest);
 typed.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!allowBackspace){e.preventDefault();return;}if(e.key==='Backspace'&&allowBackspace&&startedAt!==null&&!e.repeat)backspacePressCount++;});
 typed.addEventListener('input',()=>{if(typed.value.length){modeLocked=true;syncTypingModeButton();}if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping();if(!finished&&original.length>0&&typed.value.length>=original.length)finishTest()});
 function autoScrollTyping(){
- const style=getComputedStyle(typed),lineHeight=parseFloat(style.lineHeight)||28;
- const text=typed.value.slice(0,typed.selectionStart||typed.value.length);
- const explicitLines=text.split('\n').length;
- const approxChars=Math.max(18,Math.floor((typed.clientWidth-parseFloat(style.paddingLeft||0)-parseFloat(style.paddingRight||0))/(parseFloat(style.fontSize||16)*.62)));
- const visualLines=explicitLines+text.split('\n').reduce((n,line)=>n+Math.max(0,Math.ceil(line.length/approxChars)-1),0);
- if(visualLines>=3)typed.scrollTop=Math.max(0,(visualLines-2)*lineHeight);
- const passageStyle=getComputedStyle(passage),passageFont=parseFloat(passageStyle.fontSize)||17;
- const passageCharsPerLine=Math.max(20,Math.floor(passage.clientWidth/(passageFont*.62)));
- const reachedText=original.slice(0,typed.value.length);
- const passageVisualLines=reachedText.split('\n').reduce((n,line)=>n+Math.max(1,Math.ceil(line.length/passageCharsPerLine)),0);
- if(passageVisualLines>=3)passage.scrollTop=Math.max(0,(passageVisualLines-2)*(parseFloat(passageStyle.lineHeight)||32));
+ // The textarea natively scrolls its caret into view. Position the passage using
+ // actual rendered character geometry rather than estimated characters per line.
+ const targetIndex=Math.min(Math.max(0,typed.selectionStart||typed.value.length),Math.max(0,original.length-1));
+ const marker=passage.querySelector('[data-char-index="'+targetIndex+'"]');
+ if(!marker||hidden||typingMode==='offscreen')return;
+ const hostRect=passage.getBoundingClientRect(),markerRect=marker.getBoundingClientRect();
+ const lineHeight=parseFloat(getComputedStyle(passage).lineHeight)||30;
+ const margin=Math.min(lineHeight*1.5,passage.clientHeight*.25);
+ const topGap=markerRect.top-hostRect.top,bottomGap=hostRect.bottom-markerRect.bottom;
+ if(topGap<margin)passage.scrollTop-=margin-topGap;
+ else if(bottomGap<margin)passage.scrollTop+=margin-bottomGap;
 }
 $('self-formula-bsf')?.addEventListener('click',()=>{scoringFormula='bsf';if(finished)renderSelfResult(selfScores.bsf,typed.value,false);updateLive()});$('self-formula-crpf')?.addEventListener('click',()=>{scoringFormula='crpf';if(finished)renderSelfResult(selfScores.crpf,typed.value,false);updateLive()});
 $('self-save-passage').addEventListener('click',()=>{const text=source.value.trim();if(!text){$('self-save-message').textContent='Pehle passage paste ya type karein.';source.focus();return}const items=readSaved();if(items.length>=MAX_SAVED){$('self-save-message').textContent='Maximum 5 passages save ho sakte hain. Pehle ek delete karein.';return}const id=Date.now();items.push({id,title:'Passage '+(items.length+1)+' · '+new Date(id).toLocaleDateString(),text});if(writeSaved(items)){refreshSaved(id);$('self-save-message').textContent='Passage saved. Aap ise baad mein select karke load kar sakte hain.'}});
