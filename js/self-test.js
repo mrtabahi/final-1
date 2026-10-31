@@ -72,9 +72,9 @@ function renderPassage(){
 }
 function startClock(){if(startedAt!==null||finished)return;startedAt=Date.now();attemptDate=new Date(startedAt);deadline=startedAt+duration*1000;tick();timerId=window.setInterval(tick,200)}
 function tick(){const remaining=Math.max(0,(deadline-Date.now())/1000);$('self-timer').textContent=formatTime(remaining);updateLive();if(remaining<=0)finishTest()}
-function setHighlight(on){highlight=on;$('self-highlight').textContent='Highlight: '+(on?'On':'Off');$('self-highlight').setAttribute('aria-pressed',String(on));passageCard.classList.toggle('self-highlight-enabled',on);renderPassage()}
-function setHidden(on){hidden=on;passageCard.hidden=on;$('self-hide').textContent=on?'👁 Show passage':'🙈 Hide passage';$('self-hide').setAttribute('aria-pressed',String(on));$('self-pdf-row').hidden=!on}
-function setInputHidden(on){inputHidden=on;typeCard.hidden=on;$('self-hide-input').textContent=on?'👁 Show typing box':'🙈 Hide typing box';$('self-hide-input').setAttribute('aria-pressed',String(on));}
+function setHighlight(on){highlight=on;$('self-highlight').textContent='Highlight: '+(on?'On':'Off');$('self-highlight').setAttribute('aria-pressed',String(on));TypingWorkspaceControls.setClassState(passageCard,'self-highlight-enabled',on);renderPassage()}
+function setHidden(on){hidden=on;TypingWorkspaceControls.setHidden(passageCard,on);$('self-hide').textContent=on?'👁 Show passage':'🙈 Hide passage';$('self-hide').setAttribute('aria-pressed',String(on));TypingWorkspaceControls.setHidden($('self-pdf-row'),!on)}
+function setInputHidden(on){inputHidden=on;TypingWorkspaceControls.setHidden(typeCard,on);$('self-hide-input').textContent=on?'👁 Show typing box':'🙈 Hide typing box';$('self-hide-input').setAttribute('aria-pressed',String(on));}
 function startTest(){
  original=source.value.replace(/\r\n?/g,'\n');
  if(!original.trim()){$('self-message').textContent='Paste a passage before starting.';source.focus();return}
