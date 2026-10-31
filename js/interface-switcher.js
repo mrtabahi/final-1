@@ -122,6 +122,15 @@
     });
     // Keep the redesigned clock synchronized with the original engine's timer.
     window.setInterval(syncClock,250);
+    // Apply the admin preference after the switcher has installed its controls.
+    // A missing/invalid preference resolves to Master Interface and leaves legacy mode off.
+    const preferred=document.documentElement.dataset.typingInterface;
+    if(preferred==='screen'||preferred==='pdf'){
+      const choice=dialog.querySelector('[data-ei-mode="'+preferred+'"]');
+      if(choice)choice.click();
+    }else{
+      document.body.classList.remove('ei-exam-mode','ei-pdf-mode');
+    }
     // Exam interface starts from the practice toolbar and does not reset feature state.
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
