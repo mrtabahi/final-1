@@ -19,3 +19,18 @@ test('Fix Accuracy keeps the current passage position visible after input', () =
   assert.match(source, /renderPassage\(\);keepCurrentPassageVisible\(\);processCommittedWords\(\);tick\(\)/u);
   assert.match(source, /host\.scrollTop\+=margin-bottomGap/u);
 });
+
+
+test('Fix Accuracy keeps live source passage clean and annotates mistakes only in result comparison', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
+  const liveStart = source.indexOf('function renderPassage()');
+  const liveEnd = source.indexOf('function keepCurrentPassageVisible()', liveStart);
+  const liveRenderer = source.slice(liveStart, liveEnd);
+  assert.doesNotMatch(liveRenderer, /char-correct|char-incorrect|alignCharacters/u);
+  assert.match(source, /function renderResultComparison\(expectedText,typedText\)/u);
+  assert.match(source, /mistake-extra|mistake-wrong|mistake-omitted/u);
+  assert.match(source, /originalHost\.textContent=activePassage/u);
+  assert.match(html, /id="fix-result-original"/u);
+  assert.match(html, /id="fix-result-typed"/u);
+});
