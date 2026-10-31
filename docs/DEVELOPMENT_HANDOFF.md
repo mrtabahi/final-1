@@ -132,3 +132,11 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - Added `tests/typing-highlight-autoscroll-regression.test.cjs` to guard the three-page highlight opt-out and Fix Accuracy scroll hook.
 - These are code-level changes and regression assertions; a real-browser visual/long-passage test has not yet been performed. Do not describe auto-scroll as 100% verified until desktop/mobile browser checks pass.
 - Still pending from the current request: shared Full Screen and Typing Mode controls on Self Test/Fix Accuracy; parity review and enhancements for Fix Accuracy result analysis/original-vs-typed passage comparison; browser validation of all three auto-scroll paths; shared runtime Admin interface preference resolver. Do not change scoring/timer/anti-cheat semantics.
+
+## 2026-10-31 follow-up: activity controls
+- Highlight OFF hard-neutralization CSS is now present in Main Typing Test, Self Test, and Fix Accuracy; Fix Accuracy now tracks the active character and scrolls only when it nears the passage viewport edge.
+- Added Full Screen and pre-typing On-screen/Off-screen mode controls to Self Test and Fix Accuracy. Both mode controls lock after typing begins; each activity keeps its own timer/scoring lifecycle. Main Typing Test already has these controls.
+- Added regression test `tests/typing-highlight-autoscroll-regression.test.cjs`.
+- GitHub Actions Security regression tests passed for commits `9ec0d79`, `566d2c1`, `65167fa`, `d60a5b7`, and other preceding commits. Cache-version-only follow-up commits `1d0c902` and `124da89` still need exact-head CI confirmation.
+- Browser verification (desktop/mobile, long passage, Full Screen exit, and screen/off-screen behavior) remains pending. Fix Accuracy result report still needs original-passage comparison panel and visual parity audit against the Main Typing Test reference.
+- PR #96 stays open/unmerged; no production deployment or production DB migration.
