@@ -1,0 +1,256 @@
+# Development handoff and pending-work register
+
+Last updated: 2026-10-31 (latest update: Fix Accuracy toolbar icon/state repair)
+Repository: [mrtabahi/final-1](https://github.com/mrtabahi/final-1)
+Working branch: `fix/custom-domain-seo`
+Pull request: [#96](https://github.com/mrtabahi/final-1/pull/96) — open; do not merge without explicit user approval.
+Production branch: `main` — unchanged by this work.
+
+## Current objective
+Improve the typing experience safely by progressively sharing workspace controls and presentation while preserving each activity's distinct input, scoring, timer, result, and submission semantics.
+
+## Completed in this workstream
+- Canonical scoring engine remains `supabase/functions/typing-result/typing-master.js`; no formula changed.
+- Shared defaults/metadata: `js/typing/master-config.js`, `js/typing/activity-registry.js`.
+- Shared responsive presentation: `css/master-typing-interface.css`.
+- Added `js/typing/workspace-controls.js` with reusable bounded font sizing, element visibility, display, and class-state helpers.
+- Self Test uses shared font and visibility/highlight helpers for passage and typing panels.
+- Fix Accuracy uses shared font and passage display/highlight helpers; retains its existing font range/step and reinitializes at 19.2px per new attempt.
+- Added tests for shared config, admin site-experience controls, and shared font controls.
+- Admin Website Settings missing site-experience UI controls restored in `js/admin.js`; existing `site_experience_settings` persistence is reused.
+- No database migration, production schema change, scoring formula change, or production deploy was performed.
+
+## Important behavior boundaries
+- Exam/test duration, target speeds, and scoring remain server-authoritative.
+- Self Test retains BSF/CRPF selection; Fix Accuracy retains committed-word BSF semantics.
+- Do not expose `freeErrorPct` as an admin control: current canonical free-error allowance uses `floor(measuredKeystrokes / 100)`; the legacy config value is not applied.
+- Do not enable Google OAuth; authentication remains manual email/password.
+- Do not merge PR #96 unless the user explicitly authorizes it.
+
+## Deployment and CI status at last check
+- Vercel preview for commit `e1c1ac1103ab600d34f6a4817839ebf653a999d9` was READY:
+  https://final-1-abti6ynmn-decoding-hcn.vercel.app
+- Latest PR head `3ea1d8c08d56f3c03da020d9809ac75b16293784` has a Vercel preview deployment READY: `dpl_UXjcc5HAZgCZdDT8sMRZii5QZkJz` at https://final-1-cwa8rw93t-decoding-hcn.vercel.app. The earlier build-rate-limit blocker is no longer present.
+- Previous head `542bf0952ec70b28d7ddb105e28f7b9a2a08c7c1`: GitHub Actions Security regression tests run #317 (`41127628781`) completed SUCCESS. Its Vercel status still reflected the older build-rate-limit failure and had no matching deployment record.
+- Latest branch head is `3ea1d8c08d56f3c03da020d9809ac75b16293784` (docs refresh). GitHub Actions Security regression tests run #323 (`41173781614`) completed SUCCESS for this exact head. Its Vercel preview `dpl_UXjcc5HAZgCZdDT8sMRZii5QZkJz` is READY at https://final-1-cwa8rw93t-decoding-hcn.vercel.app.
+- Production deployment on `main` was READY at last check; no production release from this branch.
+
+## Other open PRs / security follow-up
+- PR #94: revoke anon/public execution on `public.has_active_paid_subscription()`; production ACL already applied, PR open/unmerged.
+- PR #95: revoke TRUNCATE from anon/authenticated on public schema tables; production verified zero grants, PR open/unmerged.
+- Keep both PRs tracked; do not merge without explicit approval.
+- Security advisor follow-ups previously noted: public leaderboard security-definer view; leaked-password protection disabled; unindexed foreign keys; multiple permissive RLS policies; RLS init/performance warnings. Re-audit before making changes. Leaderboard is lower priority; do not risk breaking it.
+
+## Latest typing workspace presentation update
+- Added shared `setHidden`, `setDisplay`, and `setClassState` helpers to `js/typing/workspace-controls.js`.
+- Integrated them into Self Test and Fix Accuracy without changing timer/scoring/submission logic.
+- Added unit tests for hide/show, display restoration, and highlight class toggling in `tests/typing-workspace-controls.test.cjs`.
+- Updated both HTML pages to load the refreshed helper asset version.
+- CI run #323 for exact latest head `3ea1d8c08d56f3c03da020d9809ac75b16293784` passed.
+
+## Latest typing lifecycle test update
+- Added regression cases in `tests/typing-engine-lifecycle-regression.test.cjs` for first printable key (including Space), modifier-only keys, Backspace disabled/enabled behavior, and passage-completion single submission.
+- Commit: `f167322f6ecbf8c015714fed767d2b51ab706404`.
+- These are automated regression additions; the workflow has not yet reported results for this commit. Do not treat them as passed until CI completes.
+
+## Remaining typing-workspace tasks
+1. Extract shared passage/input layout and common keyboard/input helpers only after a behavior-parity test plan exists.
+2. Timer lifecycle regression coverage includes single-start, first printable key/Space, modifier keys, Backspace semantics, duration completion, destroy cleanup, and passage-completion single-submit. Shared presentation tests now cover hide/show, display restoration, and highlight class toggling. Still add cancel/restart integration coverage.
+3. Audit the main exam typing page against Self Test and Fix Accuracy; keep exam-specific server config and result submission untouched.
+4. Verify font controller behavior in browser at desktop/mobile sizes, including reset/restart.
+5. Review test scripts and run the complete relevant test suite once CI is available.
+6. Keep accessibility/reduced-motion and mobile layout checks in release validation.
+
+## Remaining Admin Settings tasks
+1. Validate restored controls against existing handlers and storage policies.
+2. Review site-experience settings RLS and storage bucket policy in staging; do not change production without approval.
+3. Add server-side allowlist/schema validation and audit logging before introducing any new persisted typing settings.
+4. Add safe runtime settings only where they truly affect the client; no exam-authoritative overrides.
+5. Add restore-defaults/versioning only after existing persistence flow is fully tested.
+
+## Release checklist (must remain open until verified)
+- [x] Vercel preview for exact latest PR head `3ea1d8c08d56f3c03da020d9809ac75b16293784` reaches READY.
+- [x] GitHub Actions Security regression tests pass for exact latest PR head (run #323, `41173781614`).
+- [ ] Browser smoke tests on preview: canonical URLs, sitemap, robots.txt, manual signup/login, password reset, payment return flow.
+- [ ] Admin Website Settings: load, edit, save, reload, audio upload/type/size validation.
+- [ ] Typing smoke tests: exam, Self Test, Fix Accuracy; score parity and edge cases.
+- [ ] Mobile and desktop layout/accessibility review.
+- [ ] Staging DB/RLS/storage validation before any migration.
+- [ ] Explicit user approval before merging PR #96 or deploying production.
+
+## Resume instructions
+When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deployments before relying on these statuses. Continue cancel/restart integration coverage, then audit Main Typing Test parity. Do not merge PR #96 or deploy production without explicit approval.
+
+
+## Verification refresh — 2026-10-31
+- Exact latest PR head `3ea1d8c08d56f3c03da020d9809ac75b16293784`: Security regression tests run #323 (`41173781614`) completed SUCCESS.
+- Exact latest PR head Vercel preview: READY, deployment `dpl_UXjcc5HAZgCZdDT8sMRZii5QZkJz`, https://final-1-cwa8rw93t-decoding-hcn.vercel.app.
+- Previously building page-specific previews are now READY: Self Test commit `6d7699e86c2d673cf9874e2b06852875078e8cd0`; Fix Accuracy commit `87f5f6e95c72790ff7d5c74c218393dc755755a5`.
+- PR #96 remains open/unmerged; production `main` remains untouched. No production deployment or database mutation was performed.
+
+
+## Fix Accuracy toolbar repair — 2026-10-31
+- Fixed the compact toolbar controls on Fix Accuracy: buttons now provide their required `data-icon` and tooltip attributes so icons render through the shared compact-control CSS.
+- Highlight and Hide Passage toggles now update `aria-pressed`, accessible button text, and the correct on/off icon. Existing shared CSS renders pressed controls green and unpressed controls neutral.
+- Font decrease/increase buttons now expose A− / A+ icons and descriptive tooltips; these are actions, not on/off toggles, so they do not use pressed state.
+- Added a regression test covering the four controls' icon/tooltip markup and the toggle-state synchronization code.
+- Cache-busted the Fix Accuracy script to `js/fix-accuracy.js?v=20261031-toolbar1`.
+- Commits: `29a929f1e0edc5ca6ebcc632355bb1b998acd814`, `5fdb0d66f23e3d8d07495fdbe6558e1d695e2ab8`, `0978048825f12a22d925de1dc8cc66dae52706a6`, `f57c11ce074165a50163128360e3dcf77d8279d2`.
+- Exact latest code head `f57c11ce074165a50163128360e3dcf77d8279d2`: Security regression tests run #327 (`41174649038`) SUCCESS; Vercel preview READY: https://final-1-6vhjg8ne7-decoding-hcn.vercel.app.
+- Preview deployment is ready, but a manual browser interaction check is still required before calling the visual bug fully verified.
+
+## Next implementation focus
+1. Add cancel/restart lifecycle integration regression tests for Self Test and Fix Accuracy, ensuring timers are cleared and new attempts reset state without cross-attempt leakage.
+2. Audit Typing Test menu activities and the main exam typing workspace against the shared Master Interface. The shared interface should be the default for all test/practice activities unless an explicit Admin setting selects an alternate interface.
+3. Inspect the existing Admin interface selector/settings and runtime registry before changing behavior; do not introduce a parallel setting or let a global default override exam-authoritative duration/scoring/targets.
+4. Keep PR #96 open until browser smoke tests and parity checks are complete; no production merge/deploy without explicit user approval.
+
+
+## Follow-up audit — 2026-10-31
+- Rechecked exact documentation head `f11500b6f2372b078aa5f5a5ea0faa0f06f2d232`: GitHub Actions Security regression tests run #328 (`41174691775`) completed SUCCESS.
+- Vercel preview remains READY at https://final-1-6vhjg8ne7-decoding-hcn.vercel.app; deployment metadata points to code commit `f57c11ce074165a50163128360e3dcf77d8279d2` (the later handoff-only docs commit does not have a distinct preview deployment).
+- `js/interface-switcher.js` is loaded by `start_test.html` and `self-test.html`, but not by `fix-accuracy.html`. It currently injects a separate legacy Screen-to-Screen / PDF-to-Screen presentation mode; it is not the shared Master Interface and should not be made global without separating its layout behavior from activity controls.
+- All three workspace pages load `css/master-typing-interface.css`; `js/typing/master-config.js` currently defines scoring/UI/practice defaults but no interface-selection policy.
+- Admin Website Settings already reads/writes singleton `site_experience_settings` for landing page and audio. The existing migration has no interface field, and no interface override control/runtime resolver was found. Reuse this table if implementing a persisted interface preference; do not create a duplicate settings table.
+- Self Test cancel explicitly clears its interval and resets attempt state; its result-screen “Again” action returns to setup and the next start initializes a fresh attempt. Fix Accuracy restart clears its interval and returns to setup; the next setup submission resets attempt state. Add runtime-level tests for these flows rather than relying only on markup assertions.
+- Production `main` remains unchanged; PR #96 remains open and unmerged.
+
+
+## Continued implementation — 2026-10-31
+- Fix Accuracy lifecycle: replaced restart/again handlers with shared `returnToSetup()`. It clears the active interval and nulls its handle, resets elapsed/finished/error/backspace/passage state, clears and re-enables the input, resets visible live metrics, and returns to setup without calling `finish()` or submitting a score. Commit: `346425a6c099f0006ccb4c6557ad73d5a2170f18`.
+- Added lifecycle regression coverage for Fix Accuracy restart/again and Self Test cancel/again. Commit: `09e3da1bf8db8eb206256003bdcd8624b68cc25c`. The tests currently assert the lifecycle wiring/source invariants; browser-level integration still remains desirable.
+- Added migration `20261031130000_typing_interface_preferences.sql` adding JSONB `typing_interface_preferences` to the existing `site_experience_settings` singleton. It constrains the global default to Master and allows per-activity values master/screen/pdf. Migration is committed but has NOT been applied to staging or production.
+- Admin Website Settings now renders independent interface selectors for Main Typing Test, Self Test and Fix Accuracy and saves them into the existing singleton JSONB field. Commit: `635f30a30c71a09c39c4360a8f6179ccef53c1dd`. Added admin test for the selectors and save payload in commit `07ba6267418b34354ffee988c8d1f9860264a020`.
+- Important remaining work: runtime resolver/application is NOT yet implemented. Do not claim Master Interface is already active site-wide. Before rollout, implement a shared preference loader used by all three workspaces (including Fix Accuracy), default missing/invalid values to Master, apply only the selected activity override, and leave all activity lifecycle/scoring/submission code untouched. Ensure alternate screen/pdf layouts are compatible with Fix Accuracy before enabling those options there. Apply migration to staging only after tests and explicit review; production remains untouched.
+- Current branch head after these changes: `07ba6267418b34354ffee988c8d1f9860264a020`.
+
+
+## 2026-10-31 follow-up: highlight opt-out and scroll reliability
+- PR #96 remains open/unmerged; production branch `main` is unchanged.
+- Added hard CSS opt-out rules so generated character-level classes cannot retain colors/backgrounds/underlines when Highlight is OFF in Main Typing Test, Self Test, and Fix Accuracy.
+- Added Fix Accuracy active-character viewport tracking after each input render; scrolls only when the active character approaches the visible passage boundary.
+- Added `tests/typing-highlight-autoscroll-regression.test.cjs` to guard the three-page highlight opt-out and Fix Accuracy scroll hook.
+- These are code-level changes and regression assertions; a real-browser visual/long-passage test has not yet been performed. Do not describe auto-scroll as 100% verified until desktop/mobile browser checks pass.
+- Still pending from the current request: shared Full Screen and Typing Mode controls on Self Test/Fix Accuracy; parity review and enhancements for Fix Accuracy result analysis/original-vs-typed passage comparison; browser validation of all three auto-scroll paths; shared runtime Admin interface preference resolver. Do not change scoring/timer/anti-cheat semantics.
+
+## 2026-10-31 follow-up: activity controls
+- Highlight OFF hard-neutralization CSS is now present in Main Typing Test, Self Test, and Fix Accuracy; Fix Accuracy now tracks the active character and scrolls only when it nears the passage viewport edge.
+- Added Full Screen and pre-typing On-screen/Off-screen mode controls to Self Test and Fix Accuracy. Both mode controls lock after typing begins; each activity keeps its own timer/scoring lifecycle. Main Typing Test already has these controls.
+- Added regression test `tests/typing-highlight-autoscroll-regression.test.cjs`.
+- GitHub Actions Security regression tests passed for commits `9ec0d79`, `566d2c1`, `65167fa`, `d60a5b7`, and other preceding commits. Cache-version-only follow-up commits `1d0c902` and `124da89` still need exact-head CI confirmation.
+- Browser verification (desktop/mobile, long passage, Full Screen exit, and screen/off-screen behavior) remains pending. Fix Accuracy result report still needs original-passage comparison panel and visual parity audit against the Main Typing Test reference.
+- PR #96 stays open/unmerged; no production deployment or production DB migration.
+
+
+## 2026-10-31 Fix Accuracy result-only mistake annotations
+- User clarified that omitted/extra/wrong-word colours and bracketed expected words belong ONLY on the result page, not in the live original passage.
+- Corrected Fix Accuracy live renderer: it now renders the original passage as plain text and only optionally marks the current word; it no longer applies live per-character correct/incorrect classes.
+- Result page now includes a dedicated Original Passage panel alongside Typed Passage — Mistakes Annotated.
+- The result comparison annotates extra typed words (pink), wrong typed words (red) and omitted expected words in brackets (blue); the expected original word for a substitution is shown in brackets with the wrong-word annotation.
+- Corrected tokenization regexes in the Fix Accuracy renderer/comparison to use non-whitespace word matching.
+- Changed files: js/fix-accuracy.js, fix-accuracy.html, css/fix-accuracy.css, and tests/typing-highlight-autoscroll-regression.test.cjs.
+- Commits: ff9360b8fbf84132bbc5b1fad1e01add392f2024, 0fa1e1afff325a546d97eb030bf30b3caf43356d, b2dc18b482b23a4faf21af88a88716413d140e21, 3c04c4b6ed4787dd879a4f3b8b250c00be960c73, 0ddc0a1bce58d4e8a196befb1ae9bb997c243921.
+- Source-level verification confirms the original passage panel and result annotation styles exist; GitHub Actions run #347 (41176503091) was in progress for the earlier commit. No completed CI result has yet been confirmed for the latest regex correction. Browser visual testing remains pending.
+- Do not claim this is fully verified until the latest-head CI and browser test pass.
+
+
+## 2026-10-31 Activity interface preference resolver
+- Added js/typing/interface-preferences.js. It reads the per-activity typing_interface_preferences value from site_experience_settings and publishes the resolved preference on documentElement dataset; invalid/missing settings or database/network errors safely fall back to Master Interface.
+- Loaded the resolver on start_test.html, self-test.html, and fix-accuracy.html.
+- js/interface-switcher.js applies the resolved Screen to Screen or PDF to Screen choice on Main Typing Test and Self Test; Master clears legacy layout classes.
+- Fix Accuracy is explicitly constrained to Master Interface because the legacy Screen/PDF alternate layout is not implemented for its game workspace; Admin selector now only offers Master for Fix Accuracy.
+- Resolver changes only presentation and does not invoke scoring, timer, or submission code. It does not block activity startup if the preference column/migration is unavailable.
+- Added tests/typing-interface-preferences.test.cjs. CI status for these latest commits is pending at the time of this note.
+- Migration 20261031130000_typing_interface_preferences.sql remains unapplied; until applied, resolver safely uses Master Interface. No production DB changes or deployment promotion were performed.
+
+
+## 2026-10-31 Staging interface-preference migration and resolver validation
+- Staging project lhuqykxddwdkwksdzqth initially had no public.site_experience_settings table (verified via information_schema); therefore the preferences-only migration could not be applied by itself.
+- Applied the existing site_experience_settings base schema/RLS policy migration to STAGING, then applied typing_interface_preferences JSONB/check-constraint migration. Staging migration records: create_site_experience_settings (version 20261031063202) and add_typing_interface_preferences (version 20261031063208).
+- Verified staging row id=1 has {default: master, overrides: {}} and value_type object. No production project changes.
+- Security advisor run shows pre-existing findings across unrelated tables/functions (16 RLS-enabled/no-policy notices, SECURITY DEFINER function warnings, leaked-password protection disabled). No new finding specific to site_experience_settings was reported in the returned results; do not treat the overall project as clean.
+- Fixed an async race: interface-switcher.js now listens for typing-interface-preference-ready, rather than reading the preference dataset only once before the Supabase request resolves. Admin selection is applied when the resolver event arrives.
+- Updated tests/typing-interface-preferences.test.cjs to cover the async event-based integration.
+- Latest resolver changes: 6f46a5a15825ed28bbb72fdf4bb0840389709d31 and d9b8ef35d569f46e4a6d688da474bf51560d07b6. CI for the latest test update pending at documentation time.
+- Remaining validation: browser smoke test with Master/Screen/PDF on Main Typing Test and Self Test; Fix Accuracy remains Master-only. Verify admin save/read round trip with an authenticated admin account. Production migration remains unapplied.
+
+
+## 2026-10-31 Fix Accuracy result analysis parity
+- Compared Fix Accuracy result against the supplied BSF result screenshot and canonical TypingMaster score shape.
+- Added a Detailed Error Analysis panel populated from score.errorBreakdown: omissions, substitutions, spelling, incomplete words, extra/repeated words, spacing, capitalization, punctuation, and words not reached.
+- Renamed result metric labels to Total Mistakes and Words (Strokes / 5) to align with screenshot terminology. Existing allowance, excess errors, penalty WPM, correct words, gross/net, accuracy, keystrokes, attempt time, qualification and annotated passage comparison remain present.
+- Added regression coverage and refreshed Fix Accuracy JS/CSS cache versions. Changes are present in commits da3d8b10, 41072f82, 84bd7338, 677e23f1, 36517988.
+- CI and a fresh Vercel preview for these latest changes are pending; no browser visual run has been completed.
+
+
+## 2026-10-31 Scorecard metric consistency correction
+- A parity audit found Fix Accuracy displayed raw input.value.length for keystrokes and typed words, while the canonical score engine intentionally caps measured keystrokes to passage-bounded characters/separators. This could make the scorecard disagree with Gross WPM and the main Typing Test for extra text.
+- Fixed Fix Accuracy to display score.totalKeystrokes and score.equivalentTypedWords (with canonical fallback) and canonical backspacePresses. Refreshed JS cache version and added regression coverage.
+- Commit: b5debc7650c4a691ce4750847d1fb0b909b76cc7; cache/test commits: 912fa0d69fe6d378eaacebf1915719655143f0f3, 2b803f0a99ff94ceb526831fc87d7fab20981240.
+
+
+## 2026-10-31 Self Test auto-scroll geometry correction
+- Replaced estimated characters-per-line passage scrolling with DOM-measured character positions. Each rendered original character now carries a data-char-index marker; autoScrollTyping uses getBoundingClientRect to keep the exact reached character inside the visible passage viewport. Textarea retains native caret auto-scroll.
+- This removes the fragile width/font multiplier approximation. Added regression test and refreshed Self Test script cache.
+- Commit: 793060916763dc2bc1e2521fddf45b8ab5ccf6eb; test/cache commits: a3518a61227ed34d295383a7cc539d3f1171f003 / eb5be4a984d5b2358ee193ac7189b583493e3e11.
+- This is source-level verified; browser tests across mobile/desktop are still required before calling scrolling 100% verified.
+
+
+## 2026-10-31 Follow-on audit: canonical score metrics, Self Test scrolling, preference test maintenance
+- Fixed Fix Accuracy result keystrokes and words to use canonical capped score.totalKeystrokes and score.equivalentTypedWords, not raw textarea length. This prevents extra text from inflating result display independently of speed calculations.
+- Self Test auto-scroll now follows actual rendered character geometry through per-character data-char-index markers and getBoundingClientRect; removed estimated characters-per-line calculations. Textarea retains native caret scrolling.
+- Updated interface preference regression test to assert asynchronous typing-interface-preference-ready event handling (previous test asserted a stale synchronous implementation).
+- Relevant commits: b5debc7650c4a691ce4750847d1fb0b909b76cc7, 793060916763dc2bc1e2521fddf45b8ab5ccf6eb, 35334767185bf8e849947ef5430e3323d8ca2256, with cache/test/doc follow-ups.
+- Latest Vercel deployment observed READY for commit 793060916763dc2bc1e2521fddf45b8ab5ccf6eb: https://final-1-bziz73bc8-decoding-hcn.vercel.app. It predates the latest test-only update.
+- CI run #373 was in progress for the earlier auto-scroll commit; the latest test-only commit has no workflow run visible yet. Browser visual interaction remains unverified.
+
+
+## 2026-10-31 Anti-inflation keystroke cap confirmation
+- User clarified that characters beyond the original word length and any extra words must still count as errors, but must not increase Total Typed Keystrokes or Gross WPM.
+- Audited canonical `TypingMaster.countCappedKeystrokes` and `calculateScore`: each typed token contributes at most the corresponding original token's character length; tokens beyond the passage contribute zero letters; typed separators are capped by the original passage's separator count. `grossWpm`, `equivalentWords`, free-error allowance and accuracy use this capped count. Word alignment still counts extra tokens as insert/extraWords errors. This requested anti-cheat rule was already implemented in the canonical engine.
+- Added executable Node regression tests covering overlong words, appended extra words, unchanged gross WPM/keystroke totals, and extra-word error classification. Test path: tests/keystroke-capping-regression.test.cjs. Expected count corrected to 10 for `a longword` (1 + 8 letters + 1 separator).
+- Test commit: 56227d1f62ae9fa4fec9bb7f4da1bbab27875a2d. Workflow-run lookup returned no run for this test commit yet; do not claim CI passed.
+- Quick source audit: Self Test renders neutral `.self-char` spans when highlight is off; Fix Accuracy adds `.no-highlight` to its passage host and suppresses current-character emphasis. Browser-level highlight-off verification remains pending.
+
+
+## 2026-10-31 Interface parity follow-up: live metrics and scroll behavior
+- Fixed Self Test live Keystrokes display to use canonical score.totalKeystrokes rather than raw input.length, matching the passage-capped final score and anti-inflation rule. Refreshed self-test.js cache version and added regression coverage.
+- Main Typing Test auto-scroll now uses actual current-character and passage-container bounding rectangles, scrolling only enough to keep the active character within a two-line margin. Removed estimated line-count/line-height stepping; respects Auto-scroll OFF, off-screen mode, and hidden passage conditions.
+- Fixed Fix Accuracy auto-scroll dependency on visual highlighting: the active expected word now has a separate word-position-current marker; visual .word-current emphasis is added only when Highlight is ON. Auto-scroll uses the non-visual marker and exits for hidden/off-screen passage modes.
+- Added regression tests for Self Test capped live keystrokes, measured Main Typing Test scroll, and Fix Accuracy scroll with Highlight OFF.
+- Commits: da58fb3c8e53feff6d882903d7a9cfb665324332, 60f635eec853f6678e11ff0459a38840786ec421, 435543096c6c6879d33bee6b03c7ab09a94b7b4f, ceab5250f8beffc5dfaf8a67b22a6960889fbcf1, 46127a957bad761598c77869ec159830da4755c1, f2ced07641d80a192cbdfa4041b15109234f7d63, 5ffcc45e1c1ae8814cb0ccc88fd2aef3f31716d9, 6b05cc59ee193b0791b0fd9aa9ed2f145aa052a7, 50c5cf415f615e7db11dbc5f29120321bb677330.
+- Latest workflow-run lookup for the regression-test commit returned no PR workflow run. Do not claim tests or CI passed until an actual run is observed. Browser verification remains pending for desktop/mobile, long passages, font changes, full-screen entry/exit, and off-screen mode.
+- Production remains untouched; PR #96 remains open/unmerged.
+
+
+## 2026-10-31 Scorecard, controls, and preference audit — pending register
+- Compared the three result renderers. Main Typing Test exposes BSF/CRPF formula selection, canonical total keystrokes, equivalent typed words, correct-word metric, backspaces, time, error allowance/excess, penalty, error breakdown, and passage comparison. Self Test exposes both formula comparison cards, the same core capped keystroke/word metrics, detailed error breakdown, and passage comparison. Fix Accuracy intentionally uses committed-word scoring and a single activity-specific threshold result; it displays capped keystrokes/equivalent words, correct-word metric, backspaces, allowance/excess, penalty, detailed error breakdown, and original-vs-typed comparison. It is not a formula-switching exam scorecard.
+- Static audit confirms Full Screen and Typing Mode controls plus handlers exist in all three activities. Main exam uses app-root.requestFullscreen and page/screen mode; Self Test uses workspace.requestFullscreen and screen/offscreen mode; Fix Accuracy uses game.requestFullscreen and screen/offscreen mode. Actual browser interaction and mobile Fullscreen API behavior remain unverified.
+- Admin preference code writes `default: master` plus `exam`, `self-test`, and `fix-accuracy` overrides; resolver reads the same activity keys and fails safely to Master. Fix Accuracy is deliberately forced to Master because alternate layouts are unsupported. Read-only staging query on project `lhuqykxddwdkwksdzqth` confirmed current row id=1 has `{default: master, overrides: {}}`; no preference was changed. Live admin save/read round-trip with authenticated admin session remains pending. Production DB was not queried or changed.
+- Added static regression tests for all three Full Screen/Typing Mode controls and admin preference save/resolver key parity in `tests/typing-highlight-autoscroll-regression.test.cjs`.
+- Outstanding verification register: (1) run all Node regression tests and obtain a real GitHub Actions result for latest branch SHA; (2) obtain a Vercel READY preview for latest SHA; (3) browser-test Highlight OFF and auto-scroll across desktop/mobile, long passages, font resizing, hidden passage and off-screen modes; (4) interactively test Full Screen enter/exit in all activities and browsers; (5) perform authenticated admin preference save → reload → resolver read round-trip on staging only; (6) compare final scorecard values against canonical score payloads with representative normal, overlong-word, extra-word, omission, spacing and punctuation attempts; (7) review PR #96 checks and keep it unmerged pending explicit approval.
+- Latest static-control/preference wiring test commit: `60bcf41d54fe915f1de46094ec3756ddeef2a954`. No claim of passing CI or browser tests until observed. Production branch and production database remain untouched.
+
+
+## 2026-10-31 CI coverage expansion
+- Found that the existing Security regression workflow passed on latest SHA but did not execute several newly added typing regression files, including the auto-scroll/highlight, interface-preferences, workspace-controls, lifecycle and keystroke-capping tests.
+- Updated `.github/workflows/security-regression.yml` so the final step runs the complete `node --test tests/*.test.cjs` suite instead of only the admin feature-access test. Existing focused security/scoring steps remain in place.
+- Workflow update commit: `97e4630bc9db90903997c8d516b2c739b4824a65`. GitHub had not yet exposed a workflow run for this commit at the time of this update; wait for and inspect the actual result before marking CI complete.
+- The previous successful run #391 was for SHA `6cbad20bd6a939a2b480e7d80fcc50d09063b278`, but only its listed workflow steps are evidence; it did not run the full test glob.
+- Vercel preview `https://final-1-git-fix-custom-domain-seo-decoding-hcn.vercel.app` is READY for commit `1d993d7bab053235efd3ba0e7973b64d2bcff84f`, not current branch head. Vercel's deployment API reported the free daily deployment cap (>100 deployments/day), so no further preview build should be requested until the limit resets.
+- Remaining external-only checks: real browser interaction (desktop/mobile, all three fullscreen controls, highlight OFF + scroll edge cases), authenticated Admin preference round-trip on staging, and fresh preview for current head after the deployment cap resets. Do not apply production migrations, deploy production, or merge PR #96 without explicit approval.
+
+
+## 2026-10-31 follow-up completion after Vercel limit reset
+- Fixed full-suite failures exposed after expanding CI coverage:
+  - corrected the VM source separator in the typing-engine lifecycle test;
+  - removed an accidental literal newline escape from the workspace-controls test;
+  - removed the signup full-name field and stale name reference from the manual signup handler, keeping email + mobile + password + confirmation;
+  - aligned login-page regression expectations with no-name signup;
+  - corrected lifecycle timer assertions to account for the engine's immediate initial tick.
+- Latest confirmed full CI run: `Security regression tests` run #399 (`41185474889`) completed SUCCESS for commit `48f110904056d951b6d8eed393438dafad4a8165`. The complete `node --test tests/*.test.cjs` step passed (89 tests, 0 failures); all prior focused checks also passed.
+- Vercel preview deployment is READY for that exact commit: `https://final-1-f9md3w4yd-decoding-hcn.vercel.app` (deployment `dpl_HPZK5HPgmrNCVyq36kK1NsChVomT`). This is a preview only; no production promotion or domain assignment was performed.
+- Staging preference record was re-read (read-only): id=1, `{"default":"master","overrides":{}}`. No database writes were made during this verification.
+- Still requires a real authenticated Admin browser session to prove save → reload → resolver round-trip; static tests verify save/resolver key parity but are not an authenticated integration test.
+- Still requires interactive browser coverage for desktop/mobile scrolling, font resizing, hidden/offscreen modes, and fullscreen enter/exit. Source-level regression tests pass, but they do not substitute for real browser interaction.
+- PR #96 remains OPEN and UNMERGED. Production branch `main`, production database, and production deployment remain untouched.

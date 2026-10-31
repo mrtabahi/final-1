@@ -41,5 +41,5 @@ jobs:
         run: node --test tests/subscription-control-center-regression.test.cjs
       - name: Check feature access and admin membership JavaScript syntax
         run: node --check js/feature-access.js && node --check js/test-list.js && node --check js/materials.js
-      - name: Test admin feature access controls
-        run: node --test tests/admin-feature-access-regression.test.cjs
+      - name: Test complete Node regression suite
+        run: node --test tests/*.test.cjs

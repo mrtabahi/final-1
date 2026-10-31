@@ -2,9 +2,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const authStatus = await TypingMaster.requireCandidateGuard();
   if (!authStatus?.ok) return;
   const $ = id => document.getElementById(id);
+  const typingDefaults=TypingExperienceConfig;
   const folderSelect=$('fix-folder'), passageSelect=$('fix-passage-select'), customInput=$('fix-custom'), form=$('fix-setup-form');
   const setup=$('setup-panel'), game=$('game-panel'), result=$('result-panel'), input=$('fix-input');
-  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, typingFontSize=19.2, backspacePressCount=0;
+  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, backspacePressCount=0, typingMode='screen', modeLocked=false;
   const tokenize = text => String(text||'').match(/\S+/gu)||[];
   const words = text => tokenize(text);
   function announce(text){ if(!currentConfig||currentConfig.voice!=='on'||!('speechSynthesis' in window))return; try{speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(String(text));utter.rate=1;utter.pitch=1;utter.lang='en-US';speechSynthesis.speak(utter);}catch(e){console.debug('Speech unavailable',e);} }
@@ -46,33 +47,66 @@ document.addEventListener('DOMContentLoaded', async () => {
       const passage=await getPassage();activePassage=String(passage.passage||'').trim();if(!activePassage)throw new Error('Passage cannot be empty.');
       currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:($('fix-timer').value==='custom'?Math.max(1,Number($('fix-custom-minutes').value)||1)*60:Number($('fix-timer').value)),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
       $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
-      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;backspacePressCount=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=$('fix-highlight-setting').value==='on';typingFontSize=19.2;$('fix-toggle-highlight').textContent=highlightEnabled?'🖍 Highlight: On':'🖍 Highlight: Off';
+      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;backspacePressCount=0;finished=false;startedAt=0;passageHidden=false;typingMode='screen';modeLocked=false;syncTypingModeButton();highlightEnabled=$('fix-highlight-setting').value==='on';fixFontControls.set(19.2);syncToggleButton($('fix-toggle-highlight'),highlightEnabled,'Highlight: On','Highlight: Off','🖍','🖍','Highlight: show or hide correct and incorrect character colours.');
       $('fix-clock').textContent='00:00:00';
       $('fix-passage-display').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
     }catch(err){alert(err.message||'Unable to start game.');}
   });
+  function syncToggleButton(button, enabled, onLabel, offLabel, onIcon, offIcon, tooltip) {
+    button.setAttribute('aria-pressed', String(Boolean(enabled)));
+    button.dataset.icon = enabled ? onIcon : offIcon;
+    button.dataset.tooltip = tooltip;
+    button.textContent = enabled ? onLabel : offLabel;
+  }
   function formatTime(s){s=Math.max(0,Math.floor(s));return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
   function renderPassage(){
-    const host=$('fix-passage-display');host.replaceChildren();host.style.display=passageHidden?'none':'block';host.classList.toggle('no-highlight',!highlightEnabled);host.style.fontSize=typingFontSize+'px';
-    const expected=String(activePassage),typed=String(input.value||''),re=/\S+/gu,expWords=[...expected.matchAll(re)],typedWords=typed.match(/\S+/gu)||[],committedCount=(/\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
-    const typedIndexByExpected=new Map(),committedMissingExpected=new Set();let expectedCursor=0,typedCursor=0;
-    for(const item of TypingMaster.alignWords(expWords.map(match=>match[0]),typedWords)){if(item.type==='match'||item.type==='substitute'){typedIndexByExpected.set(expectedCursor,typedCursor);expectedCursor++;typedCursor++;}else if(item.type==='delete'){if(typedCursor<committedCount)committedMissingExpected.add(expectedCursor);expectedCursor++;}else if(item.type==='insert'){typedCursor++;}}
+    const host=$('fix-passage-display');host.replaceChildren();
+    TypingWorkspaceControls.setDisplay(host,!passageHidden&&typingMode==='screen','block');
+    // The original passage remains untouched during the attempt. Mistake colours and
+    // bracketed expected words belong exclusively to the result comparison below.
+    TypingWorkspaceControls.setClassState(host,'no-highlight',!highlightEnabled);
+    const expected=String(activePassage),typed=String(input.value||'');
+    const expectedWords=[...expected.matchAll(/\S+/gu)];
+    const typedWords=typed.match(/\S+/gu)||[];
+    const committedCount=(/\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
+    const alignment=TypingMaster.alignWords(expectedWords.map(match=>match[0]),typedWords);
+    let expectedCursor=0,typedCursor=0,currentExpectedIndex=-1;
+    for(const item of alignment){
+      if(item.type==='match'||item.type==='substitute'){
+        if(typedCursor===committedCount)currentExpectedIndex=expectedCursor;
+        expectedCursor++;typedCursor++;
+      }else if(item.type==='delete'){
+        if(typedCursor===committedCount)currentExpectedIndex=expectedCursor;
+        expectedCursor++;
+      }else if(item.type==='insert'){
+        typedCursor++;
+      }
+    }
     let cursor=0;
-    expWords.forEach((match,wordIndex)=>{
+    expectedWords.forEach((match,index)=>{
       if(match.index>cursor)host.appendChild(document.createTextNode(expected.slice(cursor,match.index)));
-      const typedIndex=typedIndexByExpected.get(wordIndex),word=match[0],typedWord=typedIndex===undefined?'':typedWords[typedIndex]||'',charStates=TypingMaster.alignCharacters(word,typedWord),wordNode=document.createElement('span');wordNode.className='fix-word';
-      const isCommitted=(typedIndex!==undefined&&typedIndex<committedCount)||committedMissingExpected.has(wordIndex),isCurrent=typedIndex!==undefined&&typedIndex===committedCount;
-      Array.from(word).forEach((ch,charIndex)=>{const span=document.createElement('span');span.className='passage-char';span.textContent=ch;
-        if(isCommitted)span.classList.add(charStates[charIndex]==='correct'?'char-correct':'char-incorrect');
-        else if(isCurrent&&charIndex<typedWord.length)span.classList.add(charStates[charIndex]==='correct'?'char-correct':'char-incorrect');
-        if(isCurrent&&charIndex===typedWord.length)span.classList.add('char-current');
-        wordNode.appendChild(span);
-      });
-      if(isCommitted&&typedWord.length>word.length){const extra=document.createElement('span');extra.className='char-incorrect';extra.textContent=' ['+typedWord.slice(word.length)+']';wordNode.appendChild(extra);}
-      host.appendChild(wordNode);cursor=match.index+word.length;
-      const next=expected.slice(cursor,expWords[wordIndex+1]?.index??expected.length);if(next)host.appendChild(document.createTextNode(next));cursor+=next.length;
+      const wordNode=document.createElement('span');wordNode.className='fix-word';
+      if(index===currentExpectedIndex){
+        wordNode.classList.add('word-position-current');
+        if(highlightEnabled)wordNode.classList.add('word-current');
+        wordNode.setAttribute('aria-current','true');
+      }
+      wordNode.textContent=match[0];host.appendChild(wordNode);
+      cursor=match.index+match[0].length;
+      const next=expected.slice(cursor,expectedWords[index+1]?.index??expected.length);
+      if(next)host.appendChild(document.createTextNode(next));cursor+=next.length;
     });
-    if(!expWords.length)host.textContent=expected;
+    if(!expectedWords.length)host.textContent=expected;
+  }
+  function keepCurrentPassageVisible(){
+    const host=$('fix-passage-display');
+    const marker=host?.querySelector('.word-position-current');
+    if(!host||!marker||passageHidden||typingMode!=='screen')return;
+    const hostRect=host.getBoundingClientRect(),markerRect=marker.getBoundingClientRect();
+    const topGap=markerRect.top-hostRect.top,bottomGap=hostRect.bottom-markerRect.bottom;
+    const margin=Math.min(36,host.clientHeight*.16);
+    if(topGap<margin)host.scrollTop-=margin-topGap;
+    else if(bottomGap<margin)host.scrollTop+=margin-bottomGap;
   }
   function tick(){
     if(finished)return;const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
@@ -81,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateMetrics(elapsed);if(currentConfig.duration&&remain<=0)finish('Timer complete');
   }
   function updateMetrics(elapsed){
-    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',backspacePressCount,false);
+    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,typingDefaults.getScoringConfig(),'bsf',backspacePressCount,false);
     $('fix-live-gross').textContent=score.grossWpm.toFixed(2);$('fix-live-net').textContent=score.netWpm.toFixed(2);
     $('fix-live-accuracy').textContent=score.accuracy.toFixed(2)+'%';
   }
@@ -103,15 +137,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(e.key===' '&&input.selectionStart===input.value.length){/* Space commits the word on input. */}
   });
   input.addEventListener('input',()=>{
-    if(finished)return;if(input.value.length&&!startedAt){startedAt=performance.now();if(currentConfig.duration)interval=setInterval(tick,200);}
+    if(finished)return;if(input.value.length){modeLocked=true;syncTypingModeButton();}if(input.value.length&&!startedAt){startedAt=performance.now();if(currentConfig.duration)interval=setInterval(tick,200);}
     if(!currentConfig.backspace&&input.value.length<Array.from(activePassage).length&&input.value.length<Array.from(input.value).length){/* guarded by keydown */}
-    renderPassage();processCommittedWords();tick();
+    renderPassage();keepCurrentPassageVisible();processCommittedWords();tick();
     // Reaching the end of the original passage always auto-submits, even with time remaining.
     if(!finished&&Array.from(input.value).length>=Array.from(activePassage).length)finish('Passage complete');
   });
   function renderResultComparison(expectedText,typedText){
     const host=$('fix-result-typed');if(!host)return;host.replaceChildren();
-    const expected=String(expectedText||'').match(/\\S+/gu)||[],typed=String(typedText||'').match(/\\S+/gu)||[];
+    const expected=String(expectedText||'').match(/\S+/gu)||[],typed=String(typedText||'').match(/\S+/gu)||[];
     const aligned=TypingMaster.alignWords(expected,typed);let i=0;
     const appendText=(text,cls)=>{const span=document.createElement('span');if(cls)span.className=cls;span.textContent=text;host.appendChild(span);};
     while(i<aligned.length){
@@ -144,18 +178,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
     const passed=reason!=='Maximum errors reached'&&errorCount<currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
     $('fix-result-status').textContent=passed?'QUALIFIED':'TRY AGAIN';$('fix-result-status').classList.toggle('try-again',!passed);
-    $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';$('fix-result-net').textContent=net.toFixed(2)+' WPM';$('fix-result-errors').textContent=String(errorCount);$('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';$('fix-result-allowed').textContent=String(score.allowedErrors??score.freeErrors??0);$('fix-result-excess').textContent=String(score.excessErrors??0);$('fix-result-penalty').textContent=Number(score.penaltyWpm??0).toFixed(2);$('fix-result-correct-word').textContent=Number(score.totalCorrectWord??0).toFixed(2);$('fix-result-backspace').textContent=String(backspacePressCount);$('fix-result-time').textContent=formatTime(elapsed);$('fix-result-typed-words').textContent=(String(input.value||'').length/5).toFixed(2);$('fix-result-keystrokes').textContent=String(String(input.value||'').length);$('fix-result-reason').textContent=reason;
+    $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';$('fix-result-net').textContent=net.toFixed(2)+' WPM';$('fix-result-errors').textContent=String(errorCount);$('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';$('fix-result-allowed').textContent=String(score.allowedErrors??score.freeErrors??0);$('fix-result-excess').textContent=String(score.excessErrors??0);$('fix-result-penalty').textContent=Number(score.penaltyWpm??0).toFixed(2);$('fix-result-correct-word').textContent=Number(score.totalCorrectWord??0).toFixed(2);$('fix-result-backspace').textContent=String(score.backspacePresses??backspacePressCount);$('fix-result-time').textContent=formatTime(elapsed);$('fix-result-typed-words').textContent=Number(score.equivalentTypedWords??(Number(score.totalKeystrokes||0)/5)).toFixed(2);$('fix-result-keystrokes').textContent=String(score.totalKeystrokes??0);$('fix-result-reason').textContent=reason;
+    const breakdown=score.errorBreakdown||{};
+    const analysisFields={omissions:'omissions',substitutions:'substitutions',spelling:'spellingErrors',incomplete:'incompleteWords',extra:'extraWords',repeated:'repeatedWords',spacing:'spacingErrors',capitalization:'capitalizationErrors',punctuation:'punctuationErrors','not-reached':'notReached'};
+    Object.entries(analysisFields).forEach(([id,key])=>{const node=$('fix-analysis-'+id);if(node)node.textContent=String(breakdown[key]??0);});
     $('fix-result-min-gross').textContent=currentConfig.minGross.toFixed(2);$('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);$('fix-result-max-errors').textContent=currentConfig.maxErrors;
-    $('fix-result-original')?.replaceChildren();renderResultComparison(activePassage,input.value);
+    const originalHost=$('fix-result-original');if(originalHost)originalHost.textContent=activePassage;renderResultComparison(activePassage,input.value);
     game.hidden=true;result.hidden=false;if(reason==='Maximum errors reached')announce('Game over');
   }
-  $('fix-toggle-highlight').addEventListener('click',()=>{highlightEnabled=!highlightEnabled;$('fix-toggle-highlight').textContent=highlightEnabled?'🖍 Highlight: On':'🖍 Highlight: Off';renderPassage();});
-  $('fix-toggle-passage').addEventListener('click',()=>{passageHidden=!passageHidden;$('fix-toggle-passage').textContent=passageHidden?'👁 Show passage':'🙈 Hide passage';renderPassage();});
-  $('fix-font-down').addEventListener('click',()=>{typingFontSize=Math.max(14.4,typingFontSize-1.6);renderPassage();input.style.fontSize=typingFontSize+'px';});
-  $('fix-font-up').addEventListener('click',()=>{typingFontSize=Math.min(32,typingFontSize+1.6);renderPassage();input.style.fontSize=typingFontSize+'px';});
+  function syncTypingModeButton(){const b=$('fix-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
+  $('fix-mode-switch')?.addEventListener('click',()=>{if(modeLocked)return;typingMode=typingMode==='screen'?'offscreen':'screen';renderPassage();syncTypingModeButton();});
+  $('fix-fullscreen')?.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await game.requestFullscreen();}catch(_){$('fix-load-status').textContent='Full screen is unavailable in this browser.';}});
+  document.addEventListener('fullscreenchange',()=>{const b=$('fix-fullscreen');if(b)b.textContent=document.fullscreenElement?'Exit full screen':'Full screen';});
+  $('fix-toggle-highlight').addEventListener('click',()=>{highlightEnabled=!highlightEnabled;syncToggleButton($('fix-toggle-highlight'),highlightEnabled,'Highlight: On','Highlight: Off','🖍','🖍','Highlight: show or hide correct and incorrect character colours.');renderPassage();});
+  $('fix-toggle-passage').addEventListener('click',()=>{passageHidden=!passageHidden;syncToggleButton($('fix-toggle-passage'),passageHidden,'Show passage','Hide passage','👁','🙈','Hide passage: hide the passage from view or show it again.');renderPassage();});
+  const fixFontControls=TypingWorkspaceControls.bindFontControls({downButton:$('fix-font-down'),upButton:$('fix-font-up'),targets:[$('fix-passage-display'),input],initialSize:19.2,min:14.4,max:32,step:1.6,onChange:renderPassage});
     $('fix-submit').addEventListener('click',()=>finish('Manually submitted'));
-  $('fix-restart').addEventListener('click',()=>{if(interval)clearInterval(interval);game.hidden=true;result.hidden=true;setup.hidden=false;});
-  $('fix-again').addEventListener('click',()=>{result.hidden=true;setup.hidden=false;});
+  function returnToSetup(){
+    if(interval){clearInterval(interval);interval=null;}
+    startedAt=0;finished=false;errorCount=0;backspacePressCount=0;activePassage='';
+    input.value='';input.disabled=false;input.readOnly=false;
+    $('fix-clock').textContent='00:00:00';$('fix-live-gross').textContent='0.00';$('fix-live-net').textContent='0.00';$('fix-live-accuracy').textContent='0.00%';
+    $('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+(currentConfig?.maxErrors||5);
+    game.hidden=true;result.hidden=true;setup.hidden=false;
+  }
+  $('fix-restart').addEventListener('click',returnToSetup);
+  $('fix-again').addEventListener('click',returnToSetup);
   $('fix-print').addEventListener('click',()=>window.print());
   loadCatalog();
 });

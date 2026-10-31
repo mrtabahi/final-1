@@ -14,4 +14,4 @@ Disallow: /reset.html
 Disallow: /verify.html
 Disallow: /start_test.html
 
-Sitemap: https://decoding-hcm.vercel.app/sitemap.xml
+Sitemap: https://decodinghcm.online/sitemap.xml

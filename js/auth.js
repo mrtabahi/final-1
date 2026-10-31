@@ -112,22 +112,6 @@ const AuthManager = {
     return { ok: true, user, profile };
   },
 
-  async ensureCandidateProfile(user) {
-    if (!user?.id) throw new Error('Google account session is missing.');
-    let profile = await this.getProfile(user.id);
-    if (profile) return profile;
-    const metadata = user.user_metadata || {};
-    const fullName = String(metadata.full_name || metadata.name || user.email?.split('@')[0] || 'Candidate').trim();
-    const phone = String(metadata.phone || '').trim() || null;
-    const { error } = await supabaseClient.from('profiles').upsert({
-      id: user.id, full_name: fullName, email: user.email || null, phone, role: 'candidate'
-    }, { onConflict: 'id' });
-    if (error) throw error;
-    profile = await this.getProfile(user.id);
-    if (!profile || profile.role !== 'candidate') throw new Error('Candidate profile could not be initialized.');
-    return profile;
-  },
-
   async getAccessSettings() {
     const { data, error } = await supabaseClient
       .from('site_access_settings')
@@ -136,28 +120,6 @@ const AuthManager = {
       .maybeSingle();
     if (error) throw error;
     return data || { registration_enabled: true, registration_paused_message: 'New account creation is temporarily paused. Please try again later.' };
-  },
-
-  async signInWithGoogle({ isSignup = false } = {}) {
-    // Keep Google registration subject to the same administrator-controlled
-    // registration switch as email/password registration.
-    if (isSignup) {
-      const settings = await this.getAccessSettings();
-      if (settings.registration_enabled === false) {
-        throw new Error(settings.registration_paused_message || 'New account creation is temporarily paused. Please try again later.');
-      }
-    }
-    const callback = new URL('/login.html', window.location.origin);
-    callback.searchParams.set('oauth', '1');
-    if (isSignup) callback.searchParams.set('source', 'signup');
-    const { error } = await supabaseClient.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: callback.toString(),
-        queryParams: { prompt: 'select_account' }
-      }
-    });
-    if (error) throw error;
   },
 
   async sendMagicLink(email) {

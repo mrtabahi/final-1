@@ -554,3 +554,13 @@
 .compact-tip-control[aria-pressed="true"]:focus-visible,
 .self-toolbar-actions .compact-tip-control[aria-pressed="true"]:hover,
 .self-toolbar-actions .compact-tip-control[aria-pressed="true"]:focus-visible { background:#166534!important; border-color:#14532d!important; }
+
+
+/* Highlight OFF is a hard visual opt-out: suppress nested character feedback too. */
+#passage-container.no-highlight span,
+.passage-display.no-highlight span,
+#passage-container.no-highlight [class*="char-"],
+.passage-display.no-highlight [class*="char-"]{
+  color:inherit!important;background:transparent!important;border:0!important;
+  box-shadow:none!important;text-decoration:none!important;font-weight:inherit!important
+}

@@ -122,6 +122,23 @@
     });
     // Keep the redesigned clock synchronized with the original engine's timer.
     window.setInterval(syncClock,250);
+    // Preferences load asynchronously from Supabase. Listen for the resolver event
+    // instead of reading the dataset only once during DOMContentLoaded.
+    function applyAdminPreference(preferred){
+      if(preferred==='screen'||preferred==='pdf'){
+        const choice=dialog.querySelector('[data-ei-mode="'+preferred+'"]');
+        if(choice)choice.click();
+      }else{
+        document.body.classList.remove('ei-exam-mode','ei-pdf-mode');
+        try{sessionStorage.removeItem('examInterfaceV2')}catch{}
+      }
+    }
+    window.addEventListener('typing-interface-preference-ready',event=>{
+      if(event.detail?.activity===(self?'self-test':'exam'))applyAdminPreference(event.detail.preference);
+    });
+    if(document.documentElement.dataset.typingInterface){
+      applyAdminPreference(document.documentElement.dataset.typingInterface);
+    }
     // Exam interface starts from the practice toolbar and does not reset feature state.
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();

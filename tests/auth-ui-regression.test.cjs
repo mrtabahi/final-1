@@ -7,7 +7,7 @@ const read = file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 
 test('manual account creation uses only email, mobile, password and confirmation', () => {
   const html = read('login.html');
-  for (const token of ['id="google-signin-button"', 'id="google-signup-button"', 'id="signup-form"', 'id="signup-email"', 'id="signup-phone"', 'id="signup-password"', 'id="signup-confirm"', 'Forgot password?', 'forgot.html', 'auth-shell']) {
+  for (const token of ['id="signup-form"', 'id="signup-email"', 'id="signup-phone"', 'id="signup-password"', 'id="signup-confirm"', 'Forgot password?', 'forgot.html', 'auth-shell']) {
     assert.ok(html.includes(token), 'missing auth UI token: ' + token);
   }
   assert.ok(!html.includes('id="signup-name"'), 'manual signup should not request a name');
@@ -29,15 +29,6 @@ test('manual signup stores phone as metadata and does not trigger phone OTP', ()
   assert.ok(!auth.includes('await supabaseClient.auth.updateUser({\n          phone: normalizedPhone'));
 });
 
-test('Google signup respects registration pause and uses Google display name', () => {
-  const auth = read('js/auth.js');
-  const html = read('login.html');
-  assert.ok(auth.includes('async signInWithGoogle({ isSignup = false } = {})'));
-  assert.ok(auth.includes('settings.registration_enabled === false'));
-  assert.ok(html.includes('user_metadata?.full_name || data.session.user.user_metadata?.name'));
-  assert.ok(html.includes('AuthManager.updateName(googleName)'));
-});
-
 test('site navigation rewrites My Account links based on auth state', () => {
   const nav = read('js/account-nav.js');
   assert.ok(nav.includes('my_account.html'));
@@ -48,11 +39,15 @@ test('site navigation rewrites My Account links based on auth state', () => {
   }
 });
 
-test('login page only offers password login, Google and email/password signup', () => {
+test('login page supports manual password login and does not expose Google OAuth', () => {
   const html = read('login.html');
   assert.ok(html.includes('id="login-password"'));
-  assert.ok(html.includes('id="google-signin-button"'));
-  assert.ok(html.includes('id="google-signup-button"'));
+  assert.ok(!html.includes('google-signin-button'));
+  assert.ok(!html.includes('google-signup-button'));
+  assert.ok(!html.includes('signInWithOAuth'));
+  assert.ok(!html.includes('oauth=1'));
+  assert.ok(!read('js/auth.js').includes('signInWithGoogle'));
+  assert.ok(!read('js/auth.js').includes("provider: 'google'"));
   assert.ok(!html.includes('sendMagicLink('));
   assert.ok(!html.includes('resendConfirmation('));
 });
@@ -62,10 +57,18 @@ test('password reset emails a link and reset page asks for new password plus con
   const reset = read('reset.html');
   assert.ok(forgot.includes('resetPasswordForEmail'));
   assert.ok(forgot.includes("new URL('/reset.html',window.location.origin)"));
+  assert.ok(forgot.includes('resetPasswordForEmail'));
+  assert.ok(forgot.includes('If this email is registered'));
   assert.ok(!forgot.includes('phone-form') && !forgot.includes('otp-form'));
   assert.ok(reset.includes('id="new-password"'));
   assert.ok(reset.includes('id="confirm-password"'));
+  assert.ok(reset.includes("event === 'PASSWORD_RECOVERY'"));
   assert.ok(reset.includes('auth.updateUser({password})'));
+  assert.ok(reset.includes('Passwords do not match.'));
+  assert.ok(reset.includes('This reset link is invalid or expired.'));
+  assert.ok(reset.includes("window.location.href = 'login.html?passwordReset=success'"));
+  assert.ok(!forgot.includes('decoding-hcm.vercel.app'));
+  assert.ok(!reset.includes('decoding-hcm.vercel.app'));
 });
 
 

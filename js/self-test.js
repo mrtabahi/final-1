@@ -2,13 +2,13 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const setup=$('self-setup'), workspace=$('self-workspace'), source=$('source-text'), typed=$('self-typed'), passage=$('self-passage'), passageCard=$('self-passage-card'), typeCard=$('self-type-card');
+let typingMode='screen', modeLocked=false;
 let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, inputHidden=false, allowBackspace=true, totalElapsed=0, backspacePressCount=0;
 let SAVED_KEY='decodingHcmSelfTestPassagesV1:guest';
 const LEGACY_SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
-let scoringFormula='bsf', selfFontSize=17.3, selfScores={};
-function applySelfFontSize(){passage.style.fontSize=selfFontSize+'px';typed.style.fontSize=selfFontSize+'px';}
-$('self-font-down')?.addEventListener('click',()=>{selfFontSize=Math.max(14,selfFontSize-1.5);applySelfFontSize()});
-$('self-font-up')?.addEventListener('click',()=>{selfFontSize=Math.min(32,selfFontSize+1.5);applySelfFontSize()});
+const typingDefaults=TypingExperienceConfig;
+let scoringFormula=typingDefaults.defaults.scoring.defaultFormula, selfScores={};
+const selfFontControls=TypingWorkspaceControls.bindFontControls({downButton:$('self-font-down'),upButton:$('self-font-up'),targets:[passage,typed],initialSize:17.3,min:14,max:32,step:1.5});
 function readSaved(){try{const data=JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');return Array.isArray(data)?data.filter(x=>x&&typeof x.text==='string').slice(0,MAX_SAVED):[]}catch(_){return[]}}
 function writeSaved(items){try{localStorage.setItem(SAVED_KEY,JSON.stringify(items.slice(0,MAX_SAVED)));return true}catch(_){$('self-save-message').textContent='Browser storage is unavailable. Check your privacy/storage settings.';return false}}
 function refreshSaved(selected=''){
@@ -23,12 +23,12 @@ function refreshSaved(selected=''){
 }
 function updateLive(){
  const input=typed.value, elapsed=startedAt===null?0:Math.max(1,Math.min(duration,(Date.now()-startedAt)/1000));
- const score=TypingMaster.calculateScore(original,input,elapsed||1,{freeErrorPct:.05,penaltyPerError:10},input.length,scoringFormula,backspacePressCount);
+ const score=TypingMaster.calculateScore(original,input,elapsed||1,typingDefaults.getScoringConfig(),input.length,scoringFormula,backspacePressCount);
  $('self-live-gross').textContent=score.grossWpm.toFixed(2);
  $('self-live-net').textContent=score.netWpm.toFixed(2);
  $('self-live-accuracy').textContent=score.accuracy.toFixed(2)+'%';
  $('self-live-errors').textContent=String(score.totalErrors);
- $('self-live-keystrokes').textContent=String(input.length);
+ $('self-live-keystrokes').textContent=String(score.totalKeystrokes??0);
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const formatTime=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
@@ -65,7 +65,7 @@ function renderPassage(){
   for(let j=i;j<end;j++){
    const cls=highlight?statuses[j]:'';
    const value=esc(original[j]);
-   html+=cls?'<span class="'+cls+'">'+value+'</span>':value;
+   html+='<span class="'+(cls||'self-char')+'" data-char-index="'+j+'">'+value+'</span>';
   }
   html+='</span>';i=end;
  }
@@ -73,13 +73,13 @@ function renderPassage(){
 }
 function startClock(){if(startedAt!==null||finished)return;startedAt=Date.now();attemptDate=new Date(startedAt);deadline=startedAt+duration*1000;tick();timerId=window.setInterval(tick,200)}
 function tick(){const remaining=Math.max(0,(deadline-Date.now())/1000);$('self-timer').textContent=formatTime(remaining);updateLive();if(remaining<=0)finishTest()}
-function setHighlight(on){highlight=on;$('self-highlight').textContent='Highlight: '+(on?'On':'Off');$('self-highlight').setAttribute('aria-pressed',String(on));passageCard.classList.toggle('self-highlight-enabled',on);renderPassage()}
-function setHidden(on){hidden=on;passageCard.hidden=on;$('self-hide').textContent=on?'👁 Show passage':'🙈 Hide passage';$('self-hide').setAttribute('aria-pressed',String(on));$('self-pdf-row').hidden=!on}
-function setInputHidden(on){inputHidden=on;typeCard.hidden=on;$('self-hide-input').textContent=on?'👁 Show typing box':'🙈 Hide typing box';$('self-hide-input').setAttribute('aria-pressed',String(on));}
+function setHighlight(on){highlight=on;$('self-highlight').textContent='Highlight: '+(on?'On':'Off');$('self-highlight').setAttribute('aria-pressed',String(on));TypingWorkspaceControls.setClassState(passageCard,'self-highlight-enabled',on);renderPassage()}
+function setHidden(on){hidden=on;TypingWorkspaceControls.setHidden(passageCard,on||typingMode==='offscreen');$('self-hide').textContent=on?'👁 Show passage':'🙈 Hide passage';$('self-hide').setAttribute('aria-pressed',String(on));TypingWorkspaceControls.setHidden($('self-pdf-row'),!on)}
+function setInputHidden(on){inputHidden=on;TypingWorkspaceControls.setHidden(typeCard,on);$('self-hide-input').textContent=on?'👁 Show typing box':'🙈 Hide typing box';$('self-hide-input').setAttribute('aria-pressed',String(on));}
 function startTest(){
  original=source.value.replace(/\r\n?/g,'\n');
  if(!original.trim()){$('self-message').textContent='Paste a passage before starting.';source.focus();return}
- duration=Number($('self-duration').value)*60;allowBackspace=$('self-backspace').checked;scoringFormula='bsf';backspacePressCount=0;selfScores={};
+ duration=Number($('self-duration').value)*60;typingMode='screen';modeLocked=false;syncTypingModeButton();allowBackspace=$('self-backspace').checked;scoringFormula='bsf';backspacePressCount=0;selfScores={};
  typed.value='';startedAt=null;attemptDate=null;deadline=null;finished=false;totalElapsed=0;
  $('self-message').textContent='';setup.hidden=true;workspace.hidden=false;$('self-result').hidden=true;
  passageCard.hidden=false;setHidden(false);setInputHidden(false);setHighlight(false);renderPassage();$('self-timer').textContent=formatTime(duration);
@@ -89,7 +89,7 @@ function finishTest(){
  if(finished)return;finished=true;if(timerId)window.clearInterval(timerId);timerId=null;
  totalElapsed=startedAt===null?0:Math.max(1,Math.min(duration,(Date.now()-startedAt)/1000));
  typed.disabled=true;
- const input=typed.value,config={freeErrorPct:.05,penaltyPerError:10};
+ const input=typed.value,config=typingDefaults.getScoringConfig();
  selfScores=TypingMaster.calculateBoth(original,input,totalElapsed,config,input.length,backspacePressCount);
  renderSelfResult(selfScores[scoringFormula]||selfScores.bsf,input,true);
 }
@@ -117,21 +117,25 @@ function downloadPDF(){
  for(const line of lines){if(y>pageHeight-margin){doc.addPage();y=margin}doc.text(line,margin,y);y+=lineHeight}
  doc.save('Decoding-HCM-Self-Test-Passage.pdf');
 }
+function syncTypingModeButton(){const b=$('self-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
+$('self-mode-switch')?.addEventListener('click',()=>{if(modeLocked)return;typingMode=typingMode==='screen'?'offscreen':'screen';setHidden(hidden);syncTypingModeButton();});
+$('self-fullscreen')?.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await workspace.requestFullscreen();}catch(_){$('self-message').textContent='Full screen is unavailable in this browser.';}});
+document.addEventListener('fullscreenchange',()=>{const b=$('self-fullscreen');if(b)b.textContent=document.fullscreenElement?'Exit full screen':'Full screen';});
 $('self-start').addEventListener('click',startTest);
 typed.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!allowBackspace){e.preventDefault();return;}if(e.key==='Backspace'&&allowBackspace&&startedAt!==null&&!e.repeat)backspacePressCount++;});
-typed.addEventListener('input',()=>{if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping();if(!finished&&original.length>0&&typed.value.length>=original.length)finishTest()});
+typed.addEventListener('input',()=>{if(typed.value.length){modeLocked=true;syncTypingModeButton();}if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping();if(!finished&&original.length>0&&typed.value.length>=original.length)finishTest()});
 function autoScrollTyping(){
- const style=getComputedStyle(typed),lineHeight=parseFloat(style.lineHeight)||28;
- const text=typed.value.slice(0,typed.selectionStart||typed.value.length);
- const explicitLines=text.split('\n').length;
- const approxChars=Math.max(18,Math.floor((typed.clientWidth-parseFloat(style.paddingLeft||0)-parseFloat(style.paddingRight||0))/(parseFloat(style.fontSize||16)*.62)));
- const visualLines=explicitLines+text.split('\n').reduce((n,line)=>n+Math.max(0,Math.ceil(line.length/approxChars)-1),0);
- if(visualLines>=3)typed.scrollTop=Math.max(0,(visualLines-2)*lineHeight);
- const passageStyle=getComputedStyle(passage),passageFont=parseFloat(passageStyle.fontSize)||17;
- const passageCharsPerLine=Math.max(20,Math.floor(passage.clientWidth/(passageFont*.62)));
- const reachedText=original.slice(0,typed.value.length);
- const passageVisualLines=reachedText.split('\n').reduce((n,line)=>n+Math.max(1,Math.ceil(line.length/passageCharsPerLine)),0);
- if(passageVisualLines>=3)passage.scrollTop=Math.max(0,(passageVisualLines-2)*(parseFloat(passageStyle.lineHeight)||32));
+ // The textarea natively scrolls its caret into view. Position the passage using
+ // actual rendered character geometry rather than estimated characters per line.
+ const targetIndex=Math.min(Math.max(0,typed.selectionStart||typed.value.length),Math.max(0,original.length-1));
+ const marker=passage.querySelector('[data-char-index="'+targetIndex+'"]');
+ if(!marker||hidden||typingMode==='offscreen')return;
+ const hostRect=passage.getBoundingClientRect(),markerRect=marker.getBoundingClientRect();
+ const lineHeight=parseFloat(getComputedStyle(passage).lineHeight)||30;
+ const margin=Math.min(lineHeight*1.5,passage.clientHeight*.25);
+ const topGap=markerRect.top-hostRect.top,bottomGap=hostRect.bottom-markerRect.bottom;
+ if(topGap<margin)passage.scrollTop-=margin-topGap;
+ else if(bottomGap<margin)passage.scrollTop+=margin-bottomGap;
 }
 $('self-formula-bsf')?.addEventListener('click',()=>{scoringFormula='bsf';if(finished)renderSelfResult(selfScores.bsf,typed.value,false);updateLive()});$('self-formula-crpf')?.addEventListener('click',()=>{scoringFormula='crpf';if(finished)renderSelfResult(selfScores.crpf,typed.value,false);updateLive()});
 $('self-save-passage').addEventListener('click',()=>{const text=source.value.trim();if(!text){$('self-save-message').textContent='Pehle passage paste ya type karein.';source.focus();return}const items=readSaved();if(items.length>=MAX_SAVED){$('self-save-message').textContent='Maximum 5 passages save ho sakte hain. Pehle ek delete karein.';return}const id=Date.now();items.push({id,title:'Passage '+(items.length+1)+' · '+new Date(id).toLocaleDateString(),text});if(writeSaved(items)){refreshSaved(id);$('self-save-message').textContent='Passage saved. Aap ise baad mein select karke load kar sakte hain.'}});
