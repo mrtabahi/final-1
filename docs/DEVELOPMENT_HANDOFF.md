@@ -104,3 +104,13 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 2. Audit Typing Test menu activities and the main exam typing workspace against the shared Master Interface. The shared interface should be the default for all test/practice activities unless an explicit Admin setting selects an alternate interface.
 3. Inspect the existing Admin interface selector/settings and runtime registry before changing behavior; do not introduce a parallel setting or let a global default override exam-authoritative duration/scoring/targets.
 4. Keep PR #96 open until browser smoke tests and parity checks are complete; no production merge/deploy without explicit user approval.
+
+
+## Follow-up audit — 2026-10-31
+- Rechecked exact documentation head `f11500b6f2372b078aa5f5a5ea0faa0f06f2d232`: GitHub Actions Security regression tests run #328 (`41174691775`) completed SUCCESS.
+- Vercel preview remains READY at https://final-1-6vhjg8ne7-decoding-hcn.vercel.app; deployment metadata points to code commit `f57c11ce074165a50163128360e3dcf77d8279d2` (the later handoff-only docs commit does not have a distinct preview deployment).
+- `js/interface-switcher.js` is loaded by `start_test.html` and `self-test.html`, but not by `fix-accuracy.html`. It currently injects a separate legacy Screen-to-Screen / PDF-to-Screen presentation mode; it is not the shared Master Interface and should not be made global without separating its layout behavior from activity controls.
+- All three workspace pages load `css/master-typing-interface.css`; `js/typing/master-config.js` currently defines scoring/UI/practice defaults but no interface-selection policy.
+- Admin Website Settings already reads/writes singleton `site_experience_settings` for landing page and audio. The existing migration has no interface field, and no interface override control/runtime resolver was found. Reuse this table if implementing a persisted interface preference; do not create a duplicate settings table.
+- Self Test cancel explicitly clears its interval and resets attempt state; its result-screen “Again” action returns to setup and the next start initializes a fresh attempt. Fix Accuracy restart clears its interval and returns to setup; the next setup submission resets attempt state. Add runtime-level tests for these flows rather than relying only on markup assertions.
+- Production `main` remains unchanged; PR #96 remains open and unmerged.
