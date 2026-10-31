@@ -79,3 +79,12 @@ test('Main Typing Test auto-scroll uses measured character bounds, not estimated
   assert.match(source, /charBox\.top<box\.top\+margin/u);
   assert.doesNotMatch(source, /currentLine=|visibleLines=/u);
 });
+
+
+test('Fix Accuracy auto-scroll uses a non-visual position marker when highlight is OFF', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.match(source, /word-position-current/u);
+  assert.match(source, /querySelector\('\.word-position-current'\)/u);
+  assert.match(source, /passageHidden\|\|typingMode!=='screen'/u);
+  assert.match(source, /if\(highlightEnabled\)wordNode\.classList\.add\('word-current'\)/u);
+});
