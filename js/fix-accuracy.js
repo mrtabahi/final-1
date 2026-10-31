@@ -47,11 +47,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       const passage=await getPassage();activePassage=String(passage.passage||'').trim();if(!activePassage)throw new Error('Passage cannot be empty.');
       currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:($('fix-timer').value==='custom'?Math.max(1,Number($('fix-custom-minutes').value)||1)*60:Number($('fix-timer').value)),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
       $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
-      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;backspacePressCount=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=$('fix-highlight-setting').value==='on';fixFontControls.set(19.2);$('fix-toggle-highlight').textContent=highlightEnabled?'🖍 Highlight: On':'🖍 Highlight: Off';
+      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;backspacePressCount=0;finished=false;startedAt=0;passageHidden=false;highlightEnabled=$('fix-highlight-setting').value==='on';fixFontControls.set(19.2);syncToggleButton($('fix-toggle-highlight'),highlightEnabled,'Highlight: On','Highlight: Off','🖍','🖍','Highlight: show or hide correct and incorrect character colours.');
       $('fix-clock').textContent='00:00:00';
       $('fix-passage-display').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
     }catch(err){alert(err.message||'Unable to start game.');}
   });
+  function syncToggleButton(button, enabled, onLabel, offLabel, onIcon, offIcon, tooltip) {
+    button.setAttribute('aria-pressed', String(Boolean(enabled)));
+    button.dataset.icon = enabled ? onIcon : offIcon;
+    button.dataset.tooltip = tooltip;
+    button.textContent = enabled ? onLabel : offLabel;
+  }
   function formatTime(s){s=Math.max(0,Math.floor(s));return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
   function renderPassage(){
     const host=$('fix-passage-display');host.replaceChildren();TypingWorkspaceControls.setDisplay(host,!passageHidden,'block');TypingWorkspaceControls.setClassState(host,'no-highlight',!highlightEnabled);
@@ -150,8 +156,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-result-original')?.replaceChildren();renderResultComparison(activePassage,input.value);
     game.hidden=true;result.hidden=false;if(reason==='Maximum errors reached')announce('Game over');
   }
-  $('fix-toggle-highlight').addEventListener('click',()=>{highlightEnabled=!highlightEnabled;$('fix-toggle-highlight').textContent=highlightEnabled?'🖍 Highlight: On':'🖍 Highlight: Off';renderPassage();});
-  $('fix-toggle-passage').addEventListener('click',()=>{passageHidden=!passageHidden;$('fix-toggle-passage').textContent=passageHidden?'👁 Show passage':'🙈 Hide passage';renderPassage();});
+  $('fix-toggle-highlight').addEventListener('click',()=>{highlightEnabled=!highlightEnabled;syncToggleButton($('fix-toggle-highlight'),highlightEnabled,'Highlight: On','Highlight: Off','🖍','🖍','Highlight: show or hide correct and incorrect character colours.');renderPassage();});
+  $('fix-toggle-passage').addEventListener('click',()=>{passageHidden=!passageHidden;syncToggleButton($('fix-toggle-passage'),passageHidden,'Show passage','Hide passage','👁','🙈','Hide passage: hide the passage from view or show it again.');renderPassage();});
   const fixFontControls=TypingWorkspaceControls.bindFontControls({downButton:$('fix-font-down'),upButton:$('fix-font-up'),targets:[$('fix-passage-display'),input],initialSize:19.2,min:14.4,max:32,step:1.6,onChange:renderPassage});
     $('fix-submit').addEventListener('click',()=>finish('Manually submitted'));
   $('fix-restart').addEventListener('click',()=>{if(interval)clearInterval(interval);game.hidden=true;result.hidden=true;setup.hidden=false;});
