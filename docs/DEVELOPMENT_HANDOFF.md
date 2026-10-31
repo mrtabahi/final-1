@@ -194,3 +194,12 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - This removes the fragile width/font multiplier approximation. Added regression test and refreshed Self Test script cache.
 - Commit: 793060916763dc2bc1e2521fddf45b8ab5ccf6eb; test/cache commits: a3518a61227ed34d295383a7cc539d3f1171f003 / eb5be4a984d5b2358ee193ac7189b583493e3e11.
 - This is source-level verified; browser tests across mobile/desktop are still required before calling scrolling 100% verified.
+
+
+## 2026-10-31 Follow-on audit: canonical score metrics, Self Test scrolling, preference test maintenance
+- Fixed Fix Accuracy result keystrokes and words to use canonical capped score.totalKeystrokes and score.equivalentTypedWords, not raw textarea length. This prevents extra text from inflating result display independently of speed calculations.
+- Self Test auto-scroll now follows actual rendered character geometry through per-character data-char-index markers and getBoundingClientRect; removed estimated characters-per-line calculations. Textarea retains native caret scrolling.
+- Updated interface preference regression test to assert asynchronous typing-interface-preference-ready event handling (previous test asserted a stale synchronous implementation).
+- Relevant commits: b5debc7650c4a691ce4750847d1fb0b909b76cc7, 793060916763dc2bc1e2521fddf45b8ab5ccf6eb, 35334767185bf8e849947ef5430e3323d8ca2256, with cache/test/doc follow-ups.
+- Latest Vercel deployment observed READY for commit 793060916763dc2bc1e2521fddf45b8ab5ccf6eb: https://final-1-bziz73bc8-decoding-hcn.vercel.app. It predates the latest test-only update.
+- CI run #373 was in progress for the earlier auto-scroll commit; the latest test-only commit has no workflow run visible yet. Browser visual interaction remains unverified.
