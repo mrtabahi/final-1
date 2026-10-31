@@ -63,3 +63,10 @@ test('Self Test auto-scroll follows actual rendered character geometry', () => {
   assert.match(source, /passage\.scrollTop\+=margin-bottomGap/u);
   assert.doesNotMatch(source, /approxChars|passageCharsPerLine/u);
 });
+
+
+test('Self Test live keystrokes use canonical passage-capped count', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/self-test.js'), 'utf8');
+  assert.match(source, /self-live-keystrokes'\)\.textContent=String\(score\.totalKeystrokes\?\?0\)/u);
+  assert.doesNotMatch(source, /self-live-keystrokes'\)\.textContent=String\(input\.length\)/u);
+});
