@@ -46,3 +46,11 @@ test('Fix Accuracy result includes detailed error analysis sourced from canonica
   assert.match(html, /Original Passage/u);
   assert.match(html, /Typed Passage — Mistakes Annotated/u);
 });
+
+
+test('Fix Accuracy scorecard uses canonical capped keystrokes and equivalent words', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.match(source, /score\.equivalentTypedWords\?\?\(Number\(score\.totalKeystrokes\|\|0\)\/5\)/u);
+  assert.match(source, /score\.totalKeystrokes\?\?0/u);
+  assert.doesNotMatch(source, /fix-result-typed-words.*input\.value\|\|''\)\.length/u);
+});
