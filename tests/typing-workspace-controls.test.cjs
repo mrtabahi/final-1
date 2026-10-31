@@ -84,3 +84,25 @@ test('shared display and highlight helpers apply and reverse presentation state'
   controls.setClassState(target, 'highlight-on', false);
   assert.equal(classes.has('highlight-on'), false);
 });
+
+\ntest('Fix Accuracy toolbar exposes icons and pressed colour states for toggles', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
+  const script = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  for (const id of ['fix-toggle-highlight', 'fix-toggle-passage']) {
+    const match = html.match(new RegExp('<button[^>]*id="' + id + '"[^>]*>', 'u'));
+    assert.ok(match, id + ' button exists');
+    assert.match(match[0], /data-icon=/u);
+    assert.match(match[0], /data-tooltip=/u);
+    assert.match(match[0], /aria-pressed="false"/u);
+  }
+  for (const id of ['fix-font-down', 'fix-font-up']) {
+    const match = html.match(new RegExp('<button[^>]*id="' + id + '"[^>]*>', 'u'));
+    assert.ok(match, id + ' button exists');
+    assert.match(match[0], /data-icon=/u);
+    assert.match(match[0], /data-tooltip=/u);
+  }
+  assert.match(script, /function syncToggleButton\(button, enabled/u);
+  assert.match(script, /setAttribute\('aria-pressed', String\(Boolean\(enabled\)\)\)/u);
+  assert.match(script, /syncToggleButton\(\$\('fix-toggle-passage'\),passageHidden/u);
+  assert.match(script, /syncToggleButton\(\$\('fix-toggle-highlight'\),highlightEnabled/u);
+});
