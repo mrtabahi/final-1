@@ -160,7 +160,7 @@ $('login-form').onsubmit = async e => {
             err.message || 'Unable to sign in. Please try again.';
     }
 };
-  $('signup-form').onsubmit=async e=>{e.preventDefault();$('auth-message').textContent='';if (window.registrationAllowed === false) { alert(window.registrationPauseMessage); $('auth-message').textContent=window.registrationPauseMessage; return; } if($('signup-password').value!==$('signup-confirm').value){$('auth-message').textContent='Passwords do not match.';return;}try{const d=await AuthManager.register({fullName:$('signup-name').value,email:$('signup-email').value,phone:$('signup-phone').value,password:$('signup-password').value});if(d.session){await supabaseClient.auth.signOut();} location.replace('/login.html?registered=1&email='+encodeURIComponent($('signup-email').value.trim().toLowerCase()));}catch(err){$('auth-message').textContent=err.message;}};
+  $('signup-form').onsubmit=async e=>{e.preventDefault();$('auth-message').textContent='';if (window.registrationAllowed === false) { alert(window.registrationPauseMessage); $('auth-message').textContent=window.registrationPauseMessage; return; } if($('signup-password').value!==$('signup-confirm').value){$('auth-message').textContent='Passwords do not match.';return;}try{const d=await AuthManager.register({email:$('signup-email').value,phone:$('signup-phone').value,password:$('signup-password').value});if(d.session){await supabaseClient.auth.signOut();} location.replace('/login.html?registered=1&email='+encodeURIComponent($('signup-email').value.trim().toLowerCase()));}catch(err){$('auth-message').textContent=err.message;}};
 
 
 refreshRegistrationSetting();
