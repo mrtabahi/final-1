@@ -1,6 +1,6 @@
 # Development handoff and pending-work register
 
-Last updated: 2026-10-31 (latest update: exact-head CI and Vercel preview verified)
+Last updated: 2026-10-31 (latest update: Fix Accuracy toolbar icon/state repair)
 Repository: [mrtabahi/final-1](https://github.com/mrtabahi/final-1)
 Working branch: `fix/custom-domain-seo`
 Pull request: [#96](https://github.com/mrtabahi/final-1/pull/96) — open; do not merge without explicit user approval.
@@ -87,3 +87,20 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - Exact latest PR head Vercel preview: READY, deployment `dpl_UXjcc5HAZgCZdDT8sMRZii5QZkJz`, https://final-1-cwa8rw93t-decoding-hcn.vercel.app.
 - Previously building page-specific previews are now READY: Self Test commit `6d7699e86c2d673cf9874e2b06852875078e8cd0`; Fix Accuracy commit `87f5f6e95c72790ff7d5c74c218393dc755755a5`.
 - PR #96 remains open/unmerged; production `main` remains untouched. No production deployment or database mutation was performed.
+
+
+## Fix Accuracy toolbar repair — 2026-10-31
+- Fixed the compact toolbar controls on Fix Accuracy: buttons now provide their required `data-icon` and tooltip attributes so icons render through the shared compact-control CSS.
+- Highlight and Hide Passage toggles now update `aria-pressed`, accessible button text, and the correct on/off icon. Existing shared CSS renders pressed controls green and unpressed controls neutral.
+- Font decrease/increase buttons now expose A− / A+ icons and descriptive tooltips; these are actions, not on/off toggles, so they do not use pressed state.
+- Added a regression test covering the four controls' icon/tooltip markup and the toggle-state synchronization code.
+- Cache-busted the Fix Accuracy script to `js/fix-accuracy.js?v=20261031-toolbar1`.
+- Commits: `29a929f1e0edc5ca6ebcc632355bb1b998acd814`, `5fdb0d66f23e3d8d07495fdbe6558e1d695e2ab8`, `0978048825f12a22d925de1dc8cc66dae52706a6`, `f57c11ce074165a50163128360e3dcf77d8279d2`.
+- Exact latest code head `f57c11ce074165a50163128360e3dcf77d8279d2`: Security regression tests run #327 (`41174649038`) SUCCESS; Vercel preview READY: https://final-1-6vhjg8ne7-decoding-hcn.vercel.app.
+- Preview deployment is ready, but a manual browser interaction check is still required before calling the visual bug fully verified.
+
+## Next implementation focus
+1. Add cancel/restart lifecycle integration regression tests for Self Test and Fix Accuracy, ensuring timers are cleared and new attempts reset state without cross-attempt leakage.
+2. Audit Typing Test menu activities and the main exam typing workspace against the shared Master Interface. The shared interface should be the default for all test/practice activities unless an explicit Admin setting selects an alternate interface.
+3. Inspect the existing Admin interface selector/settings and runtime registry before changing behavior; do not introduce a parallel setting or let a global default override exam-authoritative duration/scoring/targets.
+4. Keep PR #96 open until browser smoke tests and parity checks are complete; no production merge/deploy without explicit user approval.
