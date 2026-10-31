@@ -28,7 +28,7 @@ function updateLive(){
  $('self-live-net').textContent=score.netWpm.toFixed(2);
  $('self-live-accuracy').textContent=score.accuracy.toFixed(2)+'%';
  $('self-live-errors').textContent=String(score.totalErrors);
- $('self-live-keystrokes').textContent=String(input.length);
+ $('self-live-keystrokes').textContent=String(score.totalKeystrokes??0);
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const formatTime=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
