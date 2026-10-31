@@ -61,3 +61,13 @@
 @media(max-width:760px){#fix-setup-form .fix-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){#fix-setup-form .fix-grid{grid-template-columns:1fr}#setup-panel.fix-card{padding:1rem}}
 @media(prefers-reduced-motion:reduce){#setup-panel.fix-card:before{animation:none}#fix-setup-form .btn-primary{transition:none}}
+
+
+/* The live passage uses .passage-display; suppress all nested character feedback when off. */
+#fix-passage-display.no-highlight .char-incorrect,
+#fix-passage-display.no-highlight .char-correct,
+#fix-passage-display.no-highlight .char-current,
+#fix-passage-display.no-highlight .passage-char{
+  color:inherit!important;background:transparent!important;border:0!important;
+  box-shadow:none!important;text-decoration:none!important;font-weight:inherit!important
+}
