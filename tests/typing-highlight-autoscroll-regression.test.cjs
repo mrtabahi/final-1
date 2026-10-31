@@ -34,3 +34,15 @@ test('Fix Accuracy keeps live source passage clean and annotates mistakes only i
   assert.match(html, /id="fix-result-original"/u);
   assert.match(html, /id="fix-result-typed"/u);
 });
+
+
+test('Fix Accuracy result includes detailed error analysis sourced from canonical score breakdown', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  for (const id of ['omissions','substitutions','spelling','incomplete','extra','repeated','spacing','capitalization','punctuation','not-reached']) {
+    assert.match(html, new RegExp('id="fix-analysis-' + id + '"'));
+  }
+  assert.match(source, /const breakdown=score\.errorBreakdown\|\|\{\}/u);
+  assert.match(html, /Original Passage/u);
+  assert.match(html, /Typed Passage — Mistakes Annotated/u);
+});
