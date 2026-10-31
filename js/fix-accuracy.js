@@ -81,6 +81,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     if(!expWords.length)host.textContent=expected;
   }
+  function keepCurrentPassageVisible(){
+    const host=$('fix-passage-display');
+    const marker=host?.querySelector('.char-current');
+    if(!host||!marker||passageHidden)return;
+    const hostRect=host.getBoundingClientRect(),markerRect=marker.getBoundingClientRect();
+    const topGap=markerRect.top-hostRect.top,bottomGap=hostRect.bottom-markerRect.bottom;
+    const margin=Math.min(36,host.clientHeight*.16);
+    if(topGap<margin)host.scrollTop-=margin-topGap;
+    else if(bottomGap<margin)host.scrollTop+=margin-bottomGap;
+  }
   function tick(){
     if(finished)return;const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
     const remain=currentConfig.duration?Math.max(0,currentConfig.duration-elapsed):0;
@@ -112,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   input.addEventListener('input',()=>{
     if(finished)return;if(input.value.length&&!startedAt){startedAt=performance.now();if(currentConfig.duration)interval=setInterval(tick,200);}
     if(!currentConfig.backspace&&input.value.length<Array.from(activePassage).length&&input.value.length<Array.from(input.value).length){/* guarded by keydown */}
-    renderPassage();processCommittedWords();tick();
+    renderPassage();keepCurrentPassageVisible();processCommittedWords();tick();
     // Reaching the end of the original passage always auto-submits, even with time remaining.
     if(!finished&&Array.from(input.value).length>=Array.from(activePassage).length)finish('Passage complete');
   });
