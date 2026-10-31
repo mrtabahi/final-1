@@ -66,9 +66,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // bracketed expected words belong exclusively to the result comparison below.
     TypingWorkspaceControls.setClassState(host,'no-highlight',!highlightEnabled);
     const expected=String(activePassage),typed=String(input.value||'');
-    const expectedWords=[...expected.matchAll(/\\S+/gu)];
-    const typedWords=typed.match(/\\S+/gu)||[];
-    const committedCount=(/\\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
+    const expectedWords=[...expected.matchAll(/\S+/gu)];
+    const typedWords=typed.match(/\S+/gu)||[];
+    const committedCount=(/\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
     const alignment=TypingMaster.alignWords(expectedWords.map(match=>match[0]),typedWords);
     let expectedCursor=0,typedCursor=0,currentExpectedIndex=-1;
     for(const item of alignment){
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   function renderResultComparison(expectedText,typedText){
     const host=$('fix-result-typed');if(!host)return;host.replaceChildren();
-    const expected=String(expectedText||'').match(/\\S+/gu)||[],typed=String(typedText||'').match(/\\S+/gu)||[];
+    const expected=String(expectedText||'').match(/\S+/gu)||[],typed=String(typedText||'').match(/\S+/gu)||[];
     const aligned=TypingMaster.alignWords(expected,typed);let i=0;
     const appendText=(text,cls)=>{const span=document.createElement('span');if(cls)span.className=cls;span.textContent=text;host.appendChild(span);};
     while(i<aligned.length){
