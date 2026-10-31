@@ -86,8 +86,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     expectedWords.forEach((match,index)=>{
       if(match.index>cursor)host.appendChild(document.createTextNode(expected.slice(cursor,match.index)));
       const wordNode=document.createElement('span');wordNode.className='fix-word';
-      if(highlightEnabled&&index===currentExpectedIndex){
-        wordNode.classList.add('word-current');
+      if(index===currentExpectedIndex){
+        wordNode.classList.add('word-position-current');
+        if(highlightEnabled)wordNode.classList.add('word-current');
         wordNode.setAttribute('aria-current','true');
       }
       wordNode.textContent=match[0];host.appendChild(wordNode);
@@ -99,8 +100,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   function keepCurrentPassageVisible(){
     const host=$('fix-passage-display');
-    const marker=host?.querySelector('.word-current');
-    if(!host||!marker||passageHidden)return;
+    const marker=host?.querySelector('.word-position-current');
+    if(!host||!marker||passageHidden||typingMode!=='screen')return;
     const hostRect=host.getBoundingClientRect(),markerRect=marker.getBoundingClientRect();
     const topGap=markerRect.top-hostRect.top,bottomGap=hostRect.bottom-markerRect.bottom;
     const margin=Math.min(36,host.clientHeight*.16);
