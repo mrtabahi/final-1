@@ -140,3 +140,15 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - GitHub Actions Security regression tests passed for commits `9ec0d79`, `566d2c1`, `65167fa`, `d60a5b7`, and other preceding commits. Cache-version-only follow-up commits `1d0c902` and `124da89` still need exact-head CI confirmation.
 - Browser verification (desktop/mobile, long passage, Full Screen exit, and screen/off-screen behavior) remains pending. Fix Accuracy result report still needs original-passage comparison panel and visual parity audit against the Main Typing Test reference.
 - PR #96 stays open/unmerged; no production deployment or production DB migration.
+
+
+## 2026-10-31 Fix Accuracy result-only mistake annotations
+- User clarified that omitted/extra/wrong-word colours and bracketed expected words belong ONLY on the result page, not in the live original passage.
+- Corrected Fix Accuracy live renderer: it now renders the original passage as plain text and only optionally marks the current word; it no longer applies live per-character correct/incorrect classes.
+- Result page now includes a dedicated Original Passage panel alongside Typed Passage — Mistakes Annotated.
+- The result comparison annotates extra typed words (pink), wrong typed words (red) and omitted expected words in brackets (blue); the expected original word for a substitution is shown in brackets with the wrong-word annotation.
+- Corrected tokenization regexes in the Fix Accuracy renderer/comparison to use non-whitespace word matching.
+- Changed files: js/fix-accuracy.js, fix-accuracy.html, css/fix-accuracy.css, and tests/typing-highlight-autoscroll-regression.test.cjs.
+- Commits: ff9360b8fbf84132bbc5b1fad1e01add392f2024, 0fa1e1afff325a546d97eb030bf30b3caf43356d, b2dc18b482b23a4faf21af88a88716413d140e21, 3c04c4b6ed4787dd879a4f3b8b250c00be960c73, 0ddc0a1bce58d4e8a196befb1ae9bb997c243921.
+- Source-level verification confirms the original passage panel and result annotation styles exist; GitHub Actions run #347 (41176503091) was in progress for the earlier commit. No completed CI result has yet been confirmed for the latest regex correction. Browser visual testing remains pending.
+- Do not claim this is fully verified until the latest-head CI and browser test pass.
