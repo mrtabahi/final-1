@@ -211,3 +211,13 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - Added executable Node regression tests covering overlong words, appended extra words, unchanged gross WPM/keystroke totals, and extra-word error classification. Test path: tests/keystroke-capping-regression.test.cjs. Expected count corrected to 10 for `a longword` (1 + 8 letters + 1 separator).
 - Test commit: 56227d1f62ae9fa4fec9bb7f4da1bbab27875a2d. Workflow-run lookup returned no run for this test commit yet; do not claim CI passed.
 - Quick source audit: Self Test renders neutral `.self-char` spans when highlight is off; Fix Accuracy adds `.no-highlight` to its passage host and suppresses current-character emphasis. Browser-level highlight-off verification remains pending.
+
+
+## 2026-10-31 Interface parity follow-up: live metrics and scroll behavior
+- Fixed Self Test live Keystrokes display to use canonical score.totalKeystrokes rather than raw input.length, matching the passage-capped final score and anti-inflation rule. Refreshed self-test.js cache version and added regression coverage.
+- Main Typing Test auto-scroll now uses actual current-character and passage-container bounding rectangles, scrolling only enough to keep the active character within a two-line margin. Removed estimated line-count/line-height stepping; respects Auto-scroll OFF, off-screen mode, and hidden passage conditions.
+- Fixed Fix Accuracy auto-scroll dependency on visual highlighting: the active expected word now has a separate word-position-current marker; visual .word-current emphasis is added only when Highlight is ON. Auto-scroll uses the non-visual marker and exits for hidden/off-screen passage modes.
+- Added regression tests for Self Test capped live keystrokes, measured Main Typing Test scroll, and Fix Accuracy scroll with Highlight OFF.
+- Commits: da58fb3c8e53feff6d882903d7a9cfb665324332, 60f635eec853f6678e11ff0459a38840786ec421, 435543096c6c6879d33bee6b03c7ab09a94b7b4f, ceab5250f8beffc5dfaf8a67b22a6960889fbcf1, 46127a957bad761598c77869ec159830da4755c1, f2ced07641d80a192cbdfa4041b15109234f7d63, 5ffcc45e1c1ae8814cb0ccc88fd2aef3f31716d9, 6b05cc59ee193b0791b0fd9aa9ed2f145aa052a7, 50c5cf415f615e7db11dbc5f29120321bb677330.
+- Latest workflow-run lookup for the regression-test commit returned no PR workflow run. Do not claim tests or CI passed until an actual run is observed. Browser verification remains pending for desktop/mobile, long passages, font changes, full-screen entry/exit, and off-screen mode.
+- Production remains untouched; PR #96 remains open/unmerged.
