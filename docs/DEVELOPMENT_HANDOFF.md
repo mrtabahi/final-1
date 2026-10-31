@@ -152,3 +152,13 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - Commits: ff9360b8fbf84132bbc5b1fad1e01add392f2024, 0fa1e1afff325a546d97eb030bf30b3caf43356d, b2dc18b482b23a4faf21af88a88716413d140e21, 3c04c4b6ed4787dd879a4f3b8b250c00be960c73, 0ddc0a1bce58d4e8a196befb1ae9bb997c243921.
 - Source-level verification confirms the original passage panel and result annotation styles exist; GitHub Actions run #347 (41176503091) was in progress for the earlier commit. No completed CI result has yet been confirmed for the latest regex correction. Browser visual testing remains pending.
 - Do not claim this is fully verified until the latest-head CI and browser test pass.
+
+
+## 2026-10-31 Activity interface preference resolver
+- Added js/typing/interface-preferences.js. It reads the per-activity typing_interface_preferences value from site_experience_settings and publishes the resolved preference on documentElement dataset; invalid/missing settings or database/network errors safely fall back to Master Interface.
+- Loaded the resolver on start_test.html, self-test.html, and fix-accuracy.html.
+- js/interface-switcher.js applies the resolved Screen to Screen or PDF to Screen choice on Main Typing Test and Self Test; Master clears legacy layout classes.
+- Fix Accuracy is explicitly constrained to Master Interface because the legacy Screen/PDF alternate layout is not implemented for its game workspace; Admin selector now only offers Master for Fix Accuracy.
+- Resolver changes only presentation and does not invoke scoring, timer, or submission code. It does not block activity startup if the preference column/migration is unavailable.
+- Added tests/typing-interface-preferences.test.cjs. CI status for these latest commits is pending at the time of this note.
+- Migration 20261031130000_typing_interface_preferences.sql remains unapplied; until applied, resolver safely uses Master Interface. No production DB changes or deployment promotion were performed.
