@@ -25,7 +25,7 @@ function makeEngine() {
     console
   };
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/typing-engine.js'), 'utf8') + '\\nthis.TypingEngine = TypingEngine;', sandbox);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/typing-engine.js'), 'utf8') + '\nthis.TypingEngine = TypingEngine;', sandbox);
   const engine = new sandbox.TypingEngine({
     passageText: 'hello world',
     durationSeconds: 10,
