@@ -31,3 +31,15 @@ test('audio uploads are type- and size-checked before storage upload', () => {
   assert.match(source, /file\.size>10\*1024\*1024/);
   assert.match(source, /from\('public-site-audio'\)\.upload\(/);
 });
+
+
+test('typing interface preferences expose independent activity overrides with Master as default', () => {
+  for (const id of ['typing-interface-exam','typing-interface-self-test','typing-interface-fix-accuracy']) {
+    assert.ok(source.includes('id="' + id + '"'), id + ' selector must be rendered');
+  }
+  assert.match(source, /typing_interface_preferences:\{default:'master',overrides:\{/u);
+  assert.match(source, /exam:\$\('typing-interface-exam'\)\?\.value\|\|'master'/u);
+  assert.match(source, /'self-test':\$\('typing-interface-self-test'\)\?\.value\|\|'master'/u);
+  assert.match(source, /'fix-accuracy':\$\('typing-interface-fix-accuracy'\)\?\.value\|\|'master'/u);
+  assert.match(source, /typing_interface_preferences,updated_at/u);
+});
