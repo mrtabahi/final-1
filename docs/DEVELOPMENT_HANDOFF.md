@@ -162,3 +162,14 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - Resolver changes only presentation and does not invoke scoring, timer, or submission code. It does not block activity startup if the preference column/migration is unavailable.
 - Added tests/typing-interface-preferences.test.cjs. CI status for these latest commits is pending at the time of this note.
 - Migration 20261031130000_typing_interface_preferences.sql remains unapplied; until applied, resolver safely uses Master Interface. No production DB changes or deployment promotion were performed.
+
+
+## 2026-10-31 Staging interface-preference migration and resolver validation
+- Staging project lhuqykxddwdkwksdzqth initially had no public.site_experience_settings table (verified via information_schema); therefore the preferences-only migration could not be applied by itself.
+- Applied the existing site_experience_settings base schema/RLS policy migration to STAGING, then applied typing_interface_preferences JSONB/check-constraint migration. Staging migration records: create_site_experience_settings (version 20261031063202) and add_typing_interface_preferences (version 20261031063208).
+- Verified staging row id=1 has {default: master, overrides: {}} and value_type object. No production project changes.
+- Security advisor run shows pre-existing findings across unrelated tables/functions (16 RLS-enabled/no-policy notices, SECURITY DEFINER function warnings, leaked-password protection disabled). No new finding specific to site_experience_settings was reported in the returned results; do not treat the overall project as clean.
+- Fixed an async race: interface-switcher.js now listens for typing-interface-preference-ready, rather than reading the preference dataset only once before the Supabase request resolves. Admin selection is applied when the resolver event arrives.
+- Updated tests/typing-interface-preferences.test.cjs to cover the async event-based integration.
+- Latest resolver changes: 6f46a5a15825ed28bbb72fdf4bb0840389709d31 and d9b8ef35d569f46e4a6d688da474bf51560d07b6. CI for the latest test update pending at documentation time.
+- Remaining validation: browser smoke test with Master/Screen/PDF on Main Typing Test and Self Test; Fix Accuracy remains Master-only. Verify admin save/read round trip with an authenticated admin account. Production migration remains unapplied.
