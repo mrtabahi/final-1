@@ -130,6 +130,6 @@ test('admin preference save writes activity overrides and resolver reads the sam
 
 test('Main Typing Test loads the shared AuthManager script only once', () => {
   const html = fs.readFileSync(path.join(__dirname, '../start_test.html'), 'utf8');
-  const authScripts = html.match(/js\\/auth\\.js/gu) || [];
-  assert.equal(authScripts.length, 1, 'duplicate top-level AuthManager declarations break the page script');
+  const authScriptCount = html.split('js/auth.js').length - 1;
+  assert.equal(authScriptCount, 1, 'duplicate top-level AuthManager declarations break the page script');
 });
