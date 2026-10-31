@@ -124,3 +124,28 @@ test('passage completion submits exactly once and reports passage-complete reaso
   assert.equal(h.completed[0].reason, 'passage-complete');
   assert.equal(h.engine.isFinished, true);
 });
+
+
+test('Fix Accuracy restart and again clear the active attempt without submitting', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.match(source, /function returnToSetup\(\)/u);
+  assert.match(source, /if\(interval\)\{clearInterval\(interval\);interval=null;\}/u);
+  assert.match(source, /startedAt=0;finished=false;errorCount=0;backspacePressCount=0;activePassage='';/u);
+  assert.match(source, /input\.value='';input\.disabled=false;input\.readOnly=false;/u);
+  assert.match(source, /\$\('fix-restart'\)\.addEventListener\('click',returnToSetup\)/u);
+  assert.match(source, /\$\('fix-again'\)\.addEventListener\('click',returnToSetup\)/u);
+  assert.doesNotMatch(source.slice(source.indexOf('function returnToSetup'), source.indexOf("$('fix-print')")), /finish\(/u);
+});
+
+test('Self Test cancel and again stop the timer before returning to setup', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/self-test.js'), 'utf8');
+  const cancel = source.slice(source.indexOf("$('self-cancel')"));
+  assert.match(cancel, /if\(timerId\)window\.clearInterval\(timerId\);timerId=null;/u);
+  assert.match(cancel, /startedAt=null;attemptDate=null;deadline=null;finished=false;/u);
+  assert.match(cancel, /typed\.value='';typed\.disabled=false;/u);
+  const againStart = source.indexOf("$('self-again')");
+  const againEnd = source.indexOf("$('self-cancel')", againStart);
+  const again = source.slice(againStart, againEnd);
+  assert.match(again, /if\(timerId\)window\.clearInterval\(timerId\);/u);
+  assert.match(again, /workspace\.hidden=true;setup\.hidden=false;/u);
+});
