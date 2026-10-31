@@ -160,8 +160,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('fix-toggle-passage').addEventListener('click',()=>{passageHidden=!passageHidden;syncToggleButton($('fix-toggle-passage'),passageHidden,'Show passage','Hide passage','👁','🙈','Hide passage: hide the passage from view or show it again.');renderPassage();});
   const fixFontControls=TypingWorkspaceControls.bindFontControls({downButton:$('fix-font-down'),upButton:$('fix-font-up'),targets:[$('fix-passage-display'),input],initialSize:19.2,min:14.4,max:32,step:1.6,onChange:renderPassage});
     $('fix-submit').addEventListener('click',()=>finish('Manually submitted'));
-  $('fix-restart').addEventListener('click',()=>{if(interval)clearInterval(interval);game.hidden=true;result.hidden=true;setup.hidden=false;});
-  $('fix-again').addEventListener('click',()=>{result.hidden=true;setup.hidden=false;});
+  function returnToSetup(){
+    if(interval){clearInterval(interval);interval=null;}
+    startedAt=0;finished=false;errorCount=0;backspacePressCount=0;activePassage='';
+    input.value='';input.disabled=false;input.readOnly=false;
+    $('fix-clock').textContent='00:00:00';$('fix-live-gross').textContent='0.00';$('fix-live-net').textContent='0.00';$('fix-live-accuracy').textContent='0.00%';
+    $('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+(currentConfig?.maxErrors||5);
+    game.hidden=true;result.hidden=true;setup.hidden=false;
+  }
+  $('fix-restart').addEventListener('click',returnToSetup);
+  $('fix-again').addEventListener('click',returnToSetup);
   $('fix-print').addEventListener('click',()=>window.print());
   loadCatalog();
 });
