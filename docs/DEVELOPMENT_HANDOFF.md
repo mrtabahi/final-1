@@ -173,3 +173,11 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - Updated tests/typing-interface-preferences.test.cjs to cover the async event-based integration.
 - Latest resolver changes: 6f46a5a15825ed28bbb72fdf4bb0840389709d31 and d9b8ef35d569f46e4a6d688da474bf51560d07b6. CI for the latest test update pending at documentation time.
 - Remaining validation: browser smoke test with Master/Screen/PDF on Main Typing Test and Self Test; Fix Accuracy remains Master-only. Verify admin save/read round trip with an authenticated admin account. Production migration remains unapplied.
+
+
+## 2026-10-31 Fix Accuracy result analysis parity
+- Compared Fix Accuracy result against the supplied BSF result screenshot and canonical TypingMaster score shape.
+- Added a Detailed Error Analysis panel populated from score.errorBreakdown: omissions, substitutions, spelling, incomplete words, extra/repeated words, spacing, capitalization, punctuation, and words not reached.
+- Renamed result metric labels to Total Mistakes and Words (Strokes / 5) to align with screenshot terminology. Existing allowance, excess errors, penalty WPM, correct words, gross/net, accuracy, keystrokes, attempt time, qualification and annotated passage comparison remain present.
+- Added regression coverage and refreshed Fix Accuracy JS/CSS cache versions. Changes are present in commits da3d8b10, 41072f82, 84bd7338, 677e23f1, 36517988.
+- CI and a fresh Vercel preview for these latest changes are pending; no browser visual run has been completed.
