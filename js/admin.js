@@ -380,7 +380,7 @@
             if(experienceResult.error) throw new Error('Run migration 20261029120000_site_experience_settings.sql first: '+experienceResult.error.message);
             const experience=experienceResult.data||{landing_page:'home',audio_url:null,audio_loop:true,audio_enabled:false,audio_for_logged_in:false,typing_interface_preferences:{default:'master',overrides:{}}};
             const interfacePrefs=experience.typing_interface_preferences||{default:'master',overrides:{}};
-            const interfaceOptions=(key)=>['master','screen','pdf'].map(value=>'<option value="'+value+'" '+((interfacePrefs.overrides?.[key]||'master')===value?'selected':'')+'>'+(value==='master'?'Master Interface':value==='screen'?'Screen to Screen':'PDF to Screen')+'</option>').join('');
+            const interfaceOptions=(key)=>(key==='fix-accuracy'?['master']:['master','screen','pdf']).map(value=>'<option value="'+value+'" '+((interfacePrefs.overrides?.[key]||'master')===value?'selected':'')+'>'+(value==='master'?'Master Interface':value==='screen'?'Screen to Screen':'PDF to Screen')+'</option>').join('');
             if(error) throw error;
             if (renderSequence !== viewRenderSequence || currentView !== 'settings') return;
             if(!data) throw new Error('The singleton ad_settings row (id=1) does not exist.');
