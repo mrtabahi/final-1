@@ -123,3 +123,12 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - Admin Website Settings now renders independent interface selectors for Main Typing Test, Self Test and Fix Accuracy and saves them into the existing singleton JSONB field. Commit: `635f30a30c71a09c39c4360a8f6179ccef53c1dd`. Added admin test for the selectors and save payload in commit `07ba6267418b34354ffee988c8d1f9860264a020`.
 - Important remaining work: runtime resolver/application is NOT yet implemented. Do not claim Master Interface is already active site-wide. Before rollout, implement a shared preference loader used by all three workspaces (including Fix Accuracy), default missing/invalid values to Master, apply only the selected activity override, and leave all activity lifecycle/scoring/submission code untouched. Ensure alternate screen/pdf layouts are compatible with Fix Accuracy before enabling those options there. Apply migration to staging only after tests and explicit review; production remains untouched.
 - Current branch head after these changes: `07ba6267418b34354ffee988c8d1f9860264a020`.
+
+
+## 2026-10-31 follow-up: highlight opt-out and scroll reliability
+- PR #96 remains open/unmerged; production branch `main` is unchanged.
+- Added hard CSS opt-out rules so generated character-level classes cannot retain colors/backgrounds/underlines when Highlight is OFF in Main Typing Test, Self Test, and Fix Accuracy.
+- Added Fix Accuracy active-character viewport tracking after each input render; scrolls only when the active character approaches the visible passage boundary.
+- Added `tests/typing-highlight-autoscroll-regression.test.cjs` to guard the three-page highlight opt-out and Fix Accuracy scroll hook.
+- These are code-level changes and regression assertions; a real-browser visual/long-passage test has not yet been performed. Do not describe auto-scroll as 100% verified until desktop/mobile browser checks pass.
+- Still pending from the current request: shared Full Screen and Typing Mode controls on Self Test/Fix Accuracy; parity review and enhancements for Fix Accuracy result analysis/original-vs-typed passage comparison; browser validation of all three auto-scroll paths; shared runtime Admin interface preference resolver. Do not change scoring/timer/anti-cheat semantics.
