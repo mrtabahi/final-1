@@ -85,7 +85,8 @@ test('shared display and highlight helpers apply and reverse presentation state'
   assert.equal(classes.has('highlight-on'), false);
 });
 
-\ntest('Fix Accuracy toolbar exposes icons and pressed colour states for toggles', () => {
+
+test('Fix Accuracy toolbar exposes icons and pressed colour states for toggles', () => {
   const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
   const script = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   for (const id of ['fix-toggle-highlight', 'fix-toggle-passage']) {
