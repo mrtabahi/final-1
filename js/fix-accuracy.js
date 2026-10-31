@@ -60,30 +60,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   function formatTime(s){s=Math.max(0,Math.floor(s));return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
   function renderPassage(){
-    const host=$('fix-passage-display');host.replaceChildren();TypingWorkspaceControls.setDisplay(host,!passageHidden&&typingMode==='screen','block');TypingWorkspaceControls.setClassState(host,'no-highlight',!highlightEnabled);
-    const expected=String(activePassage),typed=String(input.value||''),re=/\S+/gu,expWords=[...expected.matchAll(re)],typedWords=typed.match(/\S+/gu)||[],committedCount=(/\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
-    const typedIndexByExpected=new Map(),committedMissingExpected=new Set();let expectedCursor=0,typedCursor=0;
-    for(const item of TypingMaster.alignWords(expWords.map(match=>match[0]),typedWords)){if(item.type==='match'||item.type==='substitute'){typedIndexByExpected.set(expectedCursor,typedCursor);expectedCursor++;typedCursor++;}else if(item.type==='delete'){if(typedCursor<committedCount)committedMissingExpected.add(expectedCursor);expectedCursor++;}else if(item.type==='insert'){typedCursor++;}}
+    const host=$('fix-passage-display');host.replaceChildren();
+    TypingWorkspaceControls.setDisplay(host,!passageHidden&&typingMode==='screen','block');
+    // The original passage remains untouched during the attempt. Mistake colours and
+    // bracketed expected words belong exclusively to the result comparison below.
+    TypingWorkspaceControls.setClassState(host,'no-highlight',!highlightEnabled);
+    const expected=String(activePassage),typed=String(input.value||'');
+    const expectedWords=[...expected.matchAll(/\\S+/gu)];
+    const typedWords=typed.match(/\\S+/gu)||[];
+    const committedCount=(/\\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
+    const alignment=TypingMaster.alignWords(expectedWords.map(match=>match[0]),typedWords);
+    let expectedCursor=0,typedCursor=0,currentExpectedIndex=-1;
+    for(const item of alignment){
+      if(item.type==='match'||item.type==='substitute'){
+        if(typedCursor===committedCount)currentExpectedIndex=expectedCursor;
+        expectedCursor++;typedCursor++;
+      }else if(item.type==='delete'){
+        if(typedCursor===committedCount)currentExpectedIndex=expectedCursor;
+        expectedCursor++;
+      }else if(item.type==='insert'){
+        typedCursor++;
+      }
+    }
     let cursor=0;
-    expWords.forEach((match,wordIndex)=>{
+    expectedWords.forEach((match,index)=>{
       if(match.index>cursor)host.appendChild(document.createTextNode(expected.slice(cursor,match.index)));
-      const typedIndex=typedIndexByExpected.get(wordIndex),word=match[0],typedWord=typedIndex===undefined?'':typedWords[typedIndex]||'',charStates=TypingMaster.alignCharacters(word,typedWord),wordNode=document.createElement('span');wordNode.className='fix-word';
-      const isCommitted=(typedIndex!==undefined&&typedIndex<committedCount)||committedMissingExpected.has(wordIndex),isCurrent=typedIndex!==undefined&&typedIndex===committedCount;
-      Array.from(word).forEach((ch,charIndex)=>{const span=document.createElement('span');span.className='passage-char';span.textContent=ch;
-        if(isCommitted)span.classList.add(charStates[charIndex]==='correct'?'char-correct':'char-incorrect');
-        else if(isCurrent&&charIndex<typedWord.length)span.classList.add(charStates[charIndex]==='correct'?'char-correct':'char-incorrect');
-        if(isCurrent&&charIndex===typedWord.length)span.classList.add('char-current');
-        wordNode.appendChild(span);
-      });
-      if(isCommitted&&typedWord.length>word.length){const extra=document.createElement('span');extra.className='char-incorrect';extra.textContent=' ['+typedWord.slice(word.length)+']';wordNode.appendChild(extra);}
-      host.appendChild(wordNode);cursor=match.index+word.length;
-      const next=expected.slice(cursor,expWords[wordIndex+1]?.index??expected.length);if(next)host.appendChild(document.createTextNode(next));cursor+=next.length;
+      const wordNode=document.createElement('span');wordNode.className='fix-word';
+      if(highlightEnabled&&index===currentExpectedIndex){
+        wordNode.classList.add('word-current');
+        wordNode.setAttribute('aria-current','true');
+      }
+      wordNode.textContent=match[0];host.appendChild(wordNode);
+      cursor=match.index+match[0].length;
+      const next=expected.slice(cursor,expectedWords[index+1]?.index??expected.length);
+      if(next)host.appendChild(document.createTextNode(next));cursor+=next.length;
     });
-    if(!expWords.length)host.textContent=expected;
+    if(!expectedWords.length)host.textContent=expected;
   }
   function keepCurrentPassageVisible(){
     const host=$('fix-passage-display');
-    const marker=host?.querySelector('.char-current');
+    const marker=host?.querySelector('.word-current');
     if(!host||!marker||passageHidden)return;
     const hostRect=host.getBoundingClientRect(),markerRect=marker.getBoundingClientRect();
     const topGap=markerRect.top-hostRect.top,bottomGap=hostRect.bottom-markerRect.bottom;
@@ -163,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-result-status').textContent=passed?'QUALIFIED':'TRY AGAIN';$('fix-result-status').classList.toggle('try-again',!passed);
     $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';$('fix-result-net').textContent=net.toFixed(2)+' WPM';$('fix-result-errors').textContent=String(errorCount);$('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';$('fix-result-allowed').textContent=String(score.allowedErrors??score.freeErrors??0);$('fix-result-excess').textContent=String(score.excessErrors??0);$('fix-result-penalty').textContent=Number(score.penaltyWpm??0).toFixed(2);$('fix-result-correct-word').textContent=Number(score.totalCorrectWord??0).toFixed(2);$('fix-result-backspace').textContent=String(backspacePressCount);$('fix-result-time').textContent=formatTime(elapsed);$('fix-result-typed-words').textContent=(String(input.value||'').length/5).toFixed(2);$('fix-result-keystrokes').textContent=String(String(input.value||'').length);$('fix-result-reason').textContent=reason;
     $('fix-result-min-gross').textContent=currentConfig.minGross.toFixed(2);$('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);$('fix-result-max-errors').textContent=currentConfig.maxErrors;
-    $('fix-result-original')?.replaceChildren();renderResultComparison(activePassage,input.value);
+    const originalHost=$('fix-result-original');if(originalHost)originalHost.textContent=activePassage;renderResultComparison(activePassage,input.value);
     game.hidden=true;result.hidden=false;if(reason==='Maximum errors reached')announce('Game over');
   }
   function syncTypingModeButton(){const b=$('fix-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
