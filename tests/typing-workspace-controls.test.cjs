@@ -47,3 +47,40 @@ test('shared font controls bind both directions and clamp the configured range',
   font.set(1);
   assert.equal(font.get(), 14);
 });
+
+
+test('shared visibility helper toggles the hidden state without changing content', () => {
+  const target = { hidden: false, textContent: 'passage' };
+  const sandbox = {};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../js/typing/workspace-controls.js'), 'utf8'), sandbox);
+  const controls = sandbox.TypingWorkspaceControls;
+  assert.equal(controls.setHidden(target, true), true);
+  assert.equal(target.hidden, true);
+  assert.equal(target.textContent, 'passage');
+  assert.equal(controls.setHidden(target, false), false);
+  assert.equal(target.hidden, false);
+});
+
+test('shared display and highlight helpers apply and reverse presentation state', () => {
+  const classes = new Set();
+  const target = {
+    style: { display: 'block' },
+    classList: {
+      toggle(name, enabled) {
+        if (enabled) classes.add(name);
+        else classes.delete(name);
+      }
+    }
+  };
+  const sandbox = {};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../js/typing/workspace-controls.js'), 'utf8'), sandbox);
+  const controls = sandbox.TypingWorkspaceControls;
+  controls.setDisplay(target, false);
+  assert.equal(target.style.display, 'none');
+  controls.setDisplay(target, true, 'block');
+  assert.equal(target.style.display, 'block');
+  controls.setClassState(target, 'highlight-on', true);
+  assert.equal(classes.has('highlight-on'), true);
+  controls.setClassState(target, 'highlight-on', false);
+  assert.equal(classes.has('highlight-on'), false);
+});
