@@ -2,9 +2,10 @@
 (async function(){
  'use strict';
  const start=async()=>{
-  if(!window.supabaseClient)return;
+  const client = typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient;
+  if(!client)return;
   let settings;
-  try{const result=await window.supabaseClient.from('site_experience_settings').select('audio_url,audio_enabled,audio_loop,audio_for_logged_in').eq('id',1).maybeSingle();if(result.error||!result.data)return;settings=result.data;}catch{return;}
+  try{const result=await client.from('site_experience_settings').select('audio_url,audio_enabled,audio_loop,audio_for_logged_in').eq('id',1).maybeSingle();if(result.error||!result.data)return;settings=result.data;}catch{return;}
   if(!settings.audio_enabled||!settings.audio_url)return;
   const audio=new Audio(settings.audio_url);audio.loop=Boolean(settings.audio_loop);audio.preload='auto';
   const bar=document.createElement('div');bar.className='dh-audio-status';bar.innerHTML='<span class="dh-audio-brand">DH</span><span class="dh-audio-copy"><strong>Decoding HCM</strong><small>Background audio</small></span><button type="button" class="dh-audio-toggle" aria-label="Pause background audio">Ⅱ Pause</button>';
@@ -12,13 +13,13 @@
   document.head.appendChild(style);document.body.appendChild(bar);
   const button=bar.querySelector('button');
   let session=null;
-  try{session=(await window.supabaseClient.auth.getSession()).data?.session||null;}catch{}
+  try{session=(await client.auth.getSession()).data?.session||null;}catch{}
   const canPlay=()=>!session||Boolean(settings.audio_for_logged_in);
   const paint=playing=>{button.textContent=playing?'Ⅱ Pause':'▶ Play';button.setAttribute('aria-label',playing?'Pause background audio':'Play background audio');};
   button.addEventListener('click',async()=>{if(audio.paused){try{await audio.play();paint(true);}catch{paint(false);}}else{audio.pause();paint(false);}});
   audio.addEventListener('play',()=>paint(true));audio.addEventListener('pause',()=>paint(false));
   if(canPlay()){try{await audio.play();paint(true);}catch{paint(false);}}
-  window.supabaseClient.auth.onAuthStateChange((_event,nextSession)=>{session=nextSession;if(!canPlay()){audio.pause();paint(false);}else if(audio.paused){audio.play().then(()=>paint(true)).catch(()=>paint(false));}});
+  client.auth.onAuthStateChange((_event,nextSession)=>{session=nextSession;if(!canPlay()){audio.pause();paint(false);}else if(audio.paused){audio.play().then(()=>paint(true)).catch(()=>paint(false));}});
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
