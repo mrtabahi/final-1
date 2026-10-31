@@ -79,3 +79,48 @@ test('destroy stops timer and detaches visibility listener without submitting a 
   assert.equal(h.listeners.has('visibilitychange'), false);
   assert.equal(h.completed.length, 0);
 });
+
+
+test('timer starts on the first printable key, including Space, but not modifier keys', () => {
+  const h = makeEngine();
+  const event = key => ({ key, ctrlKey: false, metaKey: false, altKey: false, preventDefault() {}, stopPropagation() {} });
+  h.engine.handleKeyDown(event('Shift'));
+  h.engine.handleKeyDown(event('Control'));
+  assert.equal(h.engine.isActive, false);
+  h.engine.handleKeyDown(event(' '));
+  assert.equal(h.engine.isActive, true);
+  const startedAt = h.engine.startTimestamp;
+  h.engine.handleKeyDown(event('a'));
+  assert.equal(h.engine.startTimestamp, startedAt);
+});
+
+test('disabled Backspace is blocked without starting the timer', () => {
+  const h = makeEngine();
+  h.engine.allowBackspace = false;
+  let prevented = false, stopped = false;
+  h.engine.handleKeyDown({
+    key: 'Backspace', preventDefault() { prevented = true; },
+    stopPropagation() { stopped = true; }
+  });
+  assert.equal(prevented, true);
+  assert.equal(stopped, true);
+  assert.equal(h.engine.isActive, false);
+});
+
+test('enabled Backspace does not start the timer by itself', () => {
+  const h = makeEngine();
+  h.engine.allowBackspace = true;
+  h.engine.handleKeyDown({
+    key: 'Backspace', preventDefault() {}, stopPropagation() {}
+  });
+  assert.equal(h.engine.isActive, false);
+});
+
+test('passage completion submits exactly once and reports passage-complete reason', () => {
+  const h = makeEngine();
+  h.engine.handleInput('hello world');
+  h.engine.handleInput('hello world!');
+  assert.equal(h.completed.length, 1);
+  assert.equal(h.completed[0].reason, 'passage-complete');
+  assert.equal(h.engine.isFinished, true);
+});
