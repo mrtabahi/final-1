@@ -2,6 +2,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const setup=$('self-setup'), workspace=$('self-workspace'), source=$('source-text'), typed=$('self-typed'), passage=$('self-passage'), passageCard=$('self-passage-card'), typeCard=$('self-type-card');
+let typingMode='screen', modeLocked=false;
 let original='', duration=300, startedAt=null, attemptDate=null, deadline=null, timerId=null, finished=false, highlight=false, hidden=false, inputHidden=false, allowBackspace=true, totalElapsed=0, backspacePressCount=0;
 let SAVED_KEY='decodingHcmSelfTestPassagesV1:guest';
 const LEGACY_SAVED_KEY='decodingHcmSelfTestPassagesV1', MAX_SAVED=5;
@@ -73,12 +74,12 @@ function renderPassage(){
 function startClock(){if(startedAt!==null||finished)return;startedAt=Date.now();attemptDate=new Date(startedAt);deadline=startedAt+duration*1000;tick();timerId=window.setInterval(tick,200)}
 function tick(){const remaining=Math.max(0,(deadline-Date.now())/1000);$('self-timer').textContent=formatTime(remaining);updateLive();if(remaining<=0)finishTest()}
 function setHighlight(on){highlight=on;$('self-highlight').textContent='Highlight: '+(on?'On':'Off');$('self-highlight').setAttribute('aria-pressed',String(on));TypingWorkspaceControls.setClassState(passageCard,'self-highlight-enabled',on);renderPassage()}
-function setHidden(on){hidden=on;TypingWorkspaceControls.setHidden(passageCard,on);$('self-hide').textContent=on?'👁 Show passage':'🙈 Hide passage';$('self-hide').setAttribute('aria-pressed',String(on));TypingWorkspaceControls.setHidden($('self-pdf-row'),!on)}
+function setHidden(on){hidden=on;TypingWorkspaceControls.setHidden(passageCard,on||typingMode==='offscreen');$('self-hide').textContent=on?'👁 Show passage':'🙈 Hide passage';$('self-hide').setAttribute('aria-pressed',String(on));TypingWorkspaceControls.setHidden($('self-pdf-row'),!on)}
 function setInputHidden(on){inputHidden=on;TypingWorkspaceControls.setHidden(typeCard,on);$('self-hide-input').textContent=on?'👁 Show typing box':'🙈 Hide typing box';$('self-hide-input').setAttribute('aria-pressed',String(on));}
 function startTest(){
  original=source.value.replace(/\r\n?/g,'\n');
  if(!original.trim()){$('self-message').textContent='Paste a passage before starting.';source.focus();return}
- duration=Number($('self-duration').value)*60;allowBackspace=$('self-backspace').checked;scoringFormula='bsf';backspacePressCount=0;selfScores={};
+ duration=Number($('self-duration').value)*60;typingMode='screen';modeLocked=false;syncTypingModeButton();allowBackspace=$('self-backspace').checked;scoringFormula='bsf';backspacePressCount=0;selfScores={};
  typed.value='';startedAt=null;attemptDate=null;deadline=null;finished=false;totalElapsed=0;
  $('self-message').textContent='';setup.hidden=true;workspace.hidden=false;$('self-result').hidden=true;
  passageCard.hidden=false;setHidden(false);setInputHidden(false);setHighlight(false);renderPassage();$('self-timer').textContent=formatTime(duration);
@@ -116,9 +117,13 @@ function downloadPDF(){
  for(const line of lines){if(y>pageHeight-margin){doc.addPage();y=margin}doc.text(line,margin,y);y+=lineHeight}
  doc.save('Decoding-HCM-Self-Test-Passage.pdf');
 }
+function syncTypingModeButton(){const b=$('self-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
+$('self-mode-switch')?.addEventListener('click',()=>{if(modeLocked)return;typingMode=typingMode==='screen'?'offscreen':'screen';setHidden(hidden);syncTypingModeButton();});
+$('self-fullscreen')?.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await workspace.requestFullscreen();}catch(_){$('self-message').textContent='Full screen is unavailable in this browser.';}});
+document.addEventListener('fullscreenchange',()=>{const b=$('self-fullscreen');if(b)b.textContent=document.fullscreenElement?'Exit full screen':'Full screen';});
 $('self-start').addEventListener('click',startTest);
 typed.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!allowBackspace){e.preventDefault();return;}if(e.key==='Backspace'&&allowBackspace&&startedAt!==null&&!e.repeat)backspacePressCount++;});
-typed.addEventListener('input',()=>{if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping();if(!finished&&original.length>0&&typed.value.length>=original.length)finishTest()});
+typed.addEventListener('input',()=>{if(typed.value.length){modeLocked=true;syncTypingModeButton();}if(typed.value.length&&!startedAt)startClock();renderPassage();updateLive();autoScrollTyping();if(!finished&&original.length>0&&typed.value.length>=original.length)finishTest()});
 function autoScrollTyping(){
  const style=getComputedStyle(typed),lineHeight=parseFloat(style.lineHeight)||28;
  const text=typed.value.slice(0,typed.selectionStart||typed.value.length);
