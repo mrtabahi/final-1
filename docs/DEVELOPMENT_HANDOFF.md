@@ -1,6 +1,6 @@
 # Development handoff and pending-work register
 
-Last updated: 2026-10-31
+Last updated: 2026-10-31 (latest update: typing lifecycle regression coverage)
 Repository: [mrtabahi/final-1](https://github.com/mrtabahi/final-1)
 Working branch: `fix/custom-domain-seo`
 Pull request: [#96](https://github.com/mrtabahi/final-1/pull/96) — open; do not merge without explicit user approval.
@@ -31,7 +31,8 @@ Improve the typing experience safely by progressively sharing workspace controls
 - Vercel preview for commit `e1c1ac1103ab600d34f6a4817839ebf653a999d9` was READY:
   https://final-1-abti6ynmn-decoding-hcn.vercel.app
 - Latest tracked Vercel status reported build-rate-limit failure (upgrade/rate-limit target); latest branch commit preview not confirmed. Recheck deployment list and latest commit after the limit clears.
-- Latest tracked head after this work: `86b461a9552ad401e99d5027a6ec13b77ef583a2`. GitHub Actions Security regression tests run #316 (`41127581157`) was IN_PROGRESS at last check. Vercel status for this head is FAILURE due to build-rate-limit. Recheck both after the limit clears.
+- Previous head `542bf0952ec70b28d7ddb105e28f7b9a2a08c7c1`: GitHub Actions Security regression tests run #317 (`41127628781`) completed SUCCESS. Its Vercel status still reflected the older build-rate-limit failure and had no matching deployment record.
+- Latest head `f167322f6ecbf8c015714fed767d2b51ab706404` adds keyboard/timer lifecycle regression tests. Vercel deployment `dpl_BcHWS5n1y5s3CjAGKCi7wvWxHqKQ` is BUILDING (preview URL: https://final-1-5inqugfa2-decoding-hcn.vercel.app); build-rate-limit no longer blocks creation. GitHub Actions run for this exact head was not yet listed at the time of this update. Recheck exact-head CI and deployment until terminal status.
 - Production deployment on `main` was READY at last check; no production release from this branch.
 
 ## Other open PRs / security follow-up
@@ -40,9 +41,14 @@ Improve the typing experience safely by progressively sharing workspace controls
 - Keep both PRs tracked; do not merge without explicit approval.
 - Security advisor follow-ups previously noted: public leaderboard security-definer view; leaked-password protection disabled; unindexed foreign keys; multiple permissive RLS policies; RLS init/performance warnings. Re-audit before making changes. Leaderboard is lower priority; do not risk breaking it.
 
+## Latest typing lifecycle test update
+- Added regression cases in `tests/typing-engine-lifecycle-regression.test.cjs` for first printable key (including Space), modifier-only keys, Backspace disabled/enabled behavior, and passage-completion single submission.
+- Commit: `f167322f6ecbf8c015714fed767d2b51ab706404`.
+- These are automated regression additions; the workflow has not yet reported results for this commit. Do not treat them as passed until CI completes.
+
 ## Remaining typing-workspace tasks
 1. Extract shared passage/input layout and common keyboard/input helpers only after a behavior-parity test plan exists.
-2. Add controller-level tests for timer lifecycle, start-on-first-keystroke, cancel/restart, disabled backspace, highlight and passage visibility.
+2. Timer lifecycle regression coverage now includes single-start behavior, first printable key/Space start, disabled/enabled Backspace semantics, duration completion, destroy cleanup, and passage-completion single-submit. Still add cancel/restart plus highlight and passage visibility coverage.
 3. Audit the main exam typing page against Self Test and Fix Accuracy; keep exam-specific server config and result submission untouched.
 4. Verify font controller behavior in browser at desktop/mobile sizes, including reset/restart.
 5. Review test scripts and run the complete relevant test suite once CI is available.
@@ -56,8 +62,8 @@ Improve the typing experience safely by progressively sharing workspace controls
 5. Add restore-defaults/versioning only after existing persistence flow is fully tested.
 
 ## Release checklist (must remain open until verified)
-- [ ] Vercel build-rate-limit resolved; preview for exact latest PR head reaches READY.
-- [ ] GitHub Actions checks pass for exact latest PR head.
+- [ ] Vercel preview for exact latest PR head `f167322f6ecbf8c015714fed767d2b51ab706404` reaches READY (latest check: BUILDING; rate-limit appears resolved).
+- [ ] GitHub Actions checks pass for exact latest PR head (not yet reported for `f167322f6ecbf8c015714fed767d2b51ab706404`; previous head run #317 passed).
 - [ ] Browser smoke tests on preview: canonical URLs, sitemap, robots.txt, manual signup/login, password reset, payment return flow.
 - [ ] Admin Website Settings: load, edit, save, reload, audio upload/type/size validation.
 - [ ] Typing smoke tests: exam, Self Test, Fix Accuracy; score parity and edge cases.
