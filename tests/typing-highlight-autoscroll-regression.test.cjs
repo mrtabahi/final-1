@@ -54,3 +54,12 @@ test('Fix Accuracy scorecard uses canonical capped keystrokes and equivalent wor
   assert.match(source, /score\.totalKeystrokes\?\?0/u);
   assert.doesNotMatch(source, /fix-result-typed-words.*input\.value\|\|''\)\.length/u);
 });
+
+
+test('Self Test auto-scroll follows actual rendered character geometry', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/self-test.js'), 'utf8');
+  assert.match(source, /data-char-index/);
+  assert.match(source, /getBoundingClientRect\(\)/u);
+  assert.match(source, /passage\.scrollTop\+=margin-bottomGap/u);
+  assert.doesNotMatch(source, /approxChars|passageCharsPerLine/u);
+});
