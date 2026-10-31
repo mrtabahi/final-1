@@ -41,17 +41,15 @@ function makeEngine() {
 
 test('typing timer starts once and reports elapsed time from monotonic clock', () => {
   const h = makeEngine();
-  let ticks = 0;
-  h.engine.onTick = (remaining, elapsed) => {
-    ticks++;
-    assert.equal(remaining, 8);
-    assert.equal(elapsed, 2);
-  };
+  const ticks = [];
+  h.engine.onTick = (remaining, elapsed) => ticks.push({ remaining, elapsed });
   h.engine.start();
   h.engine.start();
   h.advance(2000);
   h.fireInterval();
-  assert.equal(ticks, 1);
+  assert.equal(ticks.length, 2);
+  assert.deepEqual(ticks[0], { remaining: 10, elapsed: 0 });
+  assert.deepEqual(ticks[1], { remaining: 8, elapsed: 2 });
   assert.equal(h.engine.isActive, true);
   assert.equal(h.completed.length, 0);
 });
