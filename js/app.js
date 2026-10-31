@@ -108,7 +108,15 @@ document.addEventListener('DOMContentLoaded', async()=>{
         if(autoScrollEnabled&&selectedTypingMode==='screen'&&!passageHidden){
             const typedCount=splitGraphemes(typed).length;
             if(typedCount===0)display.scrollTop=0;
-            else{const current=display.querySelector('.char-current')||display.lastElementChild;if(current){const box=display.getBoundingClientRect(),charBox=current.getBoundingClientRect(),lineHeight=parseFloat(getComputedStyle(display).lineHeight)||30;const currentLine=Math.floor((charBox.top-box.top+display.scrollTop)/lineHeight),firstVisibleLine=Math.floor(display.scrollTop/lineHeight),visibleLines=Math.max(1,Math.floor(display.clientHeight/lineHeight));if(currentLine>=firstVisibleLine+visibleLines-2&&currentLine>firstVisibleLine)display.scrollTop=Math.min(display.scrollHeight-display.clientHeight,display.scrollTop+lineHeight);}}
+            else{
+                const current=display.querySelector('.char-current')||display.lastElementChild;
+                if(current){
+                    const box=display.getBoundingClientRect(),charBox=current.getBoundingClientRect();
+                    const margin=Math.max(12,(parseFloat(getComputedStyle(display).lineHeight)||30)*2);
+                    if(charBox.bottom>box.bottom-margin)display.scrollTop=Math.min(display.scrollHeight-display.clientHeight,display.scrollTop+charBox.bottom-(box.bottom-margin));
+                    else if(charBox.top<box.top+margin)display.scrollTop=Math.max(0,display.scrollTop-(box.top+margin-charBox.top));
+                }
+            }
         }
     }
     lang.onchange=render;passageSelect.onchange=update;await loadTests();const requestedTestId=new URLSearchParams(location.search).get('test');if(requestedTestId){
