@@ -126,3 +126,10 @@ test('admin preference save writes activity overrides and resolver reads the sam
   assert.match(resolver, /prefs\?\.overrides\?\.\[activity\]/u);
   assert.match(resolver, /publish\(allowed\.has\(override\)/u);
 });
+
+
+test('Main Typing Test loads the shared AuthManager script only once', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../start_test.html'), 'utf8');
+  const authScripts = html.match(/<script\\s+src=[\"']js\\/auth\\.js(?:\\?[^\"']*)?[\"']><\\/script>/gu) || [];
+  assert.equal(authScripts.length, 1, 'duplicate top-level AuthManager declarations break the page script');
+});
