@@ -203,3 +203,11 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - Relevant commits: b5debc7650c4a691ce4750847d1fb0b909b76cc7, 793060916763dc2bc1e2521fddf45b8ab5ccf6eb, 35334767185bf8e849947ef5430e3323d8ca2256, with cache/test/doc follow-ups.
 - Latest Vercel deployment observed READY for commit 793060916763dc2bc1e2521fddf45b8ab5ccf6eb: https://final-1-bziz73bc8-decoding-hcn.vercel.app. It predates the latest test-only update.
 - CI run #373 was in progress for the earlier auto-scroll commit; the latest test-only commit has no workflow run visible yet. Browser visual interaction remains unverified.
+
+
+## 2026-10-31 Anti-inflation keystroke cap confirmation
+- User clarified that characters beyond the original word length and any extra words must still count as errors, but must not increase Total Typed Keystrokes or Gross WPM.
+- Audited canonical `TypingMaster.countCappedKeystrokes` and `calculateScore`: each typed token contributes at most the corresponding original token's character length; tokens beyond the passage contribute zero letters; typed separators are capped by the original passage's separator count. `grossWpm`, `equivalentWords`, free-error allowance and accuracy use this capped count. Word alignment still counts extra tokens as insert/extraWords errors. This requested anti-cheat rule was already implemented in the canonical engine.
+- Added executable Node regression tests covering overlong words, appended extra words, unchanged gross WPM/keystroke totals, and extra-word error classification. Test path: tests/keystroke-capping-regression.test.cjs. Expected count corrected to 10 for `a longword` (1 + 8 letters + 1 separator).
+- Test commit: 56227d1f62ae9fa4fec9bb7f4da1bbab27875a2d. Workflow-run lookup returned no run for this test commit yet; do not claim CI passed.
+- Quick source audit: Self Test renders neutral `.self-char` spans when highlight is off; Fix Accuracy adds `.no-highlight` to its passage host and suppresses current-character emphasis. Browser-level highlight-off verification remains pending.
