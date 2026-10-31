@@ -1,6 +1,6 @@
 # Development handoff and pending-work register
 
-Last updated: 2026-10-31 (latest update: shared passage visibility/highlight controls)
+Last updated: 2026-10-31 (latest update: exact-head CI and Vercel preview verified)
 Repository: [mrtabahi/final-1](https://github.com/mrtabahi/final-1)
 Working branch: `fix/custom-domain-seo`
 Pull request: [#96](https://github.com/mrtabahi/final-1/pull/96) — open; do not merge without explicit user approval.
@@ -30,9 +30,9 @@ Improve the typing experience safely by progressively sharing workspace controls
 ## Deployment and CI status at last check
 - Vercel preview for commit `e1c1ac1103ab600d34f6a4817839ebf653a999d9` was READY:
   https://final-1-abti6ynmn-decoding-hcn.vercel.app
-- Latest tracked Vercel status reported build-rate-limit failure (upgrade/rate-limit target); latest branch commit preview not confirmed. Recheck deployment list and latest commit after the limit clears.
+- Latest PR head `3ea1d8c08d56f3c03da020d9809ac75b16293784` has a Vercel preview deployment READY: `dpl_UXjcc5HAZgCZdDT8sMRZii5QZkJz` at https://final-1-cwa8rw93t-decoding-hcn.vercel.app. The earlier build-rate-limit blocker is no longer present.
 - Previous head `542bf0952ec70b28d7ddb105e28f7b9a2a08c7c1`: GitHub Actions Security regression tests run #317 (`41127628781`) completed SUCCESS. Its Vercel status still reflected the older build-rate-limit failure and had no matching deployment record.
-- Latest head `f167322f6ecbf8c015714fed767d2b51ab706404` adds keyboard/timer lifecycle regression tests. Vercel deployment `dpl_BcHWS5n1y5s3CjAGKCi7wvWxHqKQ` is BUILDING (preview URL: https://final-1-5inqugfa2-decoding-hcn.vercel.app); build-rate-limit no longer blocks creation. GitHub Actions run for this exact head was not yet listed at the time of this update. Recheck exact-head CI and deployment until terminal status.
+- Latest branch head is `3ea1d8c08d56f3c03da020d9809ac75b16293784` (docs refresh). GitHub Actions Security regression tests run #323 (`41173781614`) completed SUCCESS for this exact head. Its Vercel preview `dpl_UXjcc5HAZgCZdDT8sMRZii5QZkJz` is READY at https://final-1-cwa8rw93t-decoding-hcn.vercel.app.
 - Production deployment on `main` was READY at last check; no production release from this branch.
 
 ## Other open PRs / security follow-up
@@ -46,7 +46,7 @@ Improve the typing experience safely by progressively sharing workspace controls
 - Integrated them into Self Test and Fix Accuracy without changing timer/scoring/submission logic.
 - Added unit tests for hide/show, display restoration, and highlight class toggling in `tests/typing-workspace-controls.test.cjs`.
 - Updated both HTML pages to load the refreshed helper asset version.
-- CI run #319 for prior commit `ee6235823812604780f6f0fa6e10409df2663793` passed; exact-head CI for this update remains to be checked.
+- CI run #323 for exact latest head `3ea1d8c08d56f3c03da020d9809ac75b16293784` passed.
 
 ## Latest typing lifecycle test update
 - Added regression cases in `tests/typing-engine-lifecycle-regression.test.cjs` for first printable key (including Space), modifier-only keys, Backspace disabled/enabled behavior, and passage-completion single submission.
@@ -69,8 +69,8 @@ Improve the typing experience safely by progressively sharing workspace controls
 5. Add restore-defaults/versioning only after existing persistence flow is fully tested.
 
 ## Release checklist (must remain open until verified)
-- [ ] Vercel preview for exact latest PR head reaches READY; recheck after latest commits.
-- [ ] GitHub Actions checks pass for exact latest PR head (run #319 passed for previous head `ee6235823812604780f6f0fa6e10409df2663793`; recheck latest).
+- [x] Vercel preview for exact latest PR head `3ea1d8c08d56f3c03da020d9809ac75b16293784` reaches READY.
+- [x] GitHub Actions Security regression tests pass for exact latest PR head (run #323, `41173781614`).
 - [ ] Browser smoke tests on preview: canonical URLs, sitemap, robots.txt, manual signup/login, password reset, payment return flow.
 - [ ] Admin Website Settings: load, edit, save, reload, audio upload/type/size validation.
 - [ ] Typing smoke tests: exam, Self Test, Fix Accuracy; score parity and edge cases.
@@ -79,4 +79,11 @@ Improve the typing experience safely by progressively sharing workspace controls
 - [ ] Explicit user approval before merging PR #96 or deploying production.
 
 ## Resume instructions
-When work resumes, first fetch PR #96's current head SHA, current GitHub Actions run/checks, and Vercel deployments. Compare them with this register and update this file before starting new work. Do not assume the recorded deployment or CI state is still current.
+When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deployments before relying on these statuses. Continue cancel/restart integration coverage, then audit Main Typing Test parity. Do not merge PR #96 or deploy production without explicit approval.
+
+
+## Verification refresh — 2026-10-31
+- Exact latest PR head `3ea1d8c08d56f3c03da020d9809ac75b16293784`: Security regression tests run #323 (`41173781614`) completed SUCCESS.
+- Exact latest PR head Vercel preview: READY, deployment `dpl_UXjcc5HAZgCZdDT8sMRZii5QZkJz`, https://final-1-cwa8rw93t-decoding-hcn.vercel.app.
+- Previously building page-specific previews are now READY: Self Test commit `6d7699e86c2d673cf9874e2b06852875078e8cd0`; Fix Accuracy commit `87f5f6e95c72790ff7d5c74c218393dc755755a5`.
+- PR #96 remains open/unmerged; production `main` remains untouched. No production deployment or database mutation was performed.
