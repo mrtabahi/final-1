@@ -187,3 +187,10 @@ When work resumes, re-fetch PR #96's head SHA, Actions checks, and Vercel deploy
 - A parity audit found Fix Accuracy displayed raw input.value.length for keystrokes and typed words, while the canonical score engine intentionally caps measured keystrokes to passage-bounded characters/separators. This could make the scorecard disagree with Gross WPM and the main Typing Test for extra text.
 - Fixed Fix Accuracy to display score.totalKeystrokes and score.equivalentTypedWords (with canonical fallback) and canonical backspacePresses. Refreshed JS cache version and added regression coverage.
 - Commit: b5debc7650c4a691ce4750847d1fb0b909b76cc7; cache/test commits: 912fa0d69fe6d378eaacebf1915719655143f0f3, 2b803f0a99ff94ceb526831fc87d7fab20981240.
+
+
+## 2026-10-31 Self Test auto-scroll geometry correction
+- Replaced estimated characters-per-line passage scrolling with DOM-measured character positions. Each rendered original character now carries a data-char-index marker; autoScrollTyping uses getBoundingClientRect to keep the exact reached character inside the visible passage viewport. Textarea retains native caret auto-scroll.
+- This removes the fragile width/font multiplier approximation. Added regression test and refreshed Self Test script cache.
+- Commit: 793060916763dc2bc1e2521fddf45b8ab5ccf6eb; test/cache commits: a3518a61227ed34d295383a7cc539d3f1171f003 / eb5be4a984d5b2358ee193ac7189b583493e3e11.
+- This is source-level verified; browser tests across mobile/desktop are still required before calling scrolling 100% verified.
