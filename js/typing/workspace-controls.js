@@ -28,5 +28,25 @@
     return Object.freeze({ get: () => size, set });
   }
 
-  root.TypingWorkspaceControls = Object.freeze({ bindFontControls });
+  function setHidden(target, hidden) {
+    if (!target) return Boolean(hidden);
+    target.hidden = Boolean(hidden);
+    return target.hidden;
+  }
+
+  function setDisplay(target, visible, displayValue) {
+    if (!target || !target.style) return Boolean(visible);
+    target.style.display = visible ? (displayValue || 'block') : 'none';
+    return Boolean(visible);
+  }
+
+  function setClassState(target, className, enabled) {
+    if (!target || !target.classList || !className) return Boolean(enabled);
+    target.classList.toggle(className, Boolean(enabled));
+    return Boolean(enabled);
+  }
+
+  root.TypingWorkspaceControls = Object.freeze({
+    bindFontControls, setHidden, setDisplay, setClassState
+  });
 })(typeof window !== 'undefined' ? window : globalThis);
