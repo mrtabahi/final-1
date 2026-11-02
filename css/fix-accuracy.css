@@ -125,3 +125,27 @@
  .fix-result-typed{font-size:10pt!important;line-height:1.65!important;overflow:visible!important;overflow-wrap:anywhere!important}
  a{color:#2563eb!important}
 }
+
+/* Dual BSF / CRPF score selector and clear metric feedback */
+.fix-result-methods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 14px}
+.fix-method-button{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-height:104px;padding:17px 20px;border:1px solid #cbd9eb;border-radius:16px;background:linear-gradient(145deg,#fff,#f1f6ff);color:#173b5c;text-align:left;cursor:pointer;box-shadow:0 5px 16px #173b5c10;transition:transform .18s,border-color .18s,box-shadow .18s,background .18s}
+.fix-method-button:hover{transform:translateY(-2px);border-color:#6b8ee8;box-shadow:0 12px 25px #3458a522}
+.fix-method-button.active{border:2px solid transparent;background:linear-gradient(115deg,#123b63,#3156a4 58%,#5546b8);color:#fff;box-shadow:0 10px 26px #284b9a40}
+.fix-method-button.active:after{content:"✓ SELECTED";position:absolute;right:12px;top:12px;font-size:.62rem;font-weight:900;letter-spacing:.08em;color:#a7f3d0}
+.fix-method-button .method-kicker{font-size:.65rem;font-weight:900;letter-spacing:.16em;opacity:.72}
+.fix-method-button strong{font-size:1.12rem;letter-spacing:-.02em}
+.fix-method-button small{font-size:.78rem;opacity:.78}
+.fix-result-formula-label{text-align:center;margin:-5px 0 10px;color:#64748b;font-size:.82rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.fix-result-status{font-size:clamp(1.05rem,2.5vw,1.35rem);padding:1rem;border:1px solid #86d5ad;background:linear-gradient(110deg,#dcfce7,#bbf7d0);color:#166534;box-shadow:0 8px 20px #16a34a18}
+.fix-result-status.try-again{border-color:#f3a3a3;background:linear-gradient(110deg,#fee2e2,#fecaca);color:#991b1b;box-shadow:0 8px 20px #dc262618}
+.fix-result-grid>div{transition:border-color .18s,background .18s}
+.fix-result-grid>div.metric-good{background:linear-gradient(145deg,#f0fdf4,#dcfce7);border-color:#86d5a5}
+.fix-result-grid>div.metric-warn{background:linear-gradient(145deg,#fffbeb,#fef3c7);border-color:#f4cf70}
+.fix-result-grid>div.metric-bad{background:linear-gradient(145deg,#fff1f2,#ffe4e6);border-color:#fda4af}
+.fix-result-grid>div.metric-info{background:linear-gradient(145deg,#eff6ff,#dbeafe);border-color:#93c5fd}
+.fix-result-grid>div.metric-good strong{color:#166534}
+.fix-result-grid>div.metric-warn strong{color:#92400e}
+.fix-result-grid>div.metric-bad strong{color:#991b1b}
+.fix-result-grid>div.metric-info strong{color:#1d4ed8}
+@media(max-width:520px){.fix-result-methods{gap:8px}.fix-method-button{min-height:96px;padding:13px 12px}.fix-method-button strong{font-size:.98rem}.fix-method-button.active:after{position:static;margin-top:2px}}
+@media print{.fix-result-methods{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 9px}.fix-method-button{min-height:66px;padding:8px 10px;box-shadow:none!important;break-inside:avoid}.fix-method-button strong{font-size:11pt}.fix-method-button small{font-size:8pt}.fix-method-button.active{background:#173b70!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.fix-result-status{font-size:14pt!important}}
