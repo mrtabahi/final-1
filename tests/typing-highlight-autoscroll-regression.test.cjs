@@ -8,7 +8,7 @@ test('highlight OFF neutralizes generated character feedback in all three worksp
   const main = fs.readFileSync(path.join(__dirname, '../css/typing.css'), 'utf8');
   const self = fs.readFileSync(path.join(__dirname, '../css/self-test.css'), 'utf8');
   const fix = fs.readFileSync(path.join(__dirname, '../css/fix-accuracy.css'), 'utf8');
-  assert.match(main, /\.passage-display\.no-highlight\s+\[class\*="char-"\]/u);
+  assert.match(main, /\.passage-display\.no-highlight\s+\[class*="char-"\]/u);
   assert.match(self, /\.self-passage-card:not\(\.self-highlight-enabled\).*\.self-char-correct/u);
   assert.match(fix, /#fix-passage-display\.no-highlight\s+\.char-incorrect/u);
 });
@@ -16,10 +16,10 @@ test('highlight OFF neutralizes generated character feedback in all three worksp
 test('Fix Accuracy keeps the current passage position visible after input', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   assert.match(source, /function keepCurrentPassageVisible\(\)/u);
-  assert.match(source, /renderPassage\(\);keepCurrentPassageVisible\(\);processCommittedWords\(\);tick\(\)/u);
+  assert.match(source, /const committedSpace=\/\\s\$\/u\.test\(input\.value\)/u);
+  assert.match(source, /renderPassage\(\);[\s\S]*if\(!committedSpace\)keepCurrentPassageVisible\(\);processCommittedWords\(\);tick\(\)/u);
   assert.match(source, /host\.scrollTop\+=margin-bottomGap/u);
 });
-
 
 test('Fix Accuracy keeps live source passage clean and annotates mistakes only in result comparison', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
@@ -37,7 +37,6 @@ test('Fix Accuracy keeps live source passage clean and annotates mistakes only i
   assert.match(html, /fix-print-brand/u);
 });
 
-
 test('Fix Accuracy result includes detailed error analysis sourced from canonical score breakdown', () => {
   const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
@@ -50,14 +49,12 @@ test('Fix Accuracy result includes detailed error analysis sourced from canonica
   assert.match(html, /https:\/\/decodinghcm\.online/u);
 });
 
-
 test('Fix Accuracy scorecard uses canonical capped keystrokes and equivalent words', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   assert.match(source, /score\.equivalentTypedWords\?\?\(Number\(score\.totalKeystrokes\|\|0\)\/5\)/u);
   assert.match(source, /score\.totalKeystrokes\?\?0/u);
   assert.doesNotMatch(source, /fix-result-typed-words.*input\.value\|\|''\)\.length/u);
 });
-
 
 test('Self Test auto-scroll follows actual rendered character geometry', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/self-test.js'), 'utf8');
@@ -67,13 +64,11 @@ test('Self Test auto-scroll follows actual rendered character geometry', () => {
   assert.doesNotMatch(source, /approxChars|passageCharsPerLine/u);
 });
 
-
 test('Self Test live keystrokes use canonical passage-capped count', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/self-test.js'), 'utf8');
   assert.match(source, /self-live-keystrokes'\)\.textContent=String\(score\.totalKeystrokes\?\?0\)/u);
   assert.doesNotMatch(source, /self-live-keystrokes'\)\.textContent=String\(input\.length\)/u);
 });
-
 
 test('Main Typing Test auto-scroll uses measured character bounds, not estimated line counts', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
@@ -83,7 +78,6 @@ test('Main Typing Test auto-scroll uses measured character bounds, not estimated
   assert.doesNotMatch(source, /currentLine=|visibleLines=/u);
 });
 
-
 test('Fix Accuracy auto-scroll uses a non-visual position marker when highlight is OFF', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   assert.match(source, /word-position-current/u);
@@ -91,7 +85,6 @@ test('Fix Accuracy auto-scroll uses a non-visual position marker when highlight 
   assert.match(source, /passageHidden\|\|typingMode!=='screen'/u);
   assert.match(source, /if\(highlightEnabled\)wordNode\.classList\.add\('word-current'\)/u);
 });
-
 
 test('all three typing activities expose fullscreen and typing-mode controls', () => {
   const root = path.join(__dirname, '..');
@@ -129,7 +122,6 @@ test('admin preference save writes activity overrides and resolver reads the sam
   assert.match(resolver, /prefs\?\.overrides\?\.\[activity\]/u);
   assert.match(resolver, /publish\(allowed\.has\(override\)/u);
 });
-
 
 test('Main Typing Test loads the shared AuthManager script only once', () => {
   const html = fs.readFileSync(path.join(__dirname, '../start_test.html'), 'utf8');
