@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const typingDefaults=TypingExperienceConfig;
   const folderSelect=$('fix-folder'), passageSelect=$('fix-passage-select'), customInput=$('fix-custom'), form=$('fix-setup-form');
   const setup=$('setup-panel'), game=$('game-panel'), result=$('result-panel'), input=$('fix-input');
-  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, backspacePressCount=0, typingMode='screen', modeLocked=false, selectedFormula='bsf', finalElapsed=0, finalReason='';
+  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, backspacePressCount=0, typingMode='screen', modeLocked=false, selectedFormula='bsf', finalElapsed=0, finalReason='', activeResultAlignment=null;
   const tokenize = text => String(text||'').match(/\S+/gu)||[];
   const words = text => tokenize(text);
   function announce(text){ if(!currentConfig||currentConfig.voice!=='on'||!('speechSynthesis' in window))return; try{speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(String(text));utter.rate=1;utter.pitch=1;utter.lang='en-US';speechSynthesis.speak(utter);}catch(e){console.debug('Speech unavailable',e);} }
@@ -154,10 +154,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Reaching the end of the original passage always auto-submits, even with time remaining.
     if(!finished&&Array.from(input.value).length>=Array.from(activePassage).length)finish('Passage complete');
   });
-  function renderResultComparison(expectedText,typedText,alignment){
+  function renderResultComparison(expectedText,typedText){
     const host=$('fix-result-typed');if(!host)return;host.replaceChildren();
     const expected=String(expectedText||'').match(/\S+/gu)||[],typed=String(typedText||'').match(/\S+/gu)||[];
-    const aligned=alignment||TypingMaster.alignWords(expected,typed);let i=0;
+    const aligned=activeResultAlignment||TypingMaster.alignWords(expected,typed);let i=0;
     // Trailing expected-only tokens are words never reached, not part of the typed passage.
     let visibleLength=aligned.length;
     while(visibleLength>0&&aligned[visibleLength-1].type==='delete')visibleLength--;
@@ -227,7 +227,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       button.classList.toggle('active',active);
       button.setAttribute('aria-pressed',String(active));
     });
-    renderResultComparison(activePassage,input.value,score.alignment);
+    activeResultAlignment=score.alignment;
+    renderResultComparison(activePassage,input.value);
     return score;
   }
   function finish(reason){
