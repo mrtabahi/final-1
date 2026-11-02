@@ -9,7 +9,7 @@ test('highlight OFF neutralizes generated character feedback in all three worksp
   const self = fs.readFileSync(path.join(__dirname, '../css/self-test.css'), 'utf8');
   const fix = fs.readFileSync(path.join(__dirname, '../css/fix-accuracy.css'), 'utf8');
   assert.match(main, /\.passage-display\.no-highlight/u);
-  assert.match(main, /class\\*="char-"/u);
+  assert.match(main, /class\*="char-"/u);
   assert.match(self, /\.self-passage-card:not\(\.self-highlight-enabled\)/u);
   assert.match(self, /\.self-char-correct/u);
   assert.match(fix, /#fix-passage-display\.no-highlight/u);
