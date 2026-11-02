@@ -68,14 +68,27 @@ Deno.serve(async (req) => {
     const body = await req.json();
     if (body.action === "start") {
       if (typeof body.test_id !== "string") return reply(400, { error: "test_id is required" });
+      // Run the entitlement check with the caller-scoped client so auth.uid() is
+      // the verified user. The service-role client below must not bypass paid access.
+      const { data: canAccessTest, error: accessError } = await authClient.rpc("can_access_test", {
+        p_test_id: body.test_id
+      });
+      if (accessError) {
+        console.error("typing test access check failed", accessError);
+        return reply(503, { error: "Unable to verify test access. Please try again." });
+      }
+      if (canAccessTest !== true) {
+        return reply(403, { error: "This test requires an active subscription or explicit free access." });
+      }
       const { data: test, error: testError } = await db.from("tests").select("id,active,duration_minutes,folder_id").eq("id", body.test_id).eq("active", true).maybeSingle();
       if (testError || !test) return reply(404, { error: "Active test not found" });
       if (test.folder_id) {
         const { data: folder, error: folderError } = await db.from("folders").select("id").eq("id", test.folder_id).eq("active", true).maybeSingle();
         if (folderError || !folder) return reply(404, { error: "This test is currently unavailable because its folder is disabled." });
       }
-      const { data: profile, error: profileError } = await db.from("profiles").select("id").eq("id", user.id).maybeSingle();
+      const { data: profile, error: profileError } = await db.from("profiles").select("id,account_status").eq("id", user.id).maybeSingle();
       if (profileError || !profile) return reply(403, { error: "Candidate profile not found" });
+      if (profile.account_status !== "active") return reply(403, { error: "This account is not active." });
       const { data: session, error } = await db.from("typing_exam_sessions").insert({ user_id: user.id, test_id: test.id }).select("id,started_at").single();
       if (error || !session) return reply(500, { error: "Unable to start a secure typing session" });
       return reply(200, { session_id: session.id, started_at: session.started_at, duration_seconds: Number(test.duration_minutes) * 60 });
@@ -94,8 +107,9 @@ Deno.serve(async (req) => {
       if (session.submitted_at) return reply(409, { error: "This typing session has already been submitted" });
       const { data: test, error: testError } = await db.from("tests").select("id,title,language,mode,duration_minutes,passage,target_wpm,min_accuracy,free_error_pct,penalty_per_error,active").eq("id", session.test_id).maybeSingle();
       if (testError || !test) return reply(404, { error: "Test not found" });
-      const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name").eq("id", user.id).maybeSingle();
+      const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,account_status").eq("id", user.id).maybeSingle();
       if (profileError || !profile) return reply(403, { error: "Candidate profile not found" });
+      if (profile.account_status !== "active") return reply(403, { error: "This account is not active." });
       const now = Date.now();
       const startedAt = new Date(session.started_at).getTime();
       if (!Number.isFinite(startedAt) || startedAt > now + 5000) return reply(400, { error: "Invalid session start time" });
