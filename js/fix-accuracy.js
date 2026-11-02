@@ -158,11 +158,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const host=$('fix-result-typed');if(!host)return;host.replaceChildren();
     const expected=String(expectedText||'').match(/\S+/gu)||[],typed=String(typedText||'').match(/\S+/gu)||[];
     const aligned=TypingMaster.alignWords(expected,typed);let i=0;
+    // Trailing expected-only tokens are words never reached, not part of the typed passage.
+    let visibleLength=aligned.length;
+    while(visibleLength>0&&aligned[visibleLength-1].type==='delete')visibleLength--;
     const appendText=(text,cls)=>{const span=document.createElement('span');if(cls)span.className=cls;span.textContent=text;host.appendChild(span);};
-    while(i<aligned.length){
+    while(i<visibleLength){
       const item=aligned[i];
       if(item.type==='match'){appendText(item.typed,'result-word-correct');i++;if(i<aligned.length)host.appendChild(document.createTextNode(' '));continue;}
-      const group=[];while(i<aligned.length&&aligned[i].type!=='match'){group.push(aligned[i]);i++;}
+      const group=[];while(i<visibleLength&&aligned[i].type!=='match'){group.push(aligned[i]);i++;}
       const expectedNotes=[];
       group.forEach(entry=>{
         if(entry.type==='insert'){appendText(entry.typed,'mistake-extra');host.appendChild(document.createTextNode(' '));}
