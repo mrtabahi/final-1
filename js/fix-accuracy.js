@@ -68,7 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const expected=String(activePassage),typed=String(input.value||'');
     const expectedWords=[...expected.matchAll(/\S+/gu)];
     const typedWords=typed.match(/\S+/gu)||[];
-    const committedCount=(/\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1));
+    // Keep the just-committed word highlighted while Space is held/after it.
+    // Advance to the next word only when its first character is actually typed.
+    const committedCount=Math.max(0,typedWords.length-1);
     const alignment=TypingMaster.alignWords(expectedWords.map(match=>match[0]),typedWords);
     let expectedCursor=0,typedCursor=0,currentExpectedIndex=-1;
     for(const item of alignment){
@@ -139,7 +141,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   input.addEventListener('input',()=>{
     if(finished)return;if(input.value.length){modeLocked=true;syncTypingModeButton();}if(input.value.length&&!startedAt){startedAt=performance.now();if(currentConfig.duration)interval=setInterval(tick,200);}
     if(!currentConfig.backspace&&input.value.length<Array.from(activePassage).length&&input.value.length<Array.from(input.value).length){/* guarded by keydown */}
-    renderPassage();keepCurrentPassageVisible();processCommittedWords();tick();
+    const committedSpace=/\s$/u.test(input.value);
+    renderPassage();
+    // Space validates a word; it must not move the passage viewport. Scroll
+    // only after a character is entered into the next word.
+    if(!committedSpace)keepCurrentPassageVisible();
+    processCommittedWords();tick();
     // Reaching the end of the original passage always auto-submits, even with time remaining.
     if(!finished&&Array.from(input.value).length>=Array.from(activePassage).length)finish('Passage complete');
   });
