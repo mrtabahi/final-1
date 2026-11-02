@@ -142,8 +142,8 @@ const TypingMaster = {
     const penaltyWpm=Number((excessErrors*600/elapsedSeconds).toFixed(2));
     const penaltyWords=excessErrors*penaltyPerError;
     const grossWpm=Number((measuredKeystrokes*60/(5*elapsedSeconds)).toFixed(2));
-    const netWpm=Number((grossWpm-penaltyWpm).toFixed(2));
-    const netWords=netWpm/12;
+    const netWpm=Math.max(0,Number((grossWpm-penaltyWpm).toFixed(2)));
+    const netWords=Math.max(0,netWpm/12);
     // Character accuracy follows word alignment, not raw character indexes; one missing
     // word therefore does not falsely mark every later character wrong.
     let correctChars=0,alignedPairs=0,omittedErrorChars=0;
@@ -186,7 +186,7 @@ const TypingMaster = {
     const minAccuracy=config.minAccuracy==null||config.minAccuracy===""?null:Number(config.minAccuracy);
     const targetWpm=config.targetWpm==null||config.targetWpm===""?null:Number(config.targetWpm);
     const passedByWpm=targetWpm===null||netWpm>=targetWpm,passedByAccuracy=minAccuracy===null||accuracy>=minAccuracy;
-    const totalCorrectWord=Number((measuredKeystrokes/5-totalErrors).toFixed(2));
+    const totalCorrectWord=Math.max(0,Number((measuredKeystrokes/5-totalErrors).toFixed(2)));
     return {formula:mode,totalTypedWords:typedWords.length,totalTypedChars:typedSource.length,totalKeystrokes:measuredKeystrokes,backspacePresses:Math.max(0,Math.floor(Number(backspacePresses)||0)),totalCorrectWord,
       equivalentTypedWords:Number(equivalentWords.toFixed(2)),correctChars,incorrectChars,correctWords,wordErrors,doubleSpaceErrors,totalErrors,
       freeErrors:Number(freeErrors.toFixed(2)),excessErrors:Number(excessErrors.toFixed(2)),penaltyWords:Number(penaltyWords.toFixed(2)),netWords:Number(netWords.toFixed(2)),grossWpm,netWpm,accuracy,elapsedMinutes:Number(elapsedMinutes.toFixed(2)),elapsedSeconds,
@@ -204,9 +204,9 @@ const TypingMaster = {
     const totalErrors = committedScore.totalErrors;
     const excessErrors = Math.max(0, totalErrors - fullScore.allowedErrors);
     const penaltyWpm = Number((excessErrors * 600 / fullScore.elapsedSeconds).toFixed(2));
-    const netWpm = Number((fullScore.grossWpm - penaltyWpm).toFixed(2));
+    const netWpm = Math.max(0,Number((fullScore.grossWpm - penaltyWpm).toFixed(2)));
     const accuracy = fullScore.totalKeystrokes > 0 ? Math.max(0, Number((100 - totalErrors * 500 / fullScore.totalKeystrokes).toFixed(2))) : 0;
-    const totalCorrectWord = Number((fullScore.totalKeystrokes / 5 - totalErrors).toFixed(2));
+    const totalCorrectWord = Math.max(0,Number((fullScore.totalKeystrokes / 5 - totalErrors).toFixed(2)));
     const penaltyWords = excessErrors * Math.max(0, Math.min(100, Number(config.penaltyPerError ?? config.penalty_per_error ?? 10)));
     const minAccuracy = config.minAccuracy == null || config.minAccuracy === "" ? null : Number(config.minAccuracy);
     const targetWpm = config.targetWpm == null || config.targetWpm === "" ? null : Number(config.targetWpm);
@@ -221,7 +221,7 @@ const TypingMaster = {
       excessErrors: Number(excessErrors.toFixed(2)),
       penaltyWpm,
       netWpm,
-      netWords: Number((netWpm / 12).toFixed(2)),
+      netWords: Math.max(0,Number((netWpm / 12).toFixed(2))),
       accuracy,
       totalCorrectWord,
       penaltyWords: Number(penaltyWords.toFixed(2)),
