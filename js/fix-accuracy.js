@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const typingDefaults=TypingExperienceConfig;
   const folderSelect=$('fix-folder'), passageSelect=$('fix-passage-select'), customInput=$('fix-custom'), form=$('fix-setup-form');
   const setup=$('setup-panel'), game=$('game-panel'), result=$('result-panel'), input=$('fix-input');
-  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, backspacePressCount=0, typingMode='screen', modeLocked=false;
+  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, backspacePressCount=0, typingMode='screen', modeLocked=false, selectedFormula='bsf', finalElapsed=0, finalReason='', activeResultAlignment=null;
   const tokenize = text => String(text||'').match(/\S+/gu)||[];
   const words = text => tokenize(text);
   function announce(text){ if(!currentConfig||currentConfig.voice!=='on'||!('speechSynthesis' in window))return; try{speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(String(text));utter.rate=1;utter.pitch=1;utter.lang='en-US';speechSynthesis.speak(utter);}catch(e){console.debug('Speech unavailable',e);} }
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateMetrics(elapsed);if(currentConfig.duration&&remain<=0)finish('Timer complete');
   }
   function updateMetrics(elapsed){
-    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,typingDefaults.getScoringConfig(),'bsf',backspacePressCount,false);
+    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,typingDefaults.getScoringConfig(),selectedFormula,backspacePressCount,false);
     $('fix-live-gross').textContent=score.grossWpm.toFixed(2);$('fix-live-net').textContent=score.netWpm.toFixed(2);
     $('fix-live-accuracy').textContent=score.accuracy.toFixed(2)+'%';
   }
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderResultComparison(expectedText,typedText){
     const host=$('fix-result-typed');if(!host)return;host.replaceChildren();
     const expected=String(expectedText||'').match(/\S+/gu)||[],typed=String(typedText||'').match(/\S+/gu)||[];
-    const aligned=TypingMaster.alignWords(expected,typed);let i=0;
+    const aligned=activeResultAlignment||TypingMaster.alignWords(expected,typed);let i=0;
     // Trailing expected-only tokens are words never reached, not part of the typed passage.
     let visibleLength=aligned.length;
     while(visibleLength>0&&aligned[visibleLength-1].type==='delete')visibleLength--;
@@ -181,24 +181,69 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(!aligned.length)host.textContent='No typed text was entered.';
     host.style.whiteSpace='pre-wrap';
   }
-  function finish(reason){
-    if(finished)return;
-    const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
-    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,elapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',backspacePressCount,true);
+  function renderSelectedResult(){
+    const formula=selectedFormula;
+    const score=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,{freeErrorPct:0.05,penaltyPerError:10},formula,backspacePressCount,true);
     errorCount=score.totalErrors;
-    if(errorCount>=currentConfig.maxErrors&&reason==='Passage complete')reason='Maximum errors reached';
-    finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
     const gross=score.grossWpm,net=score.netWpm,accuracy=score.accuracy;
-    $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
-    const passed=reason!=='Maximum errors reached'&&errorCount<currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
-    $('fix-result-status').textContent=passed?'QUALIFIED':'TRY AGAIN';$('fix-result-status').classList.toggle('try-again',!passed);
-    $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';$('fix-result-net').textContent=net.toFixed(2)+' WPM';$('fix-result-errors').textContent=String(errorCount);$('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';$('fix-result-allowed').textContent=String(score.allowedErrors??score.freeErrors??0);$('fix-result-excess').textContent=String(score.excessErrors??0);$('fix-result-penalty').textContent=Number(score.penaltyWpm??0).toFixed(2);$('fix-result-correct-word').textContent=Number(score.totalCorrectWord??0).toFixed(2);$('fix-result-backspace').textContent=String(score.backspacePresses??backspacePressCount);$('fix-result-time').textContent=formatTime(elapsed);$('fix-result-typed-words').textContent=Number(score.equivalentTypedWords??(Number(score.totalKeystrokes||0)/5)).toFixed(2);$('fix-result-keystrokes').textContent=String(score.totalKeystrokes??0);$('fix-result-reason').textContent=reason;
+    const passed=finalReason!=='Maximum errors reached'&&errorCount<currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
+    const methodName=formula.toUpperCase();
+    const status=$('fix-result-status');
+    status.textContent=methodName+' '+(passed?'PASS':'FAIL');
+    status.classList.toggle('try-again',!passed);
+    status.classList.toggle('is-pass',passed);
+    $('fix-result-formula-label').textContent=methodName+' Method';
+    $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';
+    $('fix-result-net').textContent=net.toFixed(2)+' WPM';
+    $('fix-result-errors').textContent=String(errorCount);
+    $('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';
+    $('fix-result-allowed').textContent=String(score.allowedErrors??score.freeErrors??0);
+    $('fix-result-excess').textContent=String(score.excessErrors??0);
+    $('fix-result-penalty').textContent=Number(score.penaltyWpm??0).toFixed(2);
+    $('fix-result-correct-word').textContent=Number(score.totalCorrectWord??0).toFixed(2);
+    $('fix-result-backspace').textContent=String(score.backspacePresses??backspacePressCount);
+    $('fix-result-time').textContent=formatTime(finalElapsed);
+    $('fix-result-typed-words').textContent=Number(score.equivalentTypedWords??(Number(score.totalKeystrokes||0)/5)).toFixed(2);
+    $('fix-result-keystrokes').textContent=String(score.totalKeystrokes??0);
+    $('fix-result-reason').textContent=finalReason;
     const breakdown=score.errorBreakdown||{};
     const analysisFields={omissions:'omissions',substitutions:'substitutions',spelling:'spellingErrors',incomplete:'incompleteWords',extra:'extraWords',repeated:'repeatedWords',spacing:'spacingErrors',capitalization:'capitalizationErrors',punctuation:'punctuationErrors'};
     Object.entries(analysisFields).forEach(([id,key])=>{const node=$('fix-analysis-'+id);if(node)node.textContent=String(breakdown[key]??0);});
-    $('fix-result-min-gross').textContent=currentConfig.minGross.toFixed(2);$('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);$('fix-result-max-errors').textContent=currentConfig.maxErrors;
+    $('fix-result-min-gross').textContent=currentConfig.minGross.toFixed(2);
+    $('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);
+    $('fix-result-max-errors').textContent=currentConfig.maxErrors;
+    const tones={
+      gross: gross>=currentConfig.minGross?'good':'bad',
+      net: net>=currentConfig.minNet?'good':'bad',
+      accuracy: accuracy>=95?'good':accuracy>=85?'warn':'bad',
+      errors: errorCount<currentConfig.maxErrors?'good':'bad',
+      allowed: 'info', excess: Number(score.excessErrors)>0?'bad':'good',
+      penalty: Number(score.penaltyWpm)>0?'warn':'good',
+      correctWord: 'good'
+    };
+    Object.entries(tones).forEach(([key,tone])=>{const node=$('fix-result-'+key);if(node){const tile=node.closest('.fix-result-grid > div');if(tile){tile.classList.remove('metric-good','metric-warn','metric-bad','metric-info');tile.classList.add('metric-'+tone);}}});
+    document.querySelectorAll('[data-result-formula]').forEach(button=>{
+      const active=button.dataset.resultFormula===formula;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-pressed',String(active));
+    });
+    activeResultAlignment=score.alignment;
     renderResultComparison(activePassage,input.value);
-    game.hidden=true;result.hidden=false;if(reason==='Maximum errors reached')announce('Game over');
+    return score;
+  }
+  function finish(reason){
+    if(finished)return;
+    finalElapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
+    const initialScore=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',backspacePressCount,true);
+    errorCount=initialScore.totalErrors;
+    if(errorCount>=currentConfig.maxErrors&&reason==='Passage complete')reason='Maximum errors reached';
+    finalReason=reason;selectedFormula='bsf';
+    finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
+    $('fix-typed-error').textContent=String(errorCount);
+    $('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
+    renderSelectedResult();
+    game.hidden=true;result.hidden=false;
+    if(reason==='Maximum errors reached')announce('Game over');
   }
   function syncTypingModeButton(){const b=$('fix-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
   $('fix-mode-switch')?.addEventListener('click',()=>{if(modeLocked)return;typingMode=typingMode==='screen'?'offscreen':'screen';renderPassage();syncTypingModeButton();});
@@ -207,7 +252,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('fix-toggle-highlight').addEventListener('click',()=>{highlightEnabled=!highlightEnabled;syncToggleButton($('fix-toggle-highlight'),highlightEnabled,'Highlight: On','Highlight: Off','🖍','🖍','Highlight: show or hide correct and incorrect character colours.');renderPassage();});
   $('fix-toggle-passage').addEventListener('click',()=>{passageHidden=!passageHidden;syncToggleButton($('fix-toggle-passage'),passageHidden,'Show passage','Hide passage','👁','🙈','Hide passage: hide the passage from view or show it again.');renderPassage();});
   const fixFontControls=TypingWorkspaceControls.bindFontControls({downButton:$('fix-font-down'),upButton:$('fix-font-up'),targets:[$('fix-passage-display'),input],initialSize:19.2,min:14.4,max:32,step:1.6,onChange:renderPassage});
-    $('fix-submit').addEventListener('click',()=>finish('Manually submitted'));
+    document.querySelectorAll('[data-result-formula]').forEach(button=>button.addEventListener('click',()=>{if(!finished)return;selectedFormula=TypingMaster.normalizeFormula(button.dataset.resultFormula);renderSelectedResult();}));
+  $('fix-submit').addEventListener('click',()=>finish('Manually submitted'));
   function returnToSetup(){
     if(interval){clearInterval(interval);interval=null;}
     startedAt=0;finished=false;errorCount=0;backspacePressCount=0;activePassage='';
