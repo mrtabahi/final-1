@@ -56,7 +56,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     button.setAttribute('aria-pressed', String(Boolean(enabled)));
     button.dataset.icon = enabled ? onIcon : offIcon;
     button.dataset.tooltip = tooltip;
-    button.textContent = enabled ? onLabel : offLabel;
+    const label=button.querySelector('.control-label');
+    if(label) label.textContent=enabled?onLabel:offLabel;
+    else button.textContent=enabled?onLabel:offLabel;
+    const icon=button.querySelector('.control-icon');
+    if(icon) icon.textContent=enabled?onIcon:offIcon;
   }
   function formatTime(s){s=Math.max(0,Math.floor(s));return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
   function renderPassage(){
@@ -154,11 +158,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const host=$('fix-result-typed');if(!host)return;host.replaceChildren();
     const expected=String(expectedText||'').match(/\S+/gu)||[],typed=String(typedText||'').match(/\S+/gu)||[];
     const aligned=TypingMaster.alignWords(expected,typed);let i=0;
+    // Trailing expected-only tokens are words never reached, not part of the typed passage.
+    let visibleLength=aligned.length;
+    while(visibleLength>0&&aligned[visibleLength-1].type==='delete')visibleLength--;
     const appendText=(text,cls)=>{const span=document.createElement('span');if(cls)span.className=cls;span.textContent=text;host.appendChild(span);};
-    while(i<aligned.length){
+    while(i<visibleLength){
       const item=aligned[i];
       if(item.type==='match'){appendText(item.typed,'result-word-correct');i++;if(i<aligned.length)host.appendChild(document.createTextNode(' '));continue;}
-      const group=[];while(i<aligned.length&&aligned[i].type!=='match'){group.push(aligned[i]);i++;}
+      const group=[];while(i<visibleLength&&aligned[i].type!=='match'){group.push(aligned[i]);i++;}
       const expectedNotes=[];
       group.forEach(entry=>{
         if(entry.type==='insert'){appendText(entry.typed,'mistake-extra');host.appendChild(document.createTextNode(' '));}
@@ -187,10 +194,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-result-status').textContent=passed?'QUALIFIED':'TRY AGAIN';$('fix-result-status').classList.toggle('try-again',!passed);
     $('fix-result-gross').textContent=gross.toFixed(2)+' WPM';$('fix-result-net').textContent=net.toFixed(2)+' WPM';$('fix-result-errors').textContent=String(errorCount);$('fix-result-accuracy').textContent=accuracy.toFixed(2)+'%';$('fix-result-allowed').textContent=String(score.allowedErrors??score.freeErrors??0);$('fix-result-excess').textContent=String(score.excessErrors??0);$('fix-result-penalty').textContent=Number(score.penaltyWpm??0).toFixed(2);$('fix-result-correct-word').textContent=Number(score.totalCorrectWord??0).toFixed(2);$('fix-result-backspace').textContent=String(score.backspacePresses??backspacePressCount);$('fix-result-time').textContent=formatTime(elapsed);$('fix-result-typed-words').textContent=Number(score.equivalentTypedWords??(Number(score.totalKeystrokes||0)/5)).toFixed(2);$('fix-result-keystrokes').textContent=String(score.totalKeystrokes??0);$('fix-result-reason').textContent=reason;
     const breakdown=score.errorBreakdown||{};
-    const analysisFields={omissions:'omissions',substitutions:'substitutions',spelling:'spellingErrors',incomplete:'incompleteWords',extra:'extraWords',repeated:'repeatedWords',spacing:'spacingErrors',capitalization:'capitalizationErrors',punctuation:'punctuationErrors','not-reached':'notReached'};
+    const analysisFields={omissions:'omissions',substitutions:'substitutions',spelling:'spellingErrors',incomplete:'incompleteWords',extra:'extraWords',repeated:'repeatedWords',spacing:'spacingErrors',capitalization:'capitalizationErrors',punctuation:'punctuationErrors'};
     Object.entries(analysisFields).forEach(([id,key])=>{const node=$('fix-analysis-'+id);if(node)node.textContent=String(breakdown[key]??0);});
     $('fix-result-min-gross').textContent=currentConfig.minGross.toFixed(2);$('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);$('fix-result-max-errors').textContent=currentConfig.maxErrors;
-    const originalHost=$('fix-result-original');if(originalHost)originalHost.textContent=activePassage;renderResultComparison(activePassage,input.value);
+    renderResultComparison(activePassage,input.value);
     game.hidden=true;result.hidden=false;if(reason==='Maximum errors reached')announce('Game over');
   }
   function syncTypingModeButton(){const b=$('fix-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}

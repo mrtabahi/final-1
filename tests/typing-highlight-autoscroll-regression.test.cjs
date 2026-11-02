@@ -30,21 +30,24 @@ test('Fix Accuracy keeps live source passage clean and annotates mistakes only i
   assert.doesNotMatch(liveRenderer, /char-correct|char-incorrect|alignCharacters/u);
   assert.match(source, /function renderResultComparison\(expectedText,typedText\)/u);
   assert.match(source, /mistake-extra|mistake-wrong|mistake-omitted/u);
-  assert.match(source, /originalHost\.textContent=activePassage/u);
-  assert.match(html, /id="fix-result-original"/u);
+  assert.match(source, /visibleLength.*aligned\.length/u);
+  assert.match(source, /aligned\[visibleLength-1\]\.type==='delete'/u);
+  assert.doesNotMatch(html, /fix-result-original|Original Passage/u);
   assert.match(html, /id="fix-result-typed"/u);
+  assert.match(html, /fix-print-brand/u);
 });
 
 
 test('Fix Accuracy result includes detailed error analysis sourced from canonical score breakdown', () => {
   const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
-  for (const id of ['omissions','substitutions','spelling','incomplete','extra','repeated','spacing','capitalization','punctuation','not-reached']) {
+  for (const id of ['omissions','substitutions','spelling','incomplete','extra','repeated','spacing','capitalization','punctuation']) {
     assert.match(html, new RegExp('id="fix-analysis-' + id + '"'));
   }
   assert.match(source, /const breakdown=score\.errorBreakdown\|\|\{\}/u);
-  assert.match(html, /Original Passage/u);
-  assert.match(html, /Typed Passage — Mistakes Annotated/u);
+  assert.doesNotMatch(html, /Words not reached|Original Passage/u);
+  assert.match(html, /Typed Passage &amp; Mistake Analysis/u);
+  assert.match(html, /https:\/\/decodinghcm\.online/u);
 });
 
 
