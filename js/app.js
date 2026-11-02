@@ -107,14 +107,22 @@ document.addEventListener('DOMContentLoaded', async()=>{
         display.replaceChildren(fragment);display.classList.toggle('no-highlight',!highlightEnabled);
         if(autoScrollEnabled&&selectedTypingMode==='screen'&&!passageHidden){
             const typedCount=splitGraphemes(typed).length;
-            if(typedCount===0)display.scrollTop=0;
-            else{
-                const current=display.querySelector('.char-current')||display.lastElementChild;
-                if(current){
-                    const box=display.getBoundingClientRect(),charBox=current.getBoundingClientRect();
-                    const margin=Math.max(12,(parseFloat(getComputedStyle(display).lineHeight)||30)*2);
-                    if(charBox.bottom>box.bottom-margin)display.scrollTop=Math.min(display.scrollHeight-display.clientHeight,display.scrollTop+charBox.bottom-(box.bottom-margin));
-                    else if(charBox.top<box.top+margin)display.scrollTop=Math.max(0,display.scrollTop-(box.top+margin-charBox.top));
+            if(typedCount===0){
+                display.scrollTop=0;
+            }else{
+                // Space commits the word but does not create a current character.
+                // Never fall back to the final passage node: that used to jump to
+                // the passage's last word on every committed space.
+                const current=display.querySelector('.char-current');
+                if(!current)return;
+                const box=display.getBoundingClientRect(),charBox=current.getBoundingClientRect();
+                const lineHeight=parseFloat(getComputedStyle(display).lineHeight)||30;
+                const margin=Math.max(8,lineHeight*.75);
+                let nextTop=display.scrollTop;
+                if(charBox.bottom>box.bottom-margin)nextTop+=charBox.bottom-(box.bottom-margin);
+                else if(charBox.top<box.top+margin)nextTop-=box.top+margin-charBox.top;
+                if(nextTop!==display.scrollTop){
+                    display.scrollTop=Math.max(0,Math.min(display.scrollHeight-display.clientHeight,nextTop));
                 }
             }
         }
