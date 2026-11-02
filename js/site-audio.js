@@ -60,7 +60,7 @@
   let intentionalPlay=Boolean(saved?.playing);
   const canPlay=()=>!session||Boolean(settings.audio_for_logged_in);
   const store=()=>{
-   try{sessionStorage.setItem(STATE_KEY,JSON.stringify({playing:!audio.paused&&intentionalPlay,time:Number.isFinite(audio.currentTime)?audio.currentTime:0,src:settings.audio_url}));}catch{}
+   try{sessionStorage.setItem(STATE_KEY,JSON.stringify({playing:intentionalPlay,time:Number.isFinite(audio.currentTime)?audio.currentTime:0,src:settings.audio_url}));}catch{}
   };
   const paint=playing=>{
    bar.dataset.playing=String(playing);
