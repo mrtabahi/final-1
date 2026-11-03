@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     game.hidden=true;result.hidden=false;
     if(reason==='Maximum errors reached')announce('Game over');
   }
-  function syncTypingModeButton(){const b=$('fix-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
+  function syncTypingModeButton(){const b=$('fix-mode-switch');if(!b)return;const label=b.querySelector('.control-label');const text='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');if(label)label.textContent=text;else b.textContent=text;b.classList.toggle('is-active',typingMode==='offscreen');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
   $('fix-mode-switch')?.addEventListener('click',()=>{if(modeLocked)return;typingMode=typingMode==='screen'?'offscreen':'screen';renderPassage();syncTypingModeButton();});
   async function toggleWorkspaceFullscreen(target){
     try{
