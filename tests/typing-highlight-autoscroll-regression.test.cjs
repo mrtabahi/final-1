@@ -18,17 +18,18 @@ test('highlight OFF neutralizes generated character feedback in all three worksp
 
 test('Fix Accuracy keeps the current passage position visible after input', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
-  assert.match(source, /function keepCurrentPassageVisible\(\)/u);
-  assert.match(source, /const committedSpace=\/\\s\$\/u\.test\(input\.value\)/u);
-  assert.match(source, /if\(!committedSpace\)keepCurrentPassageVisible\(\)/u);
-  assert.match(source, /processCommittedWords\(\);tick\(\)/u);
-  assert.match(source, /visibleLines=Math\.max\(1,Math\.floor\(host\.clientHeight\/lineHeight\)\)/u);
-  assert.match(source, /lineFromTop>=Math\.max\(0,visibleLines-3\)/u);
-  assert.match(source, /host\.scrollTo\(\{top:host\.scrollTop\+lineHeight,behavior:reduceMotion\?'auto':'smooth'\}\)/u);
-  assert.match(source, /getComputedStyle\(host\)/u);
-  assert.match(source, /data-word-index/u);
+  assert.ok(source.includes('function keepCurrentPassageVisible()'));
+  assert.ok(source.includes('const committedSpace=/\\s$/u.test(input.value)'));
+  assert.ok(source.includes('if(!committedSpace)keepCurrentPassageVisible()'));
+  assert.ok(source.includes('processCommittedWords();tick()'));
+  assert.ok(source.includes('const markerRect=marker.getBoundingClientRect()'));
+  assert.ok(source.includes('const contentBottom=hostRect.bottom-number(style.borderBottomWidth)-number(style.paddingBottom)'));
+  assert.ok(source.includes('const lowerOverflow=markerRect.bottom-safeBottom'));
+  assert.ok(source.includes("host.scrollTo({top:target,behavior:reduceMotion?'auto':'smooth'})"));
+  assert.ok(source.includes('getComputedStyle(host)'));
+  assert.ok(source.includes('dataset.wordIndex'));
+  assert.ok(source.includes('prefers-reduced-motion: reduce'));
 });
-
 test('Fix Accuracy keeps live source passage clean and annotates mistakes only in result comparison', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
@@ -116,7 +117,7 @@ test('all three typing activities expose fullscreen and typing-mode controls', (
   assert.match(scripts.exam, /selectedTypingMode=selectedTypingMode==='page'\?'screen':'page'/u);
   assert.match(scripts.self, /workspace\.requestFullscreen\(/u);
   assert.match(scripts.self, /typingMode=typingMode==='screen'\?'offscreen':'screen'/u);
-  assert.match(scripts.fix, /game\.requestFullscreen\(/u);
+  assert.ok(scripts.fix.includes('else if(target?.requestFullscreen)'));
   assert.match(scripts.fix, /typingMode=typingMode==='screen'\?'offscreen':'screen'/u);
 });
 
@@ -139,13 +140,26 @@ test('Main Typing Test loads the shared AuthManager script only once', () => {
 
 test('Fix Accuracy treats the configured maximum error count as inclusive for both formulas', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
-  assert.match(source, /if\(errorCount>currentConfig\.maxErrors\)\{finish\('Maximum errors reached'\)/u);
-  assert.match(source, /errorCount<=currentConfig\.maxErrors&&gross>=currentConfig\.minGross&&net>=currentConfig\.minNet/u);
-  assert.match(source, /if\(errorCount>currentConfig\.maxErrors&&reason==='Passage complete'\)/u);
+  assert.ok(source.includes('bsfScore.totalErrors>currentConfig.maxErrors&&crpfScore.totalErrors>currentConfig.maxErrors'));
+  assert.ok(source.includes('const passed=errorCount<=currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet'));
+  assert.ok(source.includes("if(initialBsf.totalErrors>currentConfig.maxErrors&&initialCrpf.totalErrors>currentConfig.maxErrors&&reason==='Passage complete')"));
 });
-test('Fix Accuracy scorecard includes additional accessible pastel neon feedback colours', () => {
+
+test('Fix Accuracy toolbar active states preserve icon nodes and use green styling', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '../css/fix-accuracy.css'), 'utf8');
-  for (const colour of ['pink','yellow','sky','lavender','mint']) {
-    assert.match(css, new RegExp('metric-' + colour));
-  }
+  assert.ok(source.includes("button.classList.toggle('is-active', Boolean(enabled))"));
+  assert.ok(source.includes("b.classList.toggle('is-active',typingMode==='offscreen')"));
+  assert.ok(source.includes("const label=b.querySelector('.control-label')"));
+  assert.ok(css.includes('.compact-tip-control.is-active'));
+  assert.ok(css.includes('#22c55e'));
+});
+
+test('Fix Accuracy result screen can restore fullscreen and tracks fullscreen state', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.ok(html.includes('id="fix-result-fullscreen"'));
+  assert.ok(html.includes('Restore screen'));
+  assert.ok(source.includes("$('fix-result-fullscreen')?.addEventListener('click',()=>toggleWorkspaceFullscreen(result))"));
+  assert.ok(source.includes("document.addEventListener('fullscreenchange',syncFullscreenButtons)"));
 });
