@@ -37,7 +37,7 @@ function renderPassage(){
  const statuses=new Array(original.length).fill('');
  const expectedTokens=[...original.matchAll(/\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
  const typedTokens=[...input.matchAll(/\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
- const alignment=TypingMaster.alignWords(expectedTokens.map(x=>x.text),typedTokens.map(x=>x.text));
+ const alignment=TypingMaster.alignWordsByPosition(expectedTokens.map(x=>x.text),typedTokens.map(x=>x.text));
  function mapWordChars(expected,typedWord,start){
   TypingMaster.alignCharacters(expected,typedWord).forEach((status,index)=>{statuses[start+index]=status==='correct'?'self-char-correct':'self-char-wrong';});
  }
