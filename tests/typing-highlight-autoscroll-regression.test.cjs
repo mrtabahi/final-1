@@ -144,3 +144,22 @@ test('Fix Accuracy treats the configured maximum error count as inclusive for bo
   assert.ok(source.includes('const passed=errorCount<=currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet'));
   assert.ok(source.includes("if(initialBsf.totalErrors>currentConfig.maxErrors&&initialCrpf.totalErrors>currentConfig.maxErrors&&reason==='Passage complete')"));
 });
+
+test('Fix Accuracy toolbar active states preserve icon nodes and use green styling', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../css/fix-accuracy.css'), 'utf8');
+  assert.ok(source.includes("button.classList.toggle('is-active', Boolean(enabled))"));
+  assert.ok(source.includes("b.classList.toggle('is-active',typingMode==='offscreen')"));
+  assert.ok(source.includes("const label=b.querySelector('.control-label')"));
+  assert.ok(css.includes('.compact-tip-control.is-active'));
+  assert.ok(css.includes('#22c55e'));
+});
+
+test('Fix Accuracy result screen can restore fullscreen and tracks fullscreen state', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.ok(html.includes('id="fix-result-fullscreen"'));
+  assert.ok(html.includes('Restore screen'));
+  assert.ok(source.includes("$('fix-result-fullscreen')?.addEventListener('click',()=>toggleWorkspaceFullscreen(result))"));
+  assert.ok(source.includes("document.addEventListener('fullscreenchange',syncFullscreenButtons)"));
+});
