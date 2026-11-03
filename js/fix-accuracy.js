@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const visibleLines=Math.max(1,Math.floor(host.clientHeight/lineHeight));
     const lineFromTop=Math.max(0,Math.floor((markerRect.top-hostRect.top)/lineHeight));
     const wordIndex=Number(marker.dataset.wordIndex);
-    const typedCurrentWord=(input.value.match(/[^\\s]+$/u)||[''])[0];
+    const typedCurrentWord=(input.value.match(/[^\s]+$/u)||[''])[0];
     const nextWord=host.querySelector('.fix-word[data-word-index="'+(wordIndex+1)+'"]');
     const isLastWordOnLine=!nextWord||nextWord.getBoundingClientRect().top-markerRect.top>lineHeight*.5;
     const wordFinished=typedCurrentWord.length>=marker.textContent.length;
