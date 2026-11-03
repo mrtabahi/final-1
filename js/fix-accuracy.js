@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const typingDefaults=TypingExperienceConfig;
   const folderSelect=$('fix-folder'), passageSelect=$('fix-passage-select'), customInput=$('fix-custom'), form=$('fix-setup-form');
   const setup=$('setup-panel'), game=$('game-panel'), result=$('result-panel'), input=$('fix-input');
-  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, backspacePressCount=0, typingMode='screen', modeLocked=false, selectedFormula='bsf', finalElapsed=0, finalReason='', activeResultAlignment=null;
+  let folders=[], passages=[], activePassage='', startedAt=0, interval=null, finished=false, errorCount=0, currentConfig=null, passageHidden=false, highlightEnabled=true, backspacePressCount=0, typingMode='screen', modeLocked=false, selectedFormula='bsf', finalElapsed=0, finalReason='', activeResultAlignment=null, lastAutoScrolledWordIndex=-1;
   const tokenize = text => String(text||'').match(/\S+/gu)||[];
   const words = text => tokenize(text);
   function announce(text){ if(!currentConfig||currentConfig.voice!=='on'||!('speechSynthesis' in window))return; try{speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(String(text));utter.rate=1;utter.pitch=1;utter.lang='en-US';speechSynthesis.speak(utter);}catch(e){console.debug('Speech unavailable',e);} }
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const passage=await getPassage();activePassage=String(passage.passage||'').trim();if(!activePassage)throw new Error('Passage cannot be empty.');
       currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:($('fix-timer').value==='custom'?Math.max(1,Number($('fix-custom-minutes').value)||1)*60:Number($('fix-timer').value)),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
       $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
-      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;backspacePressCount=0;finished=false;startedAt=0;passageHidden=false;typingMode='screen';modeLocked=false;syncTypingModeButton();highlightEnabled=$('fix-highlight-setting').value==='on';fixFontControls.set(19.2);syncToggleButton($('fix-toggle-highlight'),highlightEnabled,'Highlight: On','Highlight: Off','🖍','🖍','Highlight: show or hide correct and incorrect character colours.');
+      input.value='';input.disabled=false;input.readOnly=false;errorCount=0;backspacePressCount=0;lastAutoScrolledWordIndex=-1;finished=false;startedAt=0;passageHidden=false;typingMode='screen';modeLocked=false;syncTypingModeButton();highlightEnabled=$('fix-highlight-setting').value==='on';fixFontControls.set(19.2);syncToggleButton($('fix-toggle-highlight'),highlightEnabled,'Highlight: On','Highlight: Off','🖍','🖍','Highlight: show or hide correct and incorrect character colours.');
       $('fix-clock').textContent='00:00:00';
       $('fix-passage-display').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
     }catch(err){alert(err.message||'Unable to start game.');}
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let cursor=0;
     expectedWords.forEach((match,index)=>{
       if(match.index>cursor)host.appendChild(document.createTextNode(expected.slice(cursor,match.index)));
-      const wordNode=document.createElement('span');wordNode.className='fix-word';
+      const wordNode=document.createElement('span');wordNode.className='fix-word';wordNode.dataset.wordIndex=String(index);
       if(index===currentExpectedIndex){
         wordNode.classList.add('word-position-current');
         if(highlightEnabled)wordNode.classList.add('word-current');
@@ -109,10 +109,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     const marker=host?.querySelector('.word-position-current');
     if(!host||!marker||passageHidden||typingMode!=='screen')return;
     const hostRect=host.getBoundingClientRect(),markerRect=marker.getBoundingClientRect();
+    const computed=getComputedStyle(host);
+    const parsedLineHeight=parseFloat(computed.lineHeight);
+    const fontSize=parseFloat(computed.fontSize)||19.2;
+    const lineHeight=Number.isFinite(parsedLineHeight)&&parsedLineHeight>0?parsedLineHeight:fontSize*1.8;
+    const visibleLines=Math.max(1,Math.floor(host.clientHeight/lineHeight));
+    const lineFromTop=Math.max(0,Math.floor((markerRect.top-hostRect.top)/lineHeight));
+    const wordIndex=Number(marker.dataset.wordIndex);
+    const typedCurrentWord=(input.value.match(/[^\\s]+$/u)||[''])[0];
+    const nextWord=host.querySelector('.fix-word[data-word-index="'+(wordIndex+1)+'"]');
+    const isLastWordOnLine=!nextWord||nextWord.getBoundingClientRect().top-markerRect.top>lineHeight*.5;
+    const wordFinished=typedCurrentWord.length>=marker.textContent.length;
+    // Scroll exactly one measured rendered line when the candidate finishes the
+    // last word on the third visible line from the bottom. Geometry + computed
+    // line-height keeps this stable across font sizes, zoom and responsive wraps.
+    if(isLastWordOnLine&&wordFinished&&lineFromTop>=Math.max(0,visibleLines-3)&&wordIndex!==lastAutoScrolledWordIndex){
+      lastAutoScrolledWordIndex=wordIndex;
+      const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      host.scrollTo({top:host.scrollTop+lineHeight,behavior:reduceMotion?'auto':'smooth'});
+      return;
+    }
+    // Safety net for unusual viewport/font combinations: never let the active
+    // word disappear above or below the passage viewport.
     const topGap=markerRect.top-hostRect.top,bottomGap=hostRect.bottom-markerRect.bottom;
-    const margin=Math.min(36,host.clientHeight*.16);
-    if(topGap<margin)host.scrollTop-=margin-topGap;
-    else if(bottomGap<margin)host.scrollTop+=margin-bottomGap;
+    const margin=Math.min(lineHeight*.5,host.clientHeight*.12);
+    if(topGap<0)host.scrollTop=Math.max(0,host.scrollTop+topGap);
+    else if(bottomGap<0)host.scrollTo({top:host.scrollTop-bottomGap+margin,behavior:'smooth'});
   }
   function tick(){
     if(finished)return;const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
@@ -132,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     errorCount=score.totalErrors;
     $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
     if(errorCount>previousErrors)announce(Math.max(1,currentConfig.maxErrors-previousErrors));
-    if(errorCount>=currentConfig.maxErrors){finish('Maximum errors reached');return;}
+    if(errorCount>currentConfig.maxErrors){finish('Maximum errors reached');return;}
     if(hasTrailingSpace&&words(value).length>=words(activePassage).length){finish('Passage complete');return;}
   }
   input.addEventListener('keydown',e=>{
@@ -186,7 +208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const score=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,{freeErrorPct:0.05,penaltyPerError:10},formula,backspacePressCount,true);
     errorCount=score.totalErrors;
     const gross=score.grossWpm,net=score.netWpm,accuracy=score.accuracy;
-    const passed=finalReason!=='Maximum errors reached'&&errorCount<currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
+    const passed=finalReason!=='Maximum errors reached'&&errorCount<=currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
     const methodName=formula.toUpperCase();
     const status=$('fix-result-status');
     status.textContent=methodName+' '+(passed?'PASS':'FAIL');
@@ -213,15 +235,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);
     $('fix-result-max-errors').textContent=currentConfig.maxErrors;
     const tones={
-      gross: gross>=currentConfig.minGross?'good':'bad',
-      net: net>=currentConfig.minNet?'good':'bad',
-      accuracy: accuracy>=95?'good':accuracy>=85?'warn':'bad',
-      errors: errorCount<currentConfig.maxErrors?'good':'bad',
-      allowed: 'info', excess: Number(score.excessErrors)>0?'bad':'good',
-      penalty: Number(score.penaltyWpm)>0?'warn':'good',
-      correctWord: 'good'
+      gross: gross>=currentConfig.minGross?'mint':'pink',
+      net: net>=currentConfig.minNet?'sky':'pink',
+      accuracy: accuracy>=95?'mint':accuracy>=85?'yellow':'pink',
+      errors: errorCount<=currentConfig.maxErrors?'mint':'pink',
+      allowed: 'lavender', excess: Number(score.excessErrors)>0?'pink':'mint',
+      penalty: Number(score.penaltyWpm)>0?'yellow':'mint',
+      correctWord: 'sky'
     };
-    Object.entries(tones).forEach(([key,tone])=>{const node=$('fix-result-'+key);if(node){const tile=node.closest('.fix-result-grid > div');if(tile){tile.classList.remove('metric-good','metric-warn','metric-bad','metric-info');tile.classList.add('metric-'+tone);}}});
+    Object.entries(tones).forEach(([key,tone])=>{const node=$('fix-result-'+key);if(node){const tile=node.closest('.fix-result-grid > div');if(tile){tile.classList.remove('metric-good','metric-warn','metric-bad','metric-info','metric-pink','metric-yellow','metric-sky','metric-lavender','metric-mint');tile.classList.add('metric-'+tone);}}});
     document.querySelectorAll('[data-result-formula]').forEach(button=>{
       const active=button.dataset.resultFormula===formula;
       button.classList.toggle('active',active);
@@ -236,7 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     finalElapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
     const initialScore=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',backspacePressCount,true);
     errorCount=initialScore.totalErrors;
-    if(errorCount>=currentConfig.maxErrors&&reason==='Passage complete')reason='Maximum errors reached';
+    if(errorCount>currentConfig.maxErrors&&reason==='Passage complete')reason='Maximum errors reached';
     finalReason=reason;selectedFormula='bsf';
     finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
     $('fix-typed-error').textContent=String(errorCount);
