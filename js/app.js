@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
         const expectedWords=[...passage.matchAll(/\S+/gu)],typedWords=typed.match(/\S+/gu)||[];
         const committedCount=/\s$/u.test(typed)?typedWords.length:Math.max(0,typedWords.length-1);
         const typedIndexByExpected=new Map(),committedMissingExpected=new Set();let expectedCursor=0,typedCursor=0;
-        const aligned=TypingMaster.alignWords(expectedWords.map(item=>item[0]),typedWords);
+        const aligned=TypingMaster.alignWordsByPosition(expectedWords.map(item=>item[0]),typedWords);
         for(const item of aligned){if(item.type==='match'||item.type==='substitute'){typedIndexByExpected.set(expectedCursor,typedCursor);expectedCursor++;typedCursor++;}else if(item.type==='delete'){if(typedCursor<committedCount)committedMissingExpected.add(expectedCursor);expectedCursor++;}else if(item.type==='insert'){typedCursor++;}}
         const fragment=document.createDocumentFragment();let cursor=0;
         expectedWords.forEach((match,wordIndex)=>{
