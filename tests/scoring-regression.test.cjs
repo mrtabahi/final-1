@@ -289,3 +289,26 @@ test('current allowance remains keystroke-based even when freeErrorPct config di
   assert.equal(twentyPct.allowedErrors, 1);
 });
 
+
+
+test('live positional alignment never jumps to a later duplicate word occurrence', () => {
+  const expected = ['start', 'red', 'middle', 'red', 'finish'];
+  const typed = ['start', 'red', 'red'];
+  const aligned = scoring.alignWordsByPosition(expected, typed);
+  assert.deepEqual(Array.from(aligned.map(item => item.type)), ['match', 'match', 'substitute', 'delete', 'delete']);
+  assert.equal(aligned[2].expectedIndex, 2);
+  assert.equal(aligned[2].typedIndex, 2);
+  assert.equal(aligned[2].expected, 'middle');
+  assert.equal(aligned[2].typed, 'red');
+});
+
+test('live positional alignment keeps repeated letters attached to their original word slot', () => {
+  const expected = ['the', 'letter', 'later', 'letter', 'ends'];
+  const typed = ['the', 'letter', 'letter'];
+  const aligned = scoring.alignWordsByPosition(expected, typed);
+  assert.equal(aligned[2].expected, 'later');
+  assert.equal(aligned[2].typed, 'letter');
+  assert.equal(aligned[2].type, 'substitute');
+  assert.equal(aligned[3].expected, 'letter');
+  assert.equal(aligned[3].type, 'delete');
+});

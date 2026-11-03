@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Keep the just-committed word highlighted while Space is held/after it.
     // Advance to the next word only when its first character is actually typed.
     const committedCount=Math.max(0,typedWords.length-1);
-    const alignment=TypingMaster.alignWords(expectedWords.map(match=>match[0]),typedWords);
+    const alignment=TypingMaster.alignWordsByPosition(expectedWords.map(match=>match[0]),typedWords);
     let expectedCursor=0,typedCursor=0,currentExpectedIndex=-1;
     for(const item of alignment){
       if(item.type==='match'||item.type==='substitute'){
