@@ -166,3 +166,12 @@
 #fix-result-status.try-again{box-shadow:0 0 0 1px #fda4af,0 0 22px #fb718530,0 8px 20px #dc262618}
 #fix-passage-display{scroll-behavior:smooth;scrollbar-gutter:stable;overscroll-behavior:contain}
 @media(prefers-reduced-motion:reduce){#fix-passage-display{scroll-behavior:auto}.fix-result-grid>div{transition:none}}
+
+
+/* Fix Accuracy toolbar: clearly communicate enabled controls without changing their icon. */
+#game-panel .compact-tip-control.is-active,
+#result-panel .compact-tip-control.is-active{background:linear-gradient(135deg,#dcfce7,#bbf7d0)!important;border-color:#22c55e!important;color:#166534!important;box-shadow:0 0 0 2px #22c55e22,0 5px 14px #16a34a20!important}
+#game-panel .compact-tip-control.is-active .control-icon,
+#result-panel .compact-tip-control.is-active .control-icon{color:#15803d!important;filter:drop-shadow(0 0 4px #22c55e55)}
+#game-panel .compact-tip-control:focus-visible,#result-panel .compact-tip-control:focus-visible{outline:3px solid #16a34a;outline-offset:2px}
+#fix-passage-display{scroll-padding-block:1.5rem;scroll-snap-type:none;}
