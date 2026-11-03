@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   function syncToggleButton(button, enabled, onLabel, offLabel, onIcon, offIcon, tooltip) {
     button.setAttribute('aria-pressed', String(Boolean(enabled)));
+    button.classList.toggle('is-active', Boolean(enabled));
     button.dataset.icon = enabled ? onIcon : offIcon;
     button.dataset.tooltip = tooltip;
     const label=button.querySelector('.control-label');
@@ -150,11 +151,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   function processCommittedWords(){
     const value=input.value,hasTrailingSpace=/\s$/u.test(value),previousErrors=errorCount;
     const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
-    const score=TypingMaster.calculateCommittedScore(activePassage,value,elapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',backspacePressCount,false);
-    errorCount=score.totalErrors;
+    const scoringConfig={freeErrorPct:0.05,penaltyPerError:10};
+    const bsfScore=TypingMaster.calculateCommittedScore(activePassage,value,elapsed,scoringConfig,'bsf',backspacePressCount,false);
+    const crpfScore=TypingMaster.calculateCommittedScore(activePassage,value,elapsed,scoringConfig,'crpf',backspacePressCount,false);
+    errorCount=bsfScore.totalErrors;
     $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
     if(errorCount>previousErrors)announce(Math.max(1,currentConfig.maxErrors-previousErrors));
-    if(errorCount>currentConfig.maxErrors){finish('Maximum errors reached');return;}
+    // Keep the attempt alive while either official formula remains within its
+    // configured error allowance. The result selector must not inherit a BSF-only fail.
+    if(bsfScore.totalErrors>currentConfig.maxErrors&&crpfScore.totalErrors>currentConfig.maxErrors){finish('Maximum errors reached');return;}
     if(hasTrailingSpace&&words(value).length>=words(activePassage).length){finish('Passage complete');return;}
   }
   input.addEventListener('keydown',e=>{
@@ -208,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const score=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,{freeErrorPct:0.05,penaltyPerError:10},formula,backspacePressCount,true);
     errorCount=score.totalErrors;
     const gross=score.grossWpm,net=score.netWpm,accuracy=score.accuracy;
-    const passed=finalReason!=='Maximum errors reached'&&errorCount<=currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
+    const passed=errorCount<=currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
     const methodName=formula.toUpperCase();
     const status=$('fix-result-status');
     status.textContent=methodName+' '+(passed?'PASS':'FAIL');
@@ -256,9 +261,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   function finish(reason){
     if(finished)return;
     finalElapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
-    const initialScore=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,{freeErrorPct:0.05,penaltyPerError:10},'bsf',backspacePressCount,true);
-    errorCount=initialScore.totalErrors;
-    if(errorCount>currentConfig.maxErrors&&reason==='Passage complete')reason='Maximum errors reached';
+    const scoringConfig={freeErrorPct:0.05,penaltyPerError:10};
+    const initialBsf=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,scoringConfig,'bsf',backspacePressCount,true);
+    const initialCrpf=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,scoringConfig,'crpf',backspacePressCount,true);
+    errorCount=initialBsf.totalErrors;
+    if(initialBsf.totalErrors>currentConfig.maxErrors&&initialCrpf.totalErrors>currentConfig.maxErrors&&reason==='Passage complete')reason='Maximum errors reached';
     finalReason=reason;selectedFormula='bsf';
     finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
     $('fix-typed-error').textContent=String(errorCount);
@@ -269,8 +276,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   function syncTypingModeButton(){const b=$('fix-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
   $('fix-mode-switch')?.addEventListener('click',()=>{if(modeLocked)return;typingMode=typingMode==='screen'?'offscreen':'screen';renderPassage();syncTypingModeButton();});
-  $('fix-fullscreen')?.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await game.requestFullscreen();}catch(_){$('fix-load-status').textContent='Full screen is unavailable in this browser.';}});
-  document.addEventListener('fullscreenchange',()=>{const b=$('fix-fullscreen');if(b)b.textContent=document.fullscreenElement?'Exit full screen':'Full screen';});
+  async function toggleWorkspaceFullscreen(target){
+    try{
+      if(document.fullscreenElement) await document.exitFullscreen();
+      else if(target?.requestFullscreen) await target.requestFullscreen();
+      else $('fix-load-status').textContent='Full screen is unavailable in this browser.';
+    }catch(_){$('fix-load-status').textContent='Full screen is unavailable in this browser.';}
+  }
+  $('fix-fullscreen')?.addEventListener('click',()=>toggleWorkspaceFullscreen(game));
+  $('fix-result-fullscreen')?.addEventListener('click',()=>toggleWorkspaceFullscreen(result));
+  function syncFullscreenButtons(){
+    const active=Boolean(document.fullscreenElement);
+    const gameButton=$('fix-fullscreen'),resultButton=$('fix-result-fullscreen');
+    if(gameButton){gameButton.classList.toggle('is-active',active&&document.fullscreenElement===game);gameButton.setAttribute('aria-pressed',String(active&&document.fullscreenElement===game));const label=gameButton.querySelector('.control-label');if(label)label.textContent=active?'Exit full screen':'Full screen';}
+    if(resultButton){const on=active&&document.fullscreenElement===result;resultButton.classList.toggle('is-active',on);resultButton.setAttribute('aria-pressed',String(on));const label=resultButton.querySelector('.control-label');if(label)label.textContent=on?'Exit full screen':'Restore screen';}
+  }
+  document.addEventListener('fullscreenchange',syncFullscreenButtons);
   $('fix-toggle-highlight').addEventListener('click',()=>{highlightEnabled=!highlightEnabled;syncToggleButton($('fix-toggle-highlight'),highlightEnabled,'Highlight: On','Highlight: Off','🖍','🖍','Highlight: show or hide correct and incorrect character colours.');renderPassage();});
   $('fix-toggle-passage').addEventListener('click',()=>{passageHidden=!passageHidden;syncToggleButton($('fix-toggle-passage'),passageHidden,'Show passage','Hide passage','👁','🙈','Hide passage: hide the passage from view or show it again.');renderPassage();});
   const fixFontControls=TypingWorkspaceControls.bindFontControls({downButton:$('fix-font-down'),upButton:$('fix-font-up'),targets:[$('fix-passage-display'),input],initialSize:19.2,min:14.4,max:32,step:1.6,onChange:renderPassage});
@@ -280,6 +301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(interval){clearInterval(interval);interval=null;}
     startedAt=0;finished=false;errorCount=0;backspacePressCount=0;activePassage='';
     input.value='';input.disabled=false;input.readOnly=false;
+    if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
     $('fix-clock').textContent='00:00:00';$('fix-live-gross').textContent='0.00';$('fix-live-net').textContent='0.00';$('fix-live-accuracy').textContent='0.00%';
     $('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+(currentConfig?.maxErrors||5);
     game.hidden=true;result.hidden=true;setup.hidden=false;
