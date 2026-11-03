@@ -387,3 +387,53 @@
   color:inherit!important;background:transparent!important;border:0!important;
   box-shadow:none!important;text-decoration:none!important;font-weight:inherit!important
 }
+
+
+/* Formula-aware Self Test result: calm pastel neon, high-contrast status. */
+.self-result-status{display:flex;flex-direction:column;align-items:center;gap:.25rem;margin:1rem 0;padding:1.1rem;border:1px solid #fda4af;border-radius:14px;background:linear-gradient(135deg,#fff1f2,#fff7ed);text-align:center;box-shadow:0 7px 20px rgba(244,63,94,.10),0 0 0 1px rgba(251,113,133,.12) inset}
+.self-result-status-kicker{font-size:.68rem;font-weight:800;letter-spacing:.13em;color:#64748b}
+.self-result-status strong{font-size:clamp(1.55rem,4vw,2.25rem);line-height:1.15;color:#9f1239}
+.self-result-status>span:last-child{font-size:.86rem;font-weight:650;color:#475569}
+.self-result-status.is-pass{border-color:#6ee7b7;background:linear-gradient(135deg,#ecfdf5,#eff6ff);box-shadow:0 7px 20px rgba(16,185,129,.12),0 0 0 1px rgba(52,211,153,.15) inset}
+.self-result-status.is-pass strong{color:#047857}
+.self-result-status.is-fail{border-color:#fda4af;background:linear-gradient(135deg,#fff1f2,#fff7ed)}
+.self-result-grid>div.metric-pink{background:linear-gradient(145deg,#fff1f8,#fce7f3);border-color:#f9a8d4;box-shadow:0 4px 14px #ec48991c}
+.self-result-grid>div.metric-pink strong{color:#9d174d}
+.self-result-grid>div.metric-yellow{background:linear-gradient(145deg,#fffbeb,#fef3c7);border-color:#facc15;box-shadow:0 4px 14px #eab3081c}
+.self-result-grid>div.metric-yellow strong{color:#854d0e}
+.self-result-grid>div.metric-sky{background:linear-gradient(145deg,#f0f9ff,#dbeafe);border-color:#7dd3fc;box-shadow:0 4px 14px #0ea5e91c}
+.self-result-grid>div.metric-sky strong{color:#075985}
+.self-result-grid>div.metric-lavender{background:linear-gradient(145deg,#faf5ff,#ede9fe);border-color:#c4b5fd;box-shadow:0 4px 14px #8b5cf61a}
+.self-result-grid>div.metric-lavender strong{color:#5b21b6}
+.self-result-grid>div.metric-mint{background:linear-gradient(145deg,#ecfdf5,#d1fae5);border-color:#6ee7b7;box-shadow:0 4px 14px #10b9811a}
+.self-result-grid>div.metric-mint strong{color:#065f46}
+.self-formula-card.is-pass{border-color:#6ee7b7;background:linear-gradient(145deg,#f0fdf4,#fff)}
+.self-formula-card.is-fail{border-color:#fda4af;background:linear-gradient(145deg,#fff1f2,#fff)}
+.self-formula-card.is-pass>strong{color:#047857}
+.self-formula-card.is-fail>strong{color:#be123c}
+.self-formula-card .self-formula-outcome{font-weight:750}
+.self-formula-card.is-pass .self-formula-outcome{color:#047857}
+.self-formula-card.is-fail .self-formula-outcome{color:#be123c}
+.self-formula-card .self-formula-metric.metric-mint{color:#047857}
+.self-formula-card .self-formula-metric.metric-pink{color:#be123c}
+.self-formula-card .self-formula-metric.metric-sky{color:#075985}
+@media print{
+ #self-result .self-result-status{display:flex!important;margin:8px 0!important;padding:9px!important;border:1.5px solid #94a3b8!important;border-radius:7px!important;box-shadow:none!important;break-inside:avoid!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ #self-result .self-result-status.is-pass{background:#ecfdf5!important;border-color:#10b981!important}
+ #self-result .self-result-status.is-pass strong{color:#065f46!important}
+ #self-result .self-result-status.is-fail{background:#fff1f2!important;border-color:#e11d48!important}
+ #self-result .self-result-status.is-fail strong{color:#9f1239!important}
+ #self-result .self-result-status-kicker,#self-result .self-result-status>span:last-child{color:#334155!important}
+ #self-result .self-result-grid>div.metric-pink{background:#fce7f3!important;border-top-color:#db2777!important}
+ #self-result .self-result-grid>div.metric-yellow{background:#fef3c7!important;border-top-color:#d97706!important}
+ #self-result .self-result-grid>div.metric-sky{background:#dbeafe!important;border-top-color:#0284c7!important}
+ #self-result .self-result-grid>div.metric-lavender{background:#ede9fe!important;border-top-color:#7c3aed!important}
+ #self-result .self-result-grid>div.metric-mint{background:#d1fae5!important;border-top-color:#059669!important}
+ #self-result .self-formula-card.is-pass{background:#ecfdf5!important;border-color:#10b981!important}
+ #self-result .self-formula-card.is-fail{background:#fff1f2!important;border-color:#e11d48!important}
+ #self-result .self-formula-card,#self-result .self-result-status,#self-result .self-formula-switch{break-inside:avoid!important}
+ #self-result .self-formula-comparison,#self-result .self-analysis-breakdown,#self-result .self-result-comparison{break-inside:auto!important}
+ #self-result .self-result-print-content h3{break-after:avoid!important}
+ #self-result .self-result-print-content .result-content{max-height:none!important;overflow:visible!important}
+}
+@media(prefers-reduced-motion:reduce){.self-result-status,.self-result-grid>div{transition:none!important}}
