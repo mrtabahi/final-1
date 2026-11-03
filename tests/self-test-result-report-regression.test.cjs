@@ -10,7 +10,7 @@ const css = fs.readFileSync(path.join(__dirname, '../css/self-test.css'), 'utf8'
 
 test('Self Test selected formula renders PASS or FAIL from the canonical engine result', () => {
   assert.match(js, /const passed=score\.passed===true/u);
-  assert.match(js, /scoringFormula\.toUpperCase\(\)\+\(passed\?' PASS':' FAIL'\)/u);
+  assert.match(js, /scoringFormula\.toUpperCase\(\)\+' '\+\(passed\?'PASS':'FAIL'\)/u);
   assert.match(html, /id="self-result-status"/u);
   assert.match(js, /value\.passed===true\?'PASS':'FAIL'/u);
 });
