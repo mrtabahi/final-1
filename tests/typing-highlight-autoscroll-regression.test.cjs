@@ -163,3 +163,20 @@ test('Fix Accuracy result screen can restore fullscreen and tracks fullscreen st
   assert.ok(source.includes("$('fix-result-fullscreen')?.addEventListener('click',()=>toggleWorkspaceFullscreen(result))"));
   assert.ok(source.includes("document.addEventListener('fullscreenchange',syncFullscreenButtons)"));
 });
+
+
+test('Main Typing Test live highlighting uses fixed original word positions, not global duplicate matching', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  assert.ok(source.includes('TypingMaster.alignWordsByPosition(expectedWords.map(item=>item[0]),typedWords)'));
+  assert.ok(!source.includes('const aligned=TypingMaster.alignWords(expectedWords.map(item=>item[0]),typedWords)'));
+});
+
+test('Self Test live character highlighting uses fixed original word positions', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/self-test.js'), 'utf8');
+  assert.ok(source.includes('TypingMaster.alignWordsByPosition(expectedTokens.map(x=>x.text),typedTokens.map(x=>x.text))'));
+});
+
+test('Fix Accuracy live current-word marker uses fixed original word positions', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.ok(source.includes('TypingMaster.alignWordsByPosition(expectedWords.map(match=>match[0]),typedWords)'));
+});
