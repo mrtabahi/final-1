@@ -109,33 +109,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     const host=$('fix-passage-display');
     const marker=host?.querySelector('.word-position-current');
     if(!host||!marker||passageHidden||typingMode!=='screen')return;
-    const hostRect=host.getBoundingClientRect(),markerRect=marker.getBoundingClientRect();
-    const computed=getComputedStyle(host);
-    const parsedLineHeight=parseFloat(computed.lineHeight);
-    const fontSize=parseFloat(computed.fontSize)||19.2;
-    const lineHeight=Number.isFinite(parsedLineHeight)&&parsedLineHeight>0?parsedLineHeight:fontSize*1.8;
-    const visibleLines=Math.max(1,Math.floor(host.clientHeight/lineHeight));
-    const lineFromTop=Math.max(0,Math.floor((markerRect.top-hostRect.top)/lineHeight));
+
+    const typedCurrentWord=(input.value.match(/[^\\s]+$/u)||[''])[0];
+    if(!typedCurrentWord)return;
+
+    const hostRect=host.getBoundingClientRect();
+    const markerRect=marker.getBoundingClientRect();
+    const style=getComputedStyle(host);
+    const number=(value)=>{const parsed=parseFloat(value);return Number.isFinite(parsed)?parsed:0;};
+    const fontSize=number(style.fontSize)||19.2;
+    const lineHeight=number(style.lineHeight)||fontSize*1.72;
+    const contentTop=hostRect.top+number(style.borderTopWidth)+number(style.paddingTop);
+    const contentBottom=hostRect.bottom-number(style.borderBottomWidth)-number(style.paddingBottom);
+    const safeBottom=contentBottom-lineHeight*2;
+    const safeTop=contentTop+lineHeight*.25;
     const wordIndex=Number(marker.dataset.wordIndex);
-    const typedCurrentWord=(input.value.match(/[^\s]+$/u)||[''])[0];
-    const nextWord=host.querySelector('.fix-word[data-word-index="'+(wordIndex+1)+'"]');
-    const isLastWordOnLine=!nextWord||nextWord.getBoundingClientRect().top-markerRect.top>lineHeight*.5;
-    const wordFinished=typedCurrentWord.length>=marker.textContent.length;
-    // Scroll exactly one measured rendered line when the candidate finishes the
-    // last word on the third visible line from the bottom. Geometry + computed
-    // line-height keeps this stable across font sizes, zoom and responsive wraps.
-    if(isLastWordOnLine&&wordFinished&&lineFromTop>=Math.max(0,visibleLines-3)&&wordIndex!==lastAutoScrolledWordIndex){
-      lastAutoScrolledWordIndex=wordIndex;
-      const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      host.scrollTo({top:host.scrollTop+lineHeight,behavior:reduceMotion?'auto':'smooth'});
-      return;
+    const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    // Use the actual rendered word bounds (not a guessed line number). Keep two
+    // readable lines ahead of the active word and move by the measured overflow.
+    // This remains correct for wrapped words, zoom, font resizing and mobile widths.
+    const lowerOverflow=markerRect.bottom-safeBottom;
+    if(lowerOverflow>0&&wordIndex!==lastAutoScrolledWordIndex){
+      const maxScroll=Math.max(0,host.scrollHeight-host.clientHeight);
+      const target=Math.min(maxScroll,host.scrollTop+Math.max(lineHeight,lowerOverflow));
+      if(target>host.scrollTop+1){
+        lastAutoScrolledWordIndex=wordIndex;
+        host.scrollTo({top:target,behavior:reduceMotion?'auto':'smooth'});
+        return;
+      }
     }
-    // Safety net for unusual viewport/font combinations: never let the active
-    // word disappear above or below the passage viewport.
-    const topGap=markerRect.top-hostRect.top,bottomGap=hostRect.bottom-markerRect.bottom;
-    const margin=Math.min(lineHeight*.5,host.clientHeight*.12);
-    if(topGap<0)host.scrollTop=Math.max(0,host.scrollTop+topGap);
-    else if(bottomGap<0)host.scrollTo({top:host.scrollTop-bottomGap+margin,behavior:'smooth'});
+
+    // If layout changes or a very long word reaches an edge, keep the full
+    // active word visible without fighting the browser's smooth-scroll animation.
+    if(markerRect.top<safeTop){
+      const target=Math.max(0,host.scrollTop-(safeTop-markerRect.top));
+      host.scrollTo({top:target,behavior:reduceMotion?'auto':'smooth'});
+    }else if(markerRect.bottom>contentBottom){
+      const target=Math.min(Math.max(0,host.scrollHeight-host.clientHeight),host.scrollTop+(markerRect.bottom-contentBottom)+lineHeight*.25);
+      host.scrollTo({top:target,behavior:reduceMotion?'auto':'smooth'});
+    }
   }
   function tick(){
     if(finished)return;const elapsed=startedAt?Math.max(.001,(performance.now()-startedAt)/1000):.001;
