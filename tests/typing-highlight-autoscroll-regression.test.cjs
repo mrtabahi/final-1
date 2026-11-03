@@ -22,7 +22,11 @@ test('Fix Accuracy keeps the current passage position visible after input', () =
   assert.match(source, /const committedSpace=\/\\s\$\/u\.test\(input\.value\)/u);
   assert.match(source, /if\(!committedSpace\)keepCurrentPassageVisible\(\)/u);
   assert.match(source, /processCommittedWords\(\);tick\(\)/u);
-  assert.match(source, /host\.scrollTop\+=margin-bottomGap/u);
+  assert.match(source, /visibleLines=Math\.max\(1,Math\.floor\(host\.clientHeight\/lineHeight\)\)/u);
+  assert.match(source, /lineFromTop>=Math\.max\(0,visibleLines-3\)/u);
+  assert.match(source, /host\.scrollTo\(\{top:host\.scrollTop\+lineHeight,behavior:reduceMotion\?'auto':'smooth'\}\)/u);
+  assert.match(source, /getComputedStyle\(host\)/u);
+  assert.match(source, /data-word-index/u);
 });
 
 test('Fix Accuracy keeps live source passage clean and annotates mistakes only in result comparison', () => {
@@ -131,4 +135,17 @@ test('Main Typing Test loads the shared AuthManager script only once', () => {
   const html = fs.readFileSync(path.join(__dirname, '../start_test.html'), 'utf8');
   const authScriptCount = html.split('js/auth.js').length - 1;
   assert.equal(authScriptCount, 1, 'duplicate top-level AuthManager declarations break the page script');
+});
+
+test('Fix Accuracy treats the configured maximum error count as inclusive for both formulas', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.match(source, /if\(errorCount>currentConfig\.maxErrors\)\{finish\('Maximum errors reached'\)/u);
+  assert.match(source, /errorCount<=currentConfig\.maxErrors&&gross>=currentConfig\.minGross&&net>=currentConfig\.minNet/u);
+  assert.match(source, /if\(errorCount>currentConfig\.maxErrors&&reason==='Passage complete'\)/u);
+});
+test('Fix Accuracy scorecard includes additional accessible pastel neon feedback colours', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../css/fix-accuracy.css'), 'utf8');
+  for (const colour of ['pink','yellow','sky','lavender','mint']) {
+    assert.match(css, new RegExp('metric-' + colour));
+  }
 });
