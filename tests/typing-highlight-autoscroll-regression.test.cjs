@@ -22,7 +22,11 @@ test('Fix Accuracy keeps the current passage position visible after input', () =
   assert.match(source, /const committedSpace=\/\\s\$\/u\.test\(input\.value\)/u);
   assert.match(source, /if\(!committedSpace\)keepCurrentPassageVisible\(\)/u);
   assert.match(source, /processCommittedWords\(\);tick\(\)/u);
-  assert.match(source, /visibleLines=Math\.max\(1,Math\.floor\(host\.clientHeight\/lineHeight\)\)/u);\n  assert.match(source, /lineFromTop>=Math\.max\(0,visibleLines-3\)/u);\n  assert.match(source, /host\.scrollTo\(\{top:host\.scrollTop\+lineHeight,behavior:reduceMotion\?'auto':'smooth'\}\)/u);\n  assert.match(source, /getComputedStyle\(host\)/u);\n  assert.match(source, /data-word-index/u);
+  assert.match(source, /visibleLines=Math\.max\(1,Math\.floor\(host\.clientHeight\/lineHeight\)\)/u);
+  assert.match(source, /lineFromTop>=Math\.max\(0,visibleLines-3\)/u);
+  assert.match(source, /host\.scrollTo\(\{top:host\.scrollTop\+lineHeight,behavior:reduceMotion\?'auto':'smooth'\}\)/u);
+  assert.match(source, /getComputedStyle\(host\)/u);
+  assert.match(source, /data-word-index/u);
 });
 
 test('Fix Accuracy keeps live source passage clean and annotates mistakes only in result comparison', () => {
