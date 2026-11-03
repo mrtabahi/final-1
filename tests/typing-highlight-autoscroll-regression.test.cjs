@@ -117,7 +117,7 @@ test('all three typing activities expose fullscreen and typing-mode controls', (
   assert.match(scripts.exam, /selectedTypingMode=selectedTypingMode==='page'\?'screen':'page'/u);
   assert.match(scripts.self, /workspace\.requestFullscreen\(/u);
   assert.match(scripts.self, /typingMode=typingMode==='screen'\?'offscreen':'screen'/u);
-  assert.match(scripts.fix, /game\.requestFullscreen\(/u);
+  assert.match(scripts.fix, /target\?\.requestFullscreen\(\)/u);
   assert.match(scripts.fix, /typingMode=typingMode==='screen'\?'offscreen':'screen'/u);
 });
 
