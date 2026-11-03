@@ -149,3 +149,29 @@ test('Fix Accuracy scorecard includes additional accessible pastel neon feedback
     assert.match(css, new RegExp('metric-' + colour));
   }
 });
+
+
+test('Fix Accuracy toolbar exposes a green active state while preserving the control icon', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../css/fix-accuracy.css'), 'utf8');
+  assert.match(source, /button\.classList\.toggle\('is-active', Boolean\(enabled\)\)/u);
+  assert.match(source, /button\.dataset\.icon = enabled \? onIcon : offIcon/u);
+  assert.match(css, /\.compact-tip-control\.is-active/u);
+  assert.match(css, /#22c55e/u);
+});
+
+test('Fix Accuracy formula-specific qualification is not overridden by the other formula finish reason', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.match(source, /const passed=errorCount<=currentConfig\.maxErrors&&gross>=currentConfig\.minGross&&net>=currentConfig\.minNet/u);
+  assert.match(source, /bsfScore\.totalErrors>currentConfig\.maxErrors&&crpfScore\.totalErrors>currentConfig\.maxErrors/u);
+  assert.doesNotMatch(source, /finalReason!=='Maximum errors reached'&&errorCount/u);
+});
+
+test('Fix Accuracy result screen has a working restore fullscreen control', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.match(html, /id="fix-result-fullscreen"/u);
+  assert.match(html, /Restore screen/u);
+  assert.match(source, /fix-result-fullscreen.*toggleWorkspaceFullscreen\(result\)/u);
+  assert.match(source, /document\.addEventListener\('fullscreenchange',syncFullscreenButtons\)/u);
+});
