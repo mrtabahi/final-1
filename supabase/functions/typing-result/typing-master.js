@@ -71,6 +71,17 @@ const TypingMaster = {
     }
     return out;
   },
+  // Live typing feedback must stay anchored to the original word slot.
+  // Global edit-distance alignment is intentionally reserved for final BSF scoring,
+  // where a confirmed omission may legitimately shift later words.
+  alignWordsByPosition(expectedWords, typedWords) {
+    const length=Math.max(expectedWords.length,typedWords.length),out=[];
+    for(let i=0;i<length;i++){
+      const expected=expectedWords[i]??null,typed=typedWords[i]??null;
+      out.push({type:expected===null?'insert':typed===null?'delete':expected===typed?'match':'substitute',expected,typed,expectedIndex:expected===null?null:i,typedIndex:typed===null?null:i});
+    }
+    return out;
+  },
   alignCharacters(expectedText, typedText) {
     const expected=Array.from(String(expectedText??"")), typed=Array.from(String(typedText??""));
     const n=expected.length,m=typed.length;
