@@ -1333,3 +1333,178 @@ body.subscription-page .sub-footer{color:#475569!important;border-color:#e2e8f0!
 @media(max-width:520px){.home-cyber-hero{margin-top:.7rem;padding:1.25rem 1rem 2.5rem;border-radius:18px}.home-cyber-status{font-size:.52rem;letter-spacing:.07em}.home-cyber-overline{margin-top:1.1rem;font-size:.6rem}.home-cyber-copy h1{font-size:clamp(2.25rem,12vw,3.3rem)}.home-cyber-lead{font-size:.88rem;line-height:1.65}.home-cyber-actions{align-items:stretch;flex-direction:column}.home-cyber-actions a{width:100%;font-size:.68rem}.home-cyber-trust{gap:8px 12px}.home-cyber-trust span{font-size:.5rem}.home-cyber-visual{min-height:245px}.home-cyber-terminal-body{padding:15px}.home-cyber-float{padding:7px 9px}.home-cyber-float-top{top:0;right:0}.home-cyber-float-bottom{bottom:0;left:0}.home-cyber-bottomline{right:1rem;left:1rem;font-size:.43rem;letter-spacing:.06em}}
 @media(prefers-reduced-motion:reduce){.home-cyber-hero *{animation:none!important;scroll-behavior:auto!important}.home-cyber-primary,.home-cyber-secondary{transition:none!important}}
 
+
+
+/* =========================================================
+   HOMEPAGE V2 · CYBER INTELLIGENCE INTERFACE
+   Landing-page only. Existing navigation and product flows stay intact.
+   ========================================================= */
+.home-page .home-cyber-hero{
+  --hc-lime:#c9ff57;--hc-cyan:#50f5e2;--hc-violet:#b49aff;--hc-pink:#ff68c8;
+  background:
+    radial-gradient(ellipse at 78% 46%,rgba(114,66,213,.33),transparent 43%),
+    radial-gradient(ellipse at 7% 88%,rgba(15,190,164,.18),transparent 38%),
+    radial-gradient(ellipse at 55% -20%,rgba(255,104,200,.13),transparent 45%),
+    linear-gradient(128deg,#080d18 0%,#111326 48%,#0a1b22 100%);
+  background-size:140% 140%;
+  animation:homeLabAtmosphere 18s ease-in-out infinite alternate;
+  border-color:rgba(80,245,226,.5);
+  box-shadow:0 26px 75px rgba(8,13,28,.28),inset 0 1px rgba(255,255,255,.1),0 0 38px rgba(80,245,226,.08);
+}
+.home-page .home-cyber-hero:before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit;padding:1px;
+  background:conic-gradient(from 0deg,transparent 0 18%,rgba(80,245,226,.75) 24%,transparent 31% 56%,rgba(201,255,87,.65) 64%,transparent 72% 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:.65;animation:homeBorderOrbit 12s linear infinite;
+}
+.home-page .home-cyber-grid{opacity:.28;background-size:29px 29px;mask-image:radial-gradient(ellipse at 65% 50%,#000 0%,transparent 78%)}
+.home-page .home-cyber-scan{
+  z-index:0;opacity:.35;background:linear-gradient(180deg,transparent 0%,rgba(80,245,226,.16) 49%,transparent 52%);
+  background-size:100% 180px;animation:homeScanSweep 8s linear infinite;
+}
+.home-page .home-cyber-copy h1{animation:homeHeroEnter .85s cubic-bezier(.2,.8,.2,1) both}
+.home-page .home-cyber-copy h1 span{
+  display:inline-block;background:linear-gradient(95deg,#d7ff72 0%,#50f5e2 42%,#c6a7ff 72%,#ff8ed8 100%);
+  background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:none;filter:drop-shadow(0 0 16px rgba(80,245,226,.16));
+  animation:homeGradientText 7s linear infinite;
+}
+.home-page .home-cyber-lead{color:#d1d8e8}
+.home-page .home-cyber-status{border-color:#c9ff5755;background:linear-gradient(100deg,#c9ff5715,#50f5e20b);box-shadow:0 0 20px #c9ff5710}
+.home-page .home-cyber-status:after{content:"";width:5px;height:5px;margin-left:3px;border-radius:50%;background:#50f5e2;box-shadow:0 0 10px #50f5e2;animation:homeCyberPulse 1.5s infinite}
+.home-page .home-cyber-primary{background:linear-gradient(105deg,#c9ff57,#50f5e2);border-color:#e6ffad;color:#08161a!important;box-shadow:0 8px 25px #50f5e22a,0 0 0 1px #50f5e222}
+.home-page .home-cyber-primary:hover{box-shadow:0 12px 32px #50f5e244,0 0 22px #c9ff5744}
+.home-page .home-cyber-secondary{border-color:#b49aff66;background:linear-gradient(110deg,#b49aff16,#ff68c80d);color:#e8ddff!important}
+.home-page .home-cyber-secondary:hover{border-color:#b49aff;box-shadow:0 0 22px #b49aff26}
+.home-page .home-cyber-trust span{color:#c0c9d9}
+.home-page .home-cyber-visual{filter:drop-shadow(0 15px 30px #02040a66)}
+.home-page .home-cyber-terminal{
+  border-color:#50f5e277;
+  background:linear-gradient(145deg,rgba(21,28,47,.98),rgba(7,14,25,.99) 75%);
+  box-shadow:0 25px 65px #0008,0 0 0 1px #b49aff22,0 0 34px #50f5e21a,inset 0 1px #ffffff12;
+}
+.home-page .home-cyber-terminal:after{
+  content:"";position:absolute;top:-40%;left:0;right:0;height:38%;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(80,245,226,.1),transparent);
+  animation:homeTerminalScan 6s ease-in-out infinite;
+}
+.home-page .home-cyber-terminal-head{background:linear-gradient(90deg,#50f5e20b,#b49aff12);border-color:#50f5e22b}
+.home-page .home-cyber-terminal-head>b{color:#d8e6f4}
+.home-page .home-cyber-terminal-label span{color:#c9ff57;text-shadow:0 0 12px #c9ff5766}
+.home-page .home-cyber-code{color:#f2f6ff}
+.home-page .home-cyber-code:after{content:"";display:inline-block;width:7px;height:1em;margin-left:5px;vertical-align:-2px;background:#50f5e2;box-shadow:0 0 10px #50f5e2;animation:homeCursorBlink .85s steps(2,start) infinite}
+.home-page .home-cyber-signal i{background:linear-gradient(0deg,#7b5cff,#50f5e2 70%,#c9ff57);box-shadow:0 0 11px #50f5e233}
+.home-page .home-cyber-float{border-color:#50f5e255;background:rgba(10,17,30,.92);box-shadow:0 12px 30px #0007,0 0 18px #50f5e214}
+.home-page .home-cyber-float-top{animation:homeFloatBadge 5s ease-in-out infinite}
+.home-page .home-cyber-float-bottom{animation:homeFloatBadge 6s ease-in-out -2s infinite}
+.home-page .home-cyber-orbit{border-color:#b49aff33}
+.home-page .home-cyber-orbit:after{background:#ff68c8;box-shadow:0 0 15px #ff68c8}
+.home-page .home-cyber-bottomline{color:#9baac0}
+.home-page .home-cyber-bottomline b{color:#50f5e2}
+
+/* Main action launcher becomes a compact command deck */
+.home-page [aria-label="Quick navigation"]>.card{
+  padding:clamp(1rem,2.5vw,1.5rem)!important;
+  border:1px solid #8b9af044!important;border-radius:18px!important;
+  background:linear-gradient(135deg,#11172a,#17162e 55%,#10252b)!important;
+  box-shadow:0 18px 42px #0b10251c,inset 0 1px #ffffff10!important;
+}
+.home-page [aria-label="Quick navigation"]>.card:before{display:none}
+.home-page [aria-label="Quick navigation"]>.card .btn{
+  min-height:50px;display:flex;align-items:center;justify-content:center;gap:.55rem;
+  border:1px solid #7e91b555!important;border-radius:11px!important;
+  background:linear-gradient(135deg,#202a43,#171d31)!important;
+  color:#e9f5ff!important;font-size:.83rem;font-weight:800;letter-spacing:.01em;
+  box-shadow:inset 0 1px #ffffff0c,0 8px 18px #05091644!important;
+}
+.home-page [aria-label="Quick navigation"]>.card .btn:hover{
+  transform:translateY(-3px);border-color:#50f5e2aa!important;
+  background:linear-gradient(120deg,#1c3c49,#29254c)!important;
+  color:#c9ffb4!important;box-shadow:0 12px 26px #50f5e222,0 0 0 1px #50f5e21a!important;
+}
+
+/* Accuracy arcade promo gets a neon console finish */
+.home-page .typing-game-promo{
+  position:relative;overflow:hidden;border:1px solid #b49aff77!important;
+  background:radial-gradient(ellipse at 8% 50%,#50f5e21b,transparent 42%),linear-gradient(115deg,#11162a,#211638 58%,#10282d)!important;
+  color:#f7f4ff!important;box-shadow:0 16px 42px #090d201f, inset 0 1px #ffffff12!important;
+}
+.home-page .typing-game-promo:after{
+  content:"";position:absolute;top:0;bottom:0;left:-45%;width:30%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,#ffffff12,transparent);transform:skewX(-20deg);animation:homePromoSweep 8s ease-in-out infinite;
+}
+.home-page .typing-game-copy strong{color:#fff!important}
+.home-page .typing-game-copy>span:not(.typing-game-kicker){color:#c7d1e3!important}
+.home-page .typing-game-kicker{color:#c9ff57!important}
+.home-page .typing-game-copy>b{color:#50f5e2!important}
+.home-page .typing-game-art{filter:drop-shadow(0 0 16px #50f5e244)}
+
+/* Typing demo: convert the old pale keyboard preview into a matching neon lab */
+.home-page #skTypingDemo{--sk-accent:#50f5e2!important;color:#edf7ff!important;background:radial-gradient(ellipse at 50% 42%,#202b50 0%,#101326 48%,transparent 78%)!important}
+.home-page #skTypingDemo .sk-stage{
+  border:1px solid #50f5e266!important;border-radius:20px!important;
+  background:linear-gradient(145deg,#141d31,#090e1a 78%)!important;
+  box-shadow:0 22px 60px #060a1880,inset 0 1px #ffffff10!important;
+}
+.home-page #skTypingDemo .sk-brand{color:#e4edff!important}
+.home-page #skTypingDemo .sk-dot{background:#c9ff57!important;box-shadow:0 0 14px #c9ff57!important;animation:homeCyberPulse 1.6s infinite!important}
+.home-page #skTypingDemo .sk-live{color:#50f5e2!important}
+.home-page #skTypingDemo .sk-screen{background:#070d19!important;border-color:#50f5e244!important;box-shadow:inset 0 4px 20px #0009!important}
+.home-page #skTypingDemo .sk-label,.home-page #skTypingDemo .sk-hint{color:#91a4c0!important}
+.home-page #skTypingDemo .sk-input{color:#c9ff80!important;text-shadow:0 0 18px #50f5e233!important}
+.home-page #skTypingDemo .sk-cursor{background:#50f5e2!important;box-shadow:0 0 12px #50f5e2!important}
+.home-page #skTypingDemo .sk-keyboard{border-color:#58638a!important;background:linear-gradient(145deg,#27304b,#10182a)!important;box-shadow:0 10px 0 #080d18,0 18px 28px #0008!important}
+.home-page #skTypingDemo .sk-key{border-color:#566383!important;border-bottom-color:#303d5c!important;background:linear-gradient(145deg,#303b5b,#1b2540)!important;color:#e6efff!important;text-shadow:0 1px #000!important}
+.home-page #skTypingDemo .sk-key.sk-wide{color:#b4c2db!important}
+.home-page #skTypingDemo .sk-key.sk-active{background:linear-gradient(135deg,#c9ff57,#50f5e2)!important;border-color:#e8ffd0!important;color:#07171a!important;box-shadow:0 0 20px #50f5e288!important;text-shadow:none!important}
+.home-page #skTypingDemo .sk-key.sk-used{background:#1a3b43!important;border-color:#3a9d98!important;color:#78f5dc!important}
+.home-page #skTypingDemo .sk-stat{border-color:#50f5e244!important;background:linear-gradient(145deg,#17243a,#0c1424)!important;box-shadow:inset 0 1px #ffffff0b!important}
+.home-page #skTypingDemo .sk-stat-name{color:#a8b8d0!important}
+.home-page #skTypingDemo .sk-stat-value{color:#c9ff57!important;text-shadow:0 0 16px #c9ff5733!important}
+.home-page #skTypingDemo .sk-stat-unit{color:#9aabc4!important}
+.home-page #skTypingDemo .sk-footer{color:#9bacc4!important}
+.home-page #skTypingDemo .sk-footer-line{background:#50f5e255!important}
+.home-page #skTypingDemo .sk-flash{background:radial-gradient(ellipse at 50% 70%,#50f5e255,#b49aff22 40%,transparent 72%)!important}
+.home-page #skTypingDemo .sk-stage.sk-burn{border-color:#c9ff57!important;box-shadow:0 0 34px #50f5e233,0 22px 60px #060a1880!important}
+.home-page #skTypingDemo .sk-stage.sk-burn .sk-stat-value{animation:skFire .7s ease-out!important}
+.home-page #skTypingDemo .sk-dot{animation:homeCyberPulse 1.6s infinite!important}
+.home-page #skTypingDemo .sk-cursor{animation:skBlink .65s steps(2,start) infinite!important}
+
+/* About section and lower content: readable dark glass panel */
+.home-page #about-decoding-hcm{scroll-margin-top:24px}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card{
+  border:1px solid #8b9af044!important;border-radius:18px!important;
+  background:linear-gradient(140deg,#141a2d,#101c2b 60%,#17152c)!important;
+  color:#dce6f7!important;box-shadow:0 18px 42px #0b10251c,inset 0 1px #ffffff0c!important;
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card h1,
+.home-page [aria-labelledby="about-decoding-hcm"]>.card h2{color:#e9f4ff!important}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card h2:after{background:linear-gradient(90deg,#50f5e2,#b49aff)!important}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card p{color:#b9c7dc!important}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card a{color:#70f1df!important}
+
+/* Entrance and interaction motion is restrained and fully disabled for reduced motion */
+@keyframes homeLabAtmosphere{0%{background-position:0% 30%}100%{background-position:100% 70%}}
+@keyframes homeBorderOrbit{to{transform:rotate(360deg)}}
+@keyframes homeScanSweep{from{background-position:0 -180px}to{background-position:0 540px}}
+@keyframes homeTerminalScan{0%,18%{top:-40%;opacity:0}35%{opacity:.8}70%,100%{top:110%;opacity:0}}
+@keyframes homeCursorBlink{50%{opacity:0}}
+@keyframes homeGradientText{to{background-position:220% center}}
+@keyframes homeHeroEnter{from{opacity:0;transform:translateY(18px);filter:blur(5px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+@keyframes homeFloatBadge{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@keyframes homePromoSweep{0%,65%{left:-45%}100%{left:145%}}
+@media(max-width:850px){.home-page .home-cyber-hero:before{opacity:.35}}
+@media(max-width:520px){
+  .home-page [aria-label="Quick navigation"]>.card{padding:.75rem!important;gap:.55rem!important}
+  .home-page [aria-label="Quick navigation"]>.card .btn{min-height:46px;font-size:.76rem;padding:.6rem .45rem}
+  .home-page #skTypingDemo .sk-stage{padding:13px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .home-page .home-cyber-hero,.home-page .home-cyber-hero:before,
+  .home-page .home-cyber-scan,.home-page .home-cyber-terminal:after,
+  .home-page .home-cyber-float,.home-page .home-cyber-copy h1,
+  .home-page .home-cyber-copy h1 span,.home-page .typing-game-promo:after{
+    animation:none!important;filter:none!important
+  }
+  .home-page #skTypingDemo .sk-dot,.home-page #skTypingDemo .sk-cursor{animation:none!important}
+}
