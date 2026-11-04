@@ -67,7 +67,7 @@
       .navbar .nav-links li{display:block;flex:0 0 auto}
       .navbar .nav-links a{display:inline-flex;align-items:center;gap:5px;white-space:normal}
       .feature-upgrade-badge{display:inline-flex;align-items:center;justify-content:center;margin-left:5px;padding:2px 6px;border-radius:999px;background:linear-gradient(100deg,#6b4df6,#c23acb);color:#fff;font-size:9px;font-weight:900;line-height:1.35;letter-spacing:.04em;white-space:nowrap;vertical-align:middle}
-      .feature-upgrade-button{cursor:pointer}
+      .feature-upgrade-button{cursor:pointer}.test-row.feature-content-locked{border-color:#d7b9f4;box-shadow:0 10px 28px rgba(101,65,160,.10)}.test-row .test-start.feature-upgrade-button{background:linear-gradient(110deg,#6546d8,#c23dba)!important;color:#fff!important;border:0!important}.feature-upgrade-badge{font-size:8px}
       .feature-upgrade-backdrop{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(24,31,55,.58);backdrop-filter:blur(8px)}
       .feature-upgrade-backdrop.is-open{display:flex}
       .feature-upgrade-dialog{position:relative;width:min(100%,460px);padding:30px;border:1px solid #d9d8ff;border-radius:26px;background:linear-gradient(145deg,#fff,#f8f5ff);box-shadow:0 30px 90px #10152b55;color:#202a42;text-align:center}
@@ -179,16 +179,39 @@
     document.querySelectorAll('[data-test-id]').forEach(card=>{
       const testId=card.getAttribute('data-test-id');const folderId=card.getAttribute('data-folder-id');
       const rule=findRule('test',testId)||findRule('folder',folderId)||findRule('menu','Typing_test.html');
+      const start=card.querySelector('.test-start,[data-test-start]');
       if(rule&&!rule.is_free&&!premium){
-        if(!card.dataset.paidPreviewHidden){
-          card.dataset.originalPaidMarkup=card.innerHTML;card.dataset.paidPreviewHidden='true';
-          card.innerHTML='<div class="feature-paid-teaser"><span class="feature-paid-kicker">PREMIUM ACCESS</span><strong>Locked test</strong><p>Upgrade your pass to unlock this test.</p><button type="button" class="feature-upgrade-button">UPGRADE</button></div>';
-        }
         card.classList.add('feature-content-locked');
+        card.setAttribute('data-paid-locked','true');
+        if(start){
+          start.dataset.accessKey='test:'+testId;
+          start.dataset.testId=testId;
+          start.classList.add('feature-upgrade-button');
+          start.setAttribute('aria-label','Upgrade to unlock this paid test');
+          if(start.matches('a'))start.setAttribute('href','#');
+          start.innerHTML='UPGRADE <span class="feature-upgrade-badge">✦</span>';
+        }
       }else{
         card.classList.remove('feature-content-locked');
-        if(card.dataset.paidPreviewHidden&&card.dataset.originalPaidMarkup){card.innerHTML=card.dataset.originalPaidMarkup;delete card.dataset.originalPaidMarkup;delete card.dataset.paidPreviewHidden;}
+        card.removeAttribute('data-paid-locked');
+        if(start&&start.dataset.testId===testId){
+          delete start.dataset.accessKey;delete start.dataset.testId;
+          start.classList.remove('feature-upgrade-button');
+          start.removeAttribute('aria-label');
+          if(start.matches('a'))start.setAttribute('href','start_test.html?test='+encodeURIComponent(testId));
+          start.innerHTML='Start <span aria-hidden="true">→</span>';
+        }
       }
+    });
+    document.querySelectorAll('[data-access-key]').forEach(control=>{
+      const value=String(control.getAttribute('data-access-key')||'');
+      const split=value.indexOf(':');if(split<1)return;
+      const rule=findRule(value.slice(0,split),value.slice(split+1));
+      let badge=control.querySelector(':scope > .feature-upgrade-badge');
+      if(rule&&!rule.is_free&&!premium){
+        if(!badge){badge=document.createElement('span');badge.className='feature-upgrade-badge';badge.textContent='UPGRADE';control.appendChild(badge);}
+        control.classList.add('feature-upgrade-button');
+      }else if(badge){badge.remove();control.classList.remove('feature-upgrade-button');}
     });
     document.querySelectorAll('a[href]').forEach(a=>{const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());const rule=findRule('menu',file)||findRule('menu',norm(href));if(rule&&!rule.is_free&&!premium&&/start_test\.html\?test=/i.test(href))return;});
   }

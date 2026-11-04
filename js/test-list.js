@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="test-number">${String(index + 1).padStart(2, '0')}</div>
         <div class="test-row-copy"><h2>${esc(test.title)}</h2><p>${esc(test.language || 'English')} · ${esc(test.mode === 'page' ? 'Off-screen' : 'On-screen')} practice</p></div>
         <div class="test-meta"><span>◷ ${esc(test.duration_minutes ?? '—')} min</span><span>⌨ ${test.target_wpm == null ? 'Target not set' : esc(test.target_wpm) + ' WPM'}</span><span>✓ ${test.min_accuracy == null ? 'Accuracy not set' : esc(test.min_accuracy) + '% target'}</span></div>
-        <a class="btn btn-primary test-start" href="start_test.html?test=${encodeURIComponent(String(test.id))}">Start <span aria-hidden="true">→</span></a>
+        <a class="btn btn-primary test-start" data-test-start data-test-id="${esc(test.id)}" data-access-key="test:${esc(test.id)}" href="start_test.html?test=${encodeURIComponent(String(test.id))}">Start <span aria-hidden="true">→</span></a>
       </article>`).join('');
   } catch (error) {
     console.error('Unable to load selected folder tests:', error);
