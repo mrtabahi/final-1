@@ -75,3 +75,14 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(adminCore, /sort_order: editingTestId/);
   assert.match(bulkPdf, /sort_order: nextSortOrder \+ index/);
 });
+
+test('Start Preparation initializes Supabase before the access gate and auth helpers', () => {
+  const root = path.join(__dirname, '..');
+  const page = fs.readFileSync(path.join(root, 'dashboard.html'), 'utf8');
+  const configIndex = page.indexOf('js/config.js');
+  const authIndex = page.indexOf('js/auth.js');
+  const gateIndex = page.indexOf('js/feature-access.js');
+  assert.notEqual(configIndex, -1, 'Start Preparation must load Supabase project config');
+  assert.ok(configIndex < authIndex, 'Supabase config must load before auth helpers');
+  assert.ok(configIndex < gateIndex, 'Supabase config must load before the feature access gate');
+});
