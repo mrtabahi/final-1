@@ -1,0 +1,41 @@
+/* Arcade visual refresh — presentation only; game logic untouched */
+.fix-wrap{max-width:1120px!important;padding-top:18px!important}
+.fix-heading-compact{position:relative;display:flex!important;align-items:center;justify-content:space-between;gap:24px;min-height:0!important;margin:14px 0 22px!important;padding:clamp(20px,3vw,30px)!important;overflow:hidden;border:1px solid rgba(255,255,255,.78);border-radius:24px;background:radial-gradient(circle at 88% 12%,rgba(255,255,255,.22),transparent 30%),linear-gradient(112deg,#39235f 0%,#59409b 52%,#bd548c 100%);box-shadow:0 15px 38px rgba(77,47,112,.18)}
+.fix-heading-compact:after{content:"";position:absolute;inset:auto 0 0;height:3px;background:linear-gradient(90deg,#ffe17b,#ff9b68,#ff78bb,#8ce9dd)}
+.fix-heading-compact .fix-hero-copy{position:relative;z-index:2;max-width:690px}
+.fix-heading-compact .eyebrow{display:inline-flex;align-items:center;gap:9px;margin:0 0 8px;padding:6px 10px;border:1px solid rgba(255,255,255,.24);border-radius:99px;background:rgba(255,255,255,.1);color:#ffe7a4;font-size:10px;letter-spacing:.15em}
+.fix-heading-compact .eyebrow i{width:5px;height:5px;border-radius:50%;background:#8cf1d5;box-shadow:0 0 10px #8cf1d5}
+.fix-heading-compact h1{margin:0 0 5px!important;color:#fff!important;font-size:clamp(27px,3.4vw,40px)!important;line-height:1.08!important;letter-spacing:-.045em!important;font-weight:900!important}
+.fix-heading-compact h1 span{color:#ffd47c}
+.fix-heading-compact .fix-subtitle{margin:0!important;color:#f3eafa!important;font-size:14px!important;line-height:1.55}
+.fix-heading-compact .fix-hero-copy>p:not(.fix-subtitle){display:none}
+.fix-hero-chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 13px}
+.fix-hero-chips span{padding:6px 9px;border:1px solid rgba(255,255,255,.15);border-radius:9px;background:rgba(255,255,255,.09);color:#fff;font-size:10px;font-weight:750}
+.fix-heading-compact .fix-hero-cta{display:inline-flex!important;align-items:center;gap:14px;margin-top:0!important;padding:10px 15px!important;border-radius:11px!important;background:linear-gradient(110deg,#ffe18a,#ffb16d)!important;color:#49245c!important;font-size:12px!important;font-weight:900!important;box-shadow:0 7px 18px rgba(24,13,48,.2);text-decoration:none}
+.fix-heading-compact .fix-hero-art{flex:0 0 190px!important;width:190px!important;height:126px!important;min-height:126px!important;margin:0!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:18px!important;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.19),transparent 50%),rgba(22,15,54,.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 12px 25px rgba(22,13,52,.18)!important}
+.fix-heading-compact .fix-art-label{font-size:23px!important;letter-spacing:.18em;color:#a5f5df!important}
+.fix-heading-compact .fix-key-row{transform:scale(.78);transform-origin:center}
+.fix-heading-compact .fix-art-caption{font-size:8px!important;letter-spacing:.15em}
+.fix-heading-compact .fix-orbit{opacity:.35}
+.fix-heading-compact+.fix-card{margin-top:0!important}
+.arcade-wrap{margin-top:34px!important}
+.arcade-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr))!important;gap:20px!important}
+.game-tile{min-height:238px!important;padding:22px!important;border-radius:22px!important;border:1px solid rgba(110,75,140,.13)!important;background:linear-gradient(150deg,#fff 0%,#fff 55%,#fff8f0 100%)!important;box-shadow:0 9px 25px rgba(73,49,88,.075),inset 0 1px 0 #fff!important;transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s,border-color .28s!important}
+.game-tile:before{height:4px!important;background:linear-gradient(90deg,#7251d4,#52c8c1,#f3a34d,#ed79a7)!important}
+.game-tile:not(.coming):hover{transform:translateY(-8px)!important;border-color:#b8a1ed!important;box-shadow:0 20px 42px rgba(91,65,145,.17),0 0 0 4px rgba(173,145,237,.08)!important}
+.tile-icon{width:58px!important;height:58px!important;border:1px solid rgba(255,255,255,.9);border-radius:18px!important;background:linear-gradient(145deg,#f0eaff,#e5f7ff)!important;font-size:27px!important;box-shadow:0 8px 20px rgba(93,67,151,.13)!important;transition:transform .3s,box-shadow .3s}
+.game-tile:hover .tile-icon{transform:rotate(-7deg) scale(1.08);box-shadow:0 12px 24px rgba(93,67,151,.2)!important}
+.tile-status{background:#e9fbf4!important;color:#16775d!important;border:1px solid #c8f1df;font-size:9px!important;letter-spacing:.1em!important}
+.game-tile h3{margin:18px 0 6px!important;color:#30234f!important;font-size:20px!important;font-weight:900!important;letter-spacing:-.035em!important}
+.game-tile p{color:#71677e!important;font-size:13px!important;line-height:1.7!important}
+.tile-bottom{padding-top:17px!important;color:#6544b5!important;font-size:10px!important;letter-spacing:.08em}
+.tile-arrow{width:35px!important;height:35px!important;background:linear-gradient(135deg,#efe9ff,#e6f8ff)!important;color:#6344b1}
+.game-tile:nth-child(2) .tile-icon{background:linear-gradient(145deg,#fff0d7,#ffe5e9)!important}
+.game-tile:nth-child(3) .tile-icon{background:linear-gradient(145deg,#dff9ee,#e1f3ff)!important}
+.game-tile:nth-child(4) .tile-icon{background:linear-gradient(145deg,#fff0df,#f6e5ff)!important}
+.game-tile.coming{border-style:dashed!important;background:linear-gradient(150deg,#fff,#fbf9ff)!important}
+.game-tile.coming .tile-status{background:#f4effb!important;color:#81738e!important;border-color:#e8def4}
+.arcade-note{border-radius:14px!important;background:linear-gradient(110deg,#fff8e9,#fff3f8)!important;color:#786276!important}
+@media(max-width:650px){.fix-heading-compact{align-items:flex-start!important;gap:10px!important;padding:19px!important;border-radius:19px!important}.fix-heading-compact .fix-hero-art{flex-basis:96px!important;width:96px!important;height:90px!important;min-height:90px!important;margin-top:12px!important}.fix-heading-compact .fix-art-label{font-size:15px!important}.fix-heading-compact .fix-key-row{transform:scale(.48)}.fix-heading-compact .fix-art-caption{font-size:6px!important}.fix-heading-compact .fix-hero-copy{min-width:0}.fix-heading-compact .fix-hero-chips{gap:5px}.fix-heading-compact .fix-hero-chips span{font-size:9px;padding:5px 7px}.fix-wrap{padding-top:8px!important}.arcade-grid{gap:13px!important}.game-tile{min-height:215px!important;padding:18px!important}}
+@media(max-width:390px){.fix-heading-compact .fix-hero-art{display:none!important}}
+@media(prefers-reduced-motion:reduce){.game-tile,.tile-icon{transition:none!important}.game-tile:hover{transform:none!important}}
