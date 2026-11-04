@@ -188,8 +188,8 @@
           start.dataset.testId=testId;
           start.classList.add('feature-upgrade-button');
           start.setAttribute('aria-label','Upgrade to unlock this paid test');
-          if(start.matches('a'))start.setAttribute('href','#');
-          start.innerHTML='UPGRADE <span class="feature-upgrade-badge">✦</span>';
+          if(start.matches('a')&&start.getAttribute('href')!=='#')start.setAttribute('href','#');
+          if(start.textContent.trim()!=='UPGRADE ✦')start.innerHTML='UPGRADE <span class="feature-upgrade-badge">✦</span>';
         }
       }else{
         card.classList.remove('feature-content-locked');
@@ -199,7 +199,7 @@
           start.classList.remove('feature-upgrade-button');
           start.removeAttribute('aria-label');
           if(start.matches('a'))start.setAttribute('href','start_test.html?test='+encodeURIComponent(testId));
-          start.innerHTML='Start <span aria-hidden="true">→</span>';
+          if(start.textContent.trim()!=='Start →')start.innerHTML='Start <span aria-hidden="true">→</span>';
         }
       }
     });
