@@ -191,7 +191,6 @@ function downloadPDF(){
  const labels=['Total Typed Keystrokes','Gross Speed','Errors','Net Speed','Result (PASS/FAIL)'];let cx=tx;
  labels.forEach((label,i)=>{doc.text(label,cx+cols[i]/2,ty+12.5,{align:'center'});if(i){doc.line(cx,ty,cx,ty+headerH+rowH)}cx+=cols[i]});
  doc.line(tx,ty+headerH,tx+tw,ty+headerH);
- if(overflow){doc.setFont('helvetica','italic');doc.setFontSize(7);doc.setTextColor(90,90,90);doc.text('Passage shortened to fit the single-page matter area.',W/2,624,{align:'center'})}
  doc.save('Decoding-HCM-Self-Test-Passage.pdf');
 }
 function syncTypingModeButton(){const b=$('self-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
