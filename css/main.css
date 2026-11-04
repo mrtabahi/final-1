@@ -1594,3 +1594,243 @@ body.subscription-page .sub-footer{color:#475569!important;border-color:#e2e8f0!
  .home-page [aria-labelledby="about-decoding-hcm"]>.card h1,
  .home-page [aria-labelledby="about-decoding-hcm"]>.card p{animation:none!important}
 }
+
+
+/* =========================================================
+   WARM EDITION · Accessible white / yellow / orange / pink
+   Replaces the former blue + black visual language while
+   preserving layout, animations, controls and functionality.
+   ========================================================= */
+:root {
+  --primary-blue:#8a3d18;
+  --primary-hover:#6e2d14;
+  --accent-blue:#c64b22;
+  --light-blue:#fff3d6;
+  --bg-main:#fffaf2;
+  --surface-card:#ffffff;
+  --border-color:#ead8c5;
+  --text-main:#321b25;
+  --text-muted:#654b50;
+  --warning-amber:#a84a12;
+  --motion-ink:#321b25;
+  --motion-blue:#c64b22;
+  --motion-indigo:#c23b70;
+  --motion-teal:#d18b16;
+  --motion-coral:#e76a28;
+  --motion-shadow:0 14px 34px rgba(112,55,28,.12);
+}
+body {
+  background:
+    radial-gradient(ellipse at 4% 0%,rgba(255,198,74,.14),transparent 34rem),
+    radial-gradient(ellipse at 96% 10%,rgba(235,91,133,.10),transparent 30rem),
+    #fffaf2;
+  color:#321b25;
+}
+::selection{color:#321b25;background:#ffd66b}
+.navbar{
+  background:linear-gradient(105deg,#fffdf8 0%,#fff1d2 52%,#ffe2e9 100%);
+  box-shadow:0 7px 22px rgba(112,55,28,.10);
+  border-bottom:1px solid #f0d7b7;
+  animation:none;
+}
+.navbar:after{height:3px;background:linear-gradient(90deg,#f3c64e,#ee8a32,#e65b86,#f3c64e)}
+.brand-container,.nav-links a{color:#4b2430}
+.brand-logo img{background:#fff0c7;color:#8a3d18;box-shadow:0 2px 9px rgba(128,72,24,.12)}
+.nav-links a:not(.btn-nav):after{background:linear-gradient(90deg,#e9a92c,#e65b86)}
+.nav-links .btn-nav{background:linear-gradient(110deg,#f3c64e,#ef8a32);color:#321b25;border:1px solid #d77a28}
+.btn-primary,.home-page .card .btn-primary{
+  background:linear-gradient(110deg,#e7ad2c,#e86c32);
+  color:#321b25;border:1px solid #d88726;
+}
+.btn-primary:hover{background:linear-gradient(110deg,#d9911d,#d95435)}
+.btn-secondary{background:#fff2d5;color:#71351d;border-color:#e7c99d}
+.btn-secondary:hover{background:#ffe5bd}
+.card,.category-card,.test-row,.self-test-promo,.loading-card,
+.folder-card,.material-card,.stat-card,.dashboard-card{
+  border-color:#ead8c5;
+  box-shadow:0 5px 18px rgba(112,55,28,.065);
+}
+.card-title{color:#78351f;border-image:linear-gradient(90deg,#e7ad2c,#e65b86,transparent) 1}
+.form-control:focus,input:focus,select:focus,textarea:focus{
+  border-color:#d86a36;box-shadow:0 0 0 4px rgba(232,138,50,.16)
+}
+:focus-visible{outline:3px solid #d65a7b;outline-offset:3px}
+.data-table th{background:linear-gradient(110deg,#fff0c8,#ffe5df);color:#67301f}
+.data-table tbody tr:hover{background:#fff7e8}
+.footer{background:linear-gradient(110deg,#54283a,#733343);color:#fff4e8}
+.footer a,.site-social-links a{color:#ffe0a1}
+.home-page .card{
+  border-color:#f0d8bd;
+  background:linear-gradient(135deg,#fff 0%,#fffaf0 58%,#fff0e9 100%);
+  box-shadow:0 5px 18px rgba(112,55,28,.075)
+}
+.home-page .card:before{background:linear-gradient(180deg,#f3c64e,#ed8734,#e65b86)}
+.home-page .card h1,.home-page .card h2{color:#54283a}
+.home-page .card h2:after{background:linear-gradient(90deg,#e6ae2f,#e65b86)}
+.home-page .card p{color:#543d40}
+.home-page .card p a{color:#a63c38}
+.home-page .card p a:hover{color:#d14e73}
+
+/* Cyber hero becomes a warm editorial command centre */
+.home-page .home-cyber-hero{
+  color:#43232d;
+  border:1px solid #f0d1a9;
+  border-radius:24px;
+  background:
+    radial-gradient(ellipse at 8% 12%,rgba(255,211,104,.42),transparent 42%),
+    radial-gradient(ellipse at 90% 82%,rgba(239,111,139,.22),transparent 40%),
+    linear-gradient(135deg,#fffdf8 0%,#fff4df 54%,#ffedf0 100%);
+  box-shadow:0 18px 44px rgba(112,55,28,.10);
+}
+.home-page .home-cyber-grid{opacity:.16;background-image:linear-gradient(rgba(180,106,52,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(180,106,52,.12) 1px,transparent 1px)}
+.home-page .home-cyber-scan{opacity:.24;background:linear-gradient(180deg,transparent,rgba(230,112,73,.12),transparent)}
+.home-page .home-cyber-copy h1{color:#54283a}
+.home-page .home-cyber-copy h1 span{
+  background:linear-gradient(95deg,#bd7617 0%,#e8792e 45%,#d94f7a 78%,#a83c63 100%);
+  background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:none;text-shadow:none
+}
+.home-page .home-cyber-lead{color:#553c40}
+.home-page .home-cyber-status{color:#71351d;border-color:#e8c47c;background:linear-gradient(100deg,#fff0c8,#ffe8e5);box-shadow:none}
+.home-page .home-cyber-status:after{background:#df7730;box-shadow:0 0 8px #df7730}
+.home-page .home-cyber-overline{color:#a34c36}
+.home-page .home-cyber-primary{
+  background:linear-gradient(105deg,#f5c84e,#f08a32);border:1px solid #d98a28;color:#321b25!important;
+  box-shadow:0 7px 18px rgba(190,112,34,.18)
+}
+.home-page .home-cyber-primary:hover{box-shadow:0 10px 24px rgba(190,92,50,.22)}
+.home-page .home-cyber-secondary{border-color:#d77b82;background:#fff5f2;color:#713044!important}
+.home-page .home-cyber-secondary:hover{border-color:#c94e75;box-shadow:0 5px 16px rgba(201,78,117,.12)}
+.home-page .home-cyber-trust span{color:#68484b}
+.home-page .home-cyber-trust span i{background:#d58d21;box-shadow:0 0 8px rgba(213,141,33,.28)}
+.home-page .home-cyber-visual{filter:none}
+.home-page .home-cyber-terminal{
+  border:1px solid #e7b879;
+  background:linear-gradient(145deg,#fffefa,#fff0dc 75%);
+  box-shadow:0 16px 34px rgba(117,65,34,.13),inset 0 1px #fff;
+}
+.home-page .home-cyber-terminal:after{background:linear-gradient(180deg,transparent,rgba(231,135,63,.12),transparent)}
+.home-page .home-cyber-terminal-head{background:linear-gradient(90deg,#fff0c8,#ffe6e9);border-color:#efd6b7}
+.home-page .home-cyber-terminal-head>b{color:#56303a}
+.home-page .home-cyber-terminal-head em,.home-page .home-cyber-terminal-label{color:#79545a}
+.home-page .home-cyber-terminal-label span{color:#a34c20;text-shadow:none}
+.home-page .home-cyber-code{color:#43232d}
+.home-page .home-cyber-code .code-muted{color:#985a2b}
+.home-page .home-cyber-code strong{color:#9e365d}
+.home-page .home-cyber-code .code-green{color:#a65a13}
+.home-page .home-cyber-code .code-cyan{color:#c34b67}
+.home-page .home-cyber-code:after{background:#d94f7a;box-shadow:0 0 8px rgba(217,79,122,.3)}
+.home-page .home-cyber-terminal-divider{border-color:#e8cfb5}
+.home-page .home-cyber-live-row{color:#65464a}
+.home-page .home-cyber-live-row b{color:#a34c20}
+.home-page .home-cyber-signal i{background:linear-gradient(0deg,#e6a52b,#ed8038 65%,#dc5c83);box-shadow:none}
+.home-page .home-cyber-float{border-color:#e8c18b;background:rgba(255,253,247,.97);color:#54283a;box-shadow:0 9px 22px rgba(112,55,28,.12)}
+.home-page .home-cyber-float>span{color:#d45d70}
+.home-page .home-cyber-orbit{border-color:#e5b87b66}
+.home-page .home-cyber-orbit:after{background:#e65b86;box-shadow:0 0 10px rgba(230,91,134,.3)}
+.home-page .home-cyber-bottomline{color:#79545a}
+.home-page .home-cyber-bottomline b{color:#d45d70}
+
+/* Quick navigation, promo, keyboard and about panel: bright surfaces */
+.home-page [aria-label="Quick navigation"]>.card{
+  border:1px solid #efcfaa!important;
+  background:linear-gradient(135deg,#fffefa,#fff3dc 58%,#ffedf0)!important;
+  box-shadow:0 12px 30px rgba(112,55,28,.09),inset 0 1px #fff!important;
+}
+.home-page [aria-label="Quick navigation"]>.card h2,
+.home-page [aria-label="Quick navigation"]>.card h3{color:#54283a!important}
+.home-page [aria-label="Quick navigation"]>.card .btn{
+  border:1px solid #e9c38d!important;border-radius:11px!important;
+  background:linear-gradient(135deg,#fff8e8,#ffe9e2)!important;color:#54283a!important;
+}
+.home-page [aria-label="Quick navigation"]>.card .btn:hover{
+  border-color:#d65a7b!important;background:linear-gradient(120deg,#ffe8b3,#ffdce5)!important;
+  color:#54283a!important;box-shadow:0 8px 18px rgba(204,104,74,.14)!important;
+}
+.home-page .typing-game-promo{
+  border:1px solid #e8b4a5!important;
+  background:radial-gradient(ellipse at 8% 50%,rgba(255,205,94,.34),transparent 42%),linear-gradient(115deg,#fff9e9,#ffede8 58%,#ffedf2)!important;
+  color:#43232d!important;box-shadow:0 12px 30px rgba(112,55,28,.10),inset 0 1px #fff!important;
+}
+.home-page .typing-game-copy strong{color:#54283a!important}
+.home-page .typing-game-copy>span:not(.typing-game-kicker){color:#65484b!important}
+.home-page .typing-game-kicker{color:#a14b25!important}
+.home-page .typing-game-copy>b{color:#c4486b!important}
+.home-page .typing-game-art{filter:none}
+
+/* Keyboard stage: white keycaps, warm amber/pink feedback, crisp ink */
+.home-page #skTypingDemo{
+  --sk-accent:#d45b70!important;color:#43232d!important;
+  background:radial-gradient(ellipse at 50% 42%,rgba(255,211,104,.24),rgba(255,237,230,.38) 48%,transparent 78%)!important
+}
+.home-page #skTypingDemo .sk-stage{
+  border:1px solid #e9c9a6!important;border-radius:20px!important;
+  background:linear-gradient(145deg,#fffefa,#fff2df 78%)!important;
+  box-shadow:0 14px 34px rgba(112,55,28,.12),inset 0 1px #fff!important
+}
+.home-page #skTypingDemo .sk-brand{color:#54283a!important}
+.home-page #skTypingDemo .sk-dot{background:#e7a72d!important;box-shadow:0 0 9px rgba(231,167,45,.3)!important}
+.home-page #skTypingDemo .sk-live{color:#b54b53!important}
+.home-page #skTypingDemo .sk-screen{
+  background:#fffdf8!important;border:1px solid #e9cda9!important;
+  box-shadow:inset 0 2px 8px rgba(112,55,28,.06)!important;color:#43232d!important
+}
+.home-page #skTypingDemo .sk-label,.home-page #skTypingDemo .sk-hint{color:#76565a!important}
+.home-page #skTypingDemo .sk-typed{color:#43232d!important}
+.home-page #skTypingDemo .sk-keyboard{
+  background:linear-gradient(145deg,#fff6e7,#ffe9df)!important;
+  border:1px solid #e8c9a7!important;
+  box-shadow:0 5px 0 #e3c6a6,0 10px 18px rgba(112,55,28,.09)!important
+}
+.home-page #skTypingDemo .sk-key{
+  background:linear-gradient(180deg,#fffefa,#fff4e5)!important;
+  border-color:#e5c9a9!important;border-bottom-color:#d7b894!important;
+  color:#59333a!important;box-shadow:0 2px 3px rgba(112,55,28,.08)!important
+}
+.home-page #skTypingDemo .sk-key.sk-active{
+  background:linear-gradient(135deg,#ffd45c,#f39a3d)!important;
+  border-color:#d88a2a!important;color:#321b25!important;
+  box-shadow:0 0 0 2px rgba(239,153,54,.18),0 2px 4px rgba(112,55,28,.10)!important
+}
+.home-page #skTypingDemo .sk-key.sk-used{
+  background:linear-gradient(135deg,#ffe1e8,#f7c4d2)!important;
+  border-color:#df91a7!important;color:#702d45!important
+}
+.home-page #skTypingDemo .sk-stat{
+  border-color:#e9c9a6!important;background:linear-gradient(145deg,#fffefa,#fff2df)!important;
+  box-shadow:0 4px 12px rgba(112,55,28,.07)!important
+}
+.home-page #skTypingDemo .sk-stat-name,.home-page #skTypingDemo .sk-stat-unit{color:#76565a!important}
+.home-page #skTypingDemo .sk-stat-value{color:#a64a24!important;text-shadow:none!important}
+.home-page #skTypingDemo .sk-footer{color:#76565a!important}
+.home-page #skTypingDemo .sk-footer-line{background:#e5bd83!important}
+.home-page #skTypingDemo .sk-flash{background:radial-gradient(ellipse at 50% 70%,rgba(245,183,65,.30),rgba(230,91,134,.13) 40%,transparent 72%)!important}
+.home-page #skTypingDemo .sk-stage.sk-burn{
+  border-color:#df8b51!important;box-shadow:0 0 18px rgba(230,139,81,.15),0 14px 34px rgba(112,55,28,.12)!important
+}
+
+/* Final description: warm paper card with deep, high-contrast typography */
+.home-page [aria-labelledby="about-decoding-hcm"]>.card{
+  border:1px solid #ebcda9!important;border-radius:18px!important;
+  background:linear-gradient(140deg,#fffefa,#fff5e4 60%,#ffedf1)!important;
+  color:#43232d!important;box-shadow:0 14px 32px rgba(112,55,28,.09)!important
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card:before{
+  background:linear-gradient(90deg,transparent,#f0bd3d,#ef8737,#df5d83,transparent)
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card h1{
+  background:linear-gradient(95deg,#54283a 0%,#a44a2c 48%,#b83f69 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card h2{color:#713044!important;text-shadow:none!important}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card h2:after{background:linear-gradient(90deg,#e7ad2c,#e65b86)!important}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card p{color:#543b40!important}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card a{color:#a33c50!important;text-decoration-color:rgba(163,60,80,.4)!important}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card a:hover{color:#c04a27!important;text-shadow:none!important}
+
+/* Focus states and reduced motion remain accessible */
+.nav-links a:focus-visible,.btn:focus-visible,.home-page a:focus-visible{outline-color:#c64b68}
+@media(prefers-reduced-motion:reduce){
+  .navbar,.navbar:after{animation:none!important}
+  .home-page .home-cyber-copy h1 span{animation:none!important}
+}
