@@ -1508,3 +1508,89 @@ body.subscription-page .sub-footer{color:#475569!important;border-color:#e2e8f0!
   }
   .home-page #skTypingDemo .sk-dot,.home-page #skTypingDemo .sk-cursor{animation:none!important}
 }
+
+
+/* Homepage layout refinement: keyboard first, cyber feature panel below */
+.home-page #skTypingDemo{margin-bottom:clamp(22px,3.5vw,42px)!important}
+.home-page .home-cyber-hero{margin-top:clamp(22px,3vw,36px)!important;margin-bottom:clamp(24px,3vw,38px)!important}
+.home-page #skTypingDemo .sk-stage{
+  border-color:rgba(111,151,178,.42)!important;
+  box-shadow:0 18px 46px rgba(0,0,0,.32),0 0 22px rgba(80,245,226,.07),inset 0 1px rgba(255,255,255,.055)!important;
+}
+.home-page #skTypingDemo .sk-screen{
+  border-color:rgba(80,245,226,.25)!important;
+  box-shadow:inset 0 3px 12px rgba(0,0,0,.28),0 0 12px rgba(80,245,226,.045)!important;
+}
+.home-page #skTypingDemo .sk-keyboard{
+  border-color:rgba(111,137,173,.5)!important;
+  box-shadow:0 7px 0 rgba(5,10,20,.55),0 13px 23px rgba(0,0,0,.24),0 0 18px rgba(80,245,226,.055)!important;
+}
+.home-page #skTypingDemo .sk-key{
+  border-color:rgba(112,135,171,.46)!important;
+  border-bottom-color:rgba(74,95,132,.62)!important;
+  box-shadow:0 2px 4px rgba(0,0,0,.2)!important;
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease!important;
+}
+.home-page #skTypingDemo .sk-key.sk-active{
+  box-shadow:0 0 13px rgba(80,245,226,.42),0 2px 5px rgba(0,0,0,.2)!important;
+}
+.home-page #skTypingDemo .sk-stat{
+  border-color:rgba(80,245,226,.28)!important;
+  box-shadow:0 5px 15px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.045)!important;
+}
+.home-page #skTypingDemo .sk-stage.sk-burn{
+  border-color:rgba(80,245,226,.6)!important;
+  box-shadow:0 0 24px rgba(80,245,226,.17),0 18px 46px rgba(0,0,0,.3)!important;
+}
+
+/* Animated editorial typography for the final site description */
+.home-page [aria-labelledby="about-decoding-hcm"]>.card{
+  position:relative;overflow:hidden;
+  border-color:rgba(80,245,226,.28)!important;
+  background:
+    radial-gradient(ellipse at 0% 0%,rgba(80,245,226,.09),transparent 42%),
+    linear-gradient(140deg,#141a2d,#101c2b 60%,#17152c)!important;
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card:before{
+  content:"";position:absolute;top:0;left:0;width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,#50f5e2,#b49aff,#c9ff57,transparent);
+  background-size:200% 100%;animation:homeAboutLine 8s linear infinite;
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card h1{
+  font-family:Inter,"Segoe UI",system-ui,sans-serif!important;
+  font-size:clamp(1.35rem,3vw,2rem)!important;font-weight:850!important;
+  letter-spacing:-.035em!important;line-height:1.2!important;
+  background:linear-gradient(95deg,#f5fbff 0%,#8af5e5 45%,#c9ff8a 75%,#d7c5ff 100%);
+  background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent!important;
+  animation:homeAboutText 12s linear infinite;
+  text-wrap:balance;
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card h2{
+  font-family:Inter,"Segoe UI",system-ui,sans-serif!important;
+  font-size:clamp(1.02rem,2vw,1.22rem)!important;font-weight:800!important;
+  letter-spacing:-.018em!important;color:#b8fff1!important;
+  text-shadow:0 0 16px rgba(80,245,226,.13);
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card p{
+  font-family:Inter,"Segoe UI",system-ui,sans-serif!important;
+  font-size:clamp(.94rem,1.4vw,1.02rem)!important;
+  line-height:1.85!important;letter-spacing:.006em!important;color:#c5d2e5!important;
+  animation:homeAboutRise .75s ease both;
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card p:nth-of-type(2){animation-delay:.12s}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card p:nth-of-type(3){animation-delay:.24s}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card a{
+  color:#70f1df!important;font-weight:750!important;text-decoration-color:rgba(112,241,223,.42)!important;
+  text-underline-offset:3px;transition:color .2s ease,text-shadow .2s ease!important;
+}
+.home-page [aria-labelledby="about-decoding-hcm"]>.card a:hover{
+  color:#d4ff88!important;text-shadow:0 0 12px rgba(201,255,87,.28);
+}
+@keyframes homeAboutLine{to{background-position:200% 0}}
+@keyframes homeAboutText{to{background-position:220% center}}
+@keyframes homeAboutRise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){
+ .home-page [aria-labelledby="about-decoding-hcm"]>.card:before,
+ .home-page [aria-labelledby="about-decoding-hcm"]>.card h1,
+ .home-page [aria-labelledby="about-decoding-hcm"]>.card p{animation:none!important}
+}
