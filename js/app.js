@@ -144,9 +144,10 @@ document.addEventListener('DOMContentLoaded', async()=>{
                     }
                 }
                 const margin=Math.max(8,lineHeight*.75);
+                const adjustedCharBox=current.getBoundingClientRect();
                 let nextTop=display.scrollTop;
-                if(charBox.bottom>box.bottom-margin)nextTop+=charBox.bottom-(box.bottom-margin);
-                else if(charBox.top<box.top+margin)nextTop-=box.top+margin-charBox.top;
+                if(adjustedCharBox.bottom>box.bottom-margin)nextTop+=adjustedCharBox.bottom-(box.bottom-margin);
+                else if(adjustedCharBox.top<box.top+margin)nextTop-=box.top+margin-adjustedCharBox.top;
                 if(nextTop!==display.scrollTop){
                     display.scrollTop=Math.max(0,Math.min(display.scrollHeight-display.clientHeight,nextTop));
                 }
