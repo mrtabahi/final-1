@@ -100,7 +100,7 @@ test('all three typing activities expose fullscreen and typing-mode controls', (
   const html = {
     exam: fs.readFileSync(path.join(root, 'start_test.html'), 'utf8'),
     self: fs.readFileSync(path.join(root, 'self-test.html'), 'utf8'),
-    fix: fs.readFileSync(path.join(root, 'fix-accuracy.html'), 'utf8')
+    fix: fs.readFileSync(path.join(root, 'fix-accuracy-game.html'), 'utf8')
   };
   assert.match(html.exam, /id="btn-fullscreen"/u);
   assert.match(html.exam, /id="btn-mode-switch"/u);
