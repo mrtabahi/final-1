@@ -79,12 +79,12 @@ test('Self Test live keystrokes use canonical passage-capped count', () => {
   assert.doesNotMatch(source, /self-live-keystrokes'\)\.textContent=String\(input\.length\)/u);
 });
 
-test('Main Typing Test auto-scroll uses measured character bounds, not estimated line counts', () => {
+test('Main Typing Test auto-scroll uses measured character and visible-line geometry', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
-  assert.match(source, /const box=display\.getBoundingClientRect\(\),charBox=current\.getBoundingClientRect\(\)/u);
-  assert.match(source, /adjustedCharBox\.bottom>box\.bottom-margin/u);
-  assert.match(source, /adjustedCharBox\.top<box\.top\+margin/u);
-  assert.doesNotMatch(source, /currentLine=|visibleLines=/u);
+  assert.match(source, /const box=display\.getBoundingClientRect\(\)/u);
+  assert.match(source, /const charBox=current\.getBoundingClientRect\(\)/u);
+  assert.match(source, /visibleLineTops/u);
+  assert.match(source, /linePositionFromBottom/u);
 });
 
 test('Fix Accuracy auto-scroll uses a non-visual position marker when highlight is OFF', () => {
