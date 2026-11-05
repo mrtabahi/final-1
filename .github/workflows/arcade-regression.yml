@@ -9,6 +9,7 @@ on:
       - 'js/arcade/**'
       - 'supabase/functions/typing-result/typing-master.js'
       - 'tests/typing-arcade-games-regression.test.cjs'
+      - 'tests/typing-arcade-distinct.test.cjs'
       - '.github/workflows/arcade-regression.yml'
 
 permissions:
@@ -25,4 +26,4 @@ jobs:
       - name: Check Node.js
         run: node --version
       - name: Run arcade regression tests
-        run: node --test tests/typing-arcade-games-regression.test.cjs
+        run: node --test tests/typing-arcade-games-regression.test.cjs tests/typing-arcade-distinct.test.cjs
