@@ -82,8 +82,8 @@ test('Self Test live keystrokes use canonical passage-capped count', () => {
 test('Main Typing Test auto-scroll uses measured character bounds, not estimated line counts', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
   assert.match(source, /const box=display\.getBoundingClientRect\(\),charBox=current\.getBoundingClientRect\(\)/u);
-  assert.match(source, /charBox\.bottom>box\.bottom-margin/u);
-  assert.match(source, /charBox\.top<box\.top\+margin/u);
+  assert.match(source, /adjustedCharBox\.bottom>box\.bottom-margin/u);
+  assert.match(source, /adjustedCharBox\.top<box\.top\+margin/u);
   assert.doesNotMatch(source, /currentLine=|visibleLines=/u);
 });
 
