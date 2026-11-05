@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', async () => {\n  const candidateStatus = await AuthManager.requireCandidateGuard();\n  if (!candidateStatus?.ok) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  const candidateStatus = await AuthManager.requireCandidateGuard();
+  if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
   const waves = [
@@ -28,7 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {\n  const candidateSt
     $('mission-gross').textContent = scores.bsf.grossWpm.toFixed(2);
     $('mission-net').textContent = scores.bsf.netWpm.toFixed(2);
     $('mission-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
-    $('mission-errors').textContent = String(scores.bsf.totalErrors);\n    $('mission-combo').textContent = String(combo);\n    $('mission-best-combo').textContent = String(bestCombo);
+    $('mission-errors').textContent = String(scores.bsf.totalErrors);
+    $('mission-combo').textContent = String(combo);
+    $('mission-best-combo').textContent = String(bestCombo);
   }
   function update() {
     if (finished) return;
