@@ -14,13 +14,13 @@ test('three arcade games use independent page layouts, stylesheets and gameplay 
   ];
   for (const [file,marker,css,js] of routes) {
     const html = read(file);
-    assert.match(html, new RegExp('class="' + marker + '-page"'));
-    assert.match(html, new RegExp(css.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-    assert.match(html, new RegExp(js.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-    assert.match(html, /typing-result\\/typing-master\\.js/);
-    assert.match(html, /js\\/arcade\\/scoring\\.js/);
-    assert.match(html, /fix-accuracy\\.html/);
-    assert.doesNotMatch(html, /js\\/arcade-games\\.js/);
+    assert.ok(html.includes('class="' + marker + '-page"'));
+    assert.ok(html.includes(css));
+    assert.ok(html.includes(js));
+    assert.ok(html.includes('typing-result/typing-master.js'));
+    assert.ok(html.includes('js/arcade/scoring.js'));
+    assert.ok(html.includes('fix-accuracy.html'));
+    assert.ok(!html.includes('js/arcade-games.js'));
   }
   assert.match(read('speed-sprint.html'), /sprint-track/);
   assert.match(read('word-accuracy.html'), /precision-orbit/);
@@ -35,7 +35,9 @@ test('each game keeps its own challenge mechanic and challenge length', () => {
   assert.match(sprint, /sprint-car/);
   assert.match(precision, /shields = 3/);
   assert.match(precision, /bestStreak/);
-  assert.equal((precision.match(/'.*?'\.split\(' '\)/) || [''])[0].length > 0, true);
+  const wordList = precision.match(/const expected = '([^']+)'/);
+  assert.ok(wordList);
+  assert.equal(wordList[1].split(' ').length, 25);
   assert.match(read('word-accuracy.html'), /25 TARGETS/);
   assert.match(mission, /const duration = 60/);
   assert.match(mission, /const waves =/);
@@ -44,12 +46,12 @@ test('each game keeps its own challenge mechanic and challenge length', () => {
 
 test('all games delegate both official formulas to Fix Accuracy committed scoring', () => {
   const adapter = read('js/arcade/scoring.js');
-  assert.match(adapter, /TypingMaster\\.calculateCommittedScore/);
-  assert.match(adapter, /'bsf'/);
-  assert.match(adapter, /'crpf'/);
+  assert.ok(adapter.includes('TypingMaster.calculateCommittedScore'));
+  assert.ok(adapter.includes("'bsf'"));
+  assert.ok(adapter.includes("'crpf'"));
   for (const file of ['js/arcade/speed-sprint.js','js/arcade/word-accuracy.js','js/arcade/time-attack.js']) {
     const js = read(file);
-    assert.match(js, /ArcadeScoring\\.calculate/);
-    assert.doesNotMatch(js, /grossWpm\\s*=|netWpm\\s*=|accuracy\\s*=/);
+    assert.ok(js.includes('ArcadeScoring.calculate'));
+    assert.doesNotMatch(js, /grossWpm\s*=|netWpm\s*=|accuracy\s*=/);
   }
 });
