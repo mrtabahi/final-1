@@ -22,13 +22,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (testsResult.error) throw testsResult.error;
     if (accessResult.error) throw accessResult.error;
     const accessRules = new Map((accessResult.data || []).map(rule => [String(rule.resource_key), rule]));
+    const sessionResult = await supabaseClient.auth.getSession();
+    if (sessionResult.error) throw sessionResult.error;
+    const currentUser = sessionResult.data?.session?.user;
+    let premium = false;
+    if (currentUser) {
+      const entitlement = await supabaseClient.rpc('has_active_paid_subscription');
+      if (entitlement.error) throw entitlement.error;
+      premium = entitlement.data === true;
+    }
     title.textContent = folderResult.data.name;
     description.textContent = folderResult.data.description || 'Select a test below to begin.';
     const tests = testsResult.data || [];
     if (!tests.length) { box.innerHTML = '<div class="loading-card">No active tests are available in this category yet.</div>'; return; }
     box.innerHTML = tests.map((test, index) => {
       const accessRule = accessRules.get(String(test.id));
-      const requiresUpgrade = accessRule && !accessRule.is_free;
+      const requiresUpgrade = accessRule && !accessRule.is_free && !premium;
       return `
       <article class="test-row" data-test-id="${esc(test.id)}" data-folder-id="${esc(test.folder_id || "")}">
         <div class="test-number">${String(index + 1).padStart(2, '0')}</div>
