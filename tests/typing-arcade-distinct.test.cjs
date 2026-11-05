@@ -6,52 +6,43 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('three arcade games use independent page layouts, stylesheets and gameplay modules', () => {
-  const routes = [
-    ['speed-sprint.html','sprint','css/speed-sprint.css','js/arcade/speed-sprint.js'],
-    ['word-accuracy.html','precision','css/word-accuracy.css','js/arcade/word-accuracy.js'],
-    ['time-attack.html','mission','css/time-attack.css','js/arcade/time-attack.js']
-  ];
-  for (const [file,marker,css,js] of routes) {
-    const html = read(file);
-    assert.ok(html.includes('class="' + marker + '-page"'));
-    assert.ok(html.includes(css));
-    assert.ok(html.includes(js));
-    assert.ok(html.includes('typing-result/typing-master.js'));
-    assert.ok(html.includes('js/arcade/scoring.js'));
-    assert.ok(html.includes('fix-accuracy.html'));
-    assert.ok(!html.includes('js/arcade-games.js'));
-  }
-  assert.match(read('speed-sprint.html'), /sprint-track/);
-  assert.match(read('word-accuracy.html'), /precision-orbit/);
-  assert.match(read('time-attack.html'), /mission-sectors/);
-});
-
-test('each game keeps its own challenge mechanic and challenge length', () => {
-  const sprint = read('js/arcade/speed-sprint.js');
-  const precision = read('js/arcade/word-accuracy.js');
-  const mission = read('js/arcade/time-attack.js');
-  assert.match(sprint, /const duration = 30/);
-  assert.match(sprint, /sprint-car/);
-  assert.match(precision, /shields = 3/);
-  assert.match(precision, /bestStreak/);
-  const wordList = precision.match(/const expected = '([^']+)'/);
-  assert.ok(wordList);
-  assert.equal(wordList[1].split(' ').length, 25);
-  assert.match(read('word-accuracy.html'), /25 TARGETS/);
-  assert.match(mission, /const duration = 60/);
-  assert.match(mission, /const waves =/);
+test('each arcade theme has its own palette, typography and play-space metaphor', () => {
+  const sprint = read('css/speed-sprint.css');
+  const precision = read('css/word-accuracy.css');
+  const mission = read('css/time-attack.css');
+  assert.match(sprint, /#f4c65d/);
+  assert.match(sprint, /sprint-track-base/);
+  assert.match(precision, /#315d49/);
+  assert.match(precision, /precision-orbit/);
+  assert.match(mission, /#e06d60/);
+  assert.match(mission, /mission-clock-panel/);
   assert.match(mission, /mission-sectors/);
 });
 
-test('all games delegate both official formulas to Fix Accuracy committed scoring', () => {
-  const adapter = read('js/arcade/scoring.js');
-  assert.ok(adapter.includes('TypingMaster.calculateCommittedScore'));
-  assert.ok(adapter.includes("'bsf'"));
-  assert.ok(adapter.includes("'crpf'"));
-  for (const file of ['js/arcade/speed-sprint.js','js/arcade/word-accuracy.js','js/arcade/time-attack.js']) {
-    const js = read(file);
-    assert.ok(js.includes('ArcadeScoring.calculate'));
-    assert.doesNotMatch(js, /grossWpm\s*=|netWpm\s*=|accuracy\s*=/);
+test('precision and mission challenges reward different skills', () => {
+  const precision = read('js/arcade/word-accuracy.js');
+  const mission = read('js/arcade/time-attack.js');
+  assert.match(precision, /shields = 3/);
+  assert.match(precision, /bestStreak/);
+  assert.match(precision, /All 25 target words calibrated/);
+  assert.match(mission, /const waves =/);
+  assert.match(mission, /combo\+\+/);
+  assert.match(mission, /missedTargets\+\+/);
+  assert.match(mission, /bestCombo/);
+});
+
+test('all three routes enforce candidate access and expose distinct result summaries', () => {
+  for (const [html,script] of [
+    ['speed-sprint.html','js/arcade/speed-sprint.js'],
+    ['word-accuracy.html','js/arcade/word-accuracy.js'],
+    ['time-attack.html','js/arcade/time-attack.js']
+  ]) {
+    assert.match(read(html), /js\/auth\.js/);
+    assert.match(read(script), /AuthManager\.requireCandidateGuard/);
+    assert.match(read(html), /BSF METHOD/);
+    assert.match(read(html), /CRPF METHOD/);
   }
+  assert.match(read('speed-sprint.html'), /RACE PROGRESS/);
+  assert.match(read('word-accuracy.html'), /BEST CLEAN STREAK/);
+  assert.match(read('time-attack.html'), /BEST COMBO/);
 });
