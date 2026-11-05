@@ -63,7 +63,11 @@ test('premium purchase entry points use one responsive modal and preserve checko
   assert.match(modal, /width:min\(1040px,calc\(100vw - 32px\)\)!important/);
   assert.match(modal, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
   const game = fs.readFileSync(path.join(root, 'fix-accuracy.html'), 'utf8');
-  assert.doesNotMatch(game, /feature-access-pending/);\n  assert.match(gate, /feature-route-pending/);\n  assert.match(gate, /feature-access-sweep/);\n  assert.match(gate, /client\.rpc\('can_access_test'/);\n  assert.match(gate, /Membership is non-blocking on free routes/);
+  assert.doesNotMatch(game, /feature-access-pending/);
+  assert.match(gate, /feature-route-pending/);
+  assert.match(gate, /feature-access-sweep/);
+  assert.match(gate, /client\.rpc\('can_access_test'/);
+  assert.match(gate, /Membership is non-blocking on free routes/);
   assert.match(gate, /if\(rr\.error\)throw rr\.error/);
   assert.match(gate, /Access verification is temporarily unavailable/);
 });
