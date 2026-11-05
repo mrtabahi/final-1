@@ -1,4 +1,55 @@
-'use strict';const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
-test('three arcade modes have distinct visual identities and challenge mechanics',()=>{for(const [file,mode] of [['speed-sprint.html','sprint'],['word-accuracy.html','accuracy'],['time-attack.html','time']]){const h=read(file);assert.match(h,new RegExp('data-arcade-game="'+mode+'"'));assert.match(h,/id="result-retry"/);assert.match(h,/typing-result\/typing-master\.js/);}const css=read('css/arcade-games.css');for(const mode of ['sprint','accuracy','time'])assert.match(css,new RegExp('game-'+mode));const js=read('js/arcade-games.js');assert.match(js,/ghost-gross|ghost\.gross/);assert.match(js,/shield/);assert.match(js,/threat/);});
-test('arcade results use the canonical Fix Accuracy committed scoring engine',()=>{const js=read('js/arcade-games.js');assert.match(js,/TypingMaster\.calculateCommittedScore/);assert.match(js,/freeErrorPct:\.05,penaltyPerError:10/);assert.match(js,/grossWpm/);assert.match(js,/netWpm/);assert.match(js,/allowedErrors/);assert.match(js,/excessErrors/);assert.match(js,/penaltyWpm/);assert.match(js,/accuracy/);});
-test('Speed Sprint has separate previous-run and current-run lanes',()=>{const h=read('speed-sprint.html');assert.match(h,/ghost-lane/);assert.match(h,/player-car/);assert.match(read('js/arcade-games.js'),/arcade-ghost-/);});
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+
+test('three arcade games use independent page layouts, stylesheets and gameplay modules', () => {
+  const routes = [
+    ['speed-sprint.html','sprint','css/speed-sprint.css','js/arcade/speed-sprint.js'],
+    ['word-accuracy.html','precision','css/word-accuracy.css','js/arcade/word-accuracy.js'],
+    ['time-attack.html','mission','css/time-attack.css','js/arcade/time-attack.js']
+  ];
+  for (const [file,marker,css,js] of routes) {
+    const html = read(file);
+    assert.match(html, new RegExp('class="' + marker + '-page"'));
+    assert.match(html, new RegExp(css.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(html, new RegExp(js.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(html, /typing-result\\/typing-master\\.js/);
+    assert.match(html, /js\\/arcade\\/scoring\\.js/);
+    assert.match(html, /fix-accuracy\\.html/);
+    assert.doesNotMatch(html, /js\\/arcade-games\\.js/);
+  }
+  assert.match(read('speed-sprint.html'), /sprint-track/);
+  assert.match(read('word-accuracy.html'), /precision-orbit/);
+  assert.match(read('time-attack.html'), /mission-sectors/);
+});
+
+test('each game keeps its own challenge mechanic and challenge length', () => {
+  const sprint = read('js/arcade/speed-sprint.js');
+  const precision = read('js/arcade/word-accuracy.js');
+  const mission = read('js/arcade/time-attack.js');
+  assert.match(sprint, /const duration = 30/);
+  assert.match(sprint, /sprint-car/);
+  assert.match(precision, /shields = 3/);
+  assert.match(precision, /bestStreak/);
+  assert.equal((precision.match(/'.*?'\.split\(' '\)/) || [''])[0].length > 0, true);
+  assert.match(read('word-accuracy.html'), /25 TARGETS/);
+  assert.match(mission, /const duration = 60/);
+  assert.match(mission, /const waves =/);
+  assert.match(mission, /mission-sectors/);
+});
+
+test('all games delegate both official formulas to Fix Accuracy committed scoring', () => {
+  const adapter = read('js/arcade/scoring.js');
+  assert.match(adapter, /TypingMaster\\.calculateCommittedScore/);
+  assert.match(adapter, /'bsf'/);
+  assert.match(adapter, /'crpf'/);
+  for (const file of ['js/arcade/speed-sprint.js','js/arcade/word-accuracy.js','js/arcade/time-attack.js']) {
+    const js = read(file);
+    assert.match(js, /ArcadeScoring\\.calculate/);
+    assert.doesNotMatch(js, /grossWpm\\s*=|netWpm\\s*=|accuracy\\s*=/);
+  }
+});
