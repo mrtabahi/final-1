@@ -123,74 +123,99 @@ function renderSelfResult(score,input=typed.value,scroll=false){
 }
 function downloadPDF(){
  if(!hidden){$('self-message').textContent='Hide the passage first to enable the PDF download.';return}
- if(!window.jspdf?.jsPDF){alert('PDF library did not load. Please check your connection and retry.');return}
- const {jsPDF}=window.jspdf;
- const doc=new jsPDF({unit:'pt',format:'a4',compress:true});
- const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
- const left=28.8,right=566.4,bodyTop=143.2,bodyBottom=604.5,lineH=15.48,fontSize=12.8;
- // Recreate the supplied one-page CAPF matter sheet layout.
- doc.setFillColor(28,39,51);doc.rect(0,0,W,78,'F');
- doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(21);
- doc.text('DECODING HCM',W/2,50,{align:'center'});
- doc.setFontSize(9.5);doc.setFont('helvetica','bold');
- doc.text('OFFICIAL CAPF MINISTERIAL TYPING PRACTICE',W/2,70,{align:'center'});
- doc.setFillColor(237,242,247);doc.rect(28,78,W-56,26,'F');
- doc.setTextColor(35,39,43);doc.setFont('helvetica','bold');doc.setFontSize(9.5);
- doc.text('Time Limit: ______________',36,95);
- doc.text('Target Speed: ____________ WPM',217,95);
- doc.text('Total Keystrokes:',455,95);
+ // Rebuild the supplied CAPF matter-sheet at its original A4 coordinates.
+ // A high-resolution canvas keeps the Century Gothic appearance and exact one-page geometry.
+ const W=595.44,H=841.68,S=2,canvas=document.createElement('canvas');
+ canvas.width=Math.round(W*S);canvas.height=Math.round(H*S);
+ const ctx=canvas.getContext('2d');ctx.scale(S,S);
+ const left=28.8,right=569.2,bodyTop=143.2,bodyBottom=735.0,lineH=15.48;
  const sourceText=String(original||'').replace(/\r\n?/g,'\n');
- const words=[...sourceText.matchAll(/\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
- const maxWidth=right-left;let x=left,y=bodyTop+12.8,usedEnd=0,lines=1;
- const placed=[];let previousEnd=0,overflow=false;
- doc.setFont('helvetica','italic');doc.setFontSize(fontSize);
- const spaceWidth=doc.getTextWidth(' ');
- for(const word of words){
-  const gap=sourceText.slice(previousEnd,word.start);
-  if(gap.includes('\n')){x=left;y+=lineH;lines+=1}
-  else if(gap.length){const spaces=Math.max(1,(gap.match(/ /g)||[]).length);x+=spaceWidth*spaces}
-  const wordWidth=doc.getTextWidth(word.text);
-  if(x>left&&x+wordWidth>right){x=left;y+=lineH;lines+=1}
-  if(y>bodyBottom){overflow=true;break}
-  if(wordWidth>maxWidth){
-   let chunk='',chunkStart=word.start;
-   for(let k=0;k<word.text.length;k++){
-    const next=chunk+word.text[k];
-    if(chunk&&doc.getTextWidth(next)>right-x){placed.push({text:chunk,x,y,start:chunkStart,end:chunkStart+chunk.length});usedEnd=chunkStart+chunk.length;x=left;y+=lineH;lines+=1;chunk='';chunkStart=word.start+k}
-    chunk+=word.text[k];x=left+doc.getTextWidth(chunk);
+ const measureFont='italic 10.56pt "Century Gothic", "Arial", sans-serif';
+ const boldItalicFont='bold italic 10.56pt "Century Gothic", "Arial", sans-serif';
+ // Header block and meta strip follow the reference PDF dimensions and colours.
+ ctx.fillStyle='#1a2530';ctx.fillRect(28.8,21.6,537.96,57.26);
+ ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillStyle='#ffffff';
+ ctx.font='bold 20.04pt "Century Gothic", "Arial", sans-serif';
+ ctx.fillText('DECODING HCM',W/2,50);
+ ctx.font='bold 8.52pt "Century Gothic", "Arial", sans-serif';
+ ctx.fillText('OFFICIAL CAPF MINISTERIAL TYPING PRACTICE',W/2,70);
+ ctx.fillStyle='#f0f4f8';ctx.fillRect(28.8,78.86,537.96,24.6);
+ ctx.textAlign='left';ctx.fillStyle='#20272e';
+ ctx.font='bold 9pt "Century Gothic", "Arial", sans-serif';
+ ctx.fillText('Time Limit: ______________',36.36,95);
+ ctx.fillText('Target Speed: ____________ WPM',217,95);
+ ctx.fillText('Total Keystrokes:',455,95);
+ const heading='Self Test Typing Matter';
+ ctx.textAlign='center';ctx.font='bold 14.04pt "Century Gothic", "Arial", sans-serif';
+ ctx.fillText(heading,W/2,129.5);
+ // Body: preserve the reference type size and line spacing; only whole words are admitted.
+ const tokens=[...sourceText.matchAll(/\S+/gu)].map(m=>({text:m[0],start:m.index,end:m.index+m[0].length}));
+ const placed=[];let x=left,y=154.2,usedEnd=0,previousEnd=0,overflow=false;
+ ctx.font=measureFont;ctx.textAlign='left';
+ const spaceWidth=ctx.measureText(' ').width;
+ for(const word of tokens){
+   const gap=sourceText.slice(previousEnd,word.start);
+   const explicitBreak=gap.includes('\n');
+   if(explicitBreak){x=left;y+=lineH}
+   else if(gap.length){x+=spaceWidth*Math.max(1,(gap.match(/ /g)||[]).length)}
+   const width=ctx.measureText(word.text).width;
+   if(x>left&&x+width>right){x=left;y+=lineH}
+   if(y>bodyBottom){overflow=true;break}
+   if(width>right-left){
+     // Extremely long unbroken tokens are split only at character boundaries.
+     let piece='',pieceStart=word.start;
+     for(let i=0;i<word.text.length;i++){
+       const next=piece+word.text[i];
+       if(piece&&ctx.measureText(next).width>right-x){
+         placed.push({text:piece,x,y,start:pieceStart,end:pieceStart+piece.length});
+         usedEnd=pieceStart+piece.length;x=left;y+=lineH;piece='';pieceStart=word.start+i;
+       }
+       piece+=word.text[i];x=left+ctx.measureText(piece).width;
+     }
+     if(piece){
+       if(y>bodyBottom){overflow=true;break}
+       placed.push({text:piece,x:left,y,start:pieceStart,end:pieceStart+piece.length});
+       usedEnd=pieceStart+piece.length;x=left+ctx.measureText(piece).width;
+     }
+   }else{
+     placed.push({text:word.text,x,y,start:word.start,end:word.end});
+     usedEnd=word.end;x+=width;
    }
-   if(chunk){if(y>bodyBottom){overflow=true;break}placed.push({text:chunk,x:left,y,start:chunkStart,end:chunkStart+chunk.length});usedEnd=chunkStart+chunk.length;x=left+doc.getTextWidth(chunk)}
-  }else{
-   placed.push({text:word.text,x,y,start:word.start,end:word.end});x+=wordWidth;usedEnd=word.end;
-  }
-  previousEnd=word.end;
+   previousEnd=word.end;
  }
  const shownText=sourceText.slice(0,usedEnd);
- const keystrokes=shownText.length;
- doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(35,39,43);
- doc.text(String(keystrokes),548,95,{align:'right'});
- // 1750th keystroke (1-based) is emphasized as a whole word, if it fits on this page.
- const target=1749;let targetWord=null;
- if(keystrokes>target){
-  targetWord=words.find(w=>target>=w.start&&target<w.end)||[...words].reverse().find(w=>w.end<=target)||null;
+ const keystrokes=Array.from(shownText).length;
+ ctx.textAlign='right';ctx.fillStyle='#20272e';ctx.font='bold 9pt "Century Gothic", "Arial", sans-serif';
+ ctx.fillText(String(keystrokes),548,95);
+ // Emphasize the entire word containing the 1,750th displayed keystroke.
+ let targetWord=null;
+ if(keystrokes>=1750){
+   targetWord=tokens.find(w=>Array.from(sourceText.slice(0,w.end)).length>=1750)||null;
  }
- doc.setTextColor(20,20,20);
+ ctx.textAlign='left';ctx.fillStyle='#111111';
  for(const item of placed){
-  const emphasize=!!targetWord&&item.start<targetWord.end&&item.end>targetWord.start;
-  doc.setFont('helvetica',emphasize?'bolditalic':'italic');doc.setFontSize(fontSize);
-  doc.text(item.text,item.x,item.y);
+   const emphasis=!!targetWord&&item.start<targetWord.end&&item.end>targetWord.start;
+   ctx.font=emphasis?boldItalicFont:measureFont;
+   ctx.fillText(item.text,item.x,item.y);
  }
- // Candidate matter heading and original performance-evaluation footer.
- doc.setTextColor(25,25,25);doc.setFont('helvetica','bold');doc.setFontSize(15);
- doc.text('Self Test Typing Matter',W/2,129,{align:'center'});
- doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(55,55,55);
- doc.text('CANDIDATE PERFORMANCE EVALUATION',36,759);
- const tx=36,ty=770,tw=523,cols=[130,108,108,108,69],headerH=19,rowH=26;
- doc.setFillColor(232,233,235);doc.rect(tx,ty,tw,headerH,'F');
- doc.setDrawColor(190,190,190);doc.setLineWidth(.45);doc.rect(tx,ty,tw,headerH+rowH);
- const labels=['Total Typed Keystrokes','Gross Speed','Errors','Net Speed','Result (PASS/FAIL)'];let cx=tx;
- labels.forEach((label,i)=>{doc.text(label,cx+cols[i]/2,ty+12.5,{align:'center'});if(i){doc.line(cx,ty,cx,ty+headerH+rowH)}cx+=cols[i]});
- doc.line(tx,ty+headerH,tx+tw,ty+headerH);
+ // Footer is kept fixed and is never covered by long candidate passages.
+ ctx.textAlign='left';ctx.fillStyle='#373737';ctx.font='bold 9pt "Century Gothic", "Arial", sans-serif';
+ ctx.fillText('CANDIDATE PERFORMANCE EVALUATION',23.8,763.4);
+ const tx=24,ty=770.04,cols=[107.54,107.54,105.87,107.42,107.42],headerH=18,rowH=18;
+ const labels=['Total Typed Keystrokes','Gross Speed','Errors','Net Speed','Result (PASS/FAIL)'];
+ ctx.fillStyle='#eaecee';
+ let cx=tx;
+ for(let i=0;i<cols.length;i++){ctx.fillRect(cx,ty,cols[i],headerH+rowH);cx+=cols[i]}
+ ctx.strokeStyle='#cccccc';ctx.lineWidth=.45;ctx.strokeRect(tx,ty,cols.reduce((a,b)=>a+b,0),headerH+rowH);
+ ctx.beginPath();cx=tx;ctx.moveTo(tx,ty+headerH);ctx.lineTo(tx+cols.reduce((a,b)=>a+b,0),ty+headerH);
+ for(let i=1;i<cols.length;i++){cx+=cols[i-1];ctx.moveTo(cx,ty);ctx.lineTo(cx,ty+headerH+rowH)}
+ ctx.stroke();
+ ctx.fillStyle='#202020';ctx.font='bold 8.52pt "Century Gothic", "Arial", sans-serif';ctx.textAlign='center';
+ cx=tx;
+ labels.forEach((label,i)=>{ctx.fillText(label,cx+cols[i]/2,ty+12.8);cx+=cols[i]});
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF({unit:'pt',format:'a4',compress:true});
+ doc.addImage(canvas.toDataURL('image/png'),'PNG',0,0,W,H,undefined,'FAST');
  doc.save('Decoding-HCM-Self-Test-Passage.pdf');
 }
 function syncTypingModeButton(){const b=$('self-mode-switch');if(!b)return;b.textContent='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
