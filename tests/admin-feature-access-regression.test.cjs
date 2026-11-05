@@ -43,14 +43,14 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(gate, /feature-upgrade-badge/);
   assert.match(gate, /PremiumModal\.open\(\)/);
   assert.match(gate, /e\.preventDefault\(\);e\.stopImmediatePropagation\(\);openPremiumDialog\(\)/, 'Paid controls must open the purchase modal directly');
-  assert.match(gate, /document\.documentElement\.classList\.remove\('feature-access-pending'\);openPremiumDialog\(\);return;/, 'Direct paid-test URLs must not expose the setup page');
+  assert.match(gate, /rpc\('can_access_test',\{p_test_id:requestedTest\}\)/, 'Direct paid-test URLs must use the database entitlement decision');
   assert.match(admin, /typing_test\.html/);
   assert.match(admin, /resource_type:'folder'/);
   assert.match(admin, /resource_type:'test'/);
   assert.match(gate, /findRule\('menu','Typing_test\.html'\)/);
   assert.doesNotMatch(gate, /<iframe title=\"Premium Pass plans\"/);
   assert.doesNotMatch(gate, /if\(!rule&&testId\)rule=\{is_free:false/);
-  assert.match(gate, /if\(testRule&&!testRule\.is_free&&!premium\)/);
+  assert.match(gate, /if\(accessCheck\.data!==true&&!premium\)/);
   assert.match(admin, /\['fix-accuracy\.html','Typing Game'\]/);
   assert.match(admin, /\['typing-game','Typing Game'\]/);
   const mainCss = fs.readFileSync(path.join(root, 'css/main.css'), 'utf8');
