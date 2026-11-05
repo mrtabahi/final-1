@@ -82,8 +82,8 @@ test('Self Test live keystrokes use canonical passage-capped count', () => {
 test('Main Typing Test auto-scroll uses measured character bounds, not estimated line counts', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
   assert.match(source, /const box=display\.getBoundingClientRect\(\),charBox=current\.getBoundingClientRect\(\)/u);
-  assert.match(source, /charBox\.bottom>box\.bottom-margin/u);
-  assert.match(source, /charBox\.top<box\.top\+margin/u);
+  assert.match(source, /adjustedCharBox\.bottom>box\.bottom-margin/u);
+  assert.match(source, /adjustedCharBox\.top<box\.top\+margin/u);
   assert.doesNotMatch(source, /currentLine=|visibleLines=/u);
 });
 
@@ -197,4 +197,24 @@ test('Fix Accuracy action buttons keep setup and result actions in ordered colum
   assert.match(html, /id="fix-again"[^>]*>Return To setup/u);
   assert.match(css, /\.fix-game-actions\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/u);
   assert.match(css, /#result-panel>\.fix-actions\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/u);
+});
+
+
+test('Main Typing Test scrolls one line when the second-last word begins on the third visible line from bottom', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+  assert.match(source, /word\.dataset\.wordIndex=String\(wordIndex\)/u);
+  assert.match(source, /linePositionFromBottom===3/u);
+  assert.match(source, /sameLine\[sameLine\.length-2\]===currentWord/u);
+  assert.match(source, /typedCharacters<=1/u);
+  assert.match(source, /display\.scrollTop\+lineHeight/u);
+  assert.match(source, /autoScrolledWordIndices\.has\(currentWordIndex\)/u);
+});
+
+test('Exam mode chooser stays centered and visible inside the active fullscreen subtree', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/interface-switcher.js'), 'utf8');
+  assert.match(source, /const dialogHost=document\.getElementById\('app-root'\)\|\|document\.body/u);
+  assert.match(source, /dialogHost\.append\(dialog\)/u);
+  assert.match(source, /position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center/u);
+  assert.match(source, /button\.dataset\.icon = '▣'/u);
+  assert.match(source, /content:attr\(data-icon\)!important/u);
 });
