@@ -50,7 +50,7 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(gate, /findRule\('menu','Typing_test\.html'\)/);
   assert.doesNotMatch(gate, /<iframe title=\"Premium Pass plans\"/);
   assert.doesNotMatch(gate, /if\(!rule&&testId\)rule=\{is_free:false/);
-  assert.match(gate, /if\(!requestedTestAuthorized&&!premium\)/);
+  assert.match(gate, /requestedTestAuthorized=testAccess\?\.data===true/);
   assert.match(admin, /\['fix-accuracy\.html','Typing Game'\]/);
   assert.match(admin, /\['typing-game','Typing Game'\]/);
   const mainCss = fs.readFileSync(path.join(root, 'css/main.css'), 'utf8');
@@ -101,10 +101,10 @@ test('paid test list and direct URLs use authoritative database entitlement chec
   assert.match(list, /data-access-checked="true"/);
   assert.match(list, /data-paid-locked="true"/);
   assert.match(gate, /rpc\('can_access_test',\{p_test_id:requestedTest\}\)/);
-  assert.match(gate, /if\(!requestedTestAuthorized&&!premium\)/);
+  assert.match(gate, /requestedTestAuthorized=testAccess\?\.data===true/);
   assert.match(gate, /location\.replace\('\/my_account\.html\?openPremium=1'\)/);
-  assert.match(gate, /if\(!requestedTestAuthorized&&effectivePageRule/);
-  assert.match(gate, /requestedTestAuthorized=accessCheck\.data===true/);
+  assert.match(gate, /const pageNeedsPremium=!requestedTestAuthorized&&effectivePageRule/);
+  assert.match(gate, /requestedTestAuthorized=testAccess\?\.data===true/);
   assert.doesNotMatch(gate, /const paidTestCard=a\.closest/);
   assert.match(page, /test-list\.js\?v=20261105-premium-plans-redirect1/);
   assert.match(page, /feature-access\.js\?v=20261105-premium-plans-redirect1/);
