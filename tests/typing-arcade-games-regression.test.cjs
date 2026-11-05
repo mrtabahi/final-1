@@ -83,6 +83,11 @@ test('shared arcade adapter preserves Fix Accuracy committed scoring values', ()
   assert.equal(empty.grossWpm, 0);
   assert.equal(empty.netWpm, 0);
   assert.equal(empty.accuracy, 0);
+
+  const formulaDifference = context.ArcadeScoring.calculate(['one','two'], ['one','extra','two'], '', 60, 0, true);
+  assert.equal(formulaDifference.bsf.totalErrors, 1);
+  assert.equal(formulaDifference.crpf.totalErrors, 2);
+  assert.equal(formulaDifference.crpf.accuracy, 0);
 });
 
 test('arcade landing page keeps all three playable destinations', () => {
