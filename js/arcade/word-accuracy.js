@@ -18,7 +18,8 @@
     const scores = ArcadeScoring.calculate(expected, committed, input.value, elapsed(), backspaces, false);
     $('precision-live-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
     $('precision-live-net').textContent = scores.bsf.netWpm.toFixed(2);
-    $('precision-feedback').textContent = 'Match every character, then press Space to lock the word.';
+    $('precision-live-errors').textContent = String(scores.bsf.totalErrors);
+    if (!$('precision-feedback').dataset.state) $('precision-feedback').textContent = 'Match every character, then press Space to lock the word.';
   }
   function updateScore() {
     const scores = ArcadeScoring.calculate(expected, committed, input.value, elapsed(), backspaces, false);
