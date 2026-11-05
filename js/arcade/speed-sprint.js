@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let committedText = '';
   let startedAt = 0, timer = null, backspaces = 0, finished = false;
   const duration = 30;
+  const personalBestKey = 'dch-speed-sprint-best-net-wpm-v1';
+  const readPersonalBest = () => { try { return Math.max(0, Number(localStorage.getItem(personalBestKey)) || 0); } catch { return 0; } };
   const input = $('sprint-input');
   const elapsed = () => startedAt ? Math.max(0.001, (performance.now() - startedAt) / 1000) : 0.001;
   const pct = () => Math.min(100, committed.length / expected.length * 100);
@@ -63,6 +65,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     fillFormula('bsf', scores.bsf);
     fillFormula('crpf', scores.crpf);
+    const previousBest = readPersonalBest();
+    const isNewBest = scores.bsf.netWpm > previousBest;
+    const personalBest = isNewBest ? scores.bsf.netWpm : previousBest;
+    if (isNewBest) { try { localStorage.setItem(personalBestKey, String(personalBest)); } catch {} }
+    $('sprint-personal-best').textContent = personalBest.toFixed(2) + ' WPM';
+    $('sprint-result-personal-best').textContent = personalBest.toFixed(2) + ' WPM';
+    $('sprint-result-best-status').textContent = isNewBest ? 'NEW PERSONAL BEST · SAVED ON THIS DEVICE' : 'PERSONAL BEST · THIS DEVICE';
     $('sprint-result-time').textContent = seconds.toFixed(1) + ' sec';
     $('sprint-result-distance').textContent = committed.length + ' / ' + expected.length + ' words';
   }
