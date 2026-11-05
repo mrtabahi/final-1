@@ -204,7 +204,7 @@ test('Fix Accuracy action buttons keep setup and result actions in ordered colum
 test('Main Typing Test scrolls only after Space commits the final word on the third visible line from bottom', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
   assert.match(source, /word\\.dataset\\.wordIndex=String\\(wordIndex\\)/u);
-  assert.ok(source.includes('if(/\\\\s$/u.test(typed)&&committedCount>0)'));
+  assert.ok(source.includes(String.raw`/\s$/u.test(typed)&&committedCount>0`));
   assert.match(source, /lastCommittedTypedIndex=committedCount-1/u);
   assert.match(source, /isLastWordOfLine=sameLine\\.length>0&&sameLine\\[sameLine\\.length-1\\]===committedWord/u);
   assert.match(source, /linePositionFromBottom===3&&isLastWordOfLine/u);
