@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
   const pool = 'rapid engine velocity highway turbo momentum accelerate overtake traction racing circuit throttle gearbox steering finish straightaway velocity pursuit dynamic power launch apex acceleration'.split(' ');
   const expected = Array.from({length:90}, () => pool[Math.floor(Math.random() * pool.length)]);
-  const committed = [];
+  const committed = [];\n  let committedText = '';
   let startedAt = 0, timer = null, backspaces = 0, finished = false;
   const duration = 30;
   const input = $('sprint-input');
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function update() {
     if (finished) return;
     const seconds = elapsed(), remaining = Math.max(0, duration - seconds);
-    const scores = ArcadeScoring.calculate(expected, committed, input.value, seconds, backspaces, false);
+    const scores = ArcadeScoring.calculate(expected, committedText, input.value, seconds, backspaces, false);
     $('sprint-clock').textContent = remaining.toFixed(1);
     $('sprint-gross').textContent = scores.bsf.grossWpm.toFixed(2);
     $('sprint-net').textContent = scores.bsf.netWpm.toFixed(2);
@@ -29,8 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (remaining <= 0) finish('30-second finish line reached');
   }
   function commitWord() {
-    const word = input.value.trim();
+    const raw = input.value;
+    const word = raw.trim();
     input.value = '';
+    committedText += raw;
     if (!word) return;
     committed.push(word);
     paint();
