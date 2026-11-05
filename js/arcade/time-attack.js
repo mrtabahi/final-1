@@ -1,4 +1,4 @@
-(() => {
+document.addEventListener('DOMContentLoaded', async () => {\n  const candidateStatus = await AuthManager.requireCandidateGuard();\n  if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
   const waves = [
@@ -9,7 +9,7 @@
   ];
   const expected = waves.flat();
   const committed = [];
-  let startedAt = 0, timer = null, backspaces = 0, finished = false, currentWave = 0;
+  let startedAt = 0, timer = null, backspaces = 0, finished = false, currentWave = 0, combo = 0, bestCombo = 0, correctTargets = 0, missedTargets = 0;
   const duration = 60, input = $('mission-input');
   const elapsed = () => startedAt ? Math.max(0.001, (performance.now() - startedAt) / 1000) : 0.001;
   function paint() {
@@ -28,7 +28,7 @@
     $('mission-gross').textContent = scores.bsf.grossWpm.toFixed(2);
     $('mission-net').textContent = scores.bsf.netWpm.toFixed(2);
     $('mission-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
-    $('mission-errors').textContent = String(scores.bsf.totalErrors);
+    $('mission-errors').textContent = String(scores.bsf.totalErrors);\n    $('mission-combo').textContent = String(combo);\n    $('mission-best-combo').textContent = String(bestCombo);
   }
   function update() {
     if (finished) return;
@@ -41,6 +41,14 @@
     const word = input.value.trim();
     input.value = '';
     if (!word) return;
+    if (word === expected[committed.length]) {
+      combo++;
+      bestCombo = Math.max(bestCombo, combo);
+      correctTargets++;
+    } else {
+      combo = 0;
+      missedTargets++;
+    }
     committed.push(word);
     paint();
     if (committed.length >= expected.length) finish('All four waves neutralized');
@@ -56,17 +64,26 @@
     $('mission-console').hidden = true;
     $('mission-results').hidden = false;
     $('mission-result-reason').textContent = reason;
-    $('mission-result-gross').textContent = scores.bsf.grossWpm.toFixed(2) + ' WPM';
-    $('mission-result-net').textContent = scores.bsf.netWpm.toFixed(2) + ' WPM';
-    $('mission-result-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
-    $('mission-result-crpf-net').textContent = scores.crpf.netWpm.toFixed(2) + ' WPM';
-    $('mission-result-crpf-accuracy').textContent = scores.crpf.accuracy.toFixed(2) + '%';
-    $('mission-result-crpf-errors').textContent = String(scores.crpf.totalErrors);
-    $('mission-result-errors').textContent = String(scores.bsf.totalErrors);
+    const fillFormula = (name, score) => {
+      $('mission-result-' + name + '-gross').textContent = score.grossWpm.toFixed(2) + ' WPM';
+      $('mission-result-' + name + '-net').textContent = score.netWpm.toFixed(2) + ' WPM';
+      $('mission-result-' + name + '-accuracy').textContent = score.accuracy.toFixed(2) + '%';
+      $('mission-result-' + name + '-errors').textContent = String(score.totalErrors);
+      $('mission-result-' + name + '-allowed').textContent = String(score.allowedErrors);
+      $('mission-result-' + name + '-excess').textContent = String(score.excessErrors);
+      $('mission-result-' + name + '-penalty').textContent = score.penaltyWpm.toFixed(2) + ' WPM';
+      $('mission-result-' + name + '-correct').textContent = score.totalCorrectWord.toFixed(2);
+      $('mission-result-' + name + '-backspace').textContent = String(score.backspacePresses);
+      $('mission-result-' + name + '-keys').textContent = String(score.totalKeystrokes);
+    };
+    fillFormula('bsf', scores.bsf);
+    fillFormula('crpf', scores.crpf);
     $('mission-result-waves').textContent = String(Math.min(4, wavesCleared));
     $('mission-result-time').textContent = seconds.toFixed(1) + ' sec';
     $('mission-result-targets').textContent = committed.length + ' / ' + expected.length;
-    $('mission-result-keys').textContent = String(scores.bsf.totalKeystrokes);
+    $('mission-result-correct').textContent = String(correctTargets);
+    $('mission-result-missed').textContent = String(missedTargets);
+    $('mission-result-best-combo').textContent = String(bestCombo);
   }
   input.addEventListener('keydown', event => { if (event.key === 'Backspace') backspaces++; });
   input.addEventListener('input', () => {
@@ -87,4 +104,4 @@
   $('mission-retry').addEventListener('click', () => location.reload());
   $('mission-back').addEventListener('click', () => { location.href = '/fix-accuracy.html'; });
   paint();
-})();
+});
