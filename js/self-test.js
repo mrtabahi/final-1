@@ -190,14 +190,7 @@ function downloadPDF(){
  // Emphasize the entire word containing the 1,750th displayed keystroke.
  let targetWord=null;
  if(keystrokes>=1750){
-   let count=0;
-   for(const w of tokens){
-     const len=Array.from(sourceText.slice(w.start,w.end)).length;
-     if(count+len>=1750){targetWord=w;break}
-     count+=Array.from(sourceText.slice(w.start,w.end)).length;
-     const between=sourceText.slice(w.end,tokens[tokens.indexOf(w)+1]?.start??w.end);
-     count+=Array.from(between).length;
-   }
+   targetWord=tokens.find(w=>Array.from(sourceText.slice(0,w.end)).length>=1750)||null;
  }
  ctx.textAlign='left';ctx.fillStyle='#111111';
  for(const item of placed){
