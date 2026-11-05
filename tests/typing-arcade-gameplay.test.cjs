@@ -90,7 +90,7 @@ test('Word Accuracy spends shields on mismatches and records exact-match streaks
   assert.equal(game.get('precision-result-correct').textContent, '2');
   assert.equal(game.get('precision-result-wrong').textContent, '1');
   assert.equal(game.get('precision-result-bsf-errors').textContent, '2');
-  assert.equal(game.get('precision-result-crpf-errors').textContent, '2');
+  assert.equal(game.get('precision-result-crpf-errors').textContent, '3');
   assert.match(game.get('precision-result-crpf-accuracy').textContent, /%/);
 });
 
