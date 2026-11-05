@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', async () => {\n  const candidateStatus = await AuthManager.requireCandidateGuard();\n  if (!candidateStatus?.ok) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  const candidateStatus = await AuthManager.requireCandidateGuard();
+  if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
   const expected = 'administration discipline responsibility efficiency accuracy candidate examination recruitment documentation communication government procedure commitment integrity punctuality knowledge assessment verification preparation consistency thoroughness proficiency adaptability perseverance resilience'.split(' ');
