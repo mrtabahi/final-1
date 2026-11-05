@@ -1,4 +1,4 @@
-(() => {
+document.addEventListener('DOMContentLoaded', async () => {\n  const candidateStatus = await AuthManager.requireCandidateGuard();\n  if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
   const expected = 'administration discipline responsibility efficiency accuracy candidate examination recruitment documentation communication government procedure commitment integrity punctuality knowledge assessment verification preparation consistency thoroughness proficiency adaptability perseverance resilience'.split(' ');
@@ -47,7 +47,7 @@
     }
     paint();
     if (shields <= 0) finish('All precision shields depleted');
-    else if (committed.length >= expected.length) finish('All 20 target words calibrated');
+    else if (committed.length >= expected.length) finish('All 25 target words calibrated');
   }
   function finish(reason) {
     if (finished) return;
@@ -58,17 +58,24 @@
     $('precision-arena').hidden = true;
     $('precision-results').hidden = false;
     $('precision-result-reason').textContent = reason;
-    $('precision-result-gross').textContent = scores.bsf.grossWpm.toFixed(2) + ' WPM';
-    $('precision-result-net').textContent = scores.bsf.netWpm.toFixed(2) + ' WPM';
-    $('precision-result-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
-    $('precision-result-crpf-net').textContent = scores.crpf.netWpm.toFixed(2) + ' WPM';
-    $('precision-result-crpf-accuracy').textContent = scores.crpf.accuracy.toFixed(2) + '%';
-    $('precision-result-crpf-errors').textContent = String(scores.crpf.totalErrors);
-    $('precision-result-errors').textContent = String(scores.bsf.totalErrors);
+    const fillFormula = (name, score) => {
+      $('precision-result-' + name + '-gross').textContent = score.grossWpm.toFixed(2) + ' WPM';
+      $('precision-result-' + name + '-net').textContent = score.netWpm.toFixed(2) + ' WPM';
+      $('precision-result-' + name + '-accuracy').textContent = score.accuracy.toFixed(2) + '%';
+      $('precision-result-' + name + '-errors').textContent = String(score.totalErrors);
+      $('precision-result-' + name + '-allowed').textContent = String(score.allowedErrors);
+      $('precision-result-' + name + '-excess').textContent = String(score.excessErrors);
+      $('precision-result-' + name + '-penalty').textContent = score.penaltyWpm.toFixed(2) + ' WPM';
+      $('precision-result-' + name + '-correct').textContent = score.totalCorrectWord.toFixed(2);
+      $('precision-result-' + name + '-backspace').textContent = String(score.backspacePresses);
+      $('precision-result-' + name + '-keys').textContent = String(score.totalKeystrokes);
+    };
+    fillFormula('bsf', scores.bsf);
+    fillFormula('crpf', scores.crpf);
     $('precision-result-correct').textContent = String(correctWords);
+    $('precision-result-wrong').textContent = String(committed.length - correctWords);
     $('precision-result-streak').textContent = String(bestStreak);
     $('precision-result-time').textContent = seconds.toFixed(1) + ' sec';
-    $('precision-result-keys').textContent = String(scores.bsf.totalKeystrokes);
   }
   input.addEventListener('keydown', event => { if (event.key === 'Backspace') backspaces++; });
   input.addEventListener('input', () => {
@@ -88,4 +95,4 @@
   $('precision-retry').addEventListener('click', () => location.reload());
   $('precision-back').addEventListener('click', () => { location.href = '/fix-accuracy.html'; });
   paint();
-})();
+});
