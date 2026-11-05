@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     'interstellar gravitational observatory electromagnetic planetary'.split(' ')
   ];
   const expected = waves.flat();
-  const committed = [];\n  let committedText = '';
+  const committed = [];
+  let committedText = '';
   let startedAt = 0, timer = null, backspaces = 0, finished = false, currentWave = 0, combo = 0, bestCombo = 0, correctTargets = 0, missedTargets = 0;
   const duration = 60, input = $('mission-input');
   const elapsed = () => startedAt ? Math.max(0.001, (performance.now() - startedAt) / 1000) : 0.001;
