@@ -142,16 +142,15 @@
       accessObserver.observe(document.body,{childList:true,subtree:true});
       const site=findRule('site',location.pathname.split('/').pop()||'index.html')||findRule('site','*');
       const requestedTest=new URLSearchParams(location.search).get('test');
+      let requestedTestAuthorized=false;
       if(requestedTest){
-        // The database RPC applies test-level, folder-level, site-level and subscription rules.
-        // Candidate browsers cannot read feature_access_rules directly because of RLS.
+        // Resolve the individual test first. A denied test goes straight to the full
+        // Upgrade Pass plans page; do not show the generic page-restriction overlay.
         const accessCheck=await client.rpc('can_access_test',{p_test_id:requestedTest});
         if(accessCheck.error)throw accessCheck.error;
-        if(accessCheck.data!==true&&!premium){
-          document.body.classList.add('feature-site-locked');
-          document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium test</h1><p>Upgrade your plan to unlock this typing test.</p></div></div>');
-          document.documentElement.classList.remove('feature-access-pending');
-          openPremiumDialog();
+        requestedTestAuthorized=accessCheck.data===true;
+        if(!requestedTestAuthorized&&!premium){
+          location.replace('/my_account.html?openPremium=1');
           return;
         }
       }
@@ -161,7 +160,9 @@
       const routeAliases=({'fix-accuracy.html':['typing-game','fix-accuracy'],'self-test.html':['self-test'],'materials.html':['pdf-library'],'dashboard.html':['setup-box'],'start_test.html':['typing-interface']}[currentPage]||[]);
       const pageRule=findRule('menu',currentPage)||findRule('menu','/'+currentPage)||(pageFeatureKey&&findRule('feature',pageFeatureKey))||routeAliases.map(key=>findRule('feature',key)).find(Boolean);
       const effectivePageRule=pageRule||site;
-      if(effectivePageRule&&!effectivePageRule.is_free&&!premium&&!alwaysPublicPages.has(currentPage)){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark" aria-hidden="true">✦</span><h1>Premium access required</h1><p>'+esc(effectivePageRule.upgrade_message)+'</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">Explore plans</button></div></div>');document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);}
+      // A specific test has already been authorized above. Do not let the generic
+      // start_test.html/site rule override that decision with a second restriction popup.
+      if(!requestedTestAuthorized&&effectivePageRule&&!effectivePageRule.is_free&&!premium&&!alwaysPublicPages.has(currentPage)){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark" aria-hidden="true">✦</span><h1>Premium access required</h1><p>'+esc(effectivePageRule.upgrade_message)+'</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">Explore plans</button></div></div>');document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);}
       document.documentElement.classList.remove('feature-access-pending');
       if(new URLSearchParams(location.search).get('openPremium')==='1')openPremiumDialog();
     }catch(e){console.error('Feature access verification failed; protected content remains hidden.',e);document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium feature</h1><p>Access verification is temporarily unavailable. This content remains protected until your plan is confirmed.</p><div class="feature-upgrade-actions"><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View plans</button><button type="button" class="feature-upgrade-secondary" id="locked-page-cancel">Cancel</button></div></div></div>');
@@ -237,8 +238,6 @@
       }
     }
     if(!ready)return;
-    const paidTestCard=a.closest('[data-paid-locked="true"]');
-    if(paidTestCard){e.preventDefault();e.stopImmediatePropagation();openPremiumDialog();return;}
     let rule=null;
     const custom=a.getAttribute('data-access-key');if(custom){const [type,...rest]=custom.split(':');rule=findRule(type,rest.join(':'));}
     const testId=a.getAttribute('data-test-id')||a.closest('[data-test-id]')?.getAttribute('data-test-id');
