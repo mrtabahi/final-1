@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
                 const wordNodes=[...display.querySelectorAll('.passage-word')];
                 // Keep the same third-line threshold, but wait until the final word
                 // on that line has been completed and Space has committed it.
-                if(/\\s$/u.test(typed)&&committedCount>0){
+                if(/\s$/u.test(typed)&&committedCount>0){
                     const lastCommittedTypedIndex=committedCount-1;
                     const committedExpectedIndex=[...typedIndexByExpected.entries()].find(([,typedIndex])=>typedIndex===lastCommittedTypedIndex)?.[0];
                     const committedWord=committedExpectedIndex===undefined?null:wordNodes.find(node=>Number(node.dataset.wordIndex)===committedExpectedIndex);
