@@ -452,6 +452,7 @@ const AuthManager = {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   let busy = false;
   let lastAttemptAt = 0;
+  let initialHeartbeatReady = false;
   async function heartbeat() {
     const nowMs = Date.now();
     if (busy || !supabaseClient || nowMs - lastAttemptAt < 45000) return;
@@ -502,9 +503,9 @@ const AuthManager = {
   }
   // Presence is useful, but must never compete with the first screen's auth/catalogue requests.
   // Defer the initial heartbeat and throttle focus/pageshow events to one attempt per 45 seconds.
-  window.setTimeout(heartbeat, 8000);
-  window.addEventListener('pageshow', event => { if (event.persisted) heartbeat(); });
-  window.addEventListener('focus', () => { if (document.visibilityState === 'visible' && document.readyState === 'complete') heartbeat(); });
+  window.setTimeout(() => { initialHeartbeatReady = true; heartbeat(); }, 8000);
+  window.addEventListener('pageshow', event => { if (event.persisted && initialHeartbeatReady) heartbeat(); });
+  window.addEventListener('focus', () => { if (initialHeartbeatReady && document.visibilityState === 'visible' && document.readyState === 'complete') heartbeat(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) heartbeat(); });
   window.setInterval(() => { if (!document.hidden) heartbeat(); }, 60000);
 })();
