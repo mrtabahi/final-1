@@ -76,8 +76,13 @@ test('Word Accuracy spends shields on mismatches and records exact-match streaks
   game.get('precision-input').fire('input');
   assert.equal(game.get('precision-correct').textContent, '1');
   assert.equal(game.get('precision-streak').textContent, '1');
+  game.get('precision-input').value = ' ';
+  game.get('precision-input').fire('input');
   const second = game.get('precision-target').textContent;
-  game.get('precision-input').value = 'not-' + second + ' ';
+  game.get('precision-input').value = second + ' ';
+  game.get('precision-input').fire('input');
+  const third = game.get('precision-target').textContent;
+  game.get('precision-input').value = 'not-' + third + ' ';
   game.get('precision-input').fire('input');
   assert.equal(game.get('precision-shields').textContent.trim(), '● ● ○');
   game.get('precision-finish').fire('click');
