@@ -8,9 +8,9 @@ const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 const games = [
-  {html:'speed-sprint.html', js:'js/arcade/speed-sprint.js', css:'css/speed-sprint.css', marker:'sprint', ids:['sprint-clock','sprint-car','sprint-target','sprint-result-distance']},
-  {html:'word-accuracy.html', js:'js/arcade/word-accuracy.js', css:'css/word-accuracy.css', marker:'precision', ids:['precision-shields','precision-streak','precision-target','precision-result-correct']},
-  {html:'time-attack.html', js:'js/arcade/time-attack.js', css:'css/time-attack.css', marker:'mission', ids:['mission-clock','mission-sectors','mission-target','mission-result-waves']}
+  {html:'speed-sprint.html', js:'js/arcade/speed-sprint.js', css:'css/speed-sprint.css', marker:'sprint', ids:['sprint-clock','sprint-car','sprint-target','sprint-result-distance','sprint-result-crpf-net','sprint-result-crpf-accuracy','sprint-result-crpf-errors']},
+  {html:'word-accuracy.html', js:'js/arcade/word-accuracy.js', css:'css/word-accuracy.css', marker:'precision', ids:['precision-shields','precision-streak','precision-target','precision-result-correct','precision-result-crpf-net','precision-result-crpf-accuracy','precision-result-crpf-errors']},
+  {html:'time-attack.html', js:'js/arcade/time-attack.js', css:'css/time-attack.css', marker:'mission', ids:['mission-clock','mission-sectors','mission-target','mission-result-waves','mission-result-crpf-net','mission-result-crpf-accuracy','mission-result-crpf-errors']}
 ];
 
 test('each arcade game loads its own interface, stylesheet and gameplay module', () => {
@@ -33,7 +33,7 @@ test('the three experiences have different interaction and challenge mechanics',
   assert.match(sprint, /const duration = 30/);
   assert.match(sprint, /sprint-car/);
   assert.match(precision, /let startedAt = 0, backspaces = 0, shields = 3/);
-  assert.match(precision, /bestStreak/);
+  assert.match(precision, /bestStreak/);\n  assert.match(precision, /resilience/);
   assert.match(mission, /const duration = 60/);
   assert.match(mission, /const waves =/);
   assert.match(mission, /mission-sectors/);
