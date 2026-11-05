@@ -7,21 +7,88 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('all three arcade routes load their unique interface and canonical scoring engine', () => {
-  const routes = [['speed-sprint.html','sprint','Speed Sprint'],['word-accuracy.html','accuracy','Word Accuracy'],['time-attack.html','time','Time Attack']];
-  for (const [file,mode,title] of routes) {
-    const html=read(file);
-    assert.match(html,new RegExp('data-arcade-game="'+mode+'"'));
-    assert.match(html,new RegExp('<title>'+title));
-    assert.match(html,/css\/arcade-games\.css/);
-    assert.match(html,/js\/arcade-games\.js/);
-    assert.match(html,/typing-result\/typing-master\.js/);
-    assert.match(html,/id="game-input"/);
-    assert.match(html,/id="game-result"/);
-    assert.match(html,/id="result-retry"/);
-    assert.match(html,/fix-accuracy\.html/);
+const games = [
+  {html:'speed-sprint.html', js:'js/arcade/speed-sprint.js', css:'css/speed-sprint.css', marker:'sprint', ids:['sprint-clock','sprint-car','sprint-target','sprint-result-distance']},
+  {html:'word-accuracy.html', js:'js/arcade/word-accuracy.js', css:'css/word-accuracy.css', marker:'precision', ids:['precision-shields','precision-streak','precision-target','precision-result-correct']},
+  {html:'time-attack.html', js:'js/arcade/time-attack.js', css:'css/time-attack.css', marker:'mission', ids:['mission-clock','mission-sectors','mission-target','mission-result-waves']}
+];
+
+test('each arcade game loads its own interface, stylesheet and gameplay module', () => {
+  for (const game of games) {
+    const html = read(game.html);
+    assert.match(html, new RegExp('css/' + path.basename(game.css)));
+    assert.match(html, new RegExp('js/arcade/' + path.basename(game.js)));
+    assert.match(html, /typing-result\/typing-master\.js/);
+    assert.match(html, /js\/arcade\/scoring\.js/);
+    assert.match(html, /fix-accuracy\.html/);
+    for (const id of game.ids) assert.match(html, new RegExp('id="' + id + '"'));
+    assert.doesNotMatch(html, /js\/arcade-games\.js/);
   }
 });
-test('arcade menu exposes all three playable routes',()=>{const html=read('fix-accuracy.html');for(const route of ['speed-sprint.html','word-accuracy.html','time-attack.html'])assert.match(html,new RegExp('href="/'+route+'"'));assert.doesNotMatch(html,/class="game-tile coming"/);});
-test('game engine parses and implements three different challenge loops',()=>{const source=read('js/arcade-games.js');assert.doesNotThrow(()=>new vm.Script(source));assert.match(source,/sprint:[\s\S]*?duration:45/);assert.match(source,/accuracy:[\s\S]*?goal:30/);assert.match(source,/time:[\s\S]*?duration:75/);assert.match(source,/ghost/);assert.match(source,/shield/);assert.match(source,/threat/);assert.match(source,/function finish\(/);});
-test('all arcade results use Fix Accuracy committed scoring calculations',()=>{const source=read('js/arcade-games.js');assert.match(source,/TypingMaster\.calculateCommittedScore/);for(const field of ['grossWpm','netWpm','accuracy','allowedErrors','excessErrors','penaltyWpm'])assert.match(source,new RegExp(field));});
+
+test('the three experiences have different interaction and challenge mechanics', () => {
+  const sprint = read('js/arcade/speed-sprint.js');
+  const precision = read('js/arcade/word-accuracy.js');
+  const mission = read('js/arcade/time-attack.js');
+  assert.match(sprint, /const duration = 30/);
+  assert.match(sprint, /sprint-car/);
+  assert.match(precision, /let startedAt = 0, backspaces = 0, shields = 3/);
+  assert.match(precision, /bestStreak/);
+  assert.match(mission, /const duration = 60/);
+  assert.match(mission, /const waves =/);
+  assert.match(mission, /mission-sectors/);
+  for (const source of [sprint, precision, mission]) assert.doesNotThrow(() => new vm.Script(source));
+});
+
+test('all three games delegate metrics to the shared Fix Accuracy scoring adapter', () => {
+  const helper = read('js/arcade/scoring.js');
+  assert.match(helper, /TypingMaster\.calculateCommittedScore/);
+  assert.match(helper, /'bsf'/);
+  assert.match(helper, /'crpf'/);
+  for (const game of games) {
+    const source = read(game.js);
+    assert.match(source, /ArcadeScoring\.calculate/);
+    assert.doesNotMatch(source, /grossWpm\s*=|netWpm\s*=|accuracy\s*=/);
+  }
+});
+
+test('shared arcade adapter preserves Fix Accuracy committed scoring values', () => {
+  const context = { console };
+  context.window = context;
+  context.globalThis = context;
+  vm.runInNewContext(read('supabase/functions/typing-result/typing-master.js'), context);
+  vm.runInNewContext(read('js/arcade/scoring.js'), context);
+  const perfect = context.ArcadeScoring.calculate(['one','two'], ['one'], '', 60, 0, true).bsf;
+  assert.equal(perfect.grossWpm, 0.8);
+  assert.equal(perfect.netWpm, 0.8);
+  assert.equal(perfect.accuracy, 100);
+  assert.equal(perfect.totalKeystrokes, 4);
+  assert.equal(perfect.totalErrors, 0);
+
+  const wrong = context.ArcadeScoring.calculate(['one','two'], ['one','wrong'], '', 60, 0, true).bsf;
+  assert.equal(wrong.grossWpm, 1.4);
+  assert.equal(wrong.netWpm, 0);
+  assert.equal(wrong.accuracy, 28.57);
+  assert.equal(wrong.totalErrors, 1);
+  assert.equal(wrong.allowedErrors, 0);
+  assert.equal(wrong.penaltyWpm, 10);
+
+  const livePartial = context.ArcadeScoring.calculate(['one'], [], 'on', 60, 0, false).bsf;
+  const finalPartial = context.ArcadeScoring.calculate(['one'], [], 'on', 60, 0, true).bsf;
+  assert.equal(livePartial.totalErrors, 0);
+  assert.equal(finalPartial.totalErrors, 1);
+  assert.equal(finalPartial.accuracy, 0);
+
+  const empty = context.ArcadeScoring.calculate(['one'], [], '', 60, 0, true).bsf;
+  assert.equal(empty.grossWpm, 0);
+  assert.equal(empty.netWpm, 0);
+  assert.equal(empty.accuracy, 0);
+});
+
+test('arcade landing page keeps all three playable destinations', () => {
+  const html = read('fix-accuracy.html');
+  for (const route of ['speed-sprint.html','word-accuracy.html','time-attack.html']) {
+    assert.match(html, new RegExp('href="/' + route + '"'));
+  }
+  assert.doesNotMatch(html, /class="game-tile coming"/);
+});
