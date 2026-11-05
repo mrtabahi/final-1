@@ -32,7 +32,7 @@ test('Fix Accuracy keeps the current passage position visible after input', () =
 });
 test('Fix Accuracy keeps live source passage clean and annotates mistakes only in result comparison', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
-  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy-game.html'), 'utf8');
   const liveStart = source.indexOf('function renderPassage()');
   const liveEnd = source.indexOf('function keepCurrentPassageVisible()', liveStart);
   const liveRenderer = source.slice(liveStart, liveEnd);
@@ -47,7 +47,7 @@ test('Fix Accuracy keeps live source passage clean and annotates mistakes only i
 });
 
 test('Fix Accuracy result includes detailed error analysis sourced from canonical score breakdown', () => {
-  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy-game.html'), 'utf8');
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   for (const id of ['omissions','substitutions','spelling','incomplete','extra','repeated','spacing','capitalization','punctuation']) {
     assert.match(html, new RegExp('id="fix-analysis-' + id + '"'));
@@ -141,7 +141,9 @@ test('Main Typing Test loads the shared AuthManager script only once', () => {
 test('Fix Accuracy treats the configured maximum error count as inclusive for both formulas', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   assert.ok(source.includes('bsfScore.totalErrors>currentConfig.maxErrors&&crpfScore.totalErrors>currentConfig.maxErrors'));
-  assert.ok(source.includes('const passed=errorCount<=currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet'));
+  assert.ok(source.includes('const grossPass=currentConfig.minGross<=0||gross>=currentConfig.minGross'));
+  assert.ok(source.includes('const netPass=currentConfig.minNet<=0||net>=currentConfig.minNet'));
+  assert.ok(source.includes('const passed=errorCount<=currentConfig.maxErrors&&grossPass&&netPass'));
   assert.ok(source.includes("if(initialBsf.totalErrors>currentConfig.maxErrors&&initialCrpf.totalErrors>currentConfig.maxErrors&&reason==='Passage complete')"));
 });
 
@@ -156,7 +158,7 @@ test('Fix Accuracy toolbar active states preserve icon nodes and use green styli
 });
 
 test('Fix Accuracy result screen can restore fullscreen and tracks fullscreen state', () => {
-  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy-game.html'), 'utf8');
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   assert.ok(html.includes('id="fix-result-fullscreen"'));
   assert.ok(html.includes('Restore screen'));
@@ -179,4 +181,20 @@ test('Self Test live character highlighting uses fixed original word positions',
 test('Fix Accuracy live current-word marker uses fixed original word positions', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   assert.ok(source.includes('TypingMaster.alignWordsByPosition(expectedWords.map(match=>match[0]),typedWords)'));
+});
+
+
+test('Fix Accuracy advances live highlight immediately after Space commits a word', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
+  assert.match(source, /const hasCommittedSpace=\/\\s\$\/u\.test\(typed\)/u);
+  assert.match(source, /typedWords\.length-\(hasCommittedSpace\?0:1\)/u);
+});
+
+test('Fix Accuracy action buttons keep setup and result actions in ordered columns', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy-game.html'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '../css/fix-accuracy.css'), 'utf8');
+  assert.match(html, /id="fix-restart"[^>]*>Back to setup[\s\S]*?id="fix-submit"/u);
+  assert.match(html, /id="fix-again"[^>]*>Return To setup/u);
+  assert.match(css, /\.fix-game-actions\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/u);
+  assert.match(css, /#result-panel>\.fix-actions\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/u);
 });
