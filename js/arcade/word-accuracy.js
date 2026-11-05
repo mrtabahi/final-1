@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const expected = 'administration discipline responsibility efficiency accuracy candidate examination recruitment documentation communication government procedure commitment integrity punctuality knowledge assessment verification preparation consistency'.split(' ');
+  const expected = 'administration discipline responsibility efficiency accuracy candidate examination recruitment documentation communication government procedure commitment integrity punctuality knowledge assessment verification preparation consistency thoroughness proficiency adaptability perseverance resilience'.split(' ');
   const committed = [];
   let startedAt = 0, backspaces = 0, shields = 3, streak = 0, bestStreak = 0, correctWords = 0, finished = false;
   const input = $('precision-input');
