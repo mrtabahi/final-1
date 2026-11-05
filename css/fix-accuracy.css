@@ -175,3 +175,10 @@
 #result-panel .compact-tip-control.is-active .control-icon{color:#15803d!important;filter:drop-shadow(0 0 4px #22c55e55)}
 #game-panel .compact-tip-control:focus-visible,#result-panel .compact-tip-control:focus-visible{outline:3px solid #16a34a;outline-offset:2px}
 #fix-passage-display{scroll-padding-block:1.5rem;scroll-snap-type:none;}
+
+/* Result toolbar: keep screen controls visible before the report content. */
+.fix-result-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:8px 10px;border:1px solid var(--fix-border);border-radius:12px;background:linear-gradient(100deg,#f4f8ff,#fff)}
+.fix-result-toolbar-label{font-size:.7rem;font-weight:900;letter-spacing:.14em;color:var(--fix-muted)}
+.fix-result-toolbar #fix-result-fullscreen{margin:0;min-height:40px}
+#result-panel:fullscreen{box-sizing:border-box;width:100%;height:100%;overflow-y:auto;padding:clamp(14px,3vw,32px);background:#f5f8fc}
+@media(max-width:640px){.fix-result-toolbar{position:sticky;top:0;z-index:5}}
