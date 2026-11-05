@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     fillFormula('bsf', scores.bsf);
     fillFormula('crpf', scores.crpf);
     const previousBest = readPersonalBest();
-    const isNewBest = scores.bsf.netWpm > previousBest;
+    const isNewBest = reason !== 'Race aborted by player' && scores.bsf.netWpm > previousBest;
     const personalBest = isNewBest ? scores.bsf.netWpm : previousBest;
     if (isNewBest) { try { localStorage.setItem(personalBestKey, String(personalBest)); } catch {} }
     $('sprint-personal-best').textContent = personalBest.toFixed(2) + ' WPM';
