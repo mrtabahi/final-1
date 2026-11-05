@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const $ = id => document.getElementById(id);
   const pool = 'rapid engine velocity highway turbo momentum accelerate overtake traction racing circuit throttle gearbox steering finish straightaway velocity pursuit dynamic power launch apex acceleration'.split(' ');
   const expected = Array.from({length:90}, () => pool[Math.floor(Math.random() * pool.length)]);
-  const committed = [];\n  let committedText = '';
+  const committed = [];
+  let committedText = '';
   let startedAt = 0, timer = null, backspaces = 0, finished = false;
   const duration = 30;
   const input = $('sprint-input');
