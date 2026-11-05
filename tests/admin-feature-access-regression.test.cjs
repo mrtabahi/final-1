@@ -101,9 +101,12 @@ test('paid test list and direct URLs use authoritative database entitlement chec
   assert.match(list, /data-access-checked="true"/);
   assert.match(list, /data-paid-locked="true"/);
   assert.match(gate, /rpc\('can_access_test',\{p_test_id:requestedTest\}\)/);
-  assert.match(gate, /if\(accessCheck\.data!==true&&!premium\)/);
+  assert.match(gate, /if\(!requestedTestAuthorized&&!premium\)/);
   assert.match(gate, /location\.replace\('\/my_account\.html\?openPremium=1'\)/);
+  assert.match(gate, /if\(!requestedTestAuthorized&&effectivePageRule/);
+  assert.match(gate, /requestedTestAuthorized=accessCheck\.data===true/);
+  assert.doesNotMatch(gate, /const paidTestCard=a\.closest/);
   assert.match(page, /test-list\.js\?v=20261105-premium-plans-redirect1/);
-  assert.match(page, /feature-access\.js\?v=20261105-entitlement-rpc1/);
-  assert.match(start, /feature-access\.js\?v=20261105-entitlement-rpc1/);
+  assert.match(page, /feature-access\.js\?v=20261105-premium-plans-redirect1/);
+  assert.match(start, /feature-access\.js\?v=20261105-premium-plans-redirect1/);
 });
