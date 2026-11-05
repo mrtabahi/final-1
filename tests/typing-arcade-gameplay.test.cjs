@@ -87,8 +87,8 @@ test('Word Accuracy spends shields on mismatches and records exact-match streaks
   assert.equal(game.get('precision-shields').textContent.trim(), '● ● ○');
   game.get('precision-finish').fire('click');
   assert.equal(game.get('precision-results').hidden, false);
-  assert.equal(game.get('precision-result-correct').textContent, '1');
-  assert.equal(game.get('precision-result-wrong').textContent, '1');
+  assert.equal(game.get('precision-result-correct').textContent, '2');
+  assert.equal(game.get('precision-result-wrong').textContent, '1');\n  assert.equal(game.get('precision-result-bsf-errors').textContent, '2');\n  assert.equal(game.get('precision-result-crpf-errors').textContent, '2');
   assert.match(game.get('precision-result-crpf-accuracy').textContent, /%/);
 });
 
