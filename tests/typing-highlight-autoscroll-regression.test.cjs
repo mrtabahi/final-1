@@ -161,7 +161,7 @@ test('Fix Accuracy result screen can restore fullscreen and tracks fullscreen st
   const html = fs.readFileSync(path.join(__dirname, '../fix-accuracy-game.html'), 'utf8');
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
   assert.ok(html.includes('id="fix-result-fullscreen"'));
-  assert.ok(html.includes('Restore screen'));
+  assert.match(html, /id="fix-result-fullscreen"[^>]*aria-label="Restore result screen"/u);
   assert.ok(source.includes("$('fix-result-fullscreen')?.addEventListener('click',()=>toggleWorkspaceFullscreen(result))"));
   assert.ok(source.includes("document.addEventListener('fullscreenchange',syncFullscreenButtons)"));
 });
