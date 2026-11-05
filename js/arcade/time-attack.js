@@ -21,7 +21,8 @@
     $('mission-progress').style.width = index / expected.length * 100 + '%';
     $('mission-sectors').querySelectorAll('[data-wave]').forEach(node => {
       const wave = Number(node.dataset.wave);
-      node.dataset.state = wave < currentWave ? 'cleared' : wave === currentWave ? 'active' : 'locked';
+      const complete = index >= expected.length;
+      node.dataset.state = wave < currentWave || (complete && wave === 3) ? 'cleared' : wave === currentWave ? 'active' : 'locked';
     });
     const scores = ArcadeScoring.calculate(expected, committed, input.value, elapsed(), backspaces, false);
     $('mission-gross').textContent = scores.bsf.grossWpm.toFixed(2);
