@@ -203,32 +203,32 @@ test('Fix Accuracy action buttons keep setup and result actions in ordered colum
 
 test('Main Typing Test scrolls only after Space commits the final word on the third visible line from bottom', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
-  assert.match(source, /word\\.dataset\\.wordIndex=String\\(wordIndex\\)/u);
+  assert.ok(source.includes('word.dataset.wordIndex=String(wordIndex)'));
   assert.ok(source.includes(String.raw`/\s$/u.test(typed)&&committedCount>0`));
-  assert.match(source, /lastCommittedTypedIndex=committedCount-1/u);
-  assert.match(source, /isLastWordOfLine=sameLine\\.length>0&&sameLine\\[sameLine\\.length-1\\]===committedWord/u);
-  assert.match(source, /linePositionFromBottom===3&&isLastWordOfLine/u);
-  assert.match(source, /display\\.scrollTop\\+lineHeight/u);
-  assert.match(source, /autoScrolledWordIndices\\.has\\(committedExpectedIndex\\)/u);
+  assert.ok(source.includes('lastCommittedTypedIndex=committedCount-1'));
+  assert.ok(source.includes('isLastWordOfLine=sameLine.length>0&&sameLine[sameLine.length-1]===committedWord'));
+  assert.ok(source.includes('linePositionFromBottom===3&&isLastWordOfLine'));
+  assert.ok(source.includes('display.scrollTop+lineHeight'));
+  assert.ok(source.includes('autoScrolledWordIndices.has(committedExpectedIndex)'));
 });
 
 test('Main Typing Test cancel and early-submit confirmations render inside the active fullscreen element', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
-  assert.match(source, /document\\.fullscreenElement\\|\\|\\$\\('app-root'\\)\\|\\|document\\.body/u);
-  assert.match(source, /showTypingConfirm\\('Reset this typing attempt\\?/u);
-  assert.match(source, /showTypingConfirm\\('End this test now/u);
-  assert.doesNotMatch(source, /confirm\\('Reset this typing attempt/u);
-  assert.doesNotMatch(source, /confirm\\('End this test now/u);
+  assert.ok(source.includes("document.fullscreenElement||$('app-root')||document.body"));
+  assert.ok(source.includes("showTypingConfirm('Reset this typing attempt?"));
+  assert.ok(source.includes("showTypingConfirm('End this test now"));
+  assert.ok(!source.includes("confirm('Reset this typing attempt"));
+  assert.ok(!source.includes("confirm('End this test now"));
 });
 
 test('Typing toolbar assigns stable visible glyphs and exam dialog follows the active fullscreen subtree', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/interface-switcher.js'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, '../css/typing.css'), 'utf8');
-  assert.match(source, /'btn-sound':'♪'/u);
-  assert.match(source, /'btn-highlight':'✎'/u);
-  assert.match(source, /const getDialogHost=\\(\\)=>document\\.fullscreenElement\\|\\|document\\.getElementById\\('app-root'\\)\\|\\|document\\.body/u);
-  assert.match(source, /getDialogHost\\(\\)\\.append\\(dialog\\)/u);
-  assert.match(source, /document\\.addEventListener\\('fullscreenchange'/u);
-  assert.match(css, /#typing-section \\.typing-controls \\.compact-tip-control::before/u);
-  assert.match(css, /-webkit-text-fill-color:#234b70!important/u);
+  assert.ok(source.includes("'btn-sound':'♪'"));
+  assert.ok(source.includes("'btn-highlight':'✎'"));
+  assert.ok(source.includes("const getDialogHost=()=>document.fullscreenElement||document.getElementById('app-root')||document.body"));
+  assert.ok(source.includes('getDialogHost().append(dialog)'));
+  assert.ok(source.includes("document.addEventListener('fullscreenchange'"));
+  assert.ok(css.includes('#typing-section .typing-controls .compact-tip-control::before'));
+  assert.ok(css.includes('-webkit-text-fill-color:#234b70!important'));
 });
