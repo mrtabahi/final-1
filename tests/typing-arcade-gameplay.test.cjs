@@ -64,7 +64,8 @@ test('Speed Sprint starts, advances race checkpoints and produces a canonical du
   game.get('sprint-input').value = target + ' ';
   game.get('sprint-input').fire('input');
   assert.equal(game.get('sprint-word-count').textContent, '1 / 90');
-  game.get('sprint-abort').fire('click');
+  game.setNow(32000);
+  game.intervalCallback();
   assert.equal(game.get('sprint-results').hidden, false);
   assert.match(game.get('sprint-result-bsf-gross').textContent, /WPM/);
   assert.match(game.get('sprint-result-crpf-net').textContent, /WPM/);
