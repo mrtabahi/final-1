@@ -5,8 +5,7 @@
   const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   let rules=[],premium=false,ready=false,popupReturnFocus=null;
-  // Hide protected page content until the access decision has completed.
-  document.documentElement.classList.add('feature-access-pending');
+  document.body?.classList.add('feature-access-checking');
   function closePopup(){
     const el=document.getElementById('feature-upgrade-modal');
     if(!el||!el.classList.contains('is-open'))return;
@@ -83,7 +82,7 @@
       .feature-paid-kicker{font-size:.7rem;font-weight:900;letter-spacing:.1em;color:#7048d8}
       .feature-paid-teaser strong{font-size:1.05rem}.feature-paid-teaser p{margin:0;color:#536078}
       .feature-paid-teaser button{border:0;border-radius:999px;padding:8px 14px;background:linear-gradient(100deg,#5d4af4,#c039c8);color:#fff;font-weight:900}
-      html.feature-access-pending body>*:not(script):not(style){visibility:hidden!important}\n      html.feature-access-pending body:after{content:'Checking access…';position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;background:#f8f7ff;color:#34415c;font-weight:800}\n      body.feature-site-locked>*:not(.feature-site-lock):not(script):not(style){visibility:hidden}
+      body.feature-access-checking>*:not(.navbar):not(script):not(style):not(#feature-access-progress){pointer-events:none!important}\n      #feature-access-progress{position:fixed;top:0;left:0;right:0;z-index:2147483647;height:3px;overflow:hidden;background:rgba(103,75,220,.12);pointer-events:none}#feature-access-progress:after{content:'';display:block;width:38%;height:100%;border-radius:99px;background:linear-gradient(90deg,#6546e8,#d83ca8,#ffb13b);box-shadow:0 0 12px #a44be8;animation:feature-access-sweep 1.05s ease-in-out infinite}@keyframes feature-access-sweep{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}\n      body.feature-route-pending>*:not(.navbar):not(script):not(style):not(#feature-access-progress){visibility:hidden!important}body.feature-route-pending .navbar{visibility:visible!important}#feature-access-progress .feature-access-chip{position:fixed;top:14px;right:16px;display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid #ffffff35;border-radius:999px;background:rgba(20,29,54,.9);color:#fff;font:700 12px/1.2 system-ui,sans-serif;box-shadow:0 8px 28px #10152b30;backdrop-filter:blur(12px)}#feature-access-progress .feature-access-orbit{display:grid;place-items:center;width:19px;height:19px;border:1px solid #ffd76b;border-radius:50%;color:#ffd76b;animation:feature-access-orbit 1.4s linear infinite}@keyframes feature-access-orbit{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#feature-access-progress:after,#feature-access-progress .feature-access-orbit{animation:none}}\n      body.feature-site-locked>*:not(.feature-site-lock):not(script):not(style){visibility:hidden}
       body.feature-site-locked .feature-site-lock{visibility:visible;position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:20px;background:rgba(10,19,37,.86);backdrop-filter:blur(12px)}
       .feature-site-lock-card{width:min(100%,540px);padding:38px 32px;border:1px solid #f0d9a3;border-radius:26px;background:linear-gradient(145deg,#fff,#fff8e9);box-shadow:0 30px 90px #0008;text-align:center;color:#172b49}.feature-site-lock-card h1{font-size:clamp(1.35rem,3vw,1.8rem);letter-spacing:-.03em;color:#142746}.feature-site-lock-card p{color:#59677c;line-height:1.6}
       @media(max-width:760px){.navbar{display:flex;flex-direction:row;align-items:center;gap:10px;padding:12px 14px}.navbar .brand-container{min-width:0;max-width:calc(100% - 58px)}.feature-nav-toggle{display:inline-flex;flex:0 0 44px}.navbar .nav-links{display:none;order:3;flex:0 0 100%;width:100%;max-height:min(70vh,520px);overflow-y:auto;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;padding:8px 0 4px;border-top:1px solid #ffffff30}.navbar .nav-links.feature-nav-open{display:flex}.navbar .nav-links li{width:100%;display:block}.navbar .nav-links a{display:flex;width:100%;align-items:center;justify-content:space-between;padding:11px 12px;border-radius:9px;white-space:normal}.feature-upgrade-badge{margin-left:8px;flex:0 0 auto}.feature-upgrade-dialog{padding:26px 20px}}
@@ -101,36 +100,83 @@
   }
   function findRule(type,key){return rules.find(r=>r.resource_type===type&&norm(r.resource_key)===norm(key));}
   function blocked(rule){if(!rule||rule.is_free||premium)return false;popup(rule.upgrade_message);return true;}
+  function showAccessProgress(blockPage=false){
+    if(blockPage)document.body.classList.add('feature-route-pending');
+    let el=document.getElementById('feature-access-progress');
+    if(!el){
+      el=document.createElement('div');
+      el.id='feature-access-progress';
+      el.setAttribute('role','status');
+      el.setAttribute('aria-live','polite');
+      el.innerHTML='<span class="feature-access-chip"><span class="feature-access-orbit" aria-hidden="true">✦</span><span>Securing your session</span></span>';
+      document.body.appendChild(el);
+    }
+  }
+  function hideAccessProgress(){
+    document.body?.classList.remove('feature-route-pending','feature-access-checking');
+    document.getElementById('feature-access-progress')?.remove();
+  }
   async function init(){
     const client=db();
-    const lockUnavailable=()=>{
-      const current=norm(location.pathname.split('/').pop()||'index.html');
-      const publicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
-      if(!publicPages.has(current)){
-        document.body.classList.add('feature-site-locked');
-        document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium feature</h1><p>We could not verify your plan right now. This content stays protected; please view plans or try again shortly.</p><div class="feature-upgrade-actions"><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View plans</button><button type="button" class="feature-upgrade-secondary" id="locked-page-cancel">Cancel</button></div></div></div>');
-        document.getElementById('locked-page-cancel')?.addEventListener('click',()=>history.length>1?history.back():location.assign('/index.html'));
-        document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);
-      }
-      document.documentElement.classList.remove('feature-access-pending');
+    const currentPage=norm(location.pathname.split('/').pop()||'index.html');
+    const requestedTest=new URLSearchParams(location.search).get('test');
+    const alwaysPublicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
+    const showLock=(title,message)=>{
+      hideAccessProgress();
+      document.body.classList.add('feature-site-locked');
+      document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark" aria-hidden="true">✦</span><h1>'+esc(title)+'</h1><p>'+esc(message)+'</p><div class="feature-upgrade-actions"><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">Explore plans</button><button type="button" class="feature-upgrade-secondary" id="locked-page-cancel">Go back</button></div></div></div>');
+      document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);
+      document.getElementById('locked-page-cancel')?.addEventListener('click',()=>history.length>1?history.back():location.assign('/index.html'));
     };
-    if(!client){lockUnavailable();return;}
+    if(!client){
+      if(alwaysPublicPages.has(currentPage)){hideAccessProgress();return;}
+      if(!alwaysPublicPages.has(currentPage))showLock('Premium feature','We could not verify your plan right now. This content stays protected; please view plans or try again shortly.');
+      return;
+    }
     try{
-      const [sessionResult,rr]=await Promise.all([client.auth.getSession(),client.from('feature_access_rules').select('resource_type,resource_key,is_free,upgrade_message')]);
-      const user=sessionResult?.data?.session?.user||null;
+      if(requestedTest)showAccessProgress(true);
+      const [sessionResult,rr,testAccess]=await Promise.all([
+        client.auth.getSession(),
+        client.from('feature_access_rules').select('resource_type,resource_key,is_free,upgrade_message'),
+        requestedTest?client.rpc('can_access_test',{p_test_id:requestedTest}):Promise.resolve(null)
+      ]);
       if(sessionResult?.error)throw sessionResult.error;
       if(rr.error)throw rr.error;
+      if(testAccess?.error)throw testAccess.error;
+      const user=sessionResult?.data?.session?.user||null;
       rules=rr.data||[];
-      if(user){
+      let requestedTestAuthorized=false;
+      if(requestedTest){
+        requestedTestAuthorized=testAccess?.data===true;
+        if(!requestedTestAuthorized){
+          hideAccessProgress();
+          location.replace('/my_account.html?openPremium=1');
+          return;
+        }
+      }
+      const site=findRule('site',currentPage)||findRule('site','*');
+      const pageFeatureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats'}[currentPage]);
+      const routeAliases=({'fix-accuracy.html':['typing-game','fix-accuracy'],'self-test.html':['self-test'],'materials.html':['pdf-library'],'dashboard.html':['setup-box'],'start_test.html':['typing-interface']}[currentPage]||[]);
+      const pageRule=findRule('menu',currentPage)||findRule('menu','/'+currentPage)||(pageFeatureKey&&findRule('feature',pageFeatureKey))||routeAliases.map(key=>findRule('feature',key)).find(Boolean);
+      const effectivePageRule=pageRule||site;
+      const pageNeedsPremium=!requestedTestAuthorized&&effectivePageRule&&!effectivePageRule.is_free&&!alwaysPublicPages.has(currentPage);
+      if(pageNeedsPremium){
+        showAccessProgress(true);
+        if(!user){
+          showLock('Premium access required',effectivePageRule.upgrade_message);
+          return;
+        }
         const {data:hasPaidAccess,error:entitlementError}=await client.rpc('has_active_paid_subscription');
         if(entitlementError)throw entitlementError;
         premium=hasPaidAccess===true;
+        if(!premium){
+          showLock('Premium access required',effectivePageRule.upgrade_message);
+          return;
+        }
       }
       ready=true;
       installMobileNavigation();
       applyPublicAccessLabels();
-      // Several pages dynamically render large lists. Coalesce DOM updates so one
-      // render burst triggers one label pass instead of repeated full-document scans.
       let labelRefreshTimer=null;
       const accessObserver=new MutationObserver(()=>{
         if(labelRefreshTimer!==null)clearTimeout(labelRefreshTimer);
@@ -140,33 +186,20 @@
         },100);
       });
       accessObserver.observe(document.body,{childList:true,subtree:true});
-      const site=findRule('site',location.pathname.split('/').pop()||'index.html')||findRule('site','*');
-      const requestedTest=new URLSearchParams(location.search).get('test');
-      let requestedTestAuthorized=false;
-      if(requestedTest){
-        // Resolve the individual test first. A denied test goes straight to the full
-        // Upgrade Pass plans page; do not show the generic page-restriction overlay.
-        const accessCheck=await client.rpc('can_access_test',{p_test_id:requestedTest});
-        if(accessCheck.error)throw accessCheck.error;
-        requestedTestAuthorized=accessCheck.data===true;
-        if(!requestedTestAuthorized&&!premium){
-          location.replace('/my_account.html?openPremium=1');
-          return;
-        }
+      hideAccessProgress();
+      // Membership is non-blocking on free routes; it only updates upgrade labels.
+      if(user&&!pageNeedsPremium){
+        client.rpc('has_active_paid_subscription').then(({data,error})=>{
+          if(error)throw error;
+          premium=data===true;
+          applyPublicAccessLabels();
+        }).catch(error=>console.warn('Background subscription refresh failed; paid actions remain locked.',error));
       }
-      const currentPage=norm(location.pathname.split('/').pop()||'index.html');
-      const alwaysPublicPages=new Set(['login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
-      const pageFeatureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats'}[currentPage]);
-      const routeAliases=({'fix-accuracy.html':['typing-game','fix-accuracy'],'self-test.html':['self-test'],'materials.html':['pdf-library'],'dashboard.html':['setup-box'],'start_test.html':['typing-interface']}[currentPage]||[]);
-      const pageRule=findRule('menu',currentPage)||findRule('menu','/'+currentPage)||(pageFeatureKey&&findRule('feature',pageFeatureKey))||routeAliases.map(key=>findRule('feature',key)).find(Boolean);
-      const effectivePageRule=pageRule||site;
-      // A specific test has already been authorized above. Do not let the generic
-      // start_test.html/site rule override that decision with a second restriction popup.
-      if(!requestedTestAuthorized&&effectivePageRule&&!effectivePageRule.is_free&&!premium&&!alwaysPublicPages.has(currentPage)){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark" aria-hidden="true">✦</span><h1>Premium access required</h1><p>'+esc(effectivePageRule.upgrade_message)+'</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">Explore plans</button></div></div>');document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);}
-      document.documentElement.classList.remove('feature-access-pending');
       if(new URLSearchParams(location.search).get('openPremium')==='1')openPremiumDialog();
-    }catch(e){console.error('Feature access verification failed; protected content remains hidden.',e);document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium feature</h1><p>Access verification is temporarily unavailable. This content remains protected until your plan is confirmed.</p><div class="feature-upgrade-actions"><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">View plans</button><button type="button" class="feature-upgrade-secondary" id="locked-page-cancel">Cancel</button></div></div></div>');
-      document.getElementById('locked-page-cancel')?.addEventListener('click',()=>history.length>1?history.back():location.assign('/index.html'));document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);document.documentElement.classList.remove('feature-access-pending');}
+    }catch(e){
+      console.error('Feature access verification failed; protected content remains hidden.',e);
+      showLock('Premium feature','Access verification is temporarily unavailable. This content remains protected until your plan is confirmed.');
+    }
   }
   function applyPublicAccessLabels(){
     document.querySelectorAll('a[data-folder-id].category-card').forEach(card=>{
