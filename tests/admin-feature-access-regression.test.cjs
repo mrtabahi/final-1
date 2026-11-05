@@ -90,16 +90,20 @@ test('Start Preparation initializes Supabase before the access gate and auth hel
 });
 
 
-test('paid test list renders Upgrade for free users and keeps Start for entitled users', () => {
+test('paid test list and direct URLs use authoritative database entitlement checks', () => {
   const root = path.join(__dirname, '..');
   const list = fs.readFileSync(path.join(root, 'js/test-list.js'), 'utf8');
+  const gate = fs.readFileSync(path.join(root, 'js/feature-access.js'), 'utf8');
   const page = fs.readFileSync(path.join(root, 'test-list.html'), 'utf8');
-  assert.match(list, /from\('feature_access_rules'\)/);
-  assert.match(list, /has_active_paid_subscription/);
-  assert.match(list, /accessRule && !accessRule\.is_free && !premium/);
-  assert.match(list, /requiresUpgrade \? 'UPGRADE ✦' : 'Start →'/);
-  assert.match(list, /requiresUpgrade \? '#' : 'start_test\.html\?test='/);
-  assert.match(page, /feature-access\.js\?v=20261105-paid-gate2/);
   const start = fs.readFileSync(path.join(root, 'start_test.html'), 'utf8');
-  assert.match(start, /feature-access\.js\?v=20261105-paid-gate2/);
+  assert.match(list, /rpc\('can_access_test', \{p_test_id: test\.id\}\)/);
+  assert.match(list, /accessByTestId\.get\(String\(test\.id\)\) !== true/);
+  assert.match(list, /data-access-checked="true"/);
+  assert.match(list, /data-paid-locked="true"/);
+  assert.match(gate, /rpc\('can_access_test',\{p_test_id:requestedTest\}\)/);
+  assert.match(gate, /if\(accessCheck\.data!==true&&!premium\)/);
+  assert.match(gate, /closest\('\[data-paid-locked="true"\]'\)/);
+  assert.match(page, /test-list\.js\?v=20261105-entitlement-rpc1/);
+  assert.match(page, /feature-access\.js\?v=20261105-entitlement-rpc1/);
+  assert.match(start, /feature-access\.js\?v=20261105-entitlement-rpc1/);
 });
