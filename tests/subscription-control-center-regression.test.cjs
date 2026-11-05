@@ -71,3 +71,19 @@ test('premium purchase entry points use one responsive modal and preserve checko
   assert.match(gate, /if\(rr\.error\)throw rr\.error/);
   assert.match(gate, /Access verification is temporarily unavailable/);
 });
+
+
+test('typing categories paint cached data immediately and refresh catalogue alongside auth', () => {
+  const root = path.join(__dirname, '..');
+  const page = fs.readFileSync(path.join(root, 'Typing_test.html'), 'utf8');
+  const script = fs.readFileSync(path.join(root, 'js/typing-tests.js'), 'utf8');
+  const auth = fs.readFileSync(path.join(root, 'js/auth.js'), 'utf8');
+  assert.match(page, /<script defer src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2"><\/script>/);
+  assert.match(page, /typing-tests\.js\?v=20261105-instant-catalog1/);
+  assert.match(script, /decoding-hcm:typing-categories:v2/);
+  assert.ok(script.indexOf('if (cachedFolders) renderCategories(cachedFolders, true)') < script.indexOf('AuthManager.requireCandidateGuard()'));
+  assert.match(script, /Promise\.all\(\[candidateCheck,catalogueRequest\]\)/);
+  assert.match(script, /rpc\('list_test_catalog'/);
+  assert.match(auth, /setTimeout\(\(\) => \{ initialHeartbeatReady = true; heartbeat\(\); \}, 8000\)/);
+  assert.match(auth, /nowMs - lastAttemptAt < 45000/);
+});
