@@ -564,3 +564,11 @@
   color:inherit!important;background:transparent!important;border:0!important;
   box-shadow:none!important;text-decoration:none!important;font-weight:inherit!important
 }
+
+
+/* Keep the compact typing toolbar glyphs visible even when button labels update. */
+#typing-section .typing-controls .compact-tip-control::before{
+  content:attr(data-icon)!important;display:inline-block!important;visibility:visible!important;opacity:1!important;
+  font-size:1.15rem!important;line-height:1!important;font-weight:800!important;
+}
+#typing-section .typing-controls .compact-tip-control:not([data-icon])::before{content:"•"!important}
