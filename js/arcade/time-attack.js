@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearInterval(timer);
     input.disabled = true;
     const seconds = elapsed();
-    const scores = ArcadeScoring.calculate(expected, committed, input.value, seconds, backspaces, true);
+    const scores = ArcadeScoring.calculate(expected, committedText, input.value, seconds, backspaces, true);
     const wavesCleared = Math.floor(committed.length / 5);
     $('mission-console').hidden = true;
     $('mission-results').hidden = false;
