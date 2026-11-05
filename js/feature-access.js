@@ -142,7 +142,7 @@
       accessObserver.observe(document.body,{childList:true,subtree:true});
       const site=findRule('site',location.pathname.split('/').pop()||'index.html')||findRule('site','*');
       const requestedTest=new URLSearchParams(location.search).get('test');
-      if(requestedTest){let testRule=findRule('test',requestedTest);if(!testRule){const {data:testMeta}=await client.from('tests').select('folder_id').eq('id',requestedTest).maybeSingle();if(testMeta?.folder_id)testRule=findRule('folder',testMeta.folder_id);}if(testRule&&!testRule.is_free&&!premium){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Upgrade your plan</h1><p>'+esc(testRule.upgrade_message)+'</p><button type="button" class="feature-upgrade-primary" id="locked-page-upgrade">Explore plans</button></div></div>');document.getElementById('locked-page-upgrade')?.addEventListener('click',openPremiumDialog);document.documentElement.classList.remove('feature-access-pending');return;}}
+      if(requestedTest){let testRule=findRule('test',requestedTest);if(!testRule){const {data:testMeta}=await client.from('tests').select('folder_id').eq('id',requestedTest).maybeSingle();if(testMeta?.folder_id)testRule=findRule('folder',testMeta.folder_id);}if(testRule&&!testRule.is_free&&!premium){document.body.classList.add('feature-site-locked');document.body.insertAdjacentHTML('beforeend','<div class="feature-site-lock" role="region" aria-label="Premium access required"><div class="feature-site-lock-card"><span class="feature-upgrade-mark">✦</span><h1>Premium test</h1><p>'+esc(testRule.upgrade_message)+'</p></div></div>');document.documentElement.classList.remove('feature-access-pending');openPremiumDialog();return;}}
       const currentPage=norm(location.pathname.split('/').pop()||'index.html');
       const alwaysPublicPages=new Set(['login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
       const pageFeatureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats'}[currentPage]);
@@ -232,7 +232,7 @@
     if(!rule&&folderId)rule=findRule('folder',folderId)||findRule('menu','Typing_test.html');
     if(!rule&&custom&&custom.startsWith('feature:'))rule=findRule('feature',custom.slice(8));
     if(!rule&&a.matches('a[href]')){const href=a.getAttribute('href')||'';const file=norm(href.split(/[?#]/)[0].split('/').pop());const featureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats'}[file]);rule=(featureKey&&findRule('feature',featureKey))||findRule('menu',file)||findRule('menu',norm(href));}
-    if(rule&&!rule.is_free&&!premium){e.preventDefault();e.stopImmediatePropagation();popup(rule.upgrade_message);}
+    if(rule&&!rule.is_free&&!premium){e.preventDefault();e.stopImmediatePropagation();openPremiumDialog();}
   },true);
   document.addEventListener('DOMContentLoaded',init);if(document.readyState!=='loading')init();
 })();
