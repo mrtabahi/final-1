@@ -42,6 +42,8 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(gate, /applyPublicAccessLabels/);
   assert.match(gate, /feature-upgrade-badge/);
   assert.match(gate, /PremiumModal\.open\(\)/);
+  assert.match(gate, /e\.preventDefault\(\);e\.stopImmediatePropagation\(\);openPremiumDialog\(\)/, 'Paid controls must open the purchase modal directly');
+  assert.match(gate, /document\.documentElement\.classList\.remove\('feature-access-pending'\);openPremiumDialog\(\);return;/, 'Direct paid-test URLs must not expose the setup page');
   assert.match(admin, /typing_test\.html/);
   assert.match(admin, /resource_type:'folder'/);
   assert.match(admin, /resource_type:'test'/);
