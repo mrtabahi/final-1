@@ -88,3 +88,18 @@ test('Start Preparation initializes Supabase before the access gate and auth hel
   assert.ok(configIndex < authIndex, 'Supabase config must load before auth helpers');
   assert.ok(configIndex < gateIndex, 'Supabase config must load before the feature access gate');
 });
+
+
+test('paid test list renders Upgrade for free users and keeps Start for entitled users', () => {
+  const root = path.join(__dirname, '..');
+  const list = fs.readFileSync(path.join(root, 'js/test-list.js'), 'utf8');
+  const page = fs.readFileSync(path.join(root, 'test-list.html'), 'utf8');
+  assert.match(list, /from\('feature_access_rules'\)/);
+  assert.match(list, /has_active_paid_subscription/);
+  assert.match(list, /accessRule && !accessRule\.is_free && !premium/);
+  assert.match(list, /requiresUpgrade \? 'UPGRADE ✦' : 'Start →'/);
+  assert.match(list, /requiresUpgrade \? '#' : 'start_test\.html\?test='/);
+  assert.match(page, /feature-access\.js\?v=20261105-paid-gate2/);
+  const start = fs.readFileSync(path.join(root, 'start_test.html'), 'utf8');
+  assert.match(start, /feature-access\.js\?v=20261105-paid-gate2/);
+});
