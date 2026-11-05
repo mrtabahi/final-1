@@ -9,6 +9,7 @@
     Object.assign(button, {type:'button', id:'exam-interface-switcher', title:'Switch typing mode'});
     button.className = 'btn btn-secondary compact-tip-control';
     button.dataset.tooltip = 'Switch typing mode';
+    button.dataset.icon = '▣';
     button.setAttribute('aria-label','Switch typing mode');
     button.setAttribute('aria-haspopup','dialog');
     button.textContent = '▣';
@@ -16,8 +17,8 @@
 
     const style = document.createElement('style');
     style.textContent = `
-      #exam-interface-switcher{font-size:0!important;min-width:38px}#exam-interface-switcher::before{content:'▣';font-size:1.15rem}
-      #exam-interface-dialog{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;padding:1rem;background:#08142399}
+      #exam-interface-switcher{font-size:0!important;min-width:38px}#exam-interface-switcher::before{content:attr(data-icon)!important;display:inline-block;font-size:1.15rem}
+      #exam-interface-dialog{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;padding:1rem;width:100vw;height:100vh;box-sizing:border-box;background:#08142399}
       #exam-interface-dialog[hidden]{display:none!important}#exam-interface-dialog .ei-panel{width:min(390px,100%);padding:1.2rem;border-radius:16px;background:#fff;color:#123b63;box-shadow:0 24px 80px #07182755}
       #exam-interface-dialog h2{font-size:1.15rem;margin:0 0 .4rem}#exam-interface-dialog p{font-size:.9rem;color:#536579;margin:0 0 .8rem;line-height:1.45}
       #exam-interface-dialog .ei-options{display:grid;gap:.65rem}#exam-interface-dialog .ei-choice{padding:.85rem 1rem;border:1px solid #cbd8e5;border-radius:10px;background:#f7fbff;color:#123b63;font-weight:750;text-align:left;cursor:pointer}
@@ -56,7 +57,8 @@
     const dialog = document.createElement('div');
     dialog.id='exam-interface-dialog';dialog.hidden=true;dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','ei-title');
     dialog.innerHTML='<div class="ei-panel"><h2 id="ei-title">Switch typing mode</h2><p>Choose the exam interface you want to use.</p><div class="ei-options"><button type="button" class="ei-choice" data-ei-mode="screen">Screen to Screen</button><button type="button" class="ei-choice" data-ei-mode="pdf">PDF to Screen</button></div><p class="ei-note">Your current practice settings (sound, Backspace, highlight and other enabled/disabled controls) will carry over to Exam Interface automatically.</p><button type="button" class="btn btn-secondary ei-close">Cancel</button></div>';
-    document.body.append(dialog);
+    const dialogHost=document.getElementById('app-root')||document.body;
+    dialogHost.append(dialog);
 
     const toolbar=document.createElement('div');
     toolbar.id='ei-exam-toolbar';
