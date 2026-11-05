@@ -58,6 +58,9 @@
     $('mission-result-gross').textContent = scores.bsf.grossWpm.toFixed(2) + ' WPM';
     $('mission-result-net').textContent = scores.bsf.netWpm.toFixed(2) + ' WPM';
     $('mission-result-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
+    $('mission-result-crpf-net').textContent = scores.crpf.netWpm.toFixed(2) + ' WPM';
+    $('mission-result-crpf-accuracy').textContent = scores.crpf.accuracy.toFixed(2) + '%';
+    $('mission-result-crpf-errors').textContent = String(scores.crpf.totalErrors);
     $('mission-result-errors').textContent = String(scores.bsf.totalErrors);
     $('mission-result-waves').textContent = String(Math.min(4, wavesCleared));
     $('mission-result-time').textContent = seconds.toFixed(1) + ' sec';
