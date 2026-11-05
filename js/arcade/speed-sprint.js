@@ -47,6 +47,9 @@
     $('sprint-result-gross').textContent = scores.bsf.grossWpm.toFixed(2) + ' WPM';
     $('sprint-result-net').textContent = scores.bsf.netWpm.toFixed(2) + ' WPM';
     $('sprint-result-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
+    $('sprint-result-crpf-net').textContent = scores.crpf.netWpm.toFixed(2) + ' WPM';
+    $('sprint-result-crpf-accuracy').textContent = scores.crpf.accuracy.toFixed(2) + '%';
+    $('sprint-result-crpf-errors').textContent = String(scores.crpf.totalErrors);
     $('sprint-result-errors').textContent = String(scores.bsf.totalErrors);
     $('sprint-result-keys').textContent = String(scores.bsf.totalKeystrokes);
     $('sprint-result-allowance').textContent = String(scores.bsf.allowedErrors);
