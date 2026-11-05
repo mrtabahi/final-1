@@ -451,9 +451,12 @@ const AuthManager = {
 (function initCandidateActivityTracking() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   let busy = false;
+  let lastAttemptAt = 0;
   async function heartbeat() {
-    if (busy || !supabaseClient) return;
+    const nowMs = Date.now();
+    if (busy || !supabaseClient || nowMs - lastAttemptAt < 45000) return;
     busy = true;
+    lastAttemptAt = nowMs;
     try {
       const { data: sessionData } = await supabaseClient.auth.getSession();
       const user = sessionData?.session?.user;
@@ -497,10 +500,11 @@ const AuthManager = {
       busy = false;
     }
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', heartbeat, { once: true });
-  else heartbeat();
-  window.addEventListener('pageshow', heartbeat);
-  window.addEventListener('focus', heartbeat);
+  // Presence is useful, but must never compete with the first screen's auth/catalogue requests.
+  // Defer the initial heartbeat and throttle focus/pageshow events to one attempt per 45 seconds.
+  window.setTimeout(heartbeat, 8000);
+  window.addEventListener('pageshow', event => { if (event.persisted) heartbeat(); });
+  window.addEventListener('focus', () => { if (document.visibilityState === 'visible' && document.readyState === 'complete') heartbeat(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) heartbeat(); });
   window.setInterval(() => { if (!document.hidden) heartbeat(); }, 60000);
 })();
