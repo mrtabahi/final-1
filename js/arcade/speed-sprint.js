@@ -1,4 +1,4 @@
-(() => {
+document.addEventListener('DOMContentLoaded', async () => {\n  const candidateStatus = await AuthManager.requireCandidateGuard();\n  if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
   const pool = 'rapid engine velocity highway turbo momentum accelerate overtake traction racing circuit throttle gearbox steering finish straightaway velocity pursuit dynamic power launch apex acceleration'.split(' ');
@@ -44,15 +44,20 @@
     $('sprint-play').hidden = true;
     $('sprint-results').hidden = false;
     $('sprint-finish-reason').textContent = reason;
-    $('sprint-result-gross').textContent = scores.bsf.grossWpm.toFixed(2) + ' WPM';
-    $('sprint-result-net').textContent = scores.bsf.netWpm.toFixed(2) + ' WPM';
-    $('sprint-result-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
-    $('sprint-result-crpf-net').textContent = scores.crpf.netWpm.toFixed(2) + ' WPM';
-    $('sprint-result-crpf-accuracy').textContent = scores.crpf.accuracy.toFixed(2) + '%';
-    $('sprint-result-crpf-errors').textContent = String(scores.crpf.totalErrors);
-    $('sprint-result-errors').textContent = String(scores.bsf.totalErrors);
-    $('sprint-result-keys').textContent = String(scores.bsf.totalKeystrokes);
-    $('sprint-result-allowance').textContent = String(scores.bsf.allowedErrors);
+    const fillFormula = (name, score) => {
+      $('sprint-result-' + name + '-gross').textContent = score.grossWpm.toFixed(2) + ' WPM';
+      $('sprint-result-' + name + '-net').textContent = score.netWpm.toFixed(2) + ' WPM';
+      $('sprint-result-' + name + '-accuracy').textContent = score.accuracy.toFixed(2) + '%';
+      $('sprint-result-' + name + '-errors').textContent = String(score.totalErrors);
+      $('sprint-result-' + name + '-allowed').textContent = String(score.allowedErrors);
+      $('sprint-result-' + name + '-excess').textContent = String(score.excessErrors);
+      $('sprint-result-' + name + '-penalty').textContent = score.penaltyWpm.toFixed(2) + ' WPM';
+      $('sprint-result-' + name + '-correct').textContent = score.totalCorrectWord.toFixed(2);
+      $('sprint-result-' + name + '-backspace').textContent = String(score.backspacePresses);
+      $('sprint-result-' + name + '-keys').textContent = String(score.totalKeystrokes);
+    };
+    fillFormula('bsf', scores.bsf);
+    fillFormula('crpf', scores.crpf);
     $('sprint-result-time').textContent = seconds.toFixed(1) + ' sec';
     $('sprint-result-distance').textContent = committed.length + ' / ' + expected.length + ' words';
   }
@@ -74,4 +79,4 @@
   });
   $('sprint-back').addEventListener('click', () => { location.href = '/fix-accuracy.html'; });
   paint();
-})();
+});
