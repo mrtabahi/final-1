@@ -24,6 +24,7 @@ async function loadGame(htmlPath, scriptPath) {
   const html = read(htmlPath);
   const elements = new Map([...html.matchAll(/\bid="([^"]+)"/g)].map(match => [match[1], makeElement(match[1])]));
   let ready = null, now = 1000, guardCalls = 0, intervalCallback = null;
+  const storage = new Map();
   const document = {
     getElementById(id) { if (!elements.has(id)) elements.set(id, makeElement(id)); return elements.get(id); },
     addEventListener(type, callback) { if (type === 'DOMContentLoaded') ready = callback; }
@@ -34,7 +35,8 @@ async function loadGame(htmlPath, scriptPath) {
     performance:{now(){return now;}},
     setInterval(callback){intervalCallback=callback;return 1;},
     clearInterval(){intervalCallback=null;},
-    location:{href:'',reload(){}}
+    location:{href:'',reload(){}},
+    localStorage:{getItem(key){return storage.has(key)?storage.get(key):null;},setItem(key,value){storage.set(key,String(value));}}
   };
   context.window = context;
   context.globalThis = context;
@@ -49,7 +51,8 @@ async function loadGame(htmlPath, scriptPath) {
   return {
     get(id){return elements.get(id) || document.getElementById(id);},
     setNow(value){now=value;},
-    get intervalCallback(){return intervalCallback;}
+    get intervalCallback(){return intervalCallback;},
+    storage
   };
 }
 
@@ -66,6 +69,8 @@ test('Speed Sprint starts, advances race checkpoints and produces a canonical du
   assert.match(game.get('sprint-result-bsf-gross').textContent, /WPM/);
   assert.match(game.get('sprint-result-crpf-net').textContent, /WPM/);
   assert.equal(game.get('sprint-result-bsf-keys').textContent, game.get('sprint-result-crpf-keys').textContent);
+  assert.match(game.get('sprint-result-personal-best').textContent, /WPM/);
+  assert.ok(Number(game.storage.get('dch-speed-sprint-best-net-wpm-v1')) > 0);
 });
 
 test('Word Accuracy spends shields on mismatches and records exact-match streaks', async () => {
