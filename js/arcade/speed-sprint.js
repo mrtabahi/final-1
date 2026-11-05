@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', async () => {\n  const candidateStatus = await AuthManager.requireCandidateGuard();\n  if (!candidateStatus?.ok) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  const candidateStatus = await AuthManager.requireCandidateGuard();
+  if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
   const pool = 'rapid engine velocity highway turbo momentum accelerate overtake traction racing circuit throttle gearbox steering finish straightaway velocity pursuit dynamic power launch apex acceleration'.split(' ');
