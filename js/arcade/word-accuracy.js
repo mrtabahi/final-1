@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   'use strict';
   const $ = id => document.getElementById(id);
   const expected = 'administration discipline responsibility efficiency accuracy candidate examination recruitment documentation communication government procedure commitment integrity punctuality knowledge assessment verification preparation consistency thoroughness proficiency adaptability perseverance resilience'.split(' ');
-  const committed = [];
+  const committed = [];\n  let committedText = '';
   let startedAt = 0, backspaces = 0, shields = 3, streak = 0, bestStreak = 0, correctWords = 0, finished = false;
   const input = $('precision-input');
   const elapsed = () => startedAt ? Math.max(0.001, (performance.now() - startedAt) / 1000) : 0.001;
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('precision-best').textContent = String(bestStreak);
     $('precision-shields').textContent = '● '.repeat(shields) + '○ '.repeat(3 - shields);
     $('precision-progress').style.width = committed.length / expected.length * 100 + '%';
-    const scores = ArcadeScoring.calculate(expected, committed, input.value, elapsed(), backspaces, false);
+    const scores = ArcadeScoring.calculate(expected, committedText, input.value, elapsed(), backspaces, false);
     $('precision-live-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
     $('precision-live-net').textContent = scores.bsf.netWpm.toFixed(2);
     $('precision-live-errors').textContent = String(scores.bsf.totalErrors);
@@ -30,9 +30,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('precision-live-errors').textContent = String(scores.bsf.totalErrors);
   }
   function commit() {
-    const word = input.value.trim();
+    const raw = input.value;
+    const word = raw.trim();
     input.value = '';
-    if (!word) return;
+    committedText += raw;
+    if (!word) { updateScore(); return; }
     const target = expected[committed.length];
     committed.push(word);
     if (word === target) {
