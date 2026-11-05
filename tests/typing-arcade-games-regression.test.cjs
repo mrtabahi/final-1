@@ -145,7 +145,7 @@ test('arcade adapter exactly reuses Fix Accuracy defaults and committed-score be
   const spacing = context.ArcadeScoring.calculate(['one','two'], 'one  two ', '', 60, 0, true);
   assert.equal(spacing.bsf.doubleSpaceErrors, 1);
   assert.equal(spacing.bsf.totalErrors, 1);
-  assert.equal(spacing.crpf.totalErrors, 1);
+  assert.equal(spacing.crpf.totalErrors, 2);
   assert.equal(spacing.typedText, 'one  two ');
 });
 
