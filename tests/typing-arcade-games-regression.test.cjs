@@ -33,7 +33,8 @@ test('the three experiences have different interaction and challenge mechanics',
   assert.match(sprint, /const duration = 30/);
   assert.match(sprint, /sprint-car/);
   assert.match(precision, /let startedAt = 0, backspaces = 0, shields = 3/);
-  assert.match(precision, /bestStreak/);\n  assert.match(precision, /resilience/);
+  assert.match(precision, /bestStreak/);
+  assert.match(precision, /resilience/);
   assert.match(mission, /const duration = 60/);
   assert.match(mission, /const waves =/);
   assert.match(mission, /mission-sectors/);
