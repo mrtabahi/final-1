@@ -572,3 +572,14 @@
   font-size:1.15rem!important;line-height:1!important;font-weight:800!important;
 }
 #typing-section .typing-controls .compact-tip-control:not([data-icon])::before{content:"•"!important}
+
+
+/* Explicitly paint every toolbar glyph, including disabled/admin-locked controls. */
+#typing-section .typing-controls .compact-tip-control::before,
+.self-toolbar-actions .compact-tip-control::before{
+  content:attr(data-icon)!important;display:inline-block!important;visibility:visible!important;opacity:1!important;
+  color:#234b70!important;-webkit-text-fill-color:#234b70!important;
+  font-family:"Segoe UI Symbol","Noto Sans Symbols 2",Arial,sans-serif!important;
+  font-size:1.15rem!important;font-weight:800!important;line-height:1!important;
+}
+#typing-section .typing-controls .compact-tip-control.admin-feature-forced-off::before{color:#c62828!important;-webkit-text-fill-color:#c62828!important}

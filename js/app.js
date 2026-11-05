@@ -1,7 +1,19 @@
 document.addEventListener('DOMContentLoaded', async()=>{
     const status=await TypingMaster.requireCandidateGuard(); if(!status.ok)return;
     const {user,profile}=status; let currentPassage=null,engine=null,tests=[],serverSessionPromise=null,serverSessionId=null,resultScores={},selectedFormula='bsf',activeScoringConfig={};
-    const $=id=>document.getElementById(id); let soundEnabled=true,highlightEnabled=false,backspaceEnabled=false,backspacePressCount=0,passageHidden=false,inputBoxHidden=false,lastTypedValue='',audioContext=null,autoScrollEnabled=true,autoScrollLocked=false,isComposing=false,attemptStartedAt=null,attemptTypedText=''; const setup=$('setup-section'),inst=$('instruction-section'),typing=$('typing-section'),result=$('result-section'),passageSelect=$('select-passage'),lang=$('select-language'),duration=$('select-duration'),textarea=$('typing-textarea'),display=$('passage-container');
+    const $=id=>document.getElementById(id); const showTypingConfirm=(message,confirmLabel='Confirm')=>new Promise(resolve=>{
+        const overlay=document.createElement('div');overlay.className='typing-confirm-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','typing-confirm-title');
+        overlay.innerHTML='<div class="typing-confirm-panel"><h2 id="typing-confirm-title">Please confirm</h2><p class="typing-confirm-message"></p><div class="typing-confirm-actions"><button type="button" class="typing-confirm-cancel">Go back</button><button type="button" class="typing-confirm-accept"></button></div></div>';
+        overlay.querySelector('.typing-confirm-message').textContent=message;overlay.querySelector('.typing-confirm-accept').textContent=confirmLabel;
+        if(!document.getElementById('typing-confirm-style')){const style=document.createElement('style');style.id='typing-confirm-style';style.textContent='.typing-confirm-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;background:rgba(3,12,25,.68)}.typing-confirm-panel{width:min(430px,100%);padding:1.25rem;border-radius:16px;background:#fff;color:#102a43;box-shadow:0 24px 80px rgba(0,0,0,.38)}.typing-confirm-panel h2{margin:0 0 .55rem;font-size:1.2rem}.typing-confirm-panel p{margin:0;line-height:1.55;color:#334155}.typing-confirm-actions{display:flex;justify-content:flex-end;gap:.65rem;margin-top:1.2rem}.typing-confirm-actions button{min-height:40px;padding:.55rem .9rem;border:1px solid #cbd5e1;border-radius:9px;background:#f8fafc;color:#102a43;font-weight:700;cursor:pointer}.typing-confirm-actions .typing-confirm-accept{border-color:#1d4ed8;background:#1d4ed8;color:#fff}';document.head.append(style);}
+        const host=document.fullscreenElement||$('app-root')||document.body;host.append(overlay);
+        let settled=false;const finish=value=>{if(settled)return;settled=true;document.removeEventListener('keydown',onKey);overlay.remove();resolve(value);};
+        const onKey=event=>{if(event.key==='Escape'){event.preventDefault();finish(false);}};
+        overlay.querySelector('.typing-confirm-cancel').addEventListener('click',()=>finish(false));
+        overlay.querySelector('.typing-confirm-accept').addEventListener('click',()=>finish(true));
+        overlay.addEventListener('click',event=>{if(event.target===overlay)finish(false);});
+        document.addEventListener('keydown',onKey);overlay.querySelector('.typing-confirm-accept').focus();
+    }); let soundEnabled=true,highlightEnabled=false,backspaceEnabled=false,backspacePressCount=0,passageHidden=false,inputBoxHidden=false,lastTypedValue='',audioContext=null,autoScrollEnabled=true,autoScrollLocked=false,isComposing=false,attemptStartedAt=null,attemptTypedText=''; const setup=$('setup-section'),inst=$('instruction-section'),typing=$('typing-section'),result=$('result-section'),passageSelect=$('select-passage'),lang=$('select-language'),duration=$('select-duration'),textarea=$('typing-textarea'),display=$('passage-container');
     textarea.addEventListener('paste',e=>{e.preventDefault();alert('Pasting is disabled for this typing test.');});textarea.addEventListener('drop',e=>e.preventDefault());textarea.addEventListener('contextmenu',e=>e.preventDefault());
     textarea.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!backspaceEnabled){e.preventDefault();return;}if(!engine||engine.isFinished)return;if(e.key==='Backspace'&&backspaceEnabled&&engine.isActive&&!e.repeat)backspacePressCount++;const printable=(e.key&&e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey)||e.key==='Enter'||(e.key==='Backspace'&&backspaceEnabled);if(printable){if(!modeLocked)lockTypingMode();engine.totalKeystrokes++;if(!engine.isActive)engine.start();}});
     async function beep(){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;if(!audioContext)audioContext=new AudioCtx();if(audioContext.state==='suspended')await audioContext.resume();const now=audioContext.currentTime;const makeTap=(delay,volume,frequency)=>{const start=now+delay;const length=Math.floor(audioContext.sampleRate*(.018+Math.random()*.035));const buffer=audioContext.createBuffer(1,length,audioContext.sampleRate);const data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*(1-i/length);const source=audioContext.createBufferSource();source.buffer=buffer;const filter=audioContext.createBiquadFilter();filter.type='bandpass';filter.frequency.value=frequency;filter.Q.value=.65;const gain=audioContext.createGain();gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(volume,start+.002);gain.gain.exponentialRampToValueAtTime(.0001,start+.045);source.connect(filter);filter.connect(gain);gain.connect(audioContext.destination);source.start(start);source.stop(start+.05);};makeTap(0,.2,800+Math.random()*1800);for(let i=0;i<3;i++)if(Math.random()>.15)makeTap(Math.random()*.045,.065,450+Math.random()*2800);}catch(error){console.debug('Keyboard sound unavailable',error);}}
@@ -114,43 +126,38 @@ document.addEventListener('DOMContentLoaded', async()=>{
                 // Never fall back to the final passage node: that used to jump to
                 // the passage's last word on every committed space.
                 const current=display.querySelector('.char-current');
-                if(!current)return;
-                const currentWord=current.closest('.passage-word');
-                const currentWordIndex=Number(currentWord?.dataset.wordIndex);
-                const box=display.getBoundingClientRect(),charBox=current.getBoundingClientRect();
+                const box=display.getBoundingClientRect();
                 const lineHeight=parseFloat(getComputedStyle(display).lineHeight)||30;
                 const lineTolerance=Math.max(3,lineHeight*.35);
                 const wordNodes=[...display.querySelectorAll('.passage-word')];
-                const currentWordRect=currentWord?.getBoundingClientRect();
-                if(currentWordRect&&Number.isInteger(currentWordIndex)){
-                    const sameLine=wordNodes
-                        .filter(node=>Math.abs(node.getBoundingClientRect().top-currentWordRect.top)<=lineTolerance)
-                        .sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left);
-                    const visibleLineTops=[];
-                    wordNodes.forEach(node=>{
-                        const rect=node.getBoundingClientRect();
-                        if(rect.bottom<=box.top||rect.top>=box.bottom)return;
-                        if(!visibleLineTops.some(top=>Math.abs(top-rect.top)<=lineTolerance))visibleLineTops.push(rect.top);
-                    });
-                    visibleLineTops.sort((a,b)=>a-b);
-                    const currentLineIndex=visibleLineTops.findIndex(top=>Math.abs(top-currentWordRect.top)<=lineTolerance);
-                    const linePositionFromBottom=visibleLineTops.length-currentLineIndex;
-                    const typedWordIndex=typedIndexByExpected.get(currentWordIndex);
-                    const typedCharacters=typedWordIndex===undefined?0:splitGraphemes(typedWords[typedWordIndex]||'').length;
-                    const isSecondLastWord=sameLine.length>=2&&sameLine[sameLine.length-2]===currentWord;
-                    if(linePositionFromBottom===3&&isSecondLastWord&&typedCharacters<=1&&!autoScrolledWordIndices.has(currentWordIndex)){
-                        display.scrollTop=Math.min(display.scrollHeight-display.clientHeight,display.scrollTop+lineHeight);
-                        autoScrolledWordIndices.add(currentWordIndex);
+                // Keep the same third-line threshold, but wait until the final word
+                // on that line has been completed and Space has committed it.
+                if(/\s$/u.test(typed)&&committedCount>0){
+                    const lastCommittedTypedIndex=committedCount-1;
+                    const committedExpectedIndex=[...typedIndexByExpected.entries()].find(([,typedIndex])=>typedIndex===lastCommittedTypedIndex)?.[0];
+                    const committedWord=committedExpectedIndex===undefined?null:wordNodes.find(node=>Number(node.dataset.wordIndex)===committedExpectedIndex);
+                    if(committedWord&&!autoScrolledWordIndices.has(committedExpectedIndex)){
+                        const committedRect=committedWord.getBoundingClientRect();
+                        const sameLine=wordNodes.filter(node=>Math.abs(node.getBoundingClientRect().top-committedRect.top)<=lineTolerance).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left);
+                        const visibleLineTops=[];
+                        wordNodes.forEach(node=>{const rect=node.getBoundingClientRect();if(rect.bottom<=box.top||rect.top>=box.bottom)return;if(!visibleLineTops.some(top=>Math.abs(top-rect.top)<=lineTolerance))visibleLineTops.push(rect.top);});
+                        visibleLineTops.sort((a,b)=>a-b);
+                        const lineIndex=visibleLineTops.findIndex(top=>Math.abs(top-committedRect.top)<=lineTolerance);
+                        const linePositionFromBottom=visibleLineTops.length-lineIndex;
+                        const isLastWordOfLine=sameLine.length>0&&sameLine[sameLine.length-1]===committedWord;
+                        if(linePositionFromBottom===3&&isLastWordOfLine){
+                            display.scrollTop=Math.min(display.scrollHeight-display.clientHeight,display.scrollTop+lineHeight);
+                            autoScrolledWordIndices.add(committedExpectedIndex);
+                        }
                     }
                 }
+                if(!current)return;
                 const margin=Math.max(8,lineHeight*.75);
-                const adjustedCharBox=current.getBoundingClientRect();
+                const charBox=current.getBoundingClientRect();
                 let nextTop=display.scrollTop;
-                if(adjustedCharBox.bottom>box.bottom-margin)nextTop+=adjustedCharBox.bottom-(box.bottom-margin);
-                else if(adjustedCharBox.top<box.top+margin)nextTop-=box.top+margin-adjustedCharBox.top;
-                if(nextTop!==display.scrollTop){
-                    display.scrollTop=Math.max(0,Math.min(display.scrollHeight-display.clientHeight,nextTop));
-                }
+                if(charBox.bottom>box.bottom-margin)nextTop+=charBox.bottom-(box.bottom-margin);
+                else if(charBox.top<box.top+margin)nextTop-=box.top+margin-charBox.top;
+                if(nextTop!==display.scrollTop)display.scrollTop=Math.max(0,Math.min(display.scrollHeight-display.clientHeight,nextTop));
             }
         }
     }
@@ -178,9 +185,9 @@ document.addEventListener('DOMContentLoaded', async()=>{
     $('btn-start-test').onclick=()=>{if(!currentPassage)return;inst.style.display='none';typing.style.display='block';textarea.value='';attemptStartedAt=null;attemptTypedText='';backspacePressCount=0;isComposing=false;serverSessionPromise=null;serverSessionId=null;resultScores={};selectedFormula='bsf';const name=profile.full_name||'Candidate'; candidateCanChooseMode=currentPassage.mode==='candidate'; selectedTypingMode=candidateCanChooseMode?'screen':(currentPassage.mode||'screen'); modeLocked=false; autoScrollEnabled=true; autoScrollLocked=false; autoScrolledWordIndices.clear(); if(autoScrollButton){autoScrollButton.hidden=selectedTypingMode!=='screen';autoScrollButton.disabled=false;autoScrollButton.textContent='↕ Auto-scroll: On — switch before typing';autoScrollButton.setAttribute('aria-pressed','true');} const mode=selectedTypingMode,durationMin=Math.max(1,Number.parseInt(currentPassage.duration_minutes,10)||10),cfg={freeErrorPct:Number(currentPassage.free_error_pct??CONFIG.DEFAULT_FREE_ERROR_PCT),penaltyPerError:Number(currentPassage.penalty_per_error??CONFIG.DEFAULT_PENALTY_PER_ERROR),minAccuracy:currentPassage.min_accuracy,targetWpm:currentPassage.target_wpm};activeScoringConfig=cfg;$('disp-candidate-name').textContent=name;$('disp-test-title').textContent=currentPassage.title;$('disp-mode').textContent=mode==='page'?'Off Screen':'On Screen';if(modeSwitchButton){const adminLocked=!candidateCanChooseMode;modeSwitchButton.hidden=false;modeSwitchButton.disabled=adminLocked;modeSwitchButton.classList.toggle('admin-feature-forced-off',adminLocked);modeSwitchButton.title=adminLocked?'Typing mode set by admin — locked':'Switch typing mode before typing';modeSwitchButton.setAttribute('aria-label',modeSwitchButton.title);modeSwitchButton.textContent='Typing mode: '+(mode==='page'?'Off-screen':'On-screen')+(adminLocked?' — set by admin':' — switch before typing');}if(mode==='page'){ $('offscreen-alert').style.display='block';display.style.display='none';}else{$('offscreen-alert').style.display='none';display.style.display='block';renderPassageProgress('');}
         lastTypedValue='';const highlightMode=currentPassage.highlight_mode||'candidate';const backspaceMode=currentPassage.backspace_mode||(currentPassage.allow_backspace?'on':'off');const hideMode=currentPassage.hide_paragraph_mode||'candidate';highlightEnabled=highlightMode==='on';backspaceEnabled=backspaceMode==='on'||(backspaceMode==='candidate'&&Boolean(currentPassage.allow_backspace));passageHidden=hideMode==='on';inputBoxHidden=false;textarea.style.display='block';if(hideInputButton){hideInputButton.textContent='🙈 Hide typing box';hideInputButton.setAttribute('aria-pressed','false');}if(highlightButton){highlightButton.disabled=highlightMode!=='candidate';highlightButton.textContent=highlightEnabled?'🖍 Highlight: On':'🖍 Highlight: Off';highlightButton.setAttribute('aria-pressed',String(highlightEnabled));}if(backspaceButton){backspaceButton.disabled=backspaceMode!=='candidate';backspaceButton.textContent=backspaceEnabled?'⌫ Backspace: On':'⌫ Backspace: Off';backspaceButton.setAttribute('aria-pressed',String(backspaceEnabled));}if(hideButton){hideButton.disabled=hideMode!=='candidate';hideButton.textContent=passageHidden?'👁 Show passage':'🙈 Hide passage';hideButton.setAttribute('aria-pressed',String(passageHidden));}display.classList.toggle('no-highlight',!highlightEnabled);$('timer-display').textContent=`${String(durationMin).padStart(2,'0')}:00`;const livePanel=$('live-metrics-panel'),liveToggle=$('btn-toggle-live-metrics');if(livePanel)livePanel.hidden=false;if(liveToggle){liveToggle.textContent='📊 Hide live calculation';liveToggle.setAttribute('aria-expanded','true');}if(backspaceButton){backspaceButton.textContent=backspaceEnabled?'⌫ Backspace: On':'⌫ Backspace: Off';backspaceButton.setAttribute('aria-pressed',String(backspaceEnabled));}display.style.display=(passageHidden||mode==='page')?'none':'block';engine=new TypingEngine({passageText:currentPassage.passage,durationSeconds:durationMin*60,mode,scoringConfig:cfg,allowBackspace:backspaceEnabled,onTick:(remaining)=>updateLiveMetrics(remaining),onComplete:async res=>{typing.style.display='none';result.style.display='block';const elapsed=Math.max(1,Number(res.elapsedSeconds||res.score.elapsedSeconds||1));const attemptTimeNode=$('res-attempt-time');if(attemptTimeNode){const secs=Math.round(elapsed);attemptTimeNode.textContent=`${String(Math.floor(secs/60)).padStart(2,'0')}:${String(secs%60).padStart(2,'0')} (${elapsed.toFixed(2)} seconds)`;}resultScores=TypingMaster.calculateBoth(currentPassage.passage,res.typedText,elapsed,cfg,null,backspacePressCount);selectedFormula='bsf';displayResult(resultScores.bsf);await submitAttempt(res,name,selectedTypingMode);}});textarea.oninput=()=>{if(isComposing)return;if(textarea.value.length>0&&!attemptStartedAt)attemptStartedAt=new Date();attemptTypedText=textarea.value;if(textarea.value.length>0&&!modeLocked)lockTypingMode();if(soundEnabled&&textarea.value.length>lastTypedValue.length)void beep();lastTypedValue=textarea.value;renderPassageProgress(textarea.value);if(textarea.value.length>0&&!serverSessionPromise){serverSessionPromise=startSecureSession(currentPassage.id).catch(error=>{console.error('Secure session startup failed:',error);return null;});}engine.handleInput(textarea.value);if(!engine.isActive&&textarea.value.length>0)engine.start();updateLiveMetrics();};textarea.addEventListener('compositionstart',()=>{isComposing=true;});textarea.addEventListener('compositionend',()=>{isComposing=false;if(textarea.value.length>0&&!attemptStartedAt)attemptStartedAt=new Date();attemptTypedText=textarea.value;lastTypedValue=textarea.value;renderPassageProgress(textarea.value);if(engine){engine.handleInput(textarea.value);if(textarea.value.length>0&&!engine.isActive)engine.start();updateLiveMetrics();}});textarea.focus();};
     if(requestedTestId&&currentPassage){$('btn-start-test').click();}
-    $('btn-submit-early').onclick=()=>{if(engine&&!engine.isFinished&&confirm('End this test now and calculate your result?')){engine.handleInput(textarea.value);if(!engine.isActive)engine.start();engine.stop('manual');}};
-    $('btn-cancel-test')?.addEventListener('click',()=>{
-        if(!confirm('Reset this typing attempt? Your typed text and timer will be cleared.'))return;
+    $('btn-submit-early').onclick=async()=>{if(engine&&!engine.isFinished&&await showTypingConfirm('End this test now and calculate your result?','Finalize test')){engine.handleInput(textarea.value);if(!engine.isActive)engine.start();engine.stop('manual');}};
+    $('btn-cancel-test')?.addEventListener('click',async()=>{
+        if(!await showTypingConfirm('Reset this typing attempt? Your typed text and timer will be cleared.','Reset attempt'))return;
         if(engine){engine.destroy();engine=null;}
         result.style.display='none';typing.style.display='block';inst.style.display='none';setup.style.display='none';
         textarea.value='';textarea.disabled=false;lastTypedValue='';attemptStartedAt=null;attemptTypedText='';isComposing=false;
