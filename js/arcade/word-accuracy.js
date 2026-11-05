@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!$('precision-feedback').dataset.state) $('precision-feedback').textContent = 'Match every character, then press Space to lock the word.';
   }
   function updateScore() {
-    const scores = ArcadeScoring.calculate(expected, committed, input.value, elapsed(), backspaces, false);
+    const scores = ArcadeScoring.calculate(expected, committedText, input.value, elapsed(), backspaces, false);
     $('precision-live-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
     $('precision-live-net').textContent = scores.bsf.netWpm.toFixed(2);
     $('precision-live-errors').textContent = String(scores.bsf.totalErrors);
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     finished = true;
     input.disabled = true;
     const seconds = elapsed();
-    const scores = ArcadeScoring.calculate(expected, committed, input.value, seconds, backspaces, true);
+    const scores = ArcadeScoring.calculate(expected, committedText, input.value, seconds, backspaces, true);
     $('precision-arena').hidden = true;
     $('precision-results').hidden = false;
     $('precision-result-reason').textContent = reason;
