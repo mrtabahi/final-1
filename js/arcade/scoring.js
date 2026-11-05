@@ -1,6 +1,6 @@
 (function (root) {
   'use strict';
-  const config = Object.freeze({ freeErrorPct: 0.05, penaltyPerError: 10 });
+  const config = root.TypingExperienceConfig?.getScoringConfig?.() || Object.freeze({ freeErrorPct: 0.05, penaltyPerError: 10 });
   function calculate(expectedWords, committedWords, currentWord, elapsedSeconds, backspacePresses, finalize) {
     if (!root.TypingMaster || typeof root.TypingMaster.calculateCommittedScore !== 'function') {
       throw new Error('The Fix Accuracy scoring engine did not load.');
