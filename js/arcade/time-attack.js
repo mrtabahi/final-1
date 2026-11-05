@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     'interstellar gravitational observatory electromagnetic planetary'.split(' ')
   ];
   const expected = waves.flat();
-  const committed = [];
+  const committed = [];\n  let committedText = '';
   let startedAt = 0, timer = null, backspaces = 0, finished = false, currentWave = 0, combo = 0, bestCombo = 0, correctTargets = 0, missedTargets = 0;
   const duration = 60, input = $('mission-input');
   const elapsed = () => startedAt ? Math.max(0.001, (performance.now() - startedAt) / 1000) : 0.001;
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const complete = index >= expected.length;
       node.dataset.state = wave < currentWave || (complete && wave === 3) ? 'cleared' : wave === currentWave ? 'active' : 'locked';
     });
-    const scores = ArcadeScoring.calculate(expected, committed, input.value, elapsed(), backspaces, false);
+    const scores = ArcadeScoring.calculate(expected, committedText, input.value, elapsed(), backspaces, false);
     $('mission-gross').textContent = scores.bsf.grossWpm.toFixed(2);
     $('mission-net').textContent = scores.bsf.netWpm.toFixed(2);
     $('mission-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
@@ -42,8 +42,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (remaining <= 0) finish('Mission clock expired');
   }
   function commit() {
-    const word = input.value.trim();
+    const raw = input.value;
+    const word = raw.trim();
     input.value = '';
+    committedText += raw;
     if (!word) return;
     if (word === expected[committed.length]) {
       combo++;
