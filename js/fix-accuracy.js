@@ -73,9 +73,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const expected=String(activePassage),typed=String(input.value||'');
     const expectedWords=[...expected.matchAll(/\S+/gu)];
     const typedWords=typed.match(/\S+/gu)||[];
-    // Keep the just-committed word highlighted while Space is held/after it.
-    // Advance to the next word only when its first character is actually typed.
-    const committedCount=Math.max(0,typedWords.length-1);
+    // After Space commits a word, move the highlight immediately to the next
+    // word. While a word is still being typed, keep its own position highlighted.
+    const hasCommittedSpace=/\s$/u.test(typed);
+    const committedCount=Math.max(0,typedWords.length-(hasCommittedSpace?0:1));
     const alignment=TypingMaster.alignWordsByPosition(expectedWords.map(match=>match[0]),typedWords);
     let expectedCursor=0,typedCursor=0,currentExpectedIndex=-1;
     for(const item of alignment){
