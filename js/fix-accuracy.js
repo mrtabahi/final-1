@@ -225,8 +225,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const formula=selectedFormula;
     const score=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,{freeErrorPct:0.05,penaltyPerError:10},formula,backspacePressCount,true);
     errorCount=score.totalErrors;
-    const gross=score.grossWpm,net=score.netWpm,accuracy=score.accuracy;
-    const passed=errorCount<=currentConfig.maxErrors&&gross>=currentConfig.minGross&&net>=currentConfig.minNet;
+    const gross=Number.isFinite(Number(score.grossWpm))?Number(score.grossWpm):0;
+    const net=Number.isFinite(Number(score.netWpm))?Number(score.netWpm):0;
+    const accuracy=Number.isFinite(Number(score.accuracy))?Number(score.accuracy):0;
+    // A zero speed target means no minimum-speed restriction was configured.
+    // Keep the threshold visible as 0.00, but do not turn an unset target into a fail.
+    const grossPass=currentConfig.minGross<=0||gross>=currentConfig.minGross;
+    const netPass=currentConfig.minNet<=0||net>=currentConfig.minNet;
+    const passed=errorCount<=currentConfig.maxErrors&&grossPass&&netPass;
     const methodName=formula.toUpperCase();
     const status=$('fix-result-status');
     status.textContent=methodName+' '+(passed?'PASS':'FAIL');
@@ -285,6 +291,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
     renderSelectedResult();
     game.hidden=true;result.hidden=false;
+    // The game element may still own browser fullscreen after it is hidden.
+    // Exit it before presenting the result so the document regains normal scrolling.
+    if(document.fullscreenElement===game){
+      document.exitFullscreen().catch(()=>{}).finally(()=>{
+        document.documentElement.style.overflowY='auto';
+        document.body.style.overflowY='auto';
+        window.scrollTo({top:0,behavior:'auto'});
+      });
+    }else{
+      document.documentElement.style.overflowY='auto';
+      document.body.style.overflowY='auto';
+      window.scrollTo({top:0,behavior:'auto'});
+    }
     if(reason==='Maximum errors reached')announce('Game over');
   }
   function syncTypingModeButton(){const b=$('fix-mode-switch');if(!b)return;const label=b.querySelector('.control-label');const text='Typing mode: '+(typingMode==='screen'?'On-screen':'Off-screen')+(modeLocked?' — locked':' — switch before typing');if(label)label.textContent=text;else b.textContent=text;b.classList.toggle('is-active',typingMode==='offscreen');b.disabled=modeLocked;b.setAttribute('aria-pressed',String(typingMode==='offscreen'));}
