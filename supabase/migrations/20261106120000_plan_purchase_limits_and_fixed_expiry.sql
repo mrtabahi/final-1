@@ -71,7 +71,8 @@ begin
 
   if v_plan.expiry_mode = 'fixed_date' then
     if v_plan.fixed_expiry_date is null then raise exception 'This plan has an invalid expiry configuration.'; end if;
-    if v_plan.fixed_expiry_date < (v_now at time zone 'Asia/Kolkata')::date then
+    v_fixed_end := ((v_plan.fixed_expiry_date + 1)::timestamp at time zone 'Asia/Kolkata') - interval '1 microsecond';
+    if v_fixed_end <= v_now then
       raise exception 'This plan has expired and is no longer available for purchase.';
     end if;
   end if;
@@ -113,7 +114,11 @@ begin
     v_user_id, v_plan.id, v_plan.currency, v_plan.price_minor, 0, v_plan.price_minor,
     v_plan.duration_days,
     case when v_plan.price_minor = 0 then 'free' else 'pending' end,
-    case when v_plan.price_minor = 0 then null else v_now + interval '30 minutes' end,
+    case
+      when v_plan.price_minor = 0 then null
+      when v_plan.expiry_mode = 'fixed_date' then least(v_now + interval '30 minutes', v_fixed_end)
+      else v_now + interval '30 minutes'
+    end,
     v_plan.expiry_mode,
     case when v_plan.expiry_mode = 'fixed_date' then v_plan.fixed_expiry_date else null end
   )
