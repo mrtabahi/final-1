@@ -22,3 +22,11 @@ body.precision-page{color:#17271e;background:radial-gradient(ellipse at 78% 12%,
 .precision-start{background:linear-gradient(120deg,#24583a,#397b51);box-shadow:0 8px 22px #24583a2c}
 .precision-finish{color:#a13f36}
 @media(max-width:520px){.precision-briefing h1,.precision-results h2{font-size:clamp(42px,12vw,58px)}.precision-live{gap:12px}}
+
+/* Refined Game Lab navigation and character-level selector */
+.precision-back{display:inline-flex;align-items:center;gap:9px;width:fit-content;padding:11px 17px;border:1px solid #9ab99d;border-radius:999px;background:linear-gradient(135deg,#fafff5,#e5efe2);color:#24583a!important;font:900 10px Arial,sans-serif;letter-spacing:.13em;text-decoration:none;box-shadow:0 7px 18px #25472b18,inset 0 1px #fff;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.precision-back:hover{transform:translateY(-2px);border-color:#397b51;box-shadow:0 10px 24px #25472b25,0 0 0 3px #397b5112}
+.precision-back:focus-visible{outline:3px solid #24583a;outline-offset:4px}
+.precision-back:active{transform:translateY(0)}
+.precision-challenge-controls select{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #a9c0a8;border-radius:9px;background:#fffefa;color:#214f36;font:800 10px Arial,sans-serif;letter-spacing:.05em}
+.precision-challenge-controls select:focus-visible{outline:3px solid #397b51;outline-offset:2px}

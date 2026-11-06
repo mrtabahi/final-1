@@ -4,10 +4,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   'use strict';
   const $ = id => document.getElementById(id);
   let expected = [];
-  function drawTargets() {
+  function drawTargets(level='easy') {
     const bankWords = ArcadeWordBank.takeWords(20).sort((a,b) => a.length - b.length);
     const waves = Array.from({length:4}, (_, wave) => bankWords.slice(wave * 5, wave * 5 + 5));
-    expected = waves.flat();
+    expected = ArcadeCharacterLevels.apply(waves.flat(), level);
   }
   drawTargets();
   const committed = [];
@@ -120,7 +120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('mission-intensity').addEventListener('change', () => { const notes={standard:'Standard lock-on windows. Learn the pattern and build a combo.',overdrive:'Target windows are 25% shorter. Combo multiplier pressure is high.',nightmare:'Target windows are 45% shorter. Every hesitation is costly.'}; $('mission-mode-note').textContent=notes[$('mission-intensity').value]; });
   function launchBlitz() {
     clearInterval(timer);
-    drawTargets();
     committed.length = 0;
     committedText = '';
     startedAt = 0;
@@ -134,6 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     correctTargets = 0;
     missedTargets = 0;
     intensity = $('mission-intensity').value;
+    drawTargets($('mission-difficulty').value || 'easy');
     deadlineMultiplier = intensity === 'overdrive' ? 0.75 : intensity === 'nightmare' ? 0.55 : 1;
     input.value = '';
     input.disabled = false;

@@ -16,3 +16,13 @@ body.sprint-page{color:#f4fbff;background-image:radial-gradient(ellipse at 50% 0
 .sprint-back{color:#ffe08a}
 .sprint-launch{box-shadow:0 8px 24px #f4c65d33}
 @media(max-width:520px){.sprint-header h1{font-size:clamp(36px,12vw,56px)}.sprint-brief-grid strong{font-size:20px}}
+
+/* Refined Game Lab navigation and readable character targets */
+.sprint-back{display:inline-flex;align-items:center;gap:10px;width:fit-content;padding:11px 17px;border:1px solid #6b9bb5;border-radius:999px;background:linear-gradient(135deg,#173b51,#0c2536);color:#fff1b8!important;font-size:10px;font-weight:900;letter-spacing:.13em;box-shadow:0 7px 20px #0005,inset 0 1px #ffffff22;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.sprint-back:hover{transform:translateY(-2px);border-color:#ffe08a;box-shadow:0 10px 26px #0007,0 0 18px #62d8ff33}
+.sprint-back:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.sprint-back:active{transform:translateY(0)}
+.sprint-target-wrap strong{text-transform:none;letter-spacing:.015em}
+.sprint-challenge-options select{display:block;width:100%;margin-top:8px;padding:11px 12px;border:1px solid #52748a;border-radius:9px;background:#0b1d2b;color:#f4fbff;font:700 11px Arial,sans-serif;letter-spacing:.04em}
+.sprint-challenge-options label{min-width:0}
+@media(max-width:520px){.sprint-back{padding:10px 14px;font-size:9px}.sprint-challenge-options{grid-template-columns:1fr}}

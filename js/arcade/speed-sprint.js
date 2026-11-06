@@ -90,7 +90,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   function startRace() {
     clearInterval(timer);
-    expected = ArcadeWordBank.takeWords(90);
+    const difficulty = $('sprint-difficulty').value || 'easy';
+    expected = ArcadeCharacterLevels.apply(ArcadeWordBank.takeWords(90), difficulty);
     committed.length = 0;
     committedText = '';
     startedAt = 0;
