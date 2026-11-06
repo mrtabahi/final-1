@@ -66,7 +66,7 @@ test('payment retry checks the existing order before allowing another checkout',
 test('coupon engine validates eligibility and redemption limits in the checkout transaction', () => {
   assert.ok(coupons.includes('create table if not exists public.subscription_coupons'));
   assert.ok(coupons.includes('create policy "Admins read subscription coupons"'));
-  assert.ok(coupons.includes('revoke all on public.subscription_coupons from anon'));
+  assert.ok(coupons.includes('revoke all on public.subscription_coupons from public, anon, authenticated'));
   assert.match(coupons, /for update/);
   assert.match(coupons, /max_redemptions_per_user/);
   assert.ok(coupons.includes("o.status in ('paid','free')"));
