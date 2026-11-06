@@ -64,3 +64,9 @@
 .access-tree-empty{padding:8px;color:#94a3b8;font-size:.78rem}
 @media(hover:hover){.access-tree-branch:hover>summary{border-color:#a5b4fc;background:#eef2ff}.access-tree-branch:hover>.access-tree-children{display:grid}.access-tree-branch:not([open])>.access-tree-children{display:none}.access-tree-branch:hover:not([open])>.access-tree-children{display:grid}}
 @media(max-width:600px){.access-tree-wrap{padding:10px}.access-tree-node,.access-tree-branch>summary{gap:6px;padding:8px}.access-tree-node code{display:none}.access-tree-toggle{min-width:56px;padding:6px!important}.access-tree-node>span:first-child,.access-tree-branch>summary>span:first-child{font-size:.77rem}}
+
+/* Purchase-cap and fixed-expiry plan fields */
+.sub-plan-field-help{display:block;margin-top:4px;color:#718096;font-size:.72rem;font-weight:500;line-height:1.45}
+.sub-admin-form input:disabled{background:#f1f5f9;color:#94a3b8;cursor:not-allowed}
+.sub-plan-limits{margin-top:8px;padding:8px 10px;border:1px solid #dbeafe;border-radius:9px;background:#eff6ff;color:#1e40af;font-size:.74rem;font-weight:700;line-height:1.45}
+@media(max-width:600px){.sub-plan-limits{font-size:.7rem}}
