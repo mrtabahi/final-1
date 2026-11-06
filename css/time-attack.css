@@ -23,3 +23,12 @@ body.mission-page{color:#f4f7fc;background-color:#080d16;background-image:linear
 .mission-abort{color:#ffb1a8;border-color:#b36b72}
 .mission-start{box-shadow:0 8px 24px #e06d6033}
 @media(max-width:520px){.mission-header h1{font-size:clamp(36px,12vw,56px)}.mission-target-panel strong{font-size:clamp(30px,10vw,42px)}}
+
+/* Refined Game Lab navigation and character-level selector */
+.mission-back{display:inline-flex;align-items:center;gap:9px;width:fit-content;padding:11px 17px;border:1px solid #728ca7;border-radius:999px;background:linear-gradient(135deg,#24384f,#111d2c);color:#e6f3ff!important;font-size:10px;font-weight:900;letter-spacing:.13em;text-decoration:none;box-shadow:0 7px 20px #0007,inset 0 1px #ffffff22;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.mission-back:hover{transform:translateY(-2px);border-color:#ffaaa1;box-shadow:0 10px 26px #0008,0 0 18px #e06d6033}
+.mission-back:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.mission-back:active{transform:translateY(0)}
+.mission-briefing select{display:block;width:100%;box-sizing:border-box;margin:9px 0 14px;padding:12px 14px;border:1px solid #7189a4;border-radius:9px;background:#0b1420;color:#fff;font:700 11px 'Courier New',monospace;letter-spacing:.06em}
+.mission-briefing select:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(max-width:520px){.mission-back{padding:10px 14px;font-size:9px}}
