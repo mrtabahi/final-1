@@ -172,6 +172,7 @@ begin
       into v_expiry_mode, v_fixed_expiry_date
     from public.orders o
     where o.id = new.order_id;
+    if not found then raise exception 'Order not found for subscription activation.'; end if;
   else
     select p.expiry_mode, p.fixed_expiry_date
       into v_expiry_mode, v_fixed_expiry_date
