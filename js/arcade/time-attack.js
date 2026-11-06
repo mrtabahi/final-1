@@ -3,22 +3,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
-  const waves = [
-    'meteor orbit lunar comet solar'.split(' '),
-    'gravity asteroid satellite cosmic impact'.split(' '),
-    'trajectory atmosphere collision telescope radiation'.split(' '),
-    'interstellar gravitational observatory electromagnetic planetary'.split(' ')
-  ];
+  const bankWords = ArcadeWordBank.takeWords(20).sort((a,b) => a.length - b.length);
+  const waves = Array.from({length:4}, (_, wave) => bankWords.slice(wave * 5, wave * 5 + 5));
   const expected = waves.flat();
   const committed = [];
   let committedText = '';
-  let startedAt = 0, timer = null, backspaces = 0, finished = false, currentWave = 0, combo = 0, bestCombo = 0, correctTargets = 0, missedTargets = 0;
+  let startedAt = 0, timer = null, targetDeadline = 0, backspaces = 0, finished = false, currentWave = 0, combo = 0, bestCombo = 0, correctTargets = 0, missedTargets = 0;
   const duration = 60, input = $('mission-input');
   const elapsed = () => startedAt ? Math.max(0.001, (performance.now() - startedAt) / 1000) : 0.001;
+  function armTargetDeadline() {
+    const target = expected[committed.length];
+    targetDeadline = target ? performance.now() + Math.max(3000, Math.min(7000, 2200 + target.length * 220)) : 0;
+  }
   function paint() {
     const index = committed.length;
     currentWave = Math.min(3, Math.floor(index / 5));
     $('mission-target').textContent = expected[index] || 'SECTOR SECURED';
+    $('mission-target-clock').textContent = targetDeadline && startedAt ? Math.max(0, (targetDeadline - performance.now()) / 1000).toFixed(1) + 's' : '—';
     $('mission-wave').textContent = 'WAVE ' + (Math.min(4, currentWave + 1)) + ' / 4';
     $('mission-count').textContent = index + ' / ' + expected.length + ' targets';
     $('mission-progress').style.width = index / expected.length * 100 + '%';
@@ -37,6 +38,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   function update() {
     if (finished) return;
+    if (targetDeadline && performance.now() >= targetDeadline && committed.length < expected.length) {
+      const typed = input.value.trim();
+      input.value = '';
+      committedText += (typed || 'timeout') + ' ';
+      committed.push(typed || 'timeout');
+      missedTargets++;
+      combo = 0;
+      paint();
+      armTargetDeadline();
+    }
     const remaining = Math.max(0, duration - elapsed());
     $('mission-clock').textContent = Math.ceil(remaining) + 's';
     $('mission-console').dataset.critical = remaining <= 15 ? 'true' : 'false';
@@ -58,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     committed.push(word);
     paint();
+    armTargetDeadline();
     if (committed.length >= expected.length) finish('All four waves neutralized');
   }
   function finish(reason) {
@@ -104,6 +116,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('mission-briefing').hidden = true;
     $('mission-console').hidden = false;
     input.disabled = false;
+    startedAt = performance.now();
+    armTargetDeadline();
+    timer = setInterval(update, 100);
     input.focus();
     paint();
   });
