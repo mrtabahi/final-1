@@ -43,6 +43,7 @@ async function loadGame(htmlPath, scriptPath) {
   vm.createContext(context);
   vm.runInContext(read('supabase/functions/typing-result/typing-master.js'), context);
   vm.runInContext(read('js/typing/master-config.js'), context);
+  vm.runInContext(read('js/arcade/word-bank.js'), context);
   vm.runInContext(read('js/arcade/scoring.js'), context);
   vm.runInContext(read(scriptPath), context);
   assert.equal(typeof ready, 'function', scriptPath + ' should wait for DOM readiness');
