@@ -88,27 +88,50 @@ document.addEventListener('DOMContentLoaded', async () => {
   input.addEventListener('input', () => {
     if (finished) return;
     if (!startedAt) startedAt = performance.now();
-    if (ruleset === 'master' && input.value && !expected[committed.length].startsWith(input.value)) { finish('Master protocol failed: first incorrect keystroke detected'); return; }
+    const masterTyped = input.value.replace(/\s+$/u,'');
+    if (ruleset === 'master' && masterTyped && !expected[committed.length].startsWith(masterTyped)) { finish('Master protocol failed: first incorrect keystroke detected'); return; }
     if (/\s/u.test(input.value)) commit();
     else updateScore();
   });
   $('precision-mode').addEventListener('change', () => { const notes={standard:'Three shields. A wrong word breaks your streak and costs one shield.',expert:'One shield only. A single wrong word ends the challenge.',master:'One wrong character ends the run immediately. No second chances.'}; $('precision-mode-note').textContent=notes[$('precision-mode').value]; });
   $('precision-content').addEventListener('change', () => { const notes={words:'Common and advanced words. Type each target exactly.',punctuation:'Punctuation is part of the target. Every comma and period counts.',codes:'A mixed stream of words and numeric access codes.'}; $('precision-content-note').textContent=notes[$('precision-content').value]; });
-  $('precision-start').addEventListener('click', () => {
-    ruleset = $('precision-mode').value;
-    contentMode = $('precision-content').value;
+  function startChallenge() {
+    expected = ArcadeWordBank.takeWords(25);
+    committed.length = 0;
+    committedText = '';
+    startedAt = 0;
+    backspaces = 0;
+    shields = 3;
+    streak = 0;
+    bestStreak = 0;
+    correctWords = 0;
+    finished = false;
+    ruleset = $('precision-mode').value || 'standard';
+    contentMode = $('precision-content').value || 'words';
     shields = ruleset === 'standard' ? 3 : 1;
     if (contentMode === 'punctuation') expected = expected.map((word,index) => word + (index%3===0?',':index%3===1?'.':';'));
     if (contentMode === 'codes') { const codes=Array.from({length:7},()=>String(Math.floor(1000+Math.random()*9000))); expected=expected.slice(0,18).concat(codes); }
+    input.value = '';
+    input.disabled = false;
+    $('precision-results').hidden = true;
     $('precision-briefing').hidden = true;
     $('precision-arena').hidden = false;
-    input.disabled = false;
     $('precision-arena').dataset.ruleset = ruleset;
-    input.focus();
+    $('precision-feedback').textContent = 'Match every character, then press Space to lock the word.';
+    delete $('precision-feedback').dataset.state;
+    $('precision-correct').textContent = '0';
+    $('precision-streak').textContent = '0';
+    $('precision-best').textContent = '0';
+    $('precision-shields').textContent = '● '.repeat(shields) + '○ '.repeat(3 - shields);
+    $('precision-live-accuracy').textContent = '100.00%';
+    $('precision-live-net').textContent = '0.00';
+    $('precision-live-errors').textContent = '0';
     paint();
-  });
+    input.focus();
+  }
+  $('precision-start').addEventListener('click', startChallenge);
   $('precision-finish').addEventListener('click', () => finish('Precision drill ended by player'));
-  $('precision-retry').addEventListener('click', () => location.reload());
+  $('precision-retry').addEventListener('click', startChallenge);
   $('precision-back').addEventListener('click', () => { location.href = '/fix-accuracy.html'; });
   paint();
 });
