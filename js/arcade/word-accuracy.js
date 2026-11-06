@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let expected = ArcadeWordBank.takeWords(25);
   const committed = [];
   let committedText = '';
-  let startedAt = 0, backspaces = 0, shields = 3, streak = 0, bestStreak = 0, correctWords = 0, finished = false, ruleset = 'standard', contentMode = 'words';
+  let startedAt = 0, backspaces = 0, shields = 3, streak = 0, bestStreak = 0, correctWords = 0, finished = false, ruleset = 'standard', contentMode = 'words', difficultyLevel = 'easy';
   const input = $('precision-input');
   const elapsed = () => startedAt ? Math.max(0.001, (performance.now() - startedAt) / 1000) : 0.001;
   function paint() {
@@ -108,9 +108,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     finished = false;
     ruleset = $('precision-mode').value || 'standard';
     contentMode = $('precision-content').value || 'words';
+    difficultyLevel = $('precision-difficulty').value || 'easy';
     shields = ruleset === 'standard' ? 3 : 1;
     if (contentMode === 'punctuation') expected = expected.map((word,index) => word + (index%3===0?',':index%3===1?'.':';'));
     if (contentMode === 'codes') { const codes=Array.from({length:7},()=>String(Math.floor(1000+Math.random()*9000))); expected=expected.slice(0,18).concat(codes); }
+    expected = ArcadeCharacterLevels.apply(expected, difficultyLevel);
     input.value = '';
     input.disabled = false;
     $('precision-results').hidden = true;
