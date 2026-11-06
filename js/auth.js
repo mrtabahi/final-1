@@ -65,7 +65,7 @@ const AuthManager = {
 
     const { data, error } = await supabaseClient
       .from('profiles')
-      .select('id, full_name, phone, phone_verified, email, role, account_status, avatar_path')
+      .select('id, full_name, phone, phone_verified, email, role, account_status')
       .eq('id', id)
       .maybeSingle();
 
