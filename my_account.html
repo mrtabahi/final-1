@@ -50,16 +50,61 @@ body.account-page{background:radial-gradient(circle at 8% 0%,rgba(99,102,241,.09
 @media(max-width:680px){.account-page .account-membership-card .sub-section-head{align-items:flex-start;flex-direction:column}.account-page .account-membership-card .sub-btn-primary{width:100%;box-sizing:border-box}.account-page .account-profile-card{padding:22px 18px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+.profile-avatar-card{margin:0 0 1.35rem;padding:18px;border:1px solid #dbe5f3;border-radius:18px;background:linear-gradient(125deg,#f8fbff,#f3f5ff)}
+.profile-avatar-intro{display:flex;align-items:center;gap:16px}
+.profile-avatar-preview{width:86px;height:86px;flex:0 0 86px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#1d4ed8,#7255c7);color:white;font-size:1.7rem;font-weight:800;box-shadow:0 0 0 4px white,0 0 0 5px #d9e3f4}
+.profile-avatar-preview img{width:100%;height:100%;object-fit:cover}
+.profile-avatar-intro h3{margin:0 0 5px;color:#172554;font-size:1.05rem}
+.profile-avatar-intro p{margin:0 0 5px;color:#64748b;font-size:.88rem;line-height:1.5}
+.profile-avatar-note{color:#7b8ba3;font-size:.75rem}
+.profile-avatar-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.profile-avatar-pick{display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+#profile-avatar-message{margin:10px 0 0}
+.account-nav-avatar{width:30px;height:30px;display:inline-grid;place-items:center;flex:0 0 30px;overflow:hidden;border-radius:50%;background:#e6edff;color:#2449a4;font-size:.72rem;font-weight:800;margin-right:7px;vertical-align:middle}
+.account-nav-avatar img{width:100%;height:100%;object-fit:cover}
+.account-nav-signed-in{display:inline-flex!important;align-items:center}
+.avatar-crop-modal[hidden]{display:none!important}
+.avatar-crop-modal{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:16px;background:rgba(8,18,40,.72);backdrop-filter:blur(6px)}
+.avatar-crop-dialog{width:min(100%,440px);padding:20px;border-radius:22px;background:#fff;box-shadow:0 28px 90px rgba(0,0,0,.35)}
+.avatar-crop-head{display:flex;justify-content:space-between;align-items:center}
+.avatar-crop-head span{font-size:.66rem;letter-spacing:.14em;font-weight:800;color:#4f46e5}
+.avatar-crop-head h3{margin:4px 0 0;color:#172554}
+.avatar-crop-head button{border:0;background:#eef2ff;color:#334155;width:36px;height:36px;border-radius:50%;font-size:1.5rem;cursor:pointer}
+.avatar-crop-help{color:#64748b;font-size:.86rem;line-height:1.5}
+.avatar-crop-stage{display:grid;place-items:center;margin:16px auto;width:min(100%,320px);aspect-ratio:1}
+#avatar-crop-canvas{width:100%;height:100%;border-radius:50%;background:#e8edf5;touch-action:none;cursor:grab}
+#avatar-crop-canvas:active{cursor:grabbing}
+.avatar-zoom-label{display:flex;align-items:center;gap:12px;color:#334155;font-weight:700;font-size:.85rem}
+.avatar-zoom-label input{flex:1;accent-color:#315ac4}
+.avatar-crop-buttons{display:flex;gap:10px;margin-top:18px}
+.avatar-crop-buttons button{flex:1}
+@media(max-width:480px){.profile-avatar-card{padding:14px}.profile-avatar-preview{width:70px;height:70px;flex-basis:70px}.avatar-crop-dialog{padding:16px}}
+</style>
 </head><body class="account-page"><nav class="navbar">
 <a href="index.html" class="brand-container"><div class="brand-logo"><img src="logo.png" alt="SRB"></div><div><div class="brand-title">DECODING HCM</div><div class="brand-subtitle">BSF HCM Preparation</div></div></a>
-<ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="fix-accuracy.html">Typing Game</a></li><li><a href="self-test.html">Self Test</a></li><li><a href="materials.html">PDF Library</a></li><li><a href="my_results.html">My Results</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="dashboard.html">Start Preparation</a></li><li><a href="my_account.html" aria-current="page">My Account</a></li></ul></nav><div class="container"><section class="sub-current account-membership-card" aria-labelledby="account-membership-title"><div class="sub-section-head"><div><span class="sub-eyebrow">YOUR MEMBERSHIP · AT A GLANCE</span><h2 id="account-membership-title">Subscription &amp; access</h2><p>Your plan, validity, unlocked preparation tools and payment history in one place.</p></div><a class="sub-btn sub-btn-primary" href="premium.html">✦ Explore plans →</a></div><div id="account-membership-state" class="sub-current-state" role="status" aria-live="polite">Loading your subscription details…</div><div id="account-membership-details" class="account-membership-details"></div></section><section class="card account-profile-card"><h2 class="card-title">My Account</h2><p class="form-help">Manage your profile, account details and sign-in security from one place.</p><div class="account-security-note" role="note"><span aria-hidden="true">✦</span><span><strong>Your account, your control.</strong> Profile updates and password changes are saved securely to your signed-in account.</span></div><h3 class="account-section-label">Personal details</h3>
+<ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="Typing_test.html">Typing Tests</a></li><li><a href="fix-accuracy.html">Typing Game</a></li><li><a href="self-test.html">Self Test</a></li><li><a href="materials.html">PDF Library</a></li><li><a href="my_results.html">My Results</a></li><li><a href="leaderboard.html">Leaderboard</a></li><li><a href="dashboard.html">Start Preparation</a></li><li><a href="my_account.html" aria-current="page">My Account</a></li></ul></nav><div class="container"><section class="sub-current account-membership-card" aria-labelledby="account-membership-title"><div class="sub-section-head"><div><span class="sub-eyebrow">YOUR MEMBERSHIP · AT A GLANCE</span><h2 id="account-membership-title">Subscription &amp; access</h2><p>Your plan, validity, unlocked preparation tools and payment history in one place.</p></div><a class="sub-btn sub-btn-primary" href="premium.html">✦ Explore plans →</a></div><div id="account-membership-state" class="sub-current-state" role="status" aria-live="polite">Loading your subscription details…</div><div id="account-membership-details" class="account-membership-details"></div></section><section class="card account-profile-card"><h2 class="card-title">My Account</h2><p class="form-help">Manage your profile, account details and sign-in security from one place.</p><div class="account-security-note" role="note"><span aria-hidden="true">✦</span><span><strong>Your account, your control.</strong> Profile updates and password changes are saved securely to your signed-in account.</span></div><section class="profile-avatar-card" aria-labelledby="profile-avatar-title">
+  <div class="profile-avatar-intro"><div class="profile-avatar-preview" id="profile-avatar-current" aria-label="Current profile photo">U</div><div><h3 id="profile-avatar-title">Your profile logo</h3><p>Upload a clear photo. Adjust it inside the circle before saving.</p><span class="profile-avatar-note">JPG, PNG or WebP · Maximum 2 MB</span></div></div>
+  <div class="profile-avatar-actions"><label class="btn btn-primary profile-avatar-pick" for="profile-avatar-file">Upload / Change Photo</label><input id="profile-avatar-file" type="file" accept="image/jpeg,image/png,image/webp" hidden><button id="profile-avatar-remove" class="btn btn-secondary" type="button">Remove Photo</button></div>
+  <p id="profile-avatar-message" class="form-help" role="status" aria-live="polite"></p>
+</section>
+<div id="avatar-crop-modal" class="avatar-crop-modal" hidden>
+  <section class="avatar-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="avatar-crop-title">
+    <div class="avatar-crop-head"><div><span>PROFILE PHOTO</span><h3 id="avatar-crop-title">Adjust your photo</h3></div><button id="avatar-crop-close" type="button" aria-label="Close crop editor">×</button></div>
+    <p class="avatar-crop-help">Drag the photo to position it, then zoom until it fits the circle.</p>
+    <div class="avatar-crop-stage"><canvas id="avatar-crop-canvas" width="320" height="320" aria-label="Circular photo crop preview"></canvas></div>
+    <label class="avatar-zoom-label" for="avatar-crop-zoom">Zoom <input id="avatar-crop-zoom" type="range" min="1" max="3" step=".01" value="1"></label>
+    <div class="avatar-crop-buttons"><button id="avatar-crop-cancel" class="btn btn-secondary" type="button">Cancel</button><button id="avatar-crop-save" class="btn btn-primary" type="button">Save Profile Photo</button></div>
+  </section>
+</div>
+<h3 class="account-section-label">Personal details</h3>
 <form id="profile-form"><div class="grid-2"><div class="form-group"><label class="form-label" for="profile-name">Name</label><input id="profile-name" class="form-control" required maxlength="100"></div><div class="form-group"><label class="form-label" for="profile-phone">Phone</label><input id="profile-phone" class="form-control" readonly></div></div>
 <div class="grid-2"><div class="form-group"><label class="form-label" for="profile-email">Email</label><input id="profile-email" type="email" class="form-control" required></div><div class="form-group"><label class="form-label" for="profile-status">Account Status</label><input id="profile-status" class="form-control" readonly></div></div>
 <button class="btn btn-primary" type="submit">Save Name / Email</button></form><hr style="margin:2rem 0"><h3 class="account-section-label">Sign-in security</h3>
 <form id="password-form"><div class="form-group"><label class="form-label" for="new-password">New Password</label><input id="new-password" type="password" minlength="8" autocomplete="new-password" class="form-control" required></div><div class="password-form-actions"><button class="btn btn-secondary" type="submit">Change Password</button><button class="btn btn-secondary password-cancel-btn" id="cancel-password-btn" type="button">Cancel</button></div></form><button id="account-logout-btn" class="btn btn-danger" type="button" style="margin-top:1rem">Log Out</button><p id="profile-message" class="form-help" role="status" aria-live="polite" style="margin-top:1rem"></p></section></div>
-<script src="js/config.js"></script><script src="js/auth.js?v=20261030-account-controls2"></script><script src="js/my-account.js"></script><script src="js/my-subscription.js"></script>
+<script src="js/config.js"></script><script src="js/auth.js?v=20261106-profile-avatar1"></script><script src="js/my-account.js?v=20261106-avatar1"></script><script src="js/my-subscription.js"></script>
 
 <script defer src="js/pro-menu.js?v=20261024-pro-nav2"></script>
-<script src="/js/account-nav.js?v=20261027-auth-nav1"></script><script src="js/feature-access.js?v=20261105-instant-access1"></script>
+<script src="/js/account-nav.js?v=20261106-profile-avatar1"></script><script src="js/feature-access.js?v=20261105-instant-access1"></script>
 <script src="/js/site-audio.js?v=20261029-audio1"></script>
 </body></html>

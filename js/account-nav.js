@@ -1,52 +1,62 @@
-/* Public-site account navigation: show Login when signed out and My Account when signed in. */
+/* Public-site account navigation and signed-in profile avatar. */
 (function () {
   'use strict';
-  function accountLinks() {
-    return Array.from(document.querySelectorAll('a[href]')).filter(a => {
-      try {
-        const u = new URL(a.getAttribute('href'), window.location.origin);
-        return ACCOUNT_PATHS.has(u.pathname.replace(/^.*\//, '/my_account.html')) ||
-          /(^|\/)my_account\.html$/.test(u.pathname);
-      } catch { return false; }
-    });
-  }
+  const accountLinks = () => Array.from(document.querySelectorAll('a[href]')).filter(link => {
+    try { const path = new URL(link.getAttribute('href'), location.origin).pathname; return path === '/my_account.html' || path === 'my_account.html'; }
+    catch { return false; }
+  });
   function paint(links, signedIn) {
-    for (const link of links) {
+    links.forEach(link => {
+      link.querySelector('.account-nav-avatar')?.remove();
       link.textContent = signedIn ? 'My Account' : 'Login';
       link.setAttribute('aria-label', signedIn ? 'Open your account' : 'Sign in to your account');
-      link.setAttribute('href', signedIn ? '/my_account.html' : '/login.html?redirect=' + encodeURIComponent(location.pathname.replace(/^\//, '') + location.search));
+      link.setAttribute('href', signedIn ? '/my_account.html' : '/login.html?redirect=' + encodeURIComponent(location.pathname.slice(1) + location.search));
       link.classList.toggle('account-nav-login', !signedIn);
       link.classList.toggle('account-nav-signed-in', signedIn);
-    }
-  }
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = src; script.onload = resolve; script.onerror = reject;
-      document.head.appendChild(script);
     });
   }
-  async function init() {
-    const links = accountLinks();
-    if (!links.length) return;
-    try {
-      if (typeof supabaseClient === 'undefined') {
-        if (typeof supabase === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-        await loadScript('/js/config.js');
-      }
-      if (typeof supabaseClient === 'undefined' || !supabaseClient) {
-        paint(links, false); return;
-      }
-      const { data, error } = await supabaseClient.auth.getSession();
-      paint(links, !error && Boolean(data && data.session && data.session.user));
-      supabaseClient.auth.onAuthStateChange((_event, session) => paint(links, Boolean(session && session.user)));
-    } catch (error) {
-      // Fail closed for navigation: an unreadable session should not expose a
-      // private account route as the primary action.
-      paint(links, false);
-      console.debug('Account navigation session check unavailable:', error && error.message);
-    }
+  function installAvatarStyles() {
+    if (document.getElementById('profile-avatar-global-styles')) return;
+    const style = document.createElement('style'); style.id = 'profile-avatar-global-styles';
+    style.textContent = '.account-nav-signed-in{display:inline-flex!important;align-items:center;gap:7px}.account-nav-avatar{width:30px;height:30px;display:inline-grid;place-items:center;flex:0 0 30px;overflow:hidden;border-radius:50%;background:#e6edff;color:#2449a4;font-size:.72rem;font-weight:800}.account-nav-avatar img{width:100%;height:100%;object-fit:cover}';
+    document.head.appendChild(style);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
-  else init();
+  async function syncAvatar(links, session) {
+    if (!session || !session.user || typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    try {
+      const { data, error } = await supabaseClient.from('profiles').select('full_name,avatar_path').eq('id', session.user.id).maybeSingle();
+      if (error) throw error;
+      const name = String(data && data.full_name || session.user.user_metadata && session.user.user_metadata.full_name || 'User').trim();
+      const initials = name.split(' ').filter(Boolean).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'U';
+      let url = null;
+      if (data && data.avatar_path) url = supabaseClient.storage.from('profile-avatars').getPublicUrl(data.avatar_path).data.publicUrl || null;
+      links.forEach(link => {
+        let avatar = link.querySelector('.account-nav-avatar');
+        if (!avatar) { avatar = document.createElement('span'); avatar.className = 'account-nav-avatar'; link.prepend(avatar); }
+        avatar.replaceChildren(); avatar.textContent = initials;
+        if (url) {
+          const img = document.createElement('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+          img.onerror = () => { img.remove(); avatar.textContent = initials; }; avatar.replaceChildren(img);
+        }
+      });
+    } catch (error) { console.debug('Profile avatar unavailable:', error && error.message || error); }
+  }
+  async function init() {
+    installAvatarStyles();
+    const links = accountLinks(); if (!links.length) return;
+    try {
+      if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+        if (typeof supabase === 'undefined') await new Promise((resolve, reject) => { const script=document.createElement('script'); script.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'; script.onload=resolve; script.onerror=reject; document.head.appendChild(script); });
+        await new Promise((resolve, reject) => { const script=document.createElement('script'); script.src='/js/config.js'; script.onload=resolve; script.onerror=reject; document.head.appendChild(script); });
+      }
+      if (typeof supabaseClient === 'undefined' || !supabaseClient) { paint(links, false); return; }
+      const { data, error } = await supabaseClient.auth.getSession();
+      const session = !error && data ? data.session : null;
+      paint(links, Boolean(session && session.user));
+      if (session && session.user) await syncAvatar(links, session);
+      supabaseClient.auth.onAuthStateChange((_event, nextSession) => { paint(links, Boolean(nextSession && nextSession.user)); if (nextSession && nextSession.user) void syncAvatar(links, nextSession); });
+      window.addEventListener('profile-avatar-updated', async () => { const latest=await supabaseClient.auth.getSession(); if (latest.data && latest.data.session) void syncAvatar(links, latest.data.session); });
+    } catch (error) { paint(links, false); console.debug('Account navigation session check unavailable:', error && error.message || error); }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();
 })();

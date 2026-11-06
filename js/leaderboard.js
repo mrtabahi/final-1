@@ -12,10 +12,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   return (av-bv)*direction;
  };
  try{
-  const [ar,mr]=await Promise.all([
-   supabaseClient.from("public_leaderboard_attempts").select("id,candidate_name,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name").limit(300),
+  let [ar,mr]=await Promise.all([
+   supabaseClient.from("public_leaderboard_attempts").select("id,candidate_name,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name,avatar_path").limit(300),
    supabaseClient.from("manual_leaderboard_entries").select("id,candidate_name,language,test_name,duration_seconds,created_at,gross_wpm,net_wpm,accuracy").limit(300)
   ]);
+  if(ar.error && String(ar.error.message||'').includes('avatar_path')) ar=await supabaseClient.from("public_leaderboard_attempts").select("id,candidate_name,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name").limit(300);
   if(ar.error)throw ar.error;
   if(mr.error)throw mr.error;
   const all=[
@@ -29,7 +30,12 @@ document.addEventListener("DOMContentLoaded", async () => {
    String(a.id||"").localeCompare(String(b.id||""))
   ).slice(0,50);
   if(!all.length){body.innerHTML='<tr><td colspan="9">No entries found on leaderboard.</td></tr>';if(message)message.textContent="";return;}
-  body.innerHTML=all.map((a,i)=>`<tr><td><strong>#${i+1}</strong></td><td>${esc(a.candidate_name)}${a.manual?' <small>(Admin entry)</small>':''}</td><td>${esc(a.language)}</td><td>${esc(a.test_name)}</td><td>${esc(a.duration_seconds)}</td><td>${esc(date(a.created_at))}</td><td>${esc(fmt(a.gross_wpm))}</td><td><strong style="color:var(--primary-blue)">${esc(fmt(a.net_wpm))} WPM</strong></td><td>${a.accuracy==null?"-":esc(fmt(a.accuracy))+"%"}</td></tr>`).join("");
+  body.innerHTML=all.map((a,i)=>{
+   const initials=String(a.candidate_name||'Candidate').trim().split(' ').filter(Boolean).slice(0,2).map(v=>v[0]||'').join('').toUpperCase()||'U';
+   const avatarUrl=(!a.manual&&a.avatar_path)?supabaseClient.storage.from('profile-avatars').getPublicUrl(a.avatar_path).data?.publicUrl:null;
+   const avatar=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="" loading="lazy" style="width:34px;height:34px;object-fit:cover;border-radius:50%">':'<span aria-hidden="true" style="width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#e8efff;color:#2449a4;font-size:.72rem;font-weight:800">'+esc(initials)+'</span>';
+   return '<tr><td><strong>#'+(i+1)+'</strong></td><td><span style="display:inline-flex;align-items:center;gap:9px">'+avatar+'<span>'+esc(a.candidate_name)+(a.manual?' <small>(Admin entry)</small>':'')+'</span></span></td><td>'+esc(a.language)+'</td><td>'+esc(a.test_name)+'</td><td>'+esc(a.duration_seconds)+'</td><td>'+esc(date(a.created_at))+'</td><td>'+esc(fmt(a.gross_wpm))+'</td><td><strong style="color:var(--primary-blue)">'+esc(fmt(a.net_wpm))+' WPM</strong></td><td>'+(a.accuracy==null?'-':esc(fmt(a.accuracy))+'%')+'</td></tr>';
+  }).join("");
   if(message)message.textContent="";
  }catch(error){
   console.error("Leaderboard load failed",error);
