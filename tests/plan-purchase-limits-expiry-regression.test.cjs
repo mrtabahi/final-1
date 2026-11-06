@@ -10,7 +10,7 @@ const migration = fs.readFileSync(path.join(root, 'supabase/migrations/202611061
 const checkout = fs.readFileSync(path.join(root, 'supabase/functions/create-checkout/index.ts'), 'utf8');
 const verify = fs.readFileSync(path.join(root, 'supabase/functions/verify-razorpay-payment/index.ts'), 'utf8');
 const coupons = fs.readFileSync(path.join(root, 'supabase/migrations/20261106190000_subscription_coupon_engine.sql'), 'utf8');
-const checkoutGuards = fs.readFileSync(path.join(root, 'supabase/migrations/20261107120000_checkout_candidate_entitlement_guards.sql'), 'utf8');
+const checkoutGuards = fs.readFileSync(path.join(root, 'supabase/migrations/20261107150000_checkout_legacy_plan_compatibility.sql'), 'utf8');
 const couponGrants = fs.readFileSync(path.join(root, 'supabase/migrations/20261107130000_harden_subscription_coupon_table_grants.sql'), 'utf8');
 
 test('admin plan editor exposes expiry mode, fixed date and both purchase caps', () => {
@@ -78,11 +78,10 @@ test('coupon engine validates eligibility and redemption limits in the checkout 
   assert.match(coupons, /drop constraint if exists orders_coupon_id_fkey/);
 });
 
-test('checkout and coupon preview remain candidate-only and require configured entitlements', () => {
+test('checkout and coupon preview remain candidate-only without blocking legacy production plans', () => {
   assert.match(checkoutGuards, /role = 'candidate'/);
-  assert.ok(checkoutGuards.includes('public.plan_entitlements'));
+  assert.ok(!checkoutGuards.includes('public.plan_entitlements'));
   assert.match(checkoutGuards, /Candidate sign-in required/);
-  assert.match(checkoutGuards, /access entitlements are configured/);
 });
 
 test('premium checkout sends the coupon code to the server and displays the server-calculated discount', () => {
