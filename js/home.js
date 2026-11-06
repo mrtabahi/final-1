@@ -7,11 +7,34 @@
   function prettyType(type){return ({offer:'Limited-time offer',notice:'Notice',announcement:'Announcement',event:'Upcoming event',maintenance:'Service update',featured:'Featured update'})[type]||'Update';}
   function activeNow(item,now){return item.is_active&&item.is_public&&(!item.starts_at||new Date(item.starts_at)<=now)&&(!item.ends_at||new Date(item.ends_at)>now);}
   function countdown(end){if(!end)return 'No end time';const ms=new Date(end).getTime()-Date.now();if(ms<=0)return 'Ended';const d=Math.floor(ms/86400000),h=Math.floor(ms%86400000/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return (d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+  async function loadAnnouncementTicker(){
+    const ticker=document.getElementById('home-announcement-ticker');
+    const track=document.getElementById('home-ticker-track');
+    if(!ticker||!track||typeof supabaseClient==='undefined'||!supabaseClient)return;
+    try{
+      const {data,error}=await supabaseClient.from('site_announcements')
+        .select('id,title,body,starts_at,ends_at,sort_order,is_active,is_public')
+        .eq('content_type','announcement').eq('is_active',true).eq('is_public',true)
+        .order('sort_order',{ascending:true}).order('created_at',{ascending:false}).limit(20);
+      if(error)throw error;
+      const now=new Date(),items=(data||[]).filter(x=>activeNow(x,now));
+      if(!items.length){ticker.hidden=true;return;}
+      const messages=items.map(x=>[x.title,x.body].filter(Boolean).join(' — ').trim()).filter(Boolean);
+      if(!messages.length){ticker.hidden=true;return;}
+      const text=messages.join('     ✦     ');
+      const first=document.createElement('span');first.textContent=text;
+      const second=document.createElement('span');second.textContent=text;second.setAttribute('aria-hidden','true');
+      track.replaceChildren(first,second);
+      const duration=Math.max(24,Math.min(58,Math.round(text.length*.34)));
+      track.style.animationDuration=duration+'s';
+      ticker.hidden=false;
+    }catch(error){console.warn('Homepage announcement ticker unavailable:',error?.message||error);ticker.hidden=true;}
+  }
   async function loadAnnouncements(){
     const nav=document.querySelector('.navbar');if(!nav||typeof supabaseClient==='undefined'||!supabaseClient)return;
     let result;try{result=await supabaseClient.from('site_announcements').select('id,title,body,image_url,content_type,theme,cta_label,cta_url,starts_at,ends_at,sort_order,is_active,is_public').eq('is_active',true).eq('is_public',true).order('sort_order',{ascending:true}).limit(20);}catch(e){return;}
     if(result?.error||!result?.data?.length)return;
-    const now=new Date(),items=result.data.filter(x=>activeNow(x,now));if(!items.length)return;
+    const now=new Date(),items=result.data.filter(x=>activeNow(x,now)&&x.content_type!=='announcement');if(!items.length)return;
     const wrap=document.createElement('section');wrap.className='home-announcements container';wrap.id='home-announcements';wrap.setAttribute('aria-label','Latest notices and offers');wrap.dataset.theme=items[0].theme||'aurora';
     wrap.innerHTML='<div class="home-announcement-kicker">✦ Decoding HCM • Updates & offers</div><div class="home-announcement-card" aria-live="polite"></div><div class="home-announcement-controls"><button type="button" data-prev aria-label="Previous update">‹</button><button type="button" data-next aria-label="Next update">›</button><div class="home-announcement-dots" aria-hidden="true"></div><span style="margin-left:auto;font-size:.75rem;color:#cbd5e1">Live updates</span></div>';
     nav.insertAdjacentElement('afterend',wrap);let current=0;
@@ -78,5 +101,5 @@
   function wireProtectedNavigation(){
     document.addEventListener('click',async e=>{const a=e.target.closest('a[href]');if(!a)return;const u=new URL(a.href,location.href);if(u.origin!==location.origin)return;if(!protectedTargets.has(u.pathname.split('/').pop()))return;e.preventDefault();await navigateProtected(u);});
   }
-  document.addEventListener('DOMContentLoaded',()=>{addHomeStyles();wireProtectedNavigation();loadAnnouncements();});
+  document.addEventListener('DOMContentLoaded',()=>{addHomeStyles();wireProtectedNavigation();loadAnnouncementTicker();loadAnnouncements();});
 })();
