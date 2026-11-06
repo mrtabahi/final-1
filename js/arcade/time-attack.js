@@ -120,7 +120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('mission-intensity').addEventListener('change', () => { const notes={standard:'Standard lock-on windows. Learn the pattern and build a combo.',overdrive:'Target windows are 25% shorter. Combo multiplier pressure is high.',nightmare:'Target windows are 45% shorter. Every hesitation is costly.'}; $('mission-mode-note').textContent=notes[$('mission-intensity').value]; });
   function launchBlitz() {
     clearInterval(timer);
-    drawTargets();
     committed.length = 0;
     committedText = '';
     startedAt = 0;
