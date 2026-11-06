@@ -121,7 +121,7 @@
     const currentPage=norm(location.pathname.split('/').pop()||'index.html');
     const requestedTest=new URLSearchParams(location.search).get('test');
     const alwaysPublicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
-    const loginRequiredPages=new Set(['fix-accuracy.html','fix-accuracy-game.html','speed-sprint.html','word-accuracy.html','time-attack.html']);
+    const loginRequiredPages=new Set(['fix-accuracy','fix-accuracy.html','fix-accuracy-game','fix-accuracy-game.html','speed-sprint','speed-sprint.html','word-accuracy','word-accuracy.html','time-attack','time-attack.html']);
     const showLock=(title,message)=>{
       hideAccessProgress();
       document.body.classList.add('feature-site-locked');
