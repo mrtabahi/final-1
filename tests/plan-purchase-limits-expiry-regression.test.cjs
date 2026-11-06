@@ -53,9 +53,9 @@ test('Razorpay server-side payment verification remains the activation gate', ()
 
 
 test('payment retry checks the existing order before allowing another checkout', () => {
-  assert.match(pricing, /async function checkPendingOrder\\(btn\\)/);
-  assert.match(pricing, /from\\('orders'\\)\\.select\\('id,status,expires_at'\\)/);
-  assert.match(pricing, /if\\(btn\\.dataset\\.pendingOrderId\\)\\{await checkPendingOrder\\(btn\\);return;\\}/);
-  assert.match(pricing, /btn\\.textContent='Check payment status'/);
-  assert.match(pricing, /delete btn\\.dataset\\.pendingOrderId/);
+  assert.match(pricing, /async function checkPendingOrder\(btn\)/);
+  assert.match(pricing, /from\('orders'\)\.select\('id,status,expires_at'\)/);
+  assert.match(pricing, /if\(btn\.dataset\.pendingOrderId\)\{await checkPendingOrder\(btn\);return;\}/);
+  assert.match(pricing, /btn\.textContent='Check payment status'/);
+  assert.match(pricing, /delete btn\.dataset\.pendingOrderId/);
 });
