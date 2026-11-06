@@ -222,3 +222,7 @@
   .home-command-layout>.home-command-left,
   .home-command-layout>.home-command-right{position:static;top:auto}
 }
+
+@media(max-width:760px){
+  .home-top-feature-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+}
