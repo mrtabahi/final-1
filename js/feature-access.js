@@ -113,7 +113,7 @@
     }
   }
   function hideAccessProgress(){
-    document.documentElement?.classList.remove('arcade-auth-pending');
+    document.documentElement?.classList.remove('arcade-auth-pending','account-auth-pending');
     document.body?.classList.remove('feature-route-pending','feature-access-checking');
     document.getElementById('feature-access-progress')?.remove();
   }
@@ -122,8 +122,8 @@
     const pathSegments=location.pathname.split('/').filter(Boolean);
     const currentPage=norm(pathSegments[pathSegments.length-1]||'index.html');
     const requestedTest=new URLSearchParams(location.search).get('test');
-    const alwaysPublicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
-    const loginRequiredPages=new Set(['fix-accuracy','fix-accuracy.html','fix-accuracy-game','fix-accuracy-game.html','speed-sprint','speed-sprint.html','word-accuracy','word-accuracy.html','time-attack','time-attack.html']);
+    const alwaysPublicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
+    const loginRequiredPages=new Set(['fix-accuracy','fix-accuracy.html','fix-accuracy-game','fix-accuracy-game.html','speed-sprint','speed-sprint.html','word-accuracy','word-accuracy.html','time-attack','time-attack.html','my_account.html']);
     const redirectToLogin=()=>location.replace('/login.html?redirect='+encodeURIComponent(location.pathname+location.search+location.hash));
     if(loginRequiredPages.has(currentPage))showAccessProgress(true);
     const showLock=(title,message)=>{
@@ -169,7 +169,7 @@
       const routeAliases=({'fix-accuracy.html':['typing-game','fix-accuracy'],'self-test.html':['self-test'],'materials.html':['pdf-library'],'dashboard.html':['setup-box'],'start_test.html':['typing-interface']}[currentPage]||[]);
       const pageRule=findRule('menu',currentPage)||findRule('menu','/'+currentPage)||(pageFeatureKey&&findRule('feature',pageFeatureKey))||routeAliases.map(key=>findRule('feature',key)).find(Boolean);
       const effectivePageRule=pageRule||site;
-      const pageNeedsPremium=!requestedTestAuthorized&&effectivePageRule&&!effectivePageRule.is_free&&!alwaysPublicPages.has(currentPage);
+      const pageNeedsPremium=!requestedTestAuthorized&&effectivePageRule&&!effectivePageRule.is_free&&!alwaysPublicPages.has(currentPage)&&currentPage!=='my_account.html';
       if(pageNeedsPremium){
         showAccessProgress(true);
         if(!user){
