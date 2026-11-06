@@ -3,15 +3,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
-  const expected = ArcadeWordBank.takeWords(25);
+  let expected = ArcadeWordBank.takeWords(25);
   const committed = [];
   let committedText = '';
-  let startedAt = 0, backspaces = 0, shields = 3, streak = 0, bestStreak = 0, correctWords = 0, finished = false;
+  let startedAt = 0, backspaces = 0, shields = 3, streak = 0, bestStreak = 0, correctWords = 0, finished = false, ruleset = 'standard', contentMode = 'words';
   const input = $('precision-input');
   const elapsed = () => startedAt ? Math.max(0.001, (performance.now() - startedAt) / 1000) : 0.001;
   function paint() {
     const next = expected[committed.length];
     $('precision-target').textContent = next || 'CALIBRATION COMPLETE';
+    $('precision-target-number').textContent = 'TARGET ' + String(Math.min(expected.length,committed.length+1)).padStart(2,'0');
+    $('precision-difficulty-tag').textContent = ruleset.toUpperCase() + ' / ' + contentMode.toUpperCase();
     $('precision-index').textContent = Math.min(expected.length, committed.length + 1) + ' / ' + expected.length;
     $('precision-correct').textContent = String(correctWords);
     $('precision-streak').textContent = String(streak);
@@ -86,13 +88,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   input.addEventListener('input', () => {
     if (finished) return;
     if (!startedAt) startedAt = performance.now();
+    if (ruleset === 'master' && input.value && !expected[committed.length].startsWith(input.value)) { finish('Master protocol failed: first incorrect keystroke detected'); return; }
     if (/\s/u.test(input.value)) commit();
     else updateScore();
   });
+  $('precision-mode').addEventListener('change', () => { const notes={standard:'Three shields. A wrong word breaks your streak and costs one shield.',expert:'One shield only. A single wrong word ends the challenge.',master:'One wrong character ends the run immediately. No second chances.'}; $('precision-mode-note').textContent=notes[$('precision-mode').value]; });
+  $('precision-content').addEventListener('change', () => { const notes={words:'Common and advanced words. Type each target exactly.',punctuation:'Punctuation is part of the target. Every comma and period counts.',codes:'A mixed stream of words and numeric access codes.'}; $('precision-content-note').textContent=notes[$('precision-content').value]; });
   $('precision-start').addEventListener('click', () => {
+    ruleset = $('precision-mode').value;
+    contentMode = $('precision-content').value;
+    shields = ruleset === 'standard' ? 3 : 1;
+    if (contentMode === 'punctuation') expected = expected.map((word,index) => word + (index%3===0?',':index%3===1?'.':';'));
+    if (contentMode === 'codes') { const codes=Array.from({length:7},()=>String(Math.floor(1000+Math.random()*9000))); expected=expected.slice(0,18).concat(codes); }
     $('precision-briefing').hidden = true;
     $('precision-arena').hidden = false;
     input.disabled = false;
+    $('precision-arena').dataset.ruleset = ruleset;
     input.focus();
     paint();
   });
