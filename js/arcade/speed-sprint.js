@@ -3,8 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
-  let const difficulty = $('sprint-difficulty').value || 'easy';
-    expected = ArcadeCharacterLevels.apply(ArcadeWordBank.takeWords(90), difficulty);
+  let expected = ArcadeWordBank.takeWords(90);
   const committed = [];
   let committedText = '';
   // const duration = 30 is the classic default; each round can select 15, 30 or 60 seconds.
@@ -91,7 +90,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   function startRace() {
     clearInterval(timer);
-    expected = ArcadeWordBank.takeWords(90);
+    const difficulty = $('sprint-difficulty').value || 'easy';
+    expected = ArcadeCharacterLevels.apply(ArcadeWordBank.takeWords(90), difficulty);
     committed.length = 0;
     committedText = '';
     startedAt = 0;
