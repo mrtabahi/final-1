@@ -157,3 +157,24 @@ test('arcade hub exposes all three separate game destinations', () => {
   }
   assert.doesNotMatch(html, /class="game-tile coming"/);
 });
+
+test('persistent word bank serves fresh words across restarts and game routes', () => {
+  const storage = new Map();
+  const context = { Math, localStorage: {
+    getItem(key) { return storage.has(key) ? storage.get(key) : null; },
+    setItem(key, value) { storage.set(key, String(value)); }
+  }};
+  context.window = context;
+  vm.runInNewContext(read('js/arcade/word-bank.js'), context);
+  const firstRun = context.ArcadeWordBank.takeWords(70);
+  const secondRun = context.ArcadeWordBank.takeWords(70);
+  assert.ok(context.ArcadeWordBank.wordCount >= 140);
+  assert.equal(new Set(firstRun).size, firstRun.length);
+  assert.equal(new Set(secondRun).size, secondRun.length);
+  assert.equal(firstRun.filter(word => secondRun.includes(word)).length, 0);
+  const nextPage = { Math, localStorage: context.localStorage };
+  nextPage.window = nextPage;
+  vm.runInNewContext(read('js/arcade/word-bank.js'), nextPage);
+  const thirdRun = nextPage.ArcadeWordBank.takeWords(20);
+  assert.equal([...firstRun, ...secondRun].filter(word => thirdRun.includes(word)).length, 0);
+});
