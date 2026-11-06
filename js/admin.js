@@ -119,8 +119,15 @@
         }
 
 
-        if ($('admin-avatar')) $('admin-avatar').textContent = name.trim().charAt(0).toUpperCase() || 'A';
-        if ($('admin-top-avatar')) $('admin-top-avatar').textContent = name.trim().charAt(0).toUpperCase() || 'A';
+        const initials = name.trim().split(' ').filter(Boolean).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase() || 'A';
+        ['admin-avatar','admin-top-avatar'].forEach(id=>{
+            const node=$(id); if(!node)return;
+            node.replaceChildren(); node.textContent=initials;
+            if(profile.avatar_path){
+                const url=supabaseClient.storage.from('profile-avatars').getPublicUrl(profile.avatar_path).data?.publicUrl;
+                if(url){const img=document.createElement('img');img.src=url;img.alt='';img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';img.onerror=()=>{img.remove();node.textContent=initials};node.replaceChildren(img);}
+            }
+        });
     }
 
 
