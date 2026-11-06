@@ -6,7 +6,7 @@ const path = require('node:path');
 const loginHtml = fs.readFileSync(path.join(__dirname, '../login.html'), 'utf8');
 
 test('login page is a compact single-card layout without Google auth controls', () => {
-  assert.equal(loginHtml.includes('requested && !requested.startsWith'), false);
+  assert.doesNotMatch(loginHtml, /id="google-signin-button"|id="google-signup-button"/);
   assert.doesNotMatch(loginHtml, /Continue with Google|Sign up with Google/);
   assert.doesNotMatch(loginHtml, /<aside class="auth-showcase">/);
   assert.match(loginHtml, /width:min\(100%,390px\)/);
@@ -31,5 +31,5 @@ test('post-login redirect accepts only same-origin arcade destinations', () => {
   assert.match(loginHtml, /target\.origin === window\.location\.origin/);
   assert.match(loginHtml, /arcadeRedirects\.has\(targetPath\)/);
   assert.match(loginHtml, /target\.pathname \+ target\.search \+ target\.hash/);
-  assert.doesNotMatch(loginHtml, /requested && !requested\.startsWith\('\\/\\/'\)/);
+  assert.equal(loginHtml.includes('requested && !requested.startsWith'), false);
 });
