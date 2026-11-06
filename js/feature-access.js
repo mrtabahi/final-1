@@ -113,15 +113,19 @@
     }
   }
   function hideAccessProgress(){
+    document.documentElement?.classList.remove('arcade-auth-pending');
     document.body?.classList.remove('feature-route-pending','feature-access-checking');
     document.getElementById('feature-access-progress')?.remove();
   }
   async function init(){
     const client=db();
-    const currentPage=norm(location.pathname.split('/').pop()||'index.html');
+    const pathSegments=location.pathname.split('/').filter(Boolean);
+    const currentPage=norm(pathSegments[pathSegments.length-1]||'index.html');
     const requestedTest=new URLSearchParams(location.search).get('test');
     const alwaysPublicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
     const loginRequiredPages=new Set(['fix-accuracy','fix-accuracy.html','fix-accuracy-game','fix-accuracy-game.html','speed-sprint','speed-sprint.html','word-accuracy','word-accuracy.html','time-attack','time-attack.html']);
+    const redirectToLogin=()=>location.replace('/login.html?redirect='+encodeURIComponent(location.pathname+location.search+location.hash));
+    if(loginRequiredPages.has(currentPage))showAccessProgress(true);
     const showLock=(title,message)=>{
       hideAccessProgress();
       document.body.classList.add('feature-site-locked');
@@ -130,7 +134,7 @@
       document.getElementById('locked-page-cancel')?.addEventListener('click',()=>history.length>1?history.back():location.assign('/index.html'));
     };
     if(!client){
-      if(loginRequiredPages.has(currentPage)){hideAccessProgress();location.replace('/login.html?redirect='+encodeURIComponent(currentPage));return;}
+      if(loginRequiredPages.has(currentPage)){redirectToLogin();return;}
       if(alwaysPublicPages.has(currentPage)){hideAccessProgress();return;}
       if(!alwaysPublicPages.has(currentPage))showLock('Premium feature','We could not verify your plan right now. This content stays protected; please view plans or try again shortly.');
       return;
@@ -147,8 +151,7 @@
       if(testAccess?.error)throw testAccess.error;
       const user=sessionResult?.data?.session?.user||null;
       if(loginRequiredPages.has(currentPage)&&!user){
-        hideAccessProgress();
-        location.replace('/login.html?redirect='+encodeURIComponent(currentPage));
+        redirectToLogin();
         return;
       }
       rules=rr.data||[];
