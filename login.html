@@ -146,7 +146,23 @@ $('login-form').onsubmit = async e => {
         } else if (profile.role === 'candidate') {
             await showCandidateWelcome(profile);
             const requested = new URLSearchParams(window.location.search).get('redirect') || '';
-            const safeTarget = requested && !requested.startsWith('//') && !requested.includes('://') && !requested.startsWith('/\\') ? requested : '';
+            const arcadeRedirects = new Set([
+                '/fix-accuracy', '/fix-accuracy.html',
+                '/fix-accuracy-game', '/fix-accuracy-game.html',
+                '/speed-sprint', '/speed-sprint.html',
+                '/word-accuracy', '/word-accuracy.html',
+                '/time-attack', '/time-attack.html'
+            ]);
+            let safeTarget = '';
+            try {
+                const target = new URL(requested, window.location.origin);
+                const targetPath = target.pathname.replace(/\/+$/, '').toLowerCase() || '/';
+                if (target.origin === window.location.origin && arcadeRedirects.has(targetPath)) {
+                    safeTarget = target.pathname + target.search + target.hash;
+                }
+            } catch (_) {
+                // Ignore malformed or non-local redirect targets.
+            }
             window.location.href = safeTarget || 'index.html';
         } else {
             $('auth-message').textContent =
