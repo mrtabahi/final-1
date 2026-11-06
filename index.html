@@ -66,32 +66,22 @@
     <!-- Quick navigation: keeps the main tools easy to reach from Home -->
     <section class="container typing-game-promo-wrap" aria-label="Typing Game">
 <a class="typing-game-promo" href="/fix-accuracy.html"><span class="typing-game-orbit orbit-one"></span><span class="typing-game-orbit orbit-two"></span><span class="typing-game-art" aria-hidden="true"><span class="game-chip">FIX</span><span class="game-keys"><i>W</i><i>E</i><i>R</i><i>T</i><i>Y</i></span><span class="game-cursor"></span></span><span class="typing-game-copy"><span class="typing-game-kicker">NEW · ACCURACY ARCADE</span><strong>Typing Game: Fix Accuracy</strong><span>Commit each word, catch your mistakes, and level up your typing precision.</span><b>Play the game <span aria-hidden="true">→</span></b></span></a></section>
-<section class="container" aria-label="Quick navigation" style="padding-top:1.25rem;padding-bottom:.5rem">
-      <div class="card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.85rem;align-items:stretch">
-        <a class="btn btn-primary" href="/Typing_test.html">⌨️ Practice Typing</a><a class="btn btn-secondary" href="/self-test.html">📝 Self Test</a>
-        <a class="btn btn-secondary" href="/dashboard.html">🚀 Start Preparation</a>
-        <a class="btn btn-secondary" href="/my_results.html">📊 My Results</a>
-        <a class="btn btn-secondary" href="/premium.html">✨ Premium Plans</a><a class="btn btn-secondary" href="/my_account.html">👤 My Account</a>
-        <a class="btn btn-secondary" href="/leaderboard.html">🏆 Leaderboard</a>
-      </div>
-    </section>
+<section class="container home-quick-nav-wrap" aria-label="Quick navigation">
+  <nav class="home-quick-nav">
+    <a class="btn btn-primary" href="/Typing_test.html">⌨️ Practice</a>
+    <a class="btn btn-secondary" href="/self-test.html">📝 Self Test</a>
+    <a class="btn btn-secondary" href="/dashboard.html">🚀 Preparation</a>
+    <a class="btn btn-secondary" href="/my_results.html">📊 Results</a>
+    <a class="btn btn-secondary" href="/premium.html">✨ Premium</a>
+    <a class="btn btn-secondary" href="/my_account.html">👤 Account</a>
+    <a class="btn btn-secondary" href="/leaderboard.html">🏆 Leaderboard</a>
+  </nav>
+</section>
 
 
 
 <!-- Homepage command centre: side panels use existing protected destinations and admin-managed catalogues. -->
 <section class="home-command-layout container" aria-label="Typing practice command centre">
-  <aside class="home-command-rail home-command-left" aria-label="Quick access">
-    <div class="home-command-panel">
-      <div class="home-command-panel-head"><span>⚡</span><div><strong>Quick Access</strong><small>Your practice tools</small></div></div>
-      <a href="/Typing_test.html"><span>⌨️</span><b>Practice Typing</b><i>→</i></a>
-      <a href="/self-test.html"><span>📝</span><b>Self Test</b><i>→</i></a>
-      <a href="/fix-accuracy.html"><span>🎮</span><b>Typing Game</b><i>→</i></a>
-      <a href="/dashboard.html"><span>🚀</span><b>Start Preparation</b><i>→</i></a>
-      <a href="/my_results.html"><span>📊</span><b>My Results</b><i>→</i></a>
-      <a href="/my_account.html"><span>👤</span><b>My Account</b><i>→</i></a>
-    </div>
-    <a class="home-command-premium" href="/premium.html"><span>♛</span><strong>Go Premium</strong><small>Unlock advanced practice and study resources</small><b>Explore plans →</b></a>
-  </aside>
   <div class="home-command-main">
 <!-- SAURABH TYPING ANIMATION START -->
 <div id="skTypingDemo">
@@ -880,19 +870,12 @@
     })();
   </script>
 </div>
-  <aside class="home-command-rail home-command-right" aria-label="Study resources and rankings">
-    <section class="home-command-panel home-command-resources">
-      <div class="home-command-panel-head"><span>📕</span><div><strong>PDF & Study Resources</strong><small>Admin-published materials</small></div></div>
-      <div id="home-featured-materials" class="home-featured-materials" aria-live="polite"><p class="home-command-muted">Sign in to view your available resources.</p></div>
-      <a class="home-command-panel-link" href="/materials.html">Open PDF Library <span>→</span></a>
-    </section>
-    <section class="home-command-panel home-command-rank">
-      <div class="home-command-panel-head"><span>🏆</span><div><strong>Leaderboard</strong><small>Track top performance</small></div></div>
-      <p>Compare your typing progress with the community and stay motivated.</p>
-      <a class="home-command-panel-link" href="/leaderboard.html">View leaderboard <span>→</span></a>
-    </section>
-    <section class="home-command-mini">
-      <span>🛡️</span><div><strong>Secure practice</strong><small>Your account access and results stay protected.</small></div>
+  <aside class="home-command-rail home-command-right" aria-label="PDF quick downloads">
+    <section class="home-command-panel home-command-resources home-pdf-mini is-locked">
+      <div class="home-command-panel-head"><span>📕</span><div><strong>PDF Quick Downloads</strong><small>Pinned & latest study files</small></div></div>
+      <div id="home-featured-materials" class="home-featured-materials" aria-live="polite"><p class="home-command-muted">Sign in to unlock direct PDF downloads.</p></div>
+      <a class="home-command-panel-link" href="/materials.html">View full PDF Library <span>→</span></a>
+      <a class="home-pdf-lock" href="/materials.html" aria-label="Login to unlock PDF downloads"><span>LOGIN TO UNLOCK PDFS</span></a>
     </section>
   </aside>
 </section>
