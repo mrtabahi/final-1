@@ -1,0 +1,184 @@
+/* Shared single-screen arcade cockpit and full-screen system */
+:root{--arcade-safe-top:env(safe-area-inset-top,0px);--arcade-safe-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0;width:100%;height:100%;overflow:hidden}
+body.sprint-page,body.precision-page,body.mission-page{height:100svh;min-height:0;overflow:hidden}
+.sprint-shell,.precision-shell,.mission-shell{position:relative;isolation:isolate;box-sizing:border-box;width:100%;max-width:1540px;height:100svh;min-height:0;margin:0 auto;padding:calc(12px + var(--arcade-safe-top)) clamp(14px,2.4vw,34px) calc(12px + var(--arcade-safe-bottom));display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.sprint-shell:before,.precision-shell:before,.mission-shell:before{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;opacity:.36;background:radial-gradient(ellipse at 15% 20%,#46c9ff18,transparent 34%),radial-gradient(ellipse at 88% 78%,#f4c65d14,transparent 36%);animation:arcade-aurora 14s ease-in-out infinite alternate}
+@keyframes arcade-aurora{to{transform:translate3d(2%,-1%,0) scale(1.06);filter:hue-rotate(35deg)}}
+.arcade-screen-tools{position:absolute;z-index:50;top:calc(9px + var(--arcade-safe-top));right:clamp(14px,2.4vw,34px);display:flex;gap:7px}
+.arcade-screen-button{border:1px solid currentColor;border-radius:999px;padding:8px 13px;background:#0a1c2bdc;color:#e8f7ff;font:800 10px/1 Arial,sans-serif;letter-spacing:.08em;cursor:pointer;backdrop-filter:blur(12px);box-shadow:0 4px 20px #0004;transition:transform .2s,box-shadow .2s}
+.arcade-screen-button:hover{transform:translateY(-2px);box-shadow:0 0 22px #7bdfff66}
+.arcade-restore-button{background:#fffdf2ed;color:#233a2c;border-color:#9aab98}
+.arcade-screen-button[hidden]{display:none!important}
+.sprint-back,.precision-back,.mission-back{position:relative;z-index:2;align-self:flex-start;flex:none;margin:0;padding:2px 0;font-size:10px}
+.sprint-header,.precision-header,.mission-header{flex:none;margin:0;padding:4px 0 8px;min-height:0}
+.sprint-header h1,.mission-header h1{font-size:clamp(29px,4.4vw,58px);margin:5px 0;line-height:.92}
+.sprint-header p,.mission-header p{font-size:11px;margin:4px 0 0}
+.sprint-badge{width:54px;height:54px;font-size:8px;flex:none}.sprint-badge strong{font-size:16px}
+.precision-header{padding:4px 0 8px}
+.precision-edition{padding-right:130px;font-size:9px}
+.sprint-briefing,.mission-briefing{flex:1;min-height:0;margin:0;padding:clamp(15px,2.1vw,28px);overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:clamp(8px,1.4vh,15px)}
+.sprint-brief-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sprint-brief-grid div{padding:9px 12px}
+.sprint-brief-grid strong{font-size:clamp(17px,2vw,23px)}
+.sprint-briefing p,.mission-briefing>p{margin:0;font-size:12px;line-height:1.45;max-width:850px}
+.sprint-challenge-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sprint-challenge-options label,.mission-mode-label,.precision-mode-label{display:flex;flex-direction:column;gap:6px;color:#d3e9f6;font:900 9px/1.3 Arial,sans-serif;letter-spacing:.14em}
+.sprint-challenge-options select,.precision-mode,.mission-intensity{box-sizing:border-box;width:100%;min-height:38px;padding:8px 12px;border:1px solid #65869a;border-radius:9px;background:#0b1d2a;color:#f4fbff;font:800 11px Arial,sans-serif;letter-spacing:.04em;outline-offset:3px}
+.sprint-mode-note,.mission-mode-note,.precision-mode-note{margin:0;color:#b9cfdb;font:11px/1.4 Arial,sans-serif}
+.sprint-launch,.mission-start,.precision-start{align-self:flex-start;margin:2px 0 0;padding:13px 19px;min-height:42px}
+.sprint-race,.mission-console,.precision-arena{flex:1;min-height:0;width:100%;max-width:none;box-sizing:border-box;margin:0;padding:clamp(10px,1.6vw,20px);overflow:auto}
+.sprint-race{display:grid;grid-template-rows:auto auto minmax(90px,1fr) auto auto auto;gap:clamp(7px,1.2vh,13px)}
+.sprint-dash{grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.sprint-dash>div{padding:8px 10px;min-width:0}
+.sprint-dash small{font-size:8px;letter-spacing:.1em}
+.sprint-dash strong{font-size:clamp(16px,2.2vw,25px);margin-top:5px}
+.sprint-dash>div:first-child strong{font-size:clamp(23px,3vw,34px)}
+.sprint-track{margin:0}
+.sprint-track-base{height:28px;margin:7px 0}
+.sprint-car{font-size:22px;line-height:26px}
+.sprint-ghost-label{display:flex;justify-content:space-between;color:#b7d2e0;font:800 8px Arial,sans-serif;letter-spacing:.1em;margin:2px 0 6px}
+.sprint-pb-ghost{color:#9fe5ff;font-size:21px;text-shadow:0 0 9px #70dfff,0 0 20px #70dfff;z-index:2}
+.sprint-target-wrap{align-self:stretch;display:flex;flex-direction:column;justify-content:center;padding:8px 12px;min-height:70px}
+.sprint-target-wrap strong{font-size:clamp(31px,5.3vw,58px);margin-top:4px}
+.sprint-input-label{margin:0 0 5px}
+.sprint-input{box-sizing:border-box;min-height:48px;padding:11px 15px;font-size:clamp(18px,2vw,24px)}
+.sprint-play-actions,.precision-play-actions,.mission-play-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:32px}
+.sprint-key-hint,.precision-key-hint,.precision-focus-hint,.mission-key-hint{color:#9fb9c8;font:800 8px Arial,sans-serif;letter-spacing:.09em}
+.sprint-abort,.mission-abort,.precision-finish{margin:0;padding:8px 12px;min-height:32px}
+.sprint-results,.precision-results,.mission-results{flex:1;min-height:0;margin:0;padding:clamp(12px,2vw,22px);overflow:auto}
+.sprint-result-grid,.precision-report,.mission-report{gap:6px}
+.sprint-result-grid>div:not(.sprint-result-heading),.precision-report>div:not(.precision-report-heading),.mission-report>div:not(.mission-report-heading){padding:7px}
+.sprint-result-grid small,.precision-report small,.mission-report small{font-size:8px}
+.sprint-result-grid strong,.precision-report strong,.mission-report strong{font-size:14px}
+.precision-briefing{flex:1;min-height:0;margin:0;padding:clamp(12px,2.2vw,28px);grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:clamp(14px,3vw,40px);overflow:auto}
+.precision-orbit{width:min(18vw,170px);height:min(18vw,170px);justify-self:center}
+.precision-orbit-inner{width:82px;height:82px;font-size:28px}
+.precision-briefing h1{font-size:clamp(32px,4vw,54px);margin:8px 0}
+.precision-briefing p{font-size:11px;line-height:1.45;margin:5px 0}
+.precision-facts{gap:8px;margin:8px 0;font-size:8px}
+.precision-challenge-controls{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;max-width:640px}
+.precision-mode-label{color:#536957}
+.precision-mode{background:#fff;color:#203c2b;border-color:#9caf9d;min-height:34px;font-size:10px}
+.precision-mode-note{color:#536957}
+.precision-arena{display:grid;grid-template-rows:auto 4px minmax(90px,1fr) auto auto auto auto;gap:8px}
+.precision-progress{margin:0}
+.precision-target-card{padding:12px 16px 9px;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.precision-target-card strong{font-size:clamp(30px,5vw,54px);margin:8px 0 12px}
+.precision-target-meta{display:flex;justify-content:space-between;color:#536957;font:900 9px Arial,sans-serif;letter-spacing:.1em}
+.precision-target-foot{padding-top:7px}
+.precision-stats{margin:0;gap:7px}
+.precision-stats div{padding:7px 10px}
+.precision-stats strong{font-size:16px;margin-top:4px}
+.precision-label{margin:0 0 4px}
+.precision-input{min-height:44px;padding:9px 13px;font-size:clamp(17px,2vw,22px)}
+.precision-feedback{margin:0;min-height:16px;font-size:11px}
+.precision-live{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.precision-live span{font-size:8px}
+.precision-live strong{font-size:12px}
+.mission-briefing{gap:clamp(7px,1.1vh,12px)}
+.mission-briefing h2{font-size:clamp(31px,4.4vw,54px);margin:4px 0;line-height:.95}
+.mission-briefing>p{max-width:800px}
+.mission-brief-stats{margin:4px 0;gap:7px}
+.mission-brief-stats div{padding:8px 11px}
+.mission-brief-stats strong{font-size:18px;margin-top:4px}
+.mission-intensity{max-width:500px}
+.mission-mode-label{margin-top:3px}
+.mission-console{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,230px);grid-template-rows:auto auto minmax(100px,1fr) auto auto;gap:8px 14px;align-content:stretch}
+.mission-console-head{grid-column:1/-1;padding-bottom:6px}
+.mission-clock-panel{grid-column:2;grid-row:2;margin:0;width:auto;padding:8px}
+.mission-clock-panel strong{font-size:clamp(27px,3vw,42px);margin:2px}
+.mission-sectors{grid-column:1;grid-row:2;margin:0;align-self:stretch}
+.mission-sectors span{padding:8px}
+.mission-target-panel{grid-column:1/-1;grid-row:3;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:0;padding:9px}
+.mission-target-panel strong{font-size:clamp(29px,5vw,54px);margin:4px 0}
+.mission-target-meta{display:flex;justify-content:space-between;width:min(100%,700px);color:#ffaaa1;font:900 9px Arial,sans-serif;letter-spacing:.12em}
+.mission-target-clock{margin:0;padding:3px 9px;font-size:11px}
+.mission-input-label{grid-column:1/-1;margin:0}
+.mission-input{grid-column:1/-1;box-sizing:border-box;width:100%;min-height:42px;padding:9px 13px;font-size:clamp(17px,2vw,22px)}
+.mission-progress{grid-column:1/-1;margin:0}
+.mission-telemetry{grid-column:1/-1;grid-row:5;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0}
+.mission-telemetry>div{padding:7px;background:#202b3a;border:1px solid #40516a}
+.mission-telemetry small{font-size:8px}.mission-telemetry strong{font-size:15px}
+.mission-play-actions{grid-column:1/-1}
+.mission-target-panel:after{content:"";position:absolute;inset:8px 14%;border:1px solid #e06d6018;pointer-events:none}
+.mission-target-panel{position:relative}
+.sprint-shell:fullscreen,.precision-shell:fullscreen,.mission-shell:fullscreen{width:100vw;height:100vh;max-width:none;padding:12px 26px;overflow:hidden;background:inherit}
+body.arcade-expanded .sprint-shell,body.arcade-expanded .precision-shell,body.arcade-expanded .mission-shell{max-width:none;width:100%;height:100svh}
+.sprint-play[data-nitro=true] .sprint-target-wrap{box-shadow:inset 0 0 35px #f4c65d33,0 0 20px #f4c65d22}
+.precision-arena[data-ruleset=master] .precision-target-card{border-color:#c63e37;box-shadow:0 0 24px #c63e3722}
+.mission-console[data-intensity=overdrive] .mission-target-panel{border-color:#ff9a55;box-shadow:0 0 25px #ff9a5533}
+.mission-console[data-intensity=nightmare] .mission-target-panel{border-color:#ff4b4b;box-shadow:0 0 32px #ff3b4b44;animation:nightmare-pulse .9s ease-in-out infinite alternate}
+@keyframes nightmare-pulse{to{box-shadow:0 0 42px #ff3b4b88,inset 0 0 30px #ff3b4b22}}
+@media(max-width:760px){
+ .sprint-shell,.precision-shell,.mission-shell{padding:calc(8px + var(--arcade-safe-top)) 10px calc(8px + var(--arcade-safe-bottom));gap:6px}
+ .arcade-screen-tools{top:calc(6px + var(--arcade-safe-top));right:10px}
+ .arcade-screen-button{padding:7px 10px;font-size:9px}
+ .sprint-header,.mission-header{padding:2px 0 5px}
+ .sprint-header h1,.mission-header h1{font-size:clamp(25px,7vw,38px)}
+ .sprint-header p,.mission-header p{max-width:70%;font-size:9px}
+ .sprint-badge,.mission-classification{display:none}
+ .sprint-brief-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sprint-brief-grid small{font-size:8px}
+ .sprint-brief-grid strong{font-size:17px}
+ .sprint-briefing,.mission-briefing{padding:12px;gap:7px}
+ .sprint-challenge-options{gap:7px}
+ .sprint-challenge-options label{font-size:8px}
+ .sprint-challenge-options select,.mission-intensity{min-height:34px;font-size:9px}
+ .sprint-race,.mission-console,.precision-arena{padding:9px;gap:6px}
+ .sprint-dash{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .sprint-dash>div{padding:5px 7px}
+ .sprint-dash strong{font-size:16px}
+ .sprint-dash>div:first-child strong{font-size:22px}
+ .sprint-track-label,.sprint-lap{font-size:8px}
+ .sprint-target-wrap{min-height:56px;padding:5px}
+ .sprint-target-wrap strong{font-size:clamp(27px,8vw,42px)}
+ .sprint-input{min-height:40px;font-size:17px}
+ .sprint-key-hint,.precision-key-hint,.precision-focus-hint,.mission-key-hint{font-size:7px}
+ .precision-header{padding:2px 0 5px}
+ .precision-edition{padding-right:120px;font-size:8px}
+ .precision-briefing{grid-template-columns:70px minmax(0,1fr);gap:10px;padding:9px}
+ .precision-orbit{width:66px;height:66px}
+ .precision-orbit:before{inset:8px}.precision-orbit:after{inset:16px}
+ .precision-orbit-inner{width:40px;height:40px;font-size:18px}
+ .precision-orbit-inner small{font-size:6px}
+ .precision-briefing h1{font-size:clamp(24px,6.5vw,35px);margin:5px 0}
+ .precision-briefing p{font-size:9px;line-height:1.35}
+ .precision-facts{font-size:7px;gap:5px;margin:5px 0}
+ .precision-challenge-controls{grid-template-columns:1fr 1fr;gap:5px}
+ .precision-mode-label{font-size:7px}
+ .precision-mode{min-height:31px;padding:5px;font-size:8px}
+ .precision-mode-note{font-size:8px}
+ .precision-start{min-height:34px;padding:9px 12px;font-size:9px}
+ .precision-target-card strong{font-size:clamp(25px,7vw,38px);margin:5px 0 8px}
+ .precision-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+ .precision-stats div{padding:5px}
+ .precision-stats small{font-size:7px}
+ .precision-stats strong{font-size:13px}
+ .precision-live{gap:4px}
+ .precision-live span{font-size:7px}
+ .mission-console{grid-template-columns:minmax(0,1fr) 92px;gap:5px}
+ .mission-clock-panel{padding:5px}
+ .mission-clock-panel strong{font-size:24px}
+ .mission-sectors{gap:4px}
+ .mission-sectors span{padding:6px;font-size:10px}
+ .mission-target-panel strong{font-size:clamp(24px,7vw,39px)}
+ .mission-telemetry{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+ .mission-telemetry>div{padding:5px}
+ .mission-telemetry small{font-size:7px}
+ .mission-telemetry strong{font-size:13px}
+ .mission-briefing h2{font-size:clamp(27px,7vw,39px)}
+ .mission-brief-stats strong{font-size:15px}
+}
+@media(max-height:700px) and (min-width:761px){
+ .sprint-shell,.precision-shell,.mission-shell{gap:5px;padding-top:7px;padding-bottom:7px}
+ .sprint-header h1,.mission-header h1{font-size:34px;margin:3px 0}
+ .sprint-header p,.mission-header p{font-size:9px}
+ .sprint-briefing,.mission-briefing{gap:6px;padding:12px}
+ .precision-briefing{padding:10px}
+ .precision-orbit{width:120px;height:120px}
+ .precision-arena,.mission-console,.sprint-race{gap:5px;padding:8px}
+ .precision-target-card{padding:7px}
+ .mission-clock-panel{padding:5px}
+}
+@media(prefers-reduced-motion:reduce){.sprint-shell:before,.precision-shell:before,.mission-shell:before,.mission-console[data-intensity=nightmare] .mission-target-panel{animation:none!important;transition:none!important}}
