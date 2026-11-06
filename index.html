@@ -40,6 +40,7 @@
     </script>
     <link rel="stylesheet" href="css/main.css?v=20261030-vibrant1">
     <link rel="stylesheet" href="css/typing.css?v=20261024-toggle-state1">
+    <link rel="stylesheet" href="css/home-command-center.css?v=20261106-option1">
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>.legal-footer-links{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem 1rem;margin:1rem auto 0;padding:0 1rem}.legal-footer-links a{font-size:.9rem;color:inherit;text-decoration:underline;text-underline-offset:3px}</style>
@@ -77,6 +78,21 @@
 
 
 
+<!-- Homepage command centre: side panels use existing protected destinations and admin-managed catalogues. -->
+<section class="home-command-layout container" aria-label="Typing practice command centre">
+  <aside class="home-command-rail home-command-left" aria-label="Quick access">
+    <div class="home-command-panel">
+      <div class="home-command-panel-head"><span>⚡</span><div><strong>Quick Access</strong><small>Your practice tools</small></div></div>
+      <a href="/Typing_test.html"><span>⌨️</span><b>Practice Typing</b><i>→</i></a>
+      <a href="/self-test.html"><span>📝</span><b>Self Test</b><i>→</i></a>
+      <a href="/fix-accuracy.html"><span>🎮</span><b>Typing Game</b><i>→</i></a>
+      <a href="/dashboard.html"><span>🚀</span><b>Start Preparation</b><i>→</i></a>
+      <a href="/my_results.html"><span>📊</span><b>My Results</b><i>→</i></a>
+      <a href="/my_account.html"><span>👤</span><b>My Account</b><i>→</i></a>
+    </div>
+    <a class="home-command-premium" href="/premium.html"><span>♛</span><strong>Go Premium</strong><small>Unlock advanced practice and study resources</small><b>Explore plans →</b></a>
+  </aside>
+  <div class="home-command-main">
 <!-- SAURABH TYPING ANIMATION START -->
 <div id="skTypingDemo">
   <style>
@@ -864,6 +880,22 @@
     })();
   </script>
 </div>
+  <aside class="home-command-rail home-command-right" aria-label="Study resources and rankings">
+    <section class="home-command-panel home-command-resources">
+      <div class="home-command-panel-head"><span>📕</span><div><strong>PDF & Study Resources</strong><small>Admin-published materials</small></div></div>
+      <div id="home-featured-materials" class="home-featured-materials" aria-live="polite"><p class="home-command-muted">Sign in to view your available resources.</p></div>
+      <a class="home-command-panel-link" href="/materials.html">Open PDF Library <span>→</span></a>
+    </section>
+    <section class="home-command-panel home-command-rank">
+      <div class="home-command-panel-head"><span>🏆</span><div><strong>Leaderboard</strong><small>Track top performance</small></div></div>
+      <p>Compare your typing progress with the community and stay motivated.</p>
+      <a class="home-command-panel-link" href="/leaderboard.html">View leaderboard <span>→</span></a>
+    </section>
+    <section class="home-command-mini">
+      <span>🛡️</span><div><strong>Secure practice</strong><small>Your account access and results stay protected.</small></div>
+    </section>
+  </aside>
+</section>
 <!-- SAURABH TYPING ANIMATION END -->
 
 
@@ -930,6 +962,7 @@
     <script src="js/config.js"></script>
     <script src="js/ads-loader.js?v=20261023-admin-controls"></script>
     <script src="js/home.js?v=20261024-announcement-layout1"></script>
+    <script src="js/home-command-center.js?v=20261106-option1"></script>
 
 <script src="js/auth.js?v=20261030-account-controls2"></script>
 <script defer src="js/pro-menu.js?v=20261025-pro-home1"></script>
