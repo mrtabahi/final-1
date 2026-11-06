@@ -21,6 +21,8 @@ test('each game loads its own page, stylesheet, module, shared scorer and candid
     assert.match(html, new RegExp('js/arcade/' + path.basename(game.js)));
     assert.match(html, /typing-result\/typing-master\.js/);
     assert.match(html, /js\/arcade\/word-bank\.js/);
+    assert.match(html, /js\/arcade\/character-levels\.js/);
+    assert.match(html, new RegExp('id="' + game.prefix + '-difficulty"'));
     assert.match(html, /js\/arcade\/scoring\.js/);
     assert.match(html, /js\/typing\/master-config\.js/);
     assert.match(html, /js\/config\.js/);
@@ -37,12 +39,34 @@ test('each game loads its own page, stylesheet, module, shared scorer and candid
   }
 });
 
+test('all three games offer character levels and a refined Game Lab return link', () => {
+  for (const game of games) {
+    const html = read(game.html), css = read(game.css);
+    assert.match(html, /EASY · LOWERCASE/);
+    assert.match(html, /MEDIUM · CAPS \+ NUMBERS/);
+    assert.match(html, /HARD · CAPS \+ NUMBERS \+ SYMBOLS/);
+    assert.match(html, /BACK TO GAME LAB/);
+    assert.match(css, new RegExp('\\.' + game.prefix + '-back\\{display:inline-flex'));
+  }
+  const context = { Math };
+  context.window = context;
+  vm.runInNewContext(read('js/arcade/character-levels.js'), context);
+  const source = ['alpha','bravo','charlie','delta'];
+  assert.deepEqual(Array.from(context.ArcadeCharacterLevels.apply(source,'easy')), source);
+  const medium = Array.from(context.ArcadeCharacterLevels.apply(source,'medium'));
+  assert.ok(medium.every(word => /^[A-Z]/.test(word)));
+  assert.ok(medium.some(word => /[0-9]/.test(word)));
+  const hard = Array.from(context.ArcadeCharacterLevels.apply(source,'hard'));
+  assert.ok(hard.every(word => /[A-Z]/.test(word) && /[0-9]/.test(word) && /[!@#$%&*?+=]/.test(word)));
+});
+
 test('the three games have intentionally different visual identities', () => {
   const sprint = read('css/speed-sprint.css');
   const precision = read('css/word-accuracy.css');
   const mission = read('css/time-attack.css');
   assert.match(sprint, /background:#07121d/);
   assert.match(sprint, /sprint-track/);
+  assert.match(sprint, /\.sprint-target-wrap strong\\{text-transform:none/);
   assert.match(precision, /background:#f1f0e9/);
   assert.match(precision, /precision-orbit/);
   assert.match(precision, /font-family:Georgia/);
