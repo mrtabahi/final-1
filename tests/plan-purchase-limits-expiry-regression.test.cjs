@@ -73,13 +73,13 @@ test('coupon engine validates eligibility and redemption limits in the checkout 
   assert.match(coupons, /discount_minor/);
   assert.ok(coupons.includes('greatest(0, v_plan.price_minor - v_discount)'));
   assert.ok(coupons.includes('Asia/Kolkata'));
-  assert.match(coupons, /Cannot switch orders\\.coupon_id to subscription_coupons/);
+  assert.ok(coupons.includes('Cannot switch orders.coupon_id to subscription_coupons'));
   assert.match(coupons, /drop constraint if exists orders_coupon_id_fkey/);
 });
 
 test('checkout and coupon preview remain candidate-only and require configured entitlements', () => {
   assert.match(checkoutGuards, /role = 'candidate'/);
-  assert.match(checkoutGuards, /public\\.plan_entitlements/);
+  assert.ok(checkoutGuards.includes('public.plan_entitlements'));
   assert.match(checkoutGuards, /Candidate sign-in required/);
   assert.match(checkoutGuards, /access entitlements are configured/);
 });
