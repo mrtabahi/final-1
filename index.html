@@ -40,6 +40,7 @@
     </script>
     <link rel="stylesheet" href="css/main.css?v=20261030-vibrant1">
     <link rel="stylesheet" href="css/typing.css?v=20261024-toggle-state1">
+    <link rel="stylesheet" href="css/home-command-center.css?v=20261106-announcement-marquee1">
     <!-- Supabase JS Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>.legal-footer-links{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem 1rem;margin:1rem auto 0;padding:0 1rem}.legal-footer-links a{font-size:.9rem;color:inherit;text-decoration:underline;text-underline-offset:3px}</style>
@@ -59,24 +60,56 @@
     </nav>
 
 
-    <!-- Cyber command-center hero: decorative visual only; existing site tools remain unchanged. -->
-    
+    <!-- Homepage announcement ticker is populated from Admin > Website Content > Announcement. -->
+    <div class="home-announcement-ticker" id="home-announcement-ticker" hidden aria-label="Website announcements" aria-live="polite">
+      <span class="home-ticker-label"><i aria-hidden="true">✦</i> ANNOUNCEMENT</span>
+      <div class="home-ticker-window"><div class="home-ticker-track" id="home-ticker-track"></div></div>
+    </div>
 
-    <!-- Quick navigation: keeps the main tools easy to reach from Home -->
-    <section class="container typing-game-promo-wrap" aria-label="Typing Game">
-<a class="typing-game-promo" href="/fix-accuracy.html"><span class="typing-game-orbit orbit-one"></span><span class="typing-game-orbit orbit-two"></span><span class="typing-game-art" aria-hidden="true"><span class="game-chip">FIX</span><span class="game-keys"><i>W</i><i>E</i><i>R</i><i>T</i><i>Y</i></span><span class="game-cursor"></span></span><span class="typing-game-copy"><span class="typing-game-kicker">NEW · ACCURACY ARCADE</span><strong>Typing Game: Fix Accuracy</strong><span>Commit each word, catch your mistakes, and level up your typing precision.</span><b>Play the game <span aria-hidden="true">→</span></b></span></a></section>
-<section class="container" aria-label="Quick navigation" style="padding-top:1.25rem;padding-bottom:.5rem">
-      <div class="card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.85rem;align-items:stretch">
-        <a class="btn btn-primary" href="/Typing_test.html">⌨️ Practice Typing</a><a class="btn btn-secondary" href="/self-test.html">📝 Self Test</a>
-        <a class="btn btn-secondary" href="/dashboard.html">🚀 Start Preparation</a>
-        <a class="btn btn-secondary" href="/my_results.html">📊 My Results</a>
-        <a class="btn btn-secondary" href="/premium.html">✨ Premium Plans</a><a class="btn btn-secondary" href="/my_account.html">👤 My Account</a>
+    <section class="container home-top-feature-row" aria-label="Featured typing tools">
+      <a class="home-side-feature home-goal-feature" href="/Typing_test.html">
+        <span class="home-feature-icon">⌨️</span><span class="home-feature-kicker">DAILY TARGET</span>
+        <strong>10 min</strong><small>Practice a little every day</small>
+        <span class="home-feature-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+      </a>
+      <section class="container typing-game-promo-wrap" aria-label="Typing Game">
+        <a class="typing-game-promo" href="/fix-accuracy.html"><span class="typing-game-orbit orbit-one"></span><span class="typing-game-orbit orbit-two"></span><span class="typing-game-art" aria-hidden="true"><span class="game-chip">FIX</span><span class="game-keys"><i>W</i><i>E</i><i>R</i><i>T</i><i>Y</i></span><span class="game-cursor"></span></span><span class="typing-game-copy"><span class="typing-game-kicker">NEW · ACCURACY ARCADE</span><strong>Typing Game: Fix Accuracy</strong><span>Commit each word, catch your mistakes, and level up your typing precision.</span><b>Play the game <span aria-hidden="true">→</span></b></span></a>
+      </section>
+      <a class="home-side-feature home-focus-feature" href="/self-test.html">
+        <span class="home-feature-icon">✦</span><span class="home-feature-kicker">SKILL BUILDER</span>
+        <strong>Test your focus</strong><small>Build speed with fewer errors</small>
+        <span class="home-focus-orbit" aria-hidden="true"><i>F</i><i>J</i><i>⌁</i></span>
+      </a>
+    </section>
+    <section class="container home-nav-feature-row" aria-label="Quick navigation">
+      <a class="home-nav-side" href="/dashboard.html"><span>🚀</span><small>PREP</small></a>
+      <nav class="home-quick-nav">
+        <a class="btn btn-primary" href="/Typing_test.html">⌨️ Practice</a>
+        <a class="btn btn-secondary" href="/self-test.html">📝 Self Test</a>
+        <a class="btn btn-secondary" href="/dashboard.html">🚀 Preparation</a>
+        <a class="btn btn-secondary" href="/my_results.html">📊 Results</a>
+        <a class="btn btn-secondary" href="/premium.html">✨ Premium</a>
+        <a class="btn btn-secondary" href="/my_account.html">👤 Account</a>
         <a class="btn btn-secondary" href="/leaderboard.html">🏆 Leaderboard</a>
-      </div>
+      </nav>
+      <a class="home-nav-side" href="/my_results.html"><span>📈</span><small>STATS</small></a>
     </section>
 
-
-
+    <!-- Homepage command centre: preserve the original animated keyboard, add quick access and PDF rails. -->
+    <section class="home-command-layout container" aria-label="Typing practice command centre">
+      <aside class="home-command-rail home-command-left" aria-label="Quick access">
+        <div class="home-command-panel">
+          <div class="home-command-panel-head"><span>⚡</span><div><strong>Quick Access</strong><small>Your practice tools</small></div></div>
+          <a href="/Typing_test.html"><span>⌨️</span><b>Practice Typing</b><i>→</i></a>
+          <a href="/self-test.html"><span>📝</span><b>Self Test</b><i>→</i></a>
+          <a href="/fix-accuracy.html"><span>🎮</span><b>Typing Game</b><i>→</i></a>
+          <a href="/dashboard.html"><span>🚀</span><b>Start Preparation</b><i>→</i></a>
+          <a href="/my_results.html"><span>📊</span><b>My Results</b><i>→</i></a>
+          <a href="/my_account.html"><span>👤</span><b>My Account</b><i>→</i></a>
+        </div>
+        <a class="home-command-premium" href="/premium.html"><span>♛</span><strong>Go Premium</strong><small>Unlock advanced practice and study resources</small><b>Explore plans →</b></a>
+      </aside>
+      <div class="home-command-main">
 <!-- SAURABH TYPING ANIMATION START -->
 <div id="skTypingDemo">
   <style>
@@ -864,7 +897,25 @@
     })();
   </script>
 </div>
-<!-- SAURABH TYPING ANIMATION END -->
+<!-- SAURABH TYPING ANIMATION END --> 
+      </div>
+      <aside class="home-command-rail home-command-right" aria-label="PDF quick downloads">
+        <section class="home-command-panel home-command-resources home-pdf-mini is-locked">
+          <div class="home-command-panel-head"><span>📕</span><div><strong>PDF Quick Downloads</strong><small>Pinned &amp; latest study files</small></div></div>
+          <div id="home-featured-materials" class="home-featured-materials" aria-live="polite"><p class="home-command-muted">Sign in to unlock pinned and latest PDF downloads.</p></div>
+          <a class="home-command-panel-link" href="/materials.html">View full PDF Library <span>→</span></a>
+          <a class="home-pdf-lock" href="/materials.html" aria-label="Login to unlock PDF downloads"><span>LOGIN TO UNLOCK PDFS</span></a>
+        </section>
+        <a class="home-tip-card" href="/fix-accuracy.html">
+          <span class="home-tip-art" aria-hidden="true"><i>W</i><i>E</i><i>R</i><i>T</i><b>✓</b></span>
+          <span class="home-tip-kicker">PRACTICE SMARTER</span>
+          <strong>Accuracy before speed</strong>
+          <small>Slow down on tricky words. Smooth, correct typing builds lasting speed.</small>
+          <span class="home-tip-link">Try accuracy game <b>→</b></span>
+        </a>
+      </aside>
+    </section>
+
 
 
 
@@ -929,7 +980,8 @@
 
     <script src="js/config.js"></script>
     <script src="js/ads-loader.js?v=20261023-admin-controls"></script>
-    <script src="js/home.js?v=20261024-announcement-layout1"></script>
+    <script src="js/home.js?v=20261106-announcement-marquee1"></script>
+    <script src="js/home-command-center.js?v=20261106-announcement-marquee1"></script>
 
 <script src="js/auth.js?v=20261030-account-controls2"></script>
 <script defer src="js/pro-menu.js?v=20261025-pro-home1"></script>
