@@ -3,9 +3,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
-  const bankWords = ArcadeWordBank.takeWords(20).sort((a,b) => a.length - b.length);
-  const waves = Array.from({length:4}, (_, wave) => bankWords.slice(wave * 5, wave * 5 + 5));
-  const expected = waves.flat();
+  let expected = [];
+  function drawTargets() {
+    const bankWords = ArcadeWordBank.takeWords(20).sort((a,b) => a.length - b.length);
+    const waves = Array.from({length:4}, (_, wave) => bankWords.slice(wave * 5, wave * 5 + 5));
+    expected = waves.flat();
+  }
+  drawTargets();
   const committed = [];
   let committedText = '';
   let startedAt = 0, timer = null, targetDeadline = 0, backspaces = 0, finished = false, currentWave = 0, combo = 0, bestCombo = 0, correctTargets = 0, missedTargets = 0, intensity = 'standard', deadlineMultiplier = 1;
@@ -114,21 +118,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     update();
   });
   $('mission-intensity').addEventListener('change', () => { const notes={standard:'Standard lock-on windows. Learn the pattern and build a combo.',overdrive:'Target windows are 25% shorter. Combo multiplier pressure is high.',nightmare:'Target windows are 45% shorter. Every hesitation is costly.'}; $('mission-mode-note').textContent=notes[$('mission-intensity').value]; });
-  $('mission-start').addEventListener('click', () => {
+  function launchBlitz() {
+    clearInterval(timer);
+    drawTargets();
+    committed.length = 0;
+    committedText = '';
+    startedAt = 0;
+    timer = null;
+    targetDeadline = 0;
+    backspaces = 0;
+    finished = false;
+    currentWave = 0;
+    combo = 0;
+    bestCombo = 0;
+    correctTargets = 0;
+    missedTargets = 0;
     intensity = $('mission-intensity').value;
     deadlineMultiplier = intensity === 'overdrive' ? 0.75 : intensity === 'nightmare' ? 0.55 : 1;
-    $('mission-console').dataset.intensity = intensity;
+    input.value = '';
+    input.disabled = false;
+    $('mission-results').hidden = true;
     $('mission-briefing').hidden = true;
     $('mission-console').hidden = false;
-    input.disabled = false;
+    $('mission-console').dataset.intensity = intensity;
+    $('mission-console').dataset.critical = 'false';
+    $('mission-clock').textContent = duration + 's';
+    $('mission-combo').textContent = '0';
+    $('mission-best-combo').textContent = '0';
+    $('mission-gross').textContent = '0.00';
+    $('mission-net').textContent = '0.00';
+    $('mission-accuracy').textContent = '100.00%';
+    $('mission-errors').textContent = '0';
     startedAt = performance.now();
     armTargetDeadline();
     timer = setInterval(update, 100);
-    input.focus();
     paint();
-  });
+    input.focus();
+  }
+  $('mission-start').addEventListener('click', launchBlitz);
   $('mission-abort').addEventListener('click', () => finish('Mission aborted by operator'));
-  $('mission-retry').addEventListener('click', () => location.reload());
+  $('mission-retry').addEventListener('click', launchBlitz);
   $('mission-back').addEventListener('click', () => { location.href = '/fix-accuracy.html'; });
   paint();
 });
