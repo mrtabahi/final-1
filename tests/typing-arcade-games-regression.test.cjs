@@ -66,7 +66,7 @@ test('the three games have intentionally different visual identities', () => {
   const mission = read('css/time-attack.css');
   assert.match(sprint, /background:#07121d/);
   assert.match(sprint, /sprint-track/);
-  assert.match(sprint, /\.sprint-target-wrap strong\\{text-transform:none/);
+  assert.ok(sprint.includes('.sprint-target-wrap strong{text-transform:none'));
   assert.match(precision, /background:#f1f0e9/);
   assert.match(precision, /precision-orbit/);
   assert.match(precision, /font-family:Georgia/);
