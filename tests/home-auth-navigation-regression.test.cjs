@@ -8,6 +8,8 @@ const read = file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 test('Typing Game uses the existing home login prompt without navigating on cancel', () => {
   const home = read('js/home.js');
   assert.match(home, /protectedTargets = new Set\(\[[^\]]*'fix-accuracy\.html'/);
+  const protectedList = home.match(/protectedTargets = new Set\(\[([^\]]+)\]\)/)?.[1] || '';
+  assert.doesNotMatch(protectedList, /my_account\.html/);
   assert.match(home, /function showLoginPrompt\(url\)/);
   assert.match(home, /data-login-cancel/);
   assert.match(home, /data-login-ok/);
