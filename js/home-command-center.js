@@ -55,3 +55,32 @@ document.addEventListener('DOMContentLoaded', () => {
   load();
   supabaseClient.auth.onAuthStateChange((_event,session)=>{if(session?.user)void load();else{setLocked(true);message('Sign in to unlock pinned and latest PDF downloads.');}});
 });
+
+/* Keep both side rails visible during the keyboard workspace scroll, but let
+   the browser release them naturally at the exact bottom of their parent. */
+document.addEventListener('DOMContentLoaded',()=>{
+  const layout=document.querySelector('.home-command-layout');
+  const rails=[...document.querySelectorAll('.home-command-layout>.home-command-left,.home-command-layout>.home-command-right')];
+  if(!layout||rails.length!==2)return;
+  const updateStickyOffsets=()=>{
+    const desktop=window.matchMedia('(min-width: 1051px)').matches;
+    if(!desktop){rails.forEach(rail=>rail.style.removeProperty('--home-rail-sticky-top'));return;}
+    const viewportHeight=window.visualViewport?.height||window.innerHeight;
+    const bottomGap=Math.max(36,Math.min(64,Math.round(viewportHeight*.065)));
+    rails.forEach(rail=>{
+      const height=rail.getBoundingClientRect().height;
+      const top=Math.max(12,Math.round(viewportHeight-height-bottomGap));
+      rail.style.setProperty('--home-rail-sticky-top',top+'px');
+    });
+  };
+  updateStickyOffsets();
+  if('ResizeObserver'in window){
+    const observer=new ResizeObserver(()=>updateStickyOffsets());
+    rails.forEach(rail=>observer.observe(rail));
+    const main=layout.querySelector('.home-command-main');
+    if(main)observer.observe(main);
+  }
+  window.addEventListener('resize',updateStickyOffsets,{passive:true});
+  window.visualViewport?.addEventListener('resize',updateStickyOffsets,{passive:true});
+  window.addEventListener('load',updateStickyOffsets,{once:true});
+});
