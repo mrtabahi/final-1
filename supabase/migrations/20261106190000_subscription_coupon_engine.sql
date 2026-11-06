@@ -50,8 +50,9 @@ create policy "Admins update subscription coupons" on public.subscription_coupon
   for update to authenticated
   using (exists (select 1 from public.profiles p where p.id = (select auth.uid()) and p.role = 'admin'))
   with check (exists (select 1 from public.profiles p where p.id = (select auth.uid()) and p.role = 'admin'));
+-- Remove permissive default grants first; RLS does not protect TRUNCATE.
+revoke all on public.subscription_coupons from public, anon, authenticated;
 grant select, insert, update on public.subscription_coupons to authenticated;
-revoke all on public.subscription_coupons from anon;
 
 -- Do not silently reinterpret legacy coupon references from the older coupon engine.
 do $coupon_fk_guard$
