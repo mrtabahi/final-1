@@ -113,7 +113,12 @@
     filtered=candidates.filter(x=>(!q||[x.full_name,x.email,x.phone,x.id].some(t=>String(t||'').toLowerCase().includes(q)))&&(!v||(v==='verified'?x.phone_verified:!x.phone_verified))&&(!status||String(x.account_status||'active')===status));
     renderList();
   }
-  function avatarMarkup(candidate, large = false) {\n    const size = large ? 54 : 42;\n    const url = candidate.avatar_path ? supabaseClient.storage.from('profile-avatars').getPublicUrl(candidate.avatar_path).data?.publicUrl : null;\n    return url ? '<img src="'+esc(url)+'" alt="" loading="lazy" style="width:'+size+'px;height:'+size+'px;object-fit:cover;border-radius:50%">' : '<span aria-hidden="true">'+esc(initials(candidate.full_name))+'</span>';\n  }\n  function renderList() {
+  function avatarMarkup(candidate, large = false) {
+    const size = large ? 54 : 42;
+    const url = candidate.avatar_path ? supabaseClient.storage.from('profile-avatars').getPublicUrl(candidate.avatar_path).data?.publicUrl : null;
+    return url ? '<img src="'+esc(url)+'" alt="" loading="lazy" style="width:'+size+'px;height:'+size+'px;object-fit:cover;border-radius:50%">' : '<span aria-hidden="true">'+esc(initials(candidate.full_name))+'</span>';
+  }
+  function renderList() {
     const list=$('candidate-list'); if(!list)return;
     $('candidate-result-count').textContent=filtered.length+' candidate'+(filtered.length===1?'':'s');
     const pages=Math.max(1,Math.ceil(filtered.length/pageSize)); page=Math.min(page,pages-1);
