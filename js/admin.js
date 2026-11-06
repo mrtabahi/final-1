@@ -82,6 +82,7 @@
         try {
             const access = await AuthManager.requireAdminGuard();
             if (!access?.user || !access?.profile) return false;
+            try { const avatarResult=await supabaseClient.from('profiles').select('avatar_path').eq('id',access.user.id).maybeSingle(); if(!avatarResult.error) access.profile.avatar_path=avatarResult.data?.avatar_path||null; } catch {}
             setAdminIdentity(access.profile, access.user);
             return true;
         } catch (error) {
