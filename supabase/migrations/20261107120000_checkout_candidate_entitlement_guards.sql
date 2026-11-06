@@ -1,5 +1,5 @@
--- Preserve candidate-only checkout and require configured access entitlements.
--- This follow-up migration is safe for environments where the PR coupon engine is already installed.
+-- Preserve candidate-only checkout while retaining compatibility with the production plan-access model.
+-- Existing paid membership and feature-access rules remain authoritative; plan_entitlements rows are optional.
 
 create or replace function public.preview_subscription_coupon(
   p_plan_id uuid,
@@ -28,9 +28,6 @@ begin
   select * into v_plan from public.subscription_plans
   where id = p_plan_id and is_active = true;
   if not found then raise exception 'This plan is unavailable.'; end if;
-  if not exists (select 1 from public.plan_entitlements pe where pe.plan_id = v_plan.id) then
-    raise exception 'Plan is unavailable until access entitlements are configured.';
-  end if;
   if v_plan.price_minor <= 0 then raise exception 'Coupons apply only to paid plans.'; end if;
 
   select * into v_coupon from public.subscription_coupons
@@ -121,9 +118,6 @@ begin
   for update;
 
   if not found then raise exception 'This plan is unavailable.'; end if;
-  if not exists (select 1 from public.plan_entitlements pe where pe.plan_id = v_plan.id) then
-    raise exception 'Plan is unavailable until access entitlements are configured.';
-  end if;
   if v_plan.currency <> 'INR' then raise exception 'Only INR plans are currently supported.'; end if;
 
   if v_plan.expiry_mode = 'fixed_date' then
