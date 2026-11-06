@@ -8,9 +8,9 @@ const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 const games = [
-  {name:'Speed Sprint',html:'speed-sprint.html',js:'js/arcade/speed-sprint.js',css:'css/speed-sprint.css',prefix:'sprint'},
-  {name:'Word Accuracy',html:'word-accuracy.html',js:'js/arcade/word-accuracy.js',css:'css/word-accuracy.css',prefix:'precision'},
-  {name:'Time Attack',html:'time-attack.html',js:'js/arcade/time-attack.js',css:'css/time-attack.css',prefix:'mission'}
+  {name:'Velocity Circuit',html:'speed-sprint.html',js:'js/arcade/speed-sprint.js',css:'css/speed-sprint.css',prefix:'sprint'},
+  {name:'Flawless Forge',html:'word-accuracy.html',js:'js/arcade/word-accuracy.js',css:'css/word-accuracy.css',prefix:'precision'},
+  {name:'Target Blitz',html:'time-attack.html',js:'js/arcade/time-attack.js',css:'css/time-attack.css',prefix:'mission'}
 ];
 const resultFields = ['gross','net','accuracy','errors','allowed','excess','penalty','correct','backspace','keys'];
 
@@ -20,6 +20,7 @@ test('each game loads its own page, stylesheet, module, shared scorer and candid
     assert.match(html, new RegExp('css/' + path.basename(game.css)));
     assert.match(html, new RegExp('js/arcade/' + path.basename(game.js)));
     assert.match(html, /typing-result\/typing-master\.js/);
+    assert.match(html, /js\/arcade\/word-bank\.js/);
     assert.match(html, /js\/arcade\/scoring\.js/);
     assert.match(html, /js\/typing\/master-config\.js/);
     assert.match(html, /js\/config\.js/);
@@ -56,20 +57,20 @@ test('challenge rules and lengths are different for all three games', () => {
   const precision = read('js/arcade/word-accuracy.js');
   const mission = read('js/arcade/time-attack.js');
   assert.match(sprint, /const duration = 30/);
-  assert.match(sprint, /Array\.from\(\{length:90\}/);
+  assert.match(sprint, /ArcadeWordBank\.takeWords\(90\)/);
   assert.match(sprint, /sprint-car/);
   assert.match(precision, /shields = 3/);
   assert.match(precision, /bestStreak/);
-  const wordList = precision.match(/const expected = '([^']+)'/);
-  assert.ok(wordList);
-  assert.equal(wordList[1].split(' ').length, 25);
+  assert.match(precision, /ArcadeWordBank\.takeWords\(25\)/);
   assert.match(read('word-accuracy.html'), /25 TARGETS/);
   assert.match(precision, /All 25 target words calibrated/);
   assert.match(mission, /const duration = 60/);
   assert.match(mission, /const waves =/);
   assert.match(mission, /combo\+\+/);
   assert.match(mission, /bestCombo/);
-  assert.equal((mission.match(/\.split\(' '\)/g) || []).length, 4);
+  assert.match(mission, /ArcadeWordBank\.takeWords\(20\)/);
+  assert.match(mission, /targetDeadline/);
+  for (const game of [sprint,precision,mission]) assert.match(game, /ArcadeWordBank\.takeWords/);
 });
 
 test('each result screen exposes complete BSF and CRPF metrics plus unique game outcomes', () => {
