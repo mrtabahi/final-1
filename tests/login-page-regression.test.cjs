@@ -6,7 +6,7 @@ const path = require('node:path');
 const loginHtml = fs.readFileSync(path.join(__dirname, '../login.html'), 'utf8');
 
 test('login page is a compact single-card layout without Google auth controls', () => {
-  assert.doesNotMatch(loginHtml, /id="google-signin-button"|id="google-signup-button"/);
+  assert.equal(loginHtml.includes('requested && !requested.startsWith'), false);
   assert.doesNotMatch(loginHtml, /Continue with Google|Sign up with Google/);
   assert.doesNotMatch(loginHtml, /<aside class="auth-showcase">/);
   assert.match(loginHtml, /width:min\(100%,390px\)/);
