@@ -24,3 +24,12 @@ test('email/password login and manual registration remain available', () => {
   assert.match(loginHtml, /id="signup-confirm"/);
   assert.match(loginHtml, /aria-live="polite"/);
 });
+
+
+test('post-login redirect accepts only same-origin arcade destinations', () => {
+  assert.match(loginHtml, /const arcadeRedirects = new Set/);
+  assert.match(loginHtml, /target\.origin === window\.location\.origin/);
+  assert.match(loginHtml, /arcadeRedirects\.has\(targetPath\)/);
+  assert.match(loginHtml, /target\.pathname \+ target\.search \+ target\.hash/);
+  assert.doesNotMatch(loginHtml, /requested && !requested\.startsWith\('\\/\\/'\)/);
+});
