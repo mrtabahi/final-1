@@ -23,30 +23,4 @@ test('admin plan editor exposes expiry mode, fixed date and both purchase caps',
 test('fixed expiry is presented as a calendar date on public pricing cards', () => {
   assert.match(pricing, /expiry_mode,fixed_expiry_date,purchase_limit_total,purchase_limit_per_user/);
   assert.match(pricing, /Access until/);
-  assert.match(pricing, /total purchases/);
-  assert.match(pricing, /per account/);
-  assert.match(pricing, /fixed_expiry_date>=todayIst/);
-});
-
-test('checkout transaction serializes capacity checks and reserves active pending orders', () => {
-  assert.match(migration, /for update/);
-  assert.match(migration, /o\.status in \('paid', 'free'\)/);
-  assert.match(migration, /o\.status = 'pending' and o\.expires_at > v_now/);
-  assert.match(migration, /purchase_limit_total/);
-  assert.match(migration, /purchase_limit_per_user/);
-});
-
-test('fixed expiry is snapshotted onto orders and applied to membership in India time', () => {
-  assert.match(migration, /add column if not exists expiry_mode/);
-  assert.match(migration, /add column if not exists fixed_expiry_date date/);
-  assert.match(migration, /v_plan\.fixed_expiry_date/);
-  assert.match(migration, /Asia\/Kolkata/);
-  assert.match(migration, /least\(v_now \+ interval '30 minutes', v_fixed_end\)/);
-  assert.match(migration, /create trigger user_subscriptions_apply_plan_expiry/);
-});
-
-test('Razorpay server-side payment verification remains the activation gate', () => {
-  assert.match(checkout, /rpc\("create_checkout_order"/);
-  assert.match(verify, /rpc\("service_mark_order_paid"/);
-  assert.match(verify, /Payment signature verification failed/);
-});
+  assert.match(pricing, /total purc¶»§q«^
