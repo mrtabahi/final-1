@@ -39,10 +39,16 @@
   async function loadSettingsAndMessages() {
     const list = $('login-message-list');
     try {
-      const [{ data: settings, error: settingsError }, { data: messages, error: messagesError }] = await Promise.all([
+      const [settingsResult, initialMessagesResult] = await Promise.all([
         supabaseClient.from('site_access_settings').select('*').eq('id', 1).maybeSingle(),
         supabaseClient.from('candidate_login_messages').select('user_id,message,enabled,updated_at,profiles!candidate_login_messages_user_id_fkey(full_name,email,avatar_path)').order('updated_at', { ascending: false }).limit(500)
       ]);
+      const settings=settingsResult.data, settingsError=settingsResult.error;
+      let messages=initialMessagesResult.data, messagesError=initialMessagesResult.error;
+      if(messagesError && String(messagesError.message||'').includes('avatar_path')) {
+        const fallback=await supabaseClient.from('candidate_login_messages').select('user_id,message,enabled,updated_at,profiles!candidate_login_messages_user_id_fkey(full_name,email)').order('updated_at', { ascending: false }).limit(500);
+        messages=fallback.data; messagesError=fallback.error;
+      }
       if (settingsError) throw settingsError;
       if (messagesError) throw messagesError;
       $('registration-enabled').checked = settings?.registration_enabled !== false;
