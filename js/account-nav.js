@@ -15,7 +15,7 @@
     });
   }
   async function syncAvatar(links, session) {
-    if (!session?.user || !window.supabaseClient) return;
+    if (!session?.user || typeof supabaseClient === 'undefined' || !supabaseClient) return;
     try {
       const { data, error } = await supabaseClient.from('profiles')
         .select('full_name,avatar_path').eq('id', session.user.id).maybeSingle();
@@ -36,10 +36,10 @@
       });
     } catch (error) { console.debug('Profile avatar unavailable:', error?.message || error); }
   }
-  async function init() {
+  function installAvatarStyles() {\n    if (document.getElementById('profile-avatar-global-styles')) return;\n    const style = document.createElement('style'); style.id = 'profile-avatar-global-styles';\n    style.textContent = '.account-nav-signed-in{display:inline-flex!important;align-items:center;gap:7px}.account-nav-avatar{width:30px;height:30px;display:inline-grid;place-items:center;flex:0 0 30px;overflow:hidden;border-radius:50%;background:#e6edff;color:#2449a4;font-size:.72rem;font-weight:800}.account-nav-avatar img{width:100%;height:100%;object-fit:cover}';\n    document.head.appendChild(style);\n  }\n  async function init() {\n    installAvatarStyles();
     const links = accountLinks(); if (!links.length) return;
     try {
-      if (!window.supabaseClient) {
+      if (typeof supabaseClient === 'undefined' || !supabaseClient) {
         if (!window.supabase) await new Promise((resolve, reject) => {
           const script = document.createElement('script'); script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
           script.onload = resolve; script.onerror = reject; document.head.appendChild(script);
@@ -49,7 +49,7 @@
           script.onload = resolve; script.onerror = reject; document.head.appendChild(script);
         });
       }
-      if (!window.supabaseClient) { paint(links, false); return; }
+      if (typeof supabaseClient === 'undefined' || !supabaseClient) { paint(links, false); return; }
       const { data, error } = await supabaseClient.auth.getSession();
       const session = !error ? data?.session : null;
       paint(links, Boolean(session?.user));
@@ -58,7 +58,7 @@
         paint(links, Boolean(nextSession?.user));
         if (nextSession?.user) void syncAvatar(links, nextSession);
       });
-      window.addEventListener('profile-avatar-updated', () => void syncAvatar(links, { user: data?.session?.user }));
+      window.addEventListener('profile-avatar-updated', async () => { const latest = await supabaseClient.auth.getSession(); if (latest.data?.session?.user) void syncAvatar(links, latest.data.session); });
     } catch (error) {
       paint(links, false); console.debug('Account navigation session check unavailable:', error?.message || error);
     }
