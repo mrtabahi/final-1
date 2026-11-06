@@ -12,10 +12,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   return (av-bv)*direction;
  };
  try{
-  const [ar,mr]=await Promise.all([
+  let [ar,mr]=await Promise.all([
    supabaseClient.from("public_leaderboard_attempts").select("id,candidate_name,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name,avatar_path").limit(300),
    supabaseClient.from("manual_leaderboard_entries").select("id,candidate_name,language,test_name,duration_seconds,created_at,gross_wpm,net_wpm,accuracy").limit(300)
   ]);
+  if(ar.error && String(ar.error.message||'').includes('avatar_path')) ar=await supabaseClient.from("public_leaderboard_attempts").select("id,candidate_name,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name").limit(300);
   if(ar.error)throw ar.error;
   if(mr.error)throw mr.error;
   const all=[
