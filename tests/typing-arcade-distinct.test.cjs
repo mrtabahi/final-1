@@ -12,11 +12,13 @@ test('each arcade theme has its own palette, typography and play-space metaphor'
   const mission = read('css/time-attack.css');
   assert.match(sprint, /#f4c65d/);
   assert.match(sprint, /sprint-track-base/);
+  assert.match(sprint, /text-shadow/);
   assert.match(precision, /#315d49/);
   assert.match(precision, /precision-orbit/);
   assert.match(mission, /#e06d60/);
   assert.match(mission, /mission-clock-panel/);
   assert.match(mission, /mission-sectors/);
+  assert.match(mission, /text-shadow/);
 });
 
 test('precision and mission challenges reward different skills', () => {
@@ -26,6 +28,7 @@ test('precision and mission challenges reward different skills', () => {
   assert.match(precision, /bestStreak/);
   assert.match(precision, /All 25 target words calibrated/);
   assert.match(mission, /const waves =/);
+  assert.match(mission, /targetDeadline/);
   assert.match(mission, /combo\+\+/);
   assert.match(mission, /missedTargets\+\+/);
   assert.match(mission, /bestCombo/);
