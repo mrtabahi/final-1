@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('sprint-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
     $('sprint-errors').textContent = String(scores.bsf.totalErrors);
     $('sprint-nitro').textContent = String(nitroStreak) + ' / BEST ' + bestNitro;
-    if (remaining <= 0) finish('30-second finish line reached');
+    if (remaining <= 0) finish(duration + '-second finish line reached');
   }
   function commitWord() {
     const raw = input.value;
@@ -87,21 +87,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (/\s/u.test(input.value)) commitWord();
     update();
   });
-  $('sprint-retry').addEventListener('click', () => location.reload());
-  $('sprint-track-mode').addEventListener('change', () => { const notes={clean:'Classic lap. Balanced pace, no modifiers.',nitro:'Every exact checkpoint builds a live combo streak.',technical:'Punctuation is part of every checkpoint. Match it exactly.'}; $('sprint-mode-note').textContent=notes[$('sprint-track-mode').value]; });
-  $('sprint-abort').addEventListener('click', () => finish('Race aborted by player'));
-  $('sprint-start').addEventListener('click', () => {
+  function startRace() {
+    clearInterval(timer);
+    expected = ArcadeWordBank.takeWords(90);
+    committed.length = 0;
+    committedText = '';
+    startedAt = 0;
+    timer = null;
+    backspaces = 0;
+    finished = false;
+    nitroStreak = 0;
+    bestNitro = 0;
     duration = Number($('sprint-duration').value) || 30;
     trackMode = $('sprint-track-mode').value;
     if (trackMode === 'technical') expected = expected.map((word,index) => word + (index % 4 === 0 ? ',' : index % 4 === 1 ? '.' : index % 4 === 2 ? ':' : ';'));
-    $('sprint-clock').textContent = duration.toFixed(1);
-    $('sprint-play').dataset.trackMode = trackMode;
+    input.value = '';
+    input.disabled = false;
+    $('sprint-results').hidden = true;
     $('sprint-intro').hidden = true;
     $('sprint-play').hidden = false;
-    input.disabled = false;
-    input.focus();
+    $('sprint-play').dataset.trackMode = trackMode;
+    $('sprint-play').dataset.nitro = 'false';
+    $('sprint-clock').textContent = duration.toFixed(1);
+    $('sprint-gross').textContent = '0.00';
+    $('sprint-net').textContent = '0.00';
+    $('sprint-accuracy').textContent = '100.00%';
+    $('sprint-errors').textContent = '0';
+    $('sprint-nitro').textContent = '0 / BEST 0';
     paint();
-  });
+    input.focus();
+  }
+  $('sprint-retry').addEventListener('click', startRace);
+  $('sprint-track-mode').addEventListener('change', () => { const notes={clean:'Classic lap. Balanced pace, no modifiers.',nitro:'Every exact checkpoint builds a live combo streak.',technical:'Punctuation is part of every checkpoint. Match it exactly.'}; $('sprint-mode-note').textContent=notes[$('sprint-track-mode').value]; });
+  $('sprint-abort').addEventListener('click', () => finish('Race aborted by player'));
+  $('sprint-start').addEventListener('click', startRace);
   $('sprint-back').addEventListener('click', () => { location.href = '/fix-accuracy.html'; });
   paint();
 });
