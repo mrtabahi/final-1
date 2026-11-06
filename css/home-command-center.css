@@ -197,3 +197,28 @@
 .home-tip-card{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
 .home-tip-card:hover{border-color:#e5a2a7;box-shadow:0 12px 26px rgba(204,104,74,.14)}
 @media(prefers-reduced-motion:reduce){.home-command-left .home-command-panel>a,.home-command-premium,.home-command-premium>b,.home-quick-nav .btn,.home-nav-side,.home-tip-card{transition:none!important}}
+
+
+/* Match the feature-card columns exactly to the command-centre side rails. */
+.home-top-feature-row{
+  grid-template-columns:minmax(190px,235px) minmax(0,1fr) minmax(225px,270px)!important;
+  justify-content:stretch;
+}
+.home-top-feature-row .home-side-feature{width:100%;box-sizing:border-box}
+.home-top-feature-row .typing-game-promo-wrap{min-width:0}
+
+/* Side rails stay in view while the keyboard workspace scrolls, then release
+   precisely at the bottom edge of the command-centre parent. */
+@media(min-width:1051px){
+  .home-command-layout>.home-command-left,
+  .home-command-layout>.home-command-right{
+    position:sticky;
+    top:var(--home-rail-sticky-top,14px);
+    align-self:start;
+    z-index:3;
+  }
+}
+@media(max-width:1050px){
+  .home-command-layout>.home-command-left,
+  .home-command-layout>.home-command-right{position:static;top:auto}
+}
