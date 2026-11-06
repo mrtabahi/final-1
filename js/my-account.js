@@ -27,7 +27,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const avatarMessage=$('profile-avatar-message'), cropModal=$('avatar-crop-modal');
  const cropCanvas=$('avatar-crop-canvas'), cropCtx=cropCanvas?.getContext('2d');
  const zoom=$('avatar-crop-zoom'), saveAvatar=$('avatar-crop-save');
- let avatarPath=null, sourceImage=null, sourceObjectUrl=null;\n try { const {data:avatarData,error:avatarError}=await supabaseClient.from('profiles').select('avatar_path').eq('id',user.id).maybeSingle(); if(!avatarError) avatarPath=avatarData?.avatar_path||null; } catch {}
+ let avatarPath=null, sourceImage=null, sourceObjectUrl=null;
+ try { const {data:avatarData,error:avatarError}=await supabaseClient.from('profiles').select('avatar_path').eq('id',user.id).maybeSingle(); if(!avatarError) avatarPath=avatarData?.avatar_path||null; } catch {}
  let crop={x:0,y:0,zoom:1,base:1,dragging:false,lastX:0,lastY:0};
  const initials=name=>String(name||'User').trim().split(' ').filter(Boolean).slice(0,2).map(v=>v[0]||'').join('').toUpperCase()||'U';
  const avatarSay=(text,isError=false)=>{if(!avatarMessage)return;avatarMessage.textContent=text;avatarMessage.classList.toggle('is-error',isError);avatarMessage.classList.toggle('is-success',!isError)};
