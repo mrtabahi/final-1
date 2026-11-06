@@ -168,7 +168,8 @@
 
 /* Announcement ticker: brand-matched warm gradient with continuous RTL motion. */
 .home-page .navbar{display:flex;flex-wrap:wrap;align-items:center;column-gap:clamp(14px,2vw,28px);row-gap:8px}
-.home-page .navbar>.brand-container{flex:0 0 auto}
+.home-page .navbar>.brand-container{order:1;flex:0 0 auto}
+.home-page .navbar>.nav-links{order:3;flex:1 0 100%;width:100%;justify-content:center}
 .home-page .navbar>.home-announcement-ticker{order:2;flex:1 1 60%;min-width:0;max-width:1120px;margin:0 auto;padding:8px 12px;border:1px solid #e9b8a8;border-radius:11px;background:linear-gradient(105deg,#fff8e8 0%,#ffebe7 52%,#ffedf2 100%);box-shadow:0 5px 16px rgba(174,91,69,.09),inset 0 1px #fff;display:flex;align-items:center;gap:12px;overflow:hidden}
 .home-page .navbar>.home-announcement-ticker[hidden]{display:none!important}
 .home-ticker-label{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;background:linear-gradient(110deg,#f6d36b,#f3a16d);color:#5d2e32;font-size:.61rem;font-weight:950;letter-spacing:.1em;white-space:nowrap}
