@@ -39,7 +39,7 @@ test('payment module does not mutate payment or refund state from the browser', 
   assert.doesNotMatch(moduleSource, /\.update\s*\(|\.insert\s*\(|\.delete\s*\(/);
   assert.match(moduleSource, /read-only/i);
   assert.match(moduleSource, /initAdminCouponManager/);
-  assert.match(read('js/admin-coupons.js'), /from\\('subscription_coupons'\\)/);
+  assert.ok(read('js/admin-coupons.js').includes("from('subscription_coupons')"));
 });
 test('home page internal HTML links point to files that exist in the repository', () => {
   const html = read('index.html');
