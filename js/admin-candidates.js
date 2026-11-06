@@ -64,9 +64,10 @@
     const list=$('candidate-list'); if(!list || typeof supabaseClient==='undefined' || !supabaseClient) return;
     list.innerHTML='<div class="admin-empty">Loading candidate profiles…</div>';
     try {
-      const {data,error}=await supabaseClient.from('profiles').select('id,full_name,email,phone,phone_verified,role,created_at,account_status,account_status_reason,account_status_changed_at,avatar_path').eq('role','candidate').order('created_at',{ascending:false}).limit(2000);
-      if(error) throw error;
-      candidates=data||[];
+      let profileResult=await supabaseClient.from('profiles').select('id,full_name,email,phone,phone_verified,role,created_at,account_status,account_status_reason,account_status_changed_at,avatar_path').eq('role','candidate').order('created_at',{ascending:false}).limit(2000);
+      if(profileResult.error && String(profileResult.error.message||'').includes('avatar_path')) profileResult=await supabaseClient.from('profiles').select('id,full_name,email,phone,phone_verified,role,created_at,account_status,account_status_reason,account_status_changed_at').eq('role','candidate').order('created_at',{ascending:false}).limit(2000);
+      if(profileResult.error) throw profileResult.error;
+      candidates=profileResult.data||[];
       activityById = new Map();
       activityTotalsById = new Map();
       if (candidates.length) {
