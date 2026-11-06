@@ -5,11 +5,18 @@ begin;
 alter table public.profiles
   add column if not exists avatar_path text;
 
+-- A profile can reference only an object stored in that same user's folder.
+alter table public.profiles
+  drop constraint if exists profiles_avatar_path_owner_check;
+alter table public.profiles
+  add constraint profiles_avatar_path_owner_check
+  check (avatar_path is null or avatar_path like id::text || '/%');
+
 -- Public read is intentional: a profile photo is a public identity image shown
 -- beside public leaderboard names. Writes remain owner-folder restricted.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('profile-avatars', 'profile-avatars', true, 2097152,
-        array['image/jpeg','image/png','image/webp'])
+        array['image/webp'])
 on conflict (id) do update
 set public = true,
     file_size_limit = 2097152,
