@@ -71,13 +71,13 @@ test('coupon engine validates eligibility and redemption limits in the checkout 
   assert.ok(coupons.includes("o.status = 'pending' and o.expires_at > v_now"));
   assert.match(coupons, /discount_minor/);
   assert.ok(coupons.includes('greatest(0, v_plan.price_minor - v_discount)'));
-  assert.match(coupons, /Asia\\/Kolkata/);
+  assert.ok(coupons.includes('Asia/Kolkata'));
 });
 
 test('premium checkout sends the coupon code to the server and displays the server-calculated discount', () => {
   assert.match(pricing, /coupon_code:appliedCouponCode/);
   assert.match(pricing, /securely validated/);
   assert.match(checkout, /p_coupon_code:/);
-  assert.match(checkout, /discount_minor: Number\\(order\\.discount_minor\\)/);
-  assert.match(checkout, /coupon_code: order\\.coupon_code/);
+  assert.ok(checkout.includes('discount_minor: Number(order.discount_minor)'));
+  assert.ok(checkout.includes('coupon_code: order.coupon_code'));
 });
