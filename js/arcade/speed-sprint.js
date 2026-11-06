@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let expected = ArcadeWordBank.takeWords(90);
   const committed = [];
   let committedText = '';
+  // const duration = 30 is the classic default; each round can select 15, 30 or 60 seconds.
   let startedAt = 0, timer = null, backspaces = 0, finished = false, duration = 30, nitroStreak = 0, bestNitro = 0, trackMode = 'clean';
   const personalBestKey = 'dch-speed-sprint-best-net-wpm-v1';
   const readPersonalBest = () => { try { return Math.max(0, Number(localStorage.getItem(personalBestKey)) || 0); } catch { return 0; } };
