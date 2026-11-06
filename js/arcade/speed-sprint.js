@@ -3,11 +3,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
-  const expected = ArcadeWordBank.takeWords(90);
+  let expected = ArcadeWordBank.takeWords(90);
   const committed = [];
   let committedText = '';
-  let startedAt = 0, timer = null, backspaces = 0, finished = false;
-  const duration = 30;
+  let startedAt = 0, timer = null, backspaces = 0, finished = false, duration = 30, nitroStreak = 0, bestNitro = 0, trackMode = 'clean';
   const personalBestKey = 'dch-speed-sprint-best-net-wpm-v1';
   const readPersonalBest = () => { try { return Math.max(0, Number(localStorage.getItem(personalBestKey)) || 0); } catch { return 0; } };
   const input = $('sprint-input');
@@ -18,6 +17,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('sprint-word-count').textContent = committed.length + ' / ' + expected.length;
     $('sprint-progress').style.width = pct() + '%';
     $('sprint-car').style.left = pct() + '%';
+    const best = readPersonalBest();
+    const ghostPct = best ? Math.min(100, best * elapsed() / 60 / expected.length * 100) : 0;
+    $('sprint-ghost').style.left = ghostPct + '%';
+    $('sprint-ghost-gap').textContent = best ? (committed.length - Math.round(best * elapsed() / 60) >= 0 ? 'YOU LEAD BY ' : 'GHOST LEADS BY ') + Math.abs(committed.length - Math.round(best * elapsed() / 60)) + ' WORDS' : 'SET A PERSONAL BEST TO UNLOCK';
   }
   function update() {
     if (finished) return;
@@ -28,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('sprint-net').textContent = scores.bsf.netWpm.toFixed(2);
     $('sprint-accuracy').textContent = scores.bsf.accuracy.toFixed(2) + '%';
     $('sprint-errors').textContent = String(scores.bsf.totalErrors);
+    $('sprint-nitro').textContent = String(nitroStreak) + ' / BEST ' + bestNitro;
     if (remaining <= 0) finish('30-second finish line reached');
   }
   function commitWord() {
@@ -37,6 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     committedText += raw;
     if (!word) return;
     committed.push(word);
+    if (word === expected[committed.length - 1]) { nitroStreak++; bestNitro = Math.max(bestNitro,nitroStreak); } else nitroStreak = 0;
+    $('sprint-play').dataset.nitro = trackMode === 'nitro' && nitroStreak > 0 ? 'true' : 'false';
     paint();
     if (committed.length >= expected.length) finish('Race course completed');
   }
@@ -82,8 +88,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     update();
   });
   $('sprint-retry').addEventListener('click', () => location.reload());
+  $('sprint-track-mode').addEventListener('change', () => { const notes={clean:'Classic lap. Balanced pace, no modifiers.',nitro:'Every exact checkpoint builds a live combo streak.',technical:'Punctuation is part of every checkpoint. Match it exactly.'}; $('sprint-mode-note').textContent=notes[$('sprint-track-mode').value]; });
   $('sprint-abort').addEventListener('click', () => finish('Race aborted by player'));
   $('sprint-start').addEventListener('click', () => {
+    duration = Number($('sprint-duration').value) || 30;
+    trackMode = $('sprint-track-mode').value;
+    if (trackMode === 'technical') expected = expected.map((word,index) => word + (index % 4 === 0 ? ',' : index % 4 === 1 ? '.' : index % 4 === 2 ? ':' : ';'));
+    $('sprint-clock').textContent = duration.toFixed(1);
+    $('sprint-play').dataset.trackMode = trackMode;
     $('sprint-intro').hidden = true;
     $('sprint-play').hidden = false;
     input.disabled = false;
