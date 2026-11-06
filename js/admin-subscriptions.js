@@ -26,7 +26,7 @@
     $('sub-plan-save').textContent='Save plan changes'; $('sub-plan-cancel').hidden=false;
     $('sub-plan-form-title').textContent='Edit plan'; $('sub-plan-name').focus();
   }
-  function syncExpiryFields(){const fixed=$('sub-plan-expiry-mode')?.value==='fixed_date';const date=$('sub-plan-fixed-expiry');if(date){date.disabled=!fixed;date.required=fixed;date.min=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});}}
+  function syncExpiryFields(){const fixed=$('sub-plan-expiry-mode')?.value==='fixed_date';const date=$('sub-plan-fixed-expiry'),duration=$('sub-plan-days');if(date){date.disabled=!fixed;date.required=fixed;date.min=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});}if(duration){duration.disabled=fixed;duration.required=!fixed;}}
   function resetForm(){editingId=null;$('sub-plan-form').reset();$('sub-plan-days').value='30';$('sub-plan-expiry-mode').value='duration';$('sub-plan-fixed-expiry').value='';$('sub-plan-total-limit').value='';$('sub-plan-user-limit').value='';syncExpiryFields();$('sub-plan-order').value='0';$('sub-plan-save').textContent='Create plan';$('sub-plan-cancel').hidden=true;$('sub-plan-form-title').textContent='Create a plan';}
   async function savePlan(e) {
     e.preventDefault();
@@ -57,7 +57,7 @@
     if(people.error)throw people.error;if(plansResult.error)throw plansResult.error;if(subs.error)throw subs.error;
     candidates=people.data||[];
     select.innerHTML='<option value="">Choose candidate…</option>'+candidates.map(p=>'<option value="'+p.id+'">'+esc(p.full_name||p.email||p.id)+'</option>').join('');
-    $('sub-member-plan').innerHTML='<option value="">Choose plan…</option>'+(plansResult.data||[]).map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+(p.is_active?'Published':'Draft')+'</option>').join('');
+    $('sub-member-plan').innerHTML='<option value="">Choose plan…</option>'+(plansResult.data||[]).map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+(p.is_active?'Published':'Draft')+(p.expiry_mode==='fixed_date'&&p.fixed_expiry_date?' · Expires '+esc(p.fixed_expiry_date):'')+'</option>').join('');
     memberships=subs.data||[]; const box=$('subscription-member-list');
     box.innerHTML=(subs.data||[]).length?(subs.data||[]).map(s=>'<article class="sub-admin-member"><div><strong>'+esc(s.profiles?.full_name||'Candidate')+'</strong><p>'+esc(s.profiles?.email||'Email not available')+'</p><p>'+esc(s.subscription_plans?.name||'Plan')+' · '+esc(s.status)+'</p><small>'+esc(s.starts_at?new Date(s.starts_at).toLocaleDateString():'Start not set')+' → '+esc(s.ends_at?new Date(s.ends_at).toLocaleDateString():'No expiry')+'</small><div class="sub-member-actions"><label>Expiry <input type="date" data-expiry="'+s.id+'" value="'+(s.ends_at?new Date(s.ends_at).toISOString().slice(0,10):'')+'"></label><button type="button" class="admin-btn admin-btn-secondary" data-save-membership="'+s.id+'">Save expiry</button><button type="button" class="admin-btn admin-btn-secondary" data-reset-member="'+s.user_id+'">Send password reset</button><button type="button" class="admin-btn admin-btn-danger" data-expire-membership="'+s.id+'">Expire access</button></div></div><span class="sub-admin-status '+(s.status==='active'?'is-active':'')+'">'+esc(s.status)+'</span></article>').join(''):'<div class="admin-empty">No subscription records yet.</div>';
     box.querySelectorAll('[data-save-membership]').forEach(b=>b.addEventListener('click',()=>saveMembershipExpiry(b.dataset.saveMembership)));
@@ -214,9 +214,10 @@
     e.preventDefault();const userId=$('sub-member-candidate').value,planId=$('sub-member-plan').value;
     if(!userId||!planId){notify('Choose a candidate and a plan first.',true);return;}
     const plan=plans.find(p=>p.id===planId)||null;
-    const duration=Number($('sub-member-days').value||plan?.duration_days||30);
-    if(!Number.isInteger(duration)||duration<1||duration>3650){notify('Duration must be between 1 and 3650 days.',true);return;}
-    const now=new Date(),end=new Date(now.getTime()+duration*86400000),note=$('sub-member-note').value.trim();
+    const duration=Number($('sub-member-days').value||plan?.duration_days||30),todayIst=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
+    if(plan?.expiry_mode==='fixed_date'&&(!plan.fixed_expiry_date||plan.fixed_expiry_date<todayIst)){notify('This plan’s fixed expiry date has passed. Update the plan before granting access.',true);return;}
+    if(plan?.expiry_mode!=='fixed_date'&&(!Number.isInteger(duration)||duration<1||duration>3650)){notify('Duration must be between 1 and 3650 days.',true);return;}
+    const now=new Date(),end=plan?.expiry_mode==='fixed_date'?new Date(plan.fixed_expiry_date+'T23:59:59.999+05:30'):new Date(now.getTime()+duration*86400000),note=$('sub-member-note').value.trim();
     const btn=$('sub-member-grant');btn.disabled=true;notify('Saving access…');
     try{
       const {data:user}=await client().auth.getUser();
