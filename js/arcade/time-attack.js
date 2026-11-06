@@ -4,10 +4,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   'use strict';
   const $ = id => document.getElementById(id);
   let expected = [];
-  function drawTargets() {
+  function drawTargets(level='easy') {
     const bankWords = ArcadeWordBank.takeWords(20).sort((a,b) => a.length - b.length);
     const waves = Array.from({length:4}, (_, wave) => bankWords.slice(wave * 5, wave * 5 + 5));
-    expected = waves.flat();
+    expected = ArcadeCharacterLevels.apply(waves.flat(), level);
   }
   drawTargets();
   const committed = [];
@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     correctTargets = 0;
     missedTargets = 0;
     intensity = $('mission-intensity').value;
+    drawTargets($('mission-difficulty').value || 'easy');
     deadlineMultiplier = intensity === 'overdrive' ? 0.75 : intensity === 'nightmare' ? 0.55 : 1;
     input.value = '';
     input.disabled = false;
