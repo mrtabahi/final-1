@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
    cropCtx.restore();
  };
  const openCrop=()=>{cropModal.hidden=false;drawCrop();$('avatar-crop-close')?.focus()};
- const closeCrop=()=>{cropModal.hidden=true;sourceImage=null;if(sourceObjectUrl){URL.revokeObjectURL(sourceObjectUrl);sourceObjectUrl=null;}if(avatarFile)avatarFile.value='';};
+ const closeCrop=()=>{cropModal.hidden=true;sourceImage?.close?.();sourceImage=null;if(sourceObjectUrl){URL.revokeObjectURL(sourceObjectUrl);sourceObjectUrl=null;}if(avatarFile)avatarFile.value='';};
  const fileLooksValid=async file=>{
    if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Only JPG, PNG and WebP images are allowed.');
    if(file.size>2*1024*1024)throw new Error('Please choose an image smaller than 2 MB.');
@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  });
  $('profile-avatar-remove')?.addEventListener('click',async()=>{
    if(!avatarPath){avatarSay('No profile photo to remove.');return;}
+   if(!await window.confirm('Remove your profile photo? Your initials will be shown instead.'))return;
    const btn=$('profile-avatar-remove');btn.disabled=true;avatarSay('Removing profile photo…');
    try{
      const {data:{user:currentUser},error:userError}=await supabaseClient.auth.getUser();if(userError||!currentUser)throw new Error('Please sign in again.');
