@@ -7,7 +7,9 @@ window.initPremiumPurchase = async (root=document) => {
  const money=(minor,currency='INR')=>new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
  const message=(text,error=false)=>{const el=$('premium-message');if(el){el.textContent=text;el.classList.toggle('is-error',error)}};
  const couponInput=$('premium-coupon-code'),couponApply=$('premium-coupon-apply'),couponNote=$('premium-coupon-note');
- couponApply?.addEventListener('click',()=>{const code=(couponInput?.value||'').trim().toUpperCase();if(!code){if(couponNote)couponNote.textContent='Enter a coupon code first.';return;}if(couponNote)couponNote.textContent='Coupon validation is not configured on the secure checkout service yet. No discount has been applied; plan prices remain unchanged.';});
+ let appliedCouponCode='';
+ couponApply?.addEventListener('click',()=>{const code=(couponInput?.value||'').trim().toUpperCase();if(!/^[A-Z0-9][A-Z0-9_-]{2,39}$/.test(code)){appliedCouponCode='';if(couponNote)couponNote.textContent='Enter a valid code (3–40 letters, numbers, hyphens or underscores).';return;}appliedCouponCode=code;if(couponNote)couponNote.textContent='Code saved. It will be securely validated against the plan and usage limits before checkout.';couponApply.textContent='Code ready ✓';});
+ couponInput?.addEventListener('input',()=>{appliedCouponCode='';if(couponApply)couponApply.textContent='Apply';if(couponNote)couponNote.textContent='Coupon is checked securely when you choose a plan.';});
  const state=$('premium-current-state'),grid=$('premium-plan-grid');
  const [authResult,planResult]=await Promise.all([
   client.auth.getUser().catch(()=>({data:{user:null}})),
@@ -61,14 +63,17 @@ window.initPremiumPurchase = async (root=document) => {
   if(btn.dataset.pendingOrderId){await checkPendingOrder(btn);return;}
   btn.disabled=true;btn.textContent='Preparing secure checkout…';
   try{
-   const {data,error}=await client.functions.invoke('create-checkout',{body:{plan_id:btn.dataset.choosePlan}});
+   const {data,error}=await client.functions.invoke('create-checkout',{body:{plan_id:btn.dataset.choosePlan,...(appliedCouponCode?{coupon_code:appliedCouponCode}:{})}});
    if(error)throw error;
    if(data?.mode==='free'){
-    message('Your free plan has been activated. Opening your membership details…');
+    const order=data.order||{};
+    if(order.discount_minor>0&&couponNote)couponNote.textContent='Coupon '+(order.coupon_code||appliedCouponCode)+' saved you '+money(order.discount_minor,order.currency||'INR')+'.';
+    message(order.discount_minor>0?'Coupon applied. Your plan is active. Opening your membership details…':'Your free plan has been activated. Opening your membership details…');
     window.location.href='my_account.html?subscription=updated';return;
    }
    if(data?.mode==='razorpay'&&data.key_id&&data.razorpay_order_id&&data.local_order_id){
     btn.dataset.pendingOrderId=data.local_order_id;
+    if(Number(data.discount_minor)>0&&couponNote)couponNote.textContent='Coupon '+(data.coupon_code||appliedCouponCode)+' applied · You save '+money(data.discount_minor,data.currency||'INR')+'.';
     await new Promise((resolve,reject)=>{
      if(window.Razorpay){resolve();return;}
      const script=document.createElement('script');script.src='https://checkout.razorpay.com/v1/checkout.js';
