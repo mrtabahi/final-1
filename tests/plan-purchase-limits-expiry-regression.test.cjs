@@ -11,6 +11,7 @@ const checkout = fs.readFileSync(path.join(root, 'supabase/functions/create-chec
 const verify = fs.readFileSync(path.join(root, 'supabase/functions/verify-razorpay-payment/index.ts'), 'utf8');
 const coupons = fs.readFileSync(path.join(root, 'supabase/migrations/20261106190000_subscription_coupon_engine.sql'), 'utf8');
 const checkoutGuards = fs.readFileSync(path.join(root, 'supabase/migrations/20261107120000_checkout_candidate_entitlement_guards.sql'), 'utf8');
+const couponGrants = fs.readFileSync(path.join(root, 'supabase/migrations/20261107130000_harden_subscription_coupon_table_grants.sql'), 'utf8');
 
 test('admin plan editor exposes expiry mode, fixed date and both purchase caps', () => {
   for (const id of ['sub-plan-expiry-mode', 'sub-plan-fixed-expiry', 'sub-plan-total-limit', 'sub-plan-user-limit']) {
@@ -90,4 +91,9 @@ test('premium checkout sends the coupon code to the server and displays the serv
   assert.match(checkout, /p_coupon_code:/);
   assert.ok(checkout.includes('discount_minor: Number(order.discount_minor)'));
   assert.ok(checkout.includes('coupon_code: order.coupon_code'));
+});
+
+test('coupon table revokes inherited destructive grants while retaining admin CRUD privileges', () => {
+  assert.ok(couponGrants.includes('revoke all on public.subscription_coupons from public, anon, authenticated'));
+  assert.ok(couponGrants.includes('grant select, insert, update on public.subscription_coupons to authenticated'));
 });
