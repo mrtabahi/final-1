@@ -106,8 +106,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     bestStreak = 0;
     correctWords = 0;
     finished = false;
-    ruleset = $('precision-mode').value;
-    contentMode = $('precision-content').value;
+    ruleset = $('precision-mode').value || 'standard';
+    contentMode = $('precision-content').value || 'words';
     shields = ruleset === 'standard' ? 3 : 1;
     if (contentMode === 'punctuation') expected = expected.map((word,index) => word + (index%3===0?',':index%3===1?'.':';'));
     if (contentMode === 'codes') { const codes=Array.from({length:7},()=>String(Math.floor(1000+Math.random()*9000))); expected=expected.slice(0,18).concat(codes); }
