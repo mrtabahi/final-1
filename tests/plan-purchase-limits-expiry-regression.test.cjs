@@ -40,6 +40,7 @@ test('fixed expiry is snapshotted onto orders and applied to membership in India
   assert.match(migration, /add column if not exists fixed_expiry_date date/);
   assert.match(migration, /v_plan\.fixed_expiry_date/);
   assert.match(migration, /Asia\/Kolkata/);
+  assert.match(migration, /least\(v_now \+ interval '30 minutes', v_fixed_end\)/);
   assert.match(migration, /create trigger user_subscriptions_apply_plan_expiry/);
 });
 
