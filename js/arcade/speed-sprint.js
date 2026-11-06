@@ -3,8 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!candidateStatus?.ok) return;
   'use strict';
   const $ = id => document.getElementById(id);
-  const pool = 'rapid engine velocity highway turbo momentum accelerate overtake traction racing circuit throttle gearbox steering finish straightaway velocity pursuit dynamic power launch apex acceleration'.split(' ');
-  const expected = Array.from({length:90}, () => pool[Math.floor(Math.random() * pool.length)]);
+  const expected = ArcadeWordBank.takeWords(90);
   const committed = [];
   let committedText = '';
   let startedAt = 0, timer = null, backspaces = 0, finished = false;
