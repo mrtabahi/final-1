@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   input.addEventListener('input', () => {
     if (finished) return;
     if (!startedAt) startedAt = performance.now();
-    const masterTyped = input.value.replace(/\\s+$/u,'');
+    const masterTyped = input.value.replace(/\s+$/u,'');
     if (ruleset === 'master' && masterTyped && !expected[committed.length].startsWith(masterTyped)) { finish('Master protocol failed: first incorrect keystroke detected'); return; }
     if (/\s/u.test(input.value)) commit();
     else updateScore();
