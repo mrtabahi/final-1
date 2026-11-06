@@ -9,6 +9,7 @@ const pricing = fs.readFileSync(path.join(root, 'js/premium.js'), 'utf8');
 const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20261106120000_plan_purchase_limits_and_fixed_expiry.sql'), 'utf8');
 const checkout = fs.readFileSync(path.join(root, 'supabase/functions/create-checkout/index.ts'), 'utf8');
 const verify = fs.readFileSync(path.join(root, 'supabase/functions/verify-razorpay-payment/index.ts'), 'utf8');
+const coupons = fs.readFileSync(path.join(root, 'supabase/migrations/20261106190000_subscription_coupon_engine.sql'), 'utf8');
 
 test('admin plan editor exposes expiry mode, fixed date and both purchase caps', () => {
   for (const id of ['sub-plan-expiry-mode', 'sub-plan-fixed-expiry', 'sub-plan-total-limit', 'sub-plan-user-limit']) {
@@ -58,4 +59,25 @@ test('payment retry checks the existing order before allowing another checkout',
   assert.match(pricing, /if\(btn\.dataset\.pendingOrderId\)\{await checkPendingOrder\(btn\);return;\}/);
   assert.match(pricing, /btn\.textContent='Check payment status'/);
   assert.match(pricing, /delete btn\.dataset\.pendingOrderId/);
+});
+
+test('coupon engine validates eligibility and redemption limits in the checkout transaction', () => {
+  assert.match(coupons, /create table if not exists public\\.subscription_coupons/);
+  assert.match(coupons, /create policy "Admins read subscription coupons"/);
+  assert.match(coupons, /revoke all on public\\.subscription_coupons from anon/);
+  assert.match(coupons, /for update/);
+  assert.match(coupons, /max_redemptions_per_user/);
+  assert.match(coupons, /o\\.status in \\('paid','free'\\)/);
+  assert.match(coupons, /o\\.status = 'pending' and o\\.expires_at > v_now/);
+  assert.match(coupons, /discount_minor/);
+  assert.match(coupons, /greatest\\(0, v_plan\\.price_minor - v_discount\\)/);
+  assert.match(coupons, /Asia\\/Kolkata/);
+});
+
+test('premium checkout sends the coupon code to the server and displays the server-calculated discount', () => {
+  assert.match(pricing, /coupon_code:appliedCouponCode/);
+  assert.match(pricing, /securely validated/);
+  assert.match(checkout, /p_coupon_code:/);
+  assert.match(checkout, /discount_minor: Number\\(order\\.discount_minor\\)/);
+  assert.match(checkout, /coupon_code: order\\.coupon_code/);
 });
