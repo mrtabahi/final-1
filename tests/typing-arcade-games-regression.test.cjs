@@ -25,6 +25,8 @@ test('each game loads its own page, stylesheet, module, shared scorer and candid
     assert.match(html, /js\/typing\/master-config\.js/);
     assert.match(html, /js\/config\.js/);
     assert.match(html, /js\/auth\.js/);
+    assert.match(html, /js\/feature-access\.js/);
+    assert.match(html, /arcade-auth-pending/);
     assert.match(html, /cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js/);
     assert.match(html, /fix-accuracy\.html/);
     assert.match(js, /AuthManager\.requireCandidateGuard/);
@@ -177,4 +179,26 @@ test('persistent word bank serves fresh words across restarts and game routes', 
   vm.runInNewContext(read('js/arcade/word-bank.js'), nextPage);
   const thirdRun = nextPage.ArcadeWordBank.takeWords(20);
   assert.equal([...firstRun, ...secondRun].filter(word => thirdRun.includes(word)).length, 0);
+});
+
+
+test('all arcade routes are gated before first paint and preserve normalized route matching', () => {
+  for (const page of ['fix-accuracy.html','fix-accuracy-game.html','speed-sprint.html','word-accuracy.html','time-attack.html']) {
+    const html = read(page);
+    assert.match(html, /arcade-auth-pending/, page + ' must hide protected content before auth initializes');
+    assert.match(html, /js\/feature-access\.js/, page + ' must load the shared session gate');
+  }
+  const gate = read('js/feature-access.js');
+  assert.match(gate, /location\.pathname\.split\('\/'\)\.filter\(Boolean\)/);
+  assert.match(gate, /if\(loginRequiredPages\.has\(currentPage\)\)showAccessProgress\(true\)/);
+  assert.match(gate, /location\.pathname\+location\.search\+location\.hash/);
+  for (const route of ['fix-accuracy','fix-accuracy.html','fix-accuracy-game','fix-accuracy-game.html','speed-sprint','speed-sprint.html','word-accuracy','word-accuracy.html','time-attack','time-attack.html']) {
+    assert.ok(gate.includes("'" + route + "'"), 'Missing protected route ' + route);
+  }
+});
+
+test('arcade hub no longer contains the previously rendered escaped newline text', () => {
+  const html = read('fix-accuracy.html');
+  assert.doesNotMatch(html, /<meta[^>]+>\\n/);
+  assert.match(html, /<\/head>\s*<body>/);
 });
