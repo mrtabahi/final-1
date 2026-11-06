@@ -8,17 +8,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const expected = waves.flat();
   const committed = [];
   let committedText = '';
-  let startedAt = 0, timer = null, targetDeadline = 0, backspaces = 0, finished = false, currentWave = 0, combo = 0, bestCombo = 0, correctTargets = 0, missedTargets = 0;
+  let startedAt = 0, timer = null, targetDeadline = 0, backspaces = 0, finished = false, currentWave = 0, combo = 0, bestCombo = 0, correctTargets = 0, missedTargets = 0, intensity = 'standard', deadlineMultiplier = 1;
   const duration = 60, input = $('mission-input');
   const elapsed = () => startedAt ? Math.max(0.001, (performance.now() - startedAt) / 1000) : 0.001;
   function armTargetDeadline() {
     const target = expected[committed.length];
-    targetDeadline = target ? performance.now() + Math.max(3000, Math.min(7000, 2200 + target.length * 220)) : 0;
+    targetDeadline = target ? performance.now() + Math.max(1600, Math.min(7000, (2200 + target.length * 220) * deadlineMultiplier)) : 0;
   }
   function paint() {
     const index = committed.length;
     currentWave = Math.min(3, Math.floor(index / 5));
     $('mission-target').textContent = expected[index] || 'SECTOR SECURED';
+    $('mission-target-rank').textContent = index % 5 === 4 ? 'ELITE TARGET // HIGH VALUE' : 'SECTOR ' + String(currentWave+1).padStart(2,'0');
     $('mission-target-clock').textContent = targetDeadline && startedAt ? Math.max(0, (targetDeadline - performance.now()) / 1000).toFixed(1) + 's' : '—';
     $('mission-wave').textContent = 'WAVE ' + (Math.min(4, currentWave + 1)) + ' / 4';
     $('mission-count').textContent = index + ' / ' + expected.length + ' targets';
@@ -112,7 +113,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     else paint();
     update();
   });
+  $('mission-intensity').addEventListener('change', () => { const notes={standard:'Standard lock-on windows. Learn the pattern and build a combo.',overdrive:'Target windows are 25% shorter. Combo multiplier pressure is high.',nightmare:'Target windows are 45% shorter. Every hesitation is costly.'}; $('mission-mode-note').textContent=notes[$('mission-intensity').value]; });
   $('mission-start').addEventListener('click', () => {
+    intensity = $('mission-intensity').value;
+    deadlineMultiplier = intensity === 'overdrive' ? 0.75 : intensity === 'nightmare' ? 0.55 : 1;
+    $('mission-console').dataset.intensity = intensity;
     $('mission-briefing').hidden = true;
     $('mission-console').hidden = false;
     input.disabled = false;
