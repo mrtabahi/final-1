@@ -62,15 +62,15 @@ test('payment retry checks the existing order before allowing another checkout',
 });
 
 test('coupon engine validates eligibility and redemption limits in the checkout transaction', () => {
-  assert.match(coupons, /create table if not exists public\\.subscription_coupons/);
-  assert.match(coupons, /create policy "Admins read subscription coupons"/);
-  assert.match(coupons, /revoke all on public\\.subscription_coupons from anon/);
+  assert.ok(coupons.includes('create table if not exists public.subscription_coupons'));
+  assert.ok(coupons.includes('create policy "Admins read subscription coupons"'));
+  assert.ok(coupons.includes('revoke all on public.subscription_coupons from anon'));
   assert.match(coupons, /for update/);
   assert.match(coupons, /max_redemptions_per_user/);
-  assert.match(coupons, /o\\.status in \\('paid','free'\\)/);
-  assert.match(coupons, /o\\.status = 'pending' and o\\.expires_at > v_now/);
+  assert.ok(coupons.includes("o.status in ('paid','free')"));
+  assert.ok(coupons.includes("o.status = 'pending' and o.expires_at > v_now"));
   assert.match(coupons, /discount_minor/);
-  assert.match(coupons, /greatest\\(0, v_plan\\.price_minor - v_discount\\)/);
+  assert.ok(coupons.includes('greatest(0, v_plan.price_minor - v_discount)'));
   assert.match(coupons, /Asia\\/Kolkata/);
 });
 
