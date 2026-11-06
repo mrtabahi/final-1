@@ -52,4 +52,17 @@ using (
 revoke update on public.profiles from anon, authenticated;
 grant update (full_name, email, phone, avatar_path) on public.profiles to authenticated;
 
+-- Extend the existing public leaderboard projection with only the avatar path.
+-- The bucket contains public identity images; private profile columns stay private.
+create or replace view public.public_leaderboard_attempts
+with (security_barrier = true) as
+select a.id, a.candidate_name, a.language, a.duration_seconds, a.created_at,
+       a.gross_wpm, a.net_wpm, a.accuracy,
+       coalesce(t.title, '-'::text) as test_name,
+       p.avatar_path
+from public.attempts a
+left join public.tests t on t.id = a.test_id
+left join public.profiles p on p.id = a.user_id
+where coalesce(t.leaderboard_enabled, true) = true;
+
 commit;
