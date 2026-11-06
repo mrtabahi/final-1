@@ -121,6 +121,7 @@
     const currentPage=norm(location.pathname.split('/').pop()||'index.html');
     const requestedTest=new URLSearchParams(location.search).get('test');
     const alwaysPublicPages=new Set(['index.html','login.html','signup.html','forgot.html','reset.html','verify.html','premium.html','my_account.html','terms-and-conditions.html','privacy-policy.html','shipping-policy.html','cancellation-and-refunds.html','contact-us.html']);
+    const loginRequiredPages=new Set(['fix-accuracy','fix-accuracy.html','fix-accuracy-game','fix-accuracy-game.html','speed-sprint','speed-sprint.html','word-accuracy','word-accuracy.html','time-attack','time-attack.html']);
     const showLock=(title,message)=>{
       hideAccessProgress();
       document.body.classList.add('feature-site-locked');
@@ -129,6 +130,7 @@
       document.getElementById('locked-page-cancel')?.addEventListener('click',()=>history.length>1?history.back():location.assign('/index.html'));
     };
     if(!client){
+      if(loginRequiredPages.has(currentPage)){hideAccessProgress();location.replace('/login.html?redirect='+encodeURIComponent(currentPage));return;}
       if(alwaysPublicPages.has(currentPage)){hideAccessProgress();return;}
       if(!alwaysPublicPages.has(currentPage))showLock('Premium feature','We could not verify your plan right now. This content stays protected; please view plans or try again shortly.');
       return;
@@ -144,6 +146,11 @@
       if(rr.error)throw rr.error;
       if(testAccess?.error)throw testAccess.error;
       const user=sessionResult?.data?.session?.user||null;
+      if(loginRequiredPages.has(currentPage)&&!user){
+        hideAccessProgress();
+        location.replace('/login.html?redirect='+encodeURIComponent(currentPage));
+        return;
+      }
       rules=rr.data||[];
       let requestedTestAuthorized=false;
       if(requestedTest){
