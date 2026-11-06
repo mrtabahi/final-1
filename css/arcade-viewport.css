@@ -189,3 +189,23 @@ body.arcade-expanded .sprint-shell,body.arcade-expanded .precision-shell,body.ar
 .mission-shell:fullscreen{background:radial-gradient(ellipse at 50% 0%,#24344c,transparent 58%),#080d16}
 .precision-footer{display:none}
 @media(max-width:760px){.mission-console{grid-template-columns:minmax(0,1fr) 88px;grid-template-rows:auto auto minmax(70px,1fr) auto auto 4px auto auto;gap:5px}}
+
+/* 2026 instant-restart polish: crisp focus, kinetic targets, responsive feedback */
+.sprint-shell,.precision-shell,.mission-shell{--arcade-glow:0 18px 55px #0005}
+.sprint-briefing,.sprint-race,.sprint-results,.precision-briefing,.precision-arena,.precision-results,.mission-briefing,.mission-console,.mission-results{box-shadow:var(--arcade-glow);transition:border-color .22s ease,box-shadow .22s ease,transform .22s ease}
+.sprint-target-wrap,.precision-target-card,.mission-target-panel{transition:transform .18s ease,box-shadow .22s ease,border-color .22s ease}
+.sprint-target-wrap strong,.precision-target-card strong,.mission-target-panel strong{animation:arcade-target-in .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes arcade-target-in{from{opacity:.45;transform:translateY(7px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.sprint-input:focus,.precision-input:focus,.mission-input:focus{outline:0;box-shadow:0 0 0 3px #7bdfff55,0 0 28px #7bdfff30;transform:translateY(-1px)}
+.precision-input:focus{box-shadow:0 0 0 3px #4c9b6655,0 0 28px #4c9b6630}
+.mission-input:focus{box-shadow:0 0 0 3px #ff665855,0 0 28px #ff665830}
+.sprint-launch,.precision-start,.mission-start,.sprint-abort,.precision-finish,.mission-abort{transition:transform .18s ease,filter .18s ease,box-shadow .18s ease}
+.sprint-launch:hover,.precision-start:hover,.mission-start:hover,.sprint-abort:hover,.precision-finish:hover,.mission-abort:hover{transform:translateY(-2px);filter:brightness(1.08);box-shadow:0 8px 24px #0003}
+.sprint-progress,.precision-progress,.mission-progress{overflow:hidden}
+.sprint-progress span,.precision-progress span,.mission-progress span{position:relative}
+.sprint-progress span:after,.precision-progress span:after,.mission-progress span:after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent,#ffffff66,transparent);transform:translateX(-100%);animation:arcade-progress-sheen 2.4s ease-in-out infinite}
+@keyframes arcade-progress-sheen{55%,100%{transform:translateX(100%)}}
+.sprint-results:not([hidden]),.precision-results:not([hidden]),.mission-results:not([hidden]){animation:arcade-panel-in .28s ease-out}
+@keyframes arcade-panel-in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+.arcade-screen-button:focus-visible,.sprint-launch:focus-visible,.precision-start:focus-visible,.mission-start:focus-visible{outline:3px solid #8edfff;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.sprint-target-wrap strong,.precision-target-card strong,.mission-target-panel strong,.sprint-progress span:after,.precision-progress span:after,.mission-progress span:after{animation:none!important}.sprint-briefing,.sprint-race,.sprint-results,.precision-briefing,.precision-arena,.precision-results,.mission-briefing,.mission-console,.mission-results,.sprint-input,.precision-input,.mission-input{transition:none!important}}
