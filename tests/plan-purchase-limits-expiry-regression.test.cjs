@@ -24,7 +24,8 @@ test('fixed expiry is presented as a calendar date on public pricing cards', () 
   assert.match(pricing, /expiry_mode,fixed_expiry_date,purchase_limit_total,purchase_limit_per_user/);
   assert.match(pricing, /Access until/);
   assert.match(pricing, /total purchases/);
-  assert.match(pricing, /per account/);\n  assert.match(pricing, /fixed_expiry_date>=todayIst/);
+  assert.match(pricing, /per account/);
+  assert.match(pricing, /fixed_expiry_date>=todayIst/);
 });
 
 test('checkout transaction serializes capacity checks and reserves active pending orders', () => {
