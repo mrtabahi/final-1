@@ -80,6 +80,7 @@ test('coupon engine validates eligibility and redemption limits in the checkout 
 
 test('checkout and coupon preview remain candidate-only without blocking legacy production plans', () => {
   assert.match(checkoutGuards, /role = 'candidate'/);
+  assert.ok(!initialCheckoutGuards.includes('public.plan_entitlements'));
   assert.ok(!checkoutGuards.includes('public.plan_entitlements'));
   assert.match(checkoutGuards, /Candidate sign-in required/);
 });
