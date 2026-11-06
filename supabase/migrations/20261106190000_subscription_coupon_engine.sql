@@ -53,6 +53,17 @@ create policy "Admins update subscription coupons" on public.subscription_coupon
 grant select, insert, update on public.subscription_coupons to authenticated;
 revoke all on public.subscription_coupons from anon;
 
+-- Do not silently reinterpret legacy coupon references from the older coupon engine.
+do $coupon_fk_guard$
+begin
+  if exists (select 1 from public.orders where coupon_id is not null) then
+    raise exception 'Cannot switch orders.coupon_id to subscription_coupons while legacy coupon references exist.';
+  end if;
+end;
+$coupon_fk_guard$;
+
+-- Staging may have an unused FK to the legacy public.coupons table; keep that table intact.
+alter table public.orders drop constraint if exists orders_coupon_id_fkey;
 alter table public.orders
   add constraint orders_coupon_id_fkey
   foreign key (coupon_id) references public.subscription_coupons(id) on delete restrict;
