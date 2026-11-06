@@ -22,7 +22,7 @@ test('Typing Game uses the existing home login prompt without navigating on canc
 test('My Account is login-only and its content stays hidden until the session check resolves', () => {
   const gate = read('js/feature-access.js');
   const account = read('my_account.html');
-  assert.match(gate, /loginRequiredPages = new Set\([^;]*'my_account\.html'/);
+  assert.match(gate, /loginRequiredPages\\s*=\\s*new Set\\([^;]*'my_account\.html'/);
   assert.doesNotMatch(gate.match(/const alwaysPublicPages = new Set\(\[([^\]]+)\]\)/)?.[1] || '', /my_account\.html/);
   assert.match(gate, /if\(loginRequiredPages\.has\(currentPage\)\)showAccessProgress\(true\)/);
   assert.match(gate, /if\(loginRequiredPages\.has\(currentPage\)&&!user\)\{\s*redirectToLogin\(\)/);
