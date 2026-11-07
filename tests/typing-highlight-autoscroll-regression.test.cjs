@@ -244,3 +244,24 @@ test('main typing toolbar exposes clear green ON and neutral OFF visual states',
  assert.match(css,/\.typing-controls \.compact-tip-control\.is-active/u);
  assert.match(css,/content:'ON'/u);
 });
+
+
+test('Fix Accuracy defaults to the canonical calculated allowance and only applies a custom cap when entered',()=>{
+  const root=path.join(__dirname,'..');
+  const html=fs.readFileSync(path.join(root,'fix-accuracy-game.html'),'utf8');
+  const source=fs.readFileSync(path.join(root,'js/fix-accuracy.js'),'utf8');
+  assert.match(html,/id="fix-max-errors"[^>]*placeholder="Use calculated 5% allowance"/u);
+  assert.match(html,/Leave blank to use the automatic 5% error allowance/u);
+  assert.doesNotMatch(html,/id="fix-max-errors"[^>]*value="5"/u);
+  assert.match(source,/maxErrors:\$\('fix-max-errors'\)\.value\.trim\(\)===''\?null:/u);
+  assert.match(source,/const errorLimit=currentConfig\.maxErrors\?\?score\.allowedErrors/u);
+  assert.match(source,/currentConfig\.maxErrors\?\?bsfScore\.allowedErrors/u);
+  assert.match(source,/currentConfig\.maxErrors\?\?initialBsf\.allowedErrors/u);
+});
+
+test('Fix Accuracy setup excludes inactive folders and inactive tests before rendering selectors',()=>{
+  const source=fs.readFileSync(path.join(__dirname,'../js/fix-accuracy.js'),'utf8');
+  assert.match(source,/folders=\(fr\.data\|\|\[\]\)\.filter\(f=>f\.active===true\)/u);
+  assert.match(source,/passages=\(tr\.data\|\|\[\]\)\.filter\(p=>p\.active===true/u);
+  assert.match(source,/passages\.filter\(p=>p\.active===true&&String\(p\.folder_id\)/u);
+});
