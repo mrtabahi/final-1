@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(button.dataset.loading==='true')return;button.dataset.loading='true';const old=button.textContent;button.disabled=true;button.textContent='Checking access…';
   try{
    const {data:path,error}=await supabaseClient.rpc('get_material_link',{p_material_id:button.dataset.materialId});if(error)throw error;
-   if(!path){button.textContent='Premium required';const go=confirm('This material requires an active paid plan. View available plans now?');if(go)location.href='/my_account.html?openPremium=1';return;}
+   if(!path){const go=confirm('This material requires an active paid plan. View available plans now?');if(go)location.href='/my_account.html?openPremium=1';else{button.disabled=false;button.textContent=old;}return;}
    if(path.startsWith('pdf/')){
     button.textContent='Preparing download…';
     const {data:signed,error:signError}=await supabaseClient.storage.from('study-materials').createSignedUrl(path,120,{download:true});
