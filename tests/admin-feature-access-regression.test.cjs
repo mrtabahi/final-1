@@ -120,3 +120,15 @@ test('website access tree groups are collapsed by default and expand only on exp
  assert.match(css,/\.access-tree-branch:not\(\[open\]\)>\.access-tree-children\{display:none\}/u);
  assert.doesNotMatch(css,/access-tree-branch:hover:not\(\[open\]\)/u);
 });
+
+
+test('new arcade pages are represented in admin access controls and protected by matching feature rules',()=>{
+ const root=path.join(__dirname,'..');
+ const admin=fs.readFileSync(path.join(root,'js/admin-subscriptions.js'),'utf8');
+ const gate=fs.readFileSync(path.join(root,'js/feature-access.js'),'utf8');
+ for(const [file,key] of [['time-attack.html','time-attack'],['speed-sprint.html','speed-sprint'],['word-accuracy.html','word-accuracy']]){
+  assert.ok(admin.includes("['"+file+"'"),file+' must appear in Website Access Tree');
+  assert.ok(admin.includes("['"+key+"'"),key+' must have an editable feature rule');
+  assert.ok(gate.includes("'"+file+"':'"+key+"'"),file+' must enforce the corresponding paid/free feature rule');
+ }
+});
