@@ -5,7 +5,7 @@ alter table public.study_materials
   add column if not exists file_name text,
   add column if not exists file_size_bytes bigint,
   add column if not exists is_free boolean not null default false,
-  add column if not exists is_pinned boolean not null default false;
+  add column if not exists pinned boolean not null default false;
 
 alter table public.study_materials
   drop constraint if exists study_materials_source_check;
@@ -18,7 +18,7 @@ alter table public.study_materials
   );
 
 create index if not exists study_materials_public_order_idx
-  on public.study_materials (active desc, is_pinned desc, sort_order asc, created_at desc);
+  on public.study_materials (active desc, pinned desc, sort_order asc, created_at desc);
 
 -- Private bucket: files are never anonymously readable. Signed URLs are issued only
 -- after the authenticated user's access is checked by can_access_material().
@@ -63,28 +63,30 @@ set search_path=pg_catalog,public
 as $$
 declare v_free boolean;
 begin
-  if p_user_id is not null and exists(select 1 from public.profiles p where p.id=p_user_id and p.role='admin') then return true; end if;
+  if auth.uid() is null or p_user_id is distinct from auth.uid() then return false; end if;
+  if public.is_current_user_admin() then return true; end if;
   select sm.is_free into v_free
   from public.study_materials sm
   where sm.id=p_material_id and sm.active=true;
   if not found then return false; end if;
   if coalesce(v_free,false) then return true; end if;
-  return p_user_id is not null and public.has_active_paid_membership(p_user_id);
+  return coalesce(public.has_active_paid_subscription(),false);
 end;
 $$;
 revoke all on function public.can_access_material(uuid,uuid) from public,anon;
 grant execute on function public.can_access_material(uuid,uuid) to authenticated;
 
-create or replace function public.list_material_catalog()
+drop function if exists public.list_material_catalog();
+create function public.list_material_catalog()
 returns table(
   id uuid,title text,description text,material_type text,created_at timestamptz,
-  is_free boolean,is_pinned boolean,has_file boolean
+  is_free boolean,pinned boolean,has_file boolean
 )
 language sql stable security definer
 set search_path=pg_catalog,public
 as $$
   select sm.id,sm.title,sm.description,sm.material_type,sm.created_at,
-         sm.is_free,sm.is_pinned,(sm.storage_path is not null)
+         sm.is_free,sm.pinned,(sm.storage_path is not null)
   from public.study_materials sm
   where sm.active=true
   order by sm.is_pinned desc,sm.sort_order asc,sm.created_at desc;
