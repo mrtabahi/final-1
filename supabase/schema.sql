@@ -37,15 +37,82 @@ CREATE POLICY "Admins delete attempts" ON public.attempts FOR DELETE
  USING (EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=auth.uid() AND p.role='admin'));
 
 
--- Public leaderboard projection: expose only fields intended for public ranking.
--- The view deliberately omits user IDs, typed content, anti-cheat events, and result snapshots.
-CREATE OR REPLACE VIEW public.public_leaderboard_attempts WITH (security_barrier = true) AS
-SELECT a.id, a.candidate_name, a.language, a.duration_seconds, a.created_at,
-       a.gross_wpm, a.net_wpm, a.accuracy, COALESCE(t.title, '-') AS test_name
-FROM public.attempts AS a
-LEFT JOIN public.tests AS t ON t.id = a.test_id
-WHERE COALESCE(t.leaderboard_enabled, true) = true;
-GRANT SELECT ON public.public_leaderboard_attempts TO anon, authenticated;
+-- Public leaderboard projection: a narrow table with RLS, populated only by
+-- locked-down triggers. It omits user IDs, typed content, anti-cheat events,
+-- and result snapshots while avoiding a SECURITY DEFINER view.
+CREATE TABLE IF NOT EXISTS public.public_leaderboard_attempts (
+ id UUID PRIMARY KEY, candidate_name TEXT NOT NULL, language TEXT NOT NULL,
+ duration_seconds INTEGER NOT NULL, created_at TIMESTAMPTZ NOT NULL,
+ gross_wpm NUMERIC NOT NULL, net_wpm NUMERIC NOT NULL, accuracy NUMERIC NOT NULL,
+ test_name TEXT NOT NULL DEFAULT '-'
+);
+ALTER TABLE public.public_leaderboard_attempts ENABLE ROW LEVEL SECURITY;
+REVOKE ALL PRIVILEGES ON TABLE public.public_leaderboard_attempts FROM PUBLIC, anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.public_leaderboard_attempts TO anon, authenticated, service_role;
+CREATE POLICY public_leaderboard_projection_read ON public.public_leaderboard_attempts
+ FOR SELECT TO anon, authenticated USING (true);
+
+CREATE OR REPLACE FUNCTION public.sync_public_leaderboard_attempt_projection()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $
+DECLARE v_test_name TEXT := '-'; v_enabled BOOLEAN := true;
+BEGIN
+ IF TG_OP = 'DELETE' THEN
+  DELETE FROM public.public_leaderboard_attempts WHERE id = OLD.id;
+  RETURN OLD;
+ END IF;
+ IF NEW.test_id IS NOT NULL THEN
+  SELECT t.title, COALESCE(t.leaderboard_enabled,true) INTO v_test_name,v_enabled
+  FROM public.tests t WHERE t.id=NEW.test_id;
+  IF NOT FOUND THEN v_test_name:='-'; v_enabled:=true; END IF;
+ END IF;
+ IF v_enabled THEN
+  INSERT INTO public.public_leaderboard_attempts
+   (id,candidate_name,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name)
+  VALUES (NEW.id,NEW.candidate_name,NEW.language,NEW.duration_seconds,NEW.created_at,NEW.gross_wpm,NEW.net_wpm,NEW.accuracy,COALESCE(v_test_name,'-'))
+  ON CONFLICT (id) DO UPDATE SET candidate_name=EXCLUDED.candidate_name,language=EXCLUDED.language,
+   duration_seconds=EXCLUDED.duration_seconds,created_at=EXCLUDED.created_at,gross_wpm=EXCLUDED.gross_wpm,
+   net_wpm=EXCLUDED.net_wpm,accuracy=EXCLUDED.accuracy,test_name=EXCLUDED.test_name;
+ ELSE
+  DELETE FROM public.public_leaderboard_attempts WHERE id=NEW.id;
+ END IF;
+ RETURN NEW;
+END; $;
+REVOKE ALL ON FUNCTION public.sync_public_leaderboard_attempt_projection() FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.sync_public_leaderboard_test_projection()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $
+BEGIN
+ IF NEW.leaderboard_enabled THEN
+  INSERT INTO public.public_leaderboard_attempts
+   (id,candidate_name,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name)
+  SELECT a.id,a.candidate_name,a.language,a.duration_seconds,a.created_at,a.gross_wpm,a.net_wpm,a.accuracy,NEW.title
+  FROM public.attempts a WHERE a.test_id=NEW.id
+  ON CONFLICT (id) DO UPDATE SET candidate_name=EXCLUDED.candidate_name,language=EXCLUDED.language,
+   duration_seconds=EXCLUDED.duration_seconds,created_at=EXCLUDED.created_at,gross_wpm=EXCLUDED.gross_wpm,
+   net_wpm=EXCLUDED.net_wpm,accuracy=EXCLUDED.accuracy,test_name=EXCLUDED.test_name;
+ ELSE
+  DELETE FROM public.public_leaderboard_attempts p
+  WHERE p.id IN (SELECT a.id FROM public.attempts a WHERE a.test_id=NEW.id);
+ END IF;
+ RETURN NEW;
+END; $;
+REVOKE ALL ON FUNCTION public.sync_public_leaderboard_test_projection() FROM PUBLIC, anon, authenticated;
+
+CREATE TRIGGER attempts_sync_public_leaderboard_projection
+ AFTER INSERT OR UPDATE OR DELETE ON public.attempts
+ FOR EACH ROW EXECUTE FUNCTION public.sync_public_leaderboard_attempt_projection();
+CREATE TRIGGER tests_sync_public_leaderboard_projection
+ AFTER UPDATE OF title, leaderboard_enabled ON public.tests
+ FOR EACH ROW EXECUTE FUNCTION public.sync_public_leaderboard_test_projection();
+
+INSERT INTO public.public_leaderboard_attempts
+ (id,candidate_name,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name)
+SELECT a.id,a.candidate_name,a.language,a.duration_seconds,a.created_at,a.gross_wpm,a.net_wpm,a.accuracy,COALESCE(t.title,'-')
+FROM public.attempts a LEFT JOIN public.tests t ON t.id=a.test_id
+WHERE COALESCE(t.leaderboard_enabled,true)=true
+ON CONFLICT (id) DO UPDATE SET candidate_name=EXCLUDED.candidate_name,language=EXCLUDED.language,
+ duration_seconds=EXCLUDED.duration_seconds,created_at=EXCLUDED.created_at,gross_wpm=EXCLUDED.gross_wpm,
+ net_wpm=EXCLUDED.net_wpm,accuracy=EXCLUDED.accuracy,test_name=EXCLUDED.test_name;
 
 
 -- Homepage notices, timed offers and admin-managed promotional content
