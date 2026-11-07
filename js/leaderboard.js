@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if(mr.error)throw mr.error;
   const all=[
    ...(ar.data||[]).map(a=>({...a,manual:false})),
-   ...(mr.data||[]).map(a=>({...a,manual:true}))
+   ...(mr.data||[]).map(a=>({...a,manual:true,avatar_url:null}))
   ].sort((a,b)=>
    compareField(a,b,"net_wpm",-1)||
    compareField(a,b,"accuracy",-1)||
@@ -29,7 +29,13 @@ document.addEventListener("DOMContentLoaded", async () => {
    String(a.id||"").localeCompare(String(b.id||""))
   ).slice(0,50);
   if(!all.length){body.innerHTML='<tr><td colspan="10">No entries found on leaderboard.</td></tr>';if(message)message.textContent="";return;}
-  body.innerHTML=all.map((a,i)=>`<tr><td><strong>#${i+1}</strong></td><td class="leaderboard-avatar-cell">${a.avatar_url?`<span class="dh-avatar"><img src="${esc(a.avatar_url)}" alt="" loading="lazy"></span>`:`<span class="dh-avatar">${esc(String(a.candidate_name||"U").trim().split(/\\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase())}</span>`}</td><td>${esc(a.candidate_name)}</td>`<td>${esc(a.language)}</td><td>${esc(a.test_name)}</td><td>${esc(a.duration_seconds)}</td><td>${esc(date(a.created_at))}</td><td>${esc(fmt(a.gross_wpm))}</td><td><strong style="color:var(--primary-blue)">${esc(fmt(a.net_wpm))} WPM</strong></td><td>${a.accuracy==null?"-":esc(fmt(a.accuracy))+"%"}</td></tr>`).join("");
+  body.innerHTML=all.map((a,i)=>{
+   const initials=String(a.candidate_name||"U").trim().split(/\\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
+   const avatar=a.avatar_url
+    ? '<span class="dh-avatar"><img src="'+esc(a.avatar_url)+'" alt="" loading="lazy"></span>'
+    : '<span class="dh-avatar">'+esc(initials||"U")+'</span>';
+   return '<tr><td><strong>#'+(i+1)+'</strong></td><td class="leaderboard-avatar-cell">'+avatar+'</td><td>'+esc(a.candidate_name)+'</td><td>'+esc(a.language)+'</td><td>'+esc(a.test_name)+'</td><td>'+esc(a.duration_seconds)+'</td><td>'+esc(date(a.created_at))+'</td><td>'+esc(fmt(a.gross_wpm))+'</td><td><strong style="color:var(--primary-blue)">'+esc(fmt(a.net_wpm))+' WPM</strong></td><td>'+(a.accuracy==null?"-":esc(fmt(a.accuracy))+"%")+'</td></tr>';
+  }).join("");
   if(message)message.textContent="";
  }catch(error){
   console.error("Leaderboard load failed",error);
