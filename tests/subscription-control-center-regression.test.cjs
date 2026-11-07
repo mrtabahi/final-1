@@ -80,7 +80,7 @@ test('typing categories paint cached data immediately and refresh catalogue alon
   const script = fs.readFileSync(path.join(root, 'js/typing-tests.js'), 'utf8');
   const auth = fs.readFileSync(path.join(root, 'js/auth.js'), 'utf8');
   assert.match(page, /<script defer src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2"><\/script>/);
-  assert.match(page, /typing-tests\.js\?v=20261105-instant-catalog1/);
+  assert.match(page, /typing-tests\.js\?v=20261108-remove-self-card1/);
   assert.match(script, /decoding-hcm:typing-categories:v2/);
   assert.ok(script.indexOf('if (cachedFolders) renderCategories(cachedFolders, true)') < script.indexOf('AuthManager.requireCandidateGuard()'));
   assert.match(script, /Promise\.all\(\[candidateCheck,catalogueRequest\]\)/);
