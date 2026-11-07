@@ -16,16 +16,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       supabaseClient.rpc('list_test_catalog',{p_folder_id:null})
     ]).then(([fr,tr])=>{
       if(fr.error)console.warn('Folder list:',fr.error);
-      folders=fr.data||[];
+      folders=(fr.data||[]).filter(f=>f.active===true);
       if(tr.error){console.warn('Passage catalog:',tr.error);$('fix-load-status').textContent='Could not load admin passages. Custom passage is available.';return;}
       const activeIds=new Set(folders.map(f=>String(f.id)));
-      passages=(tr.data||[]).filter(p=>!p.folder_id||activeIds.has(String(p.folder_id)));
+      passages=(tr.data||[]).filter(p=>p.active===true&&(!p.folder_id||activeIds.has(String(p.folder_id))));
       folderSelect.innerHTML='<option value="">Please choose the folder</option>';
       folders.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.name||('Folder '+f.id);folderSelect.appendChild(o);});
       passageSelect.disabled=true;passageSelect.innerHTML='<option value="">Please choose the folder first</option>';renderPassages();$('fix-load-status').textContent=folders.length+' active folder(s) loaded. Choose a folder to see its passages, or paste a custom passage.';
     }).catch(e=>{$('fix-load-status').textContent='Could not load admin passages. Custom passage is available.';console.warn(e);});
   }
-  function renderPassages(){const selected=folderSelect.value;passageSelect.innerHTML='';if(!selected){passageSelect.disabled=true;passageSelect.innerHTML='<option value="">Please choose the folder first</option>';return;}passageSelect.disabled=false;const list=passages.filter(p=>String(p.folder_id)===String(selected));passageSelect.innerHTML='<option value="">Please choose a passage</option>';list.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.title||('Passage '+p.id);passageSelect.appendChild(o);});if(!list.length){passageSelect.innerHTML='<option value="">No passages in this folder</option>';}}
+  function renderPassages(){const selected=folderSelect.value;passageSelect.innerHTML='';if(!selected){passageSelect.disabled=true;passageSelect.innerHTML='<option value="">Please choose the folder first</option>';return;}passageSelect.disabled=false;const list=passages.filter(p=>p.active===true&&String(p.folder_id)===String(selected));passageSelect.innerHTML='<option value="">Please choose a passage</option>';list.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.title||('Passage '+p.id);passageSelect.appendChild(o);});if(!list.length){passageSelect.innerHTML='<option value="">No passages in this folder</option>';}}
   folderSelect.addEventListener('change',()=>{renderPassages();});
   $('fix-timer').addEventListener('change',()=>{const wrap=$('fix-custom-time-wrap');if(wrap)wrap.hidden=$('fix-timer').value!=='custom';});
   const customTimeWrap=$('fix-custom-time-wrap');if(customTimeWrap)customTimeWrap.hidden=$('fix-timer').value!=='custom';
@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     try{
       const passage=await getPassage();activePassage=String(passage.passage||'').trim();if(!activePassage)throw new Error('Passage cannot be empty.');
-      currentConfig={maxErrors:Math.max(1,Number($('fix-max-errors').value)||5),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:($('fix-timer').value==='custom'?Math.max(1,Number($('fix-custom-minutes').value)||1)*60:Number($('fix-timer').value)),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
-      $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+currentConfig.maxErrors;
+      currentConfig={maxErrors:$('fix-max-errors').value.trim()===''?null:Math.max(1,Math.floor(Number($('fix-max-errors').value))),minGross:Math.max(0,Number($('fix-min-gross').value)||0),minNet:Math.max(0,Number($('fix-min-net').value)||0),duration:$('fix-timer').value==='free'?0:($('fix-timer').value==='custom'?Math.max(1,Number($('fix-custom-minutes').value)||1)*60:Number($('fix-timer').value)),backspace:$('fix-backspace').value==='on',voice:$('fix-voice').value};
+      $('fix-game-title').textContent=passage.title||'Typing passage';$('fix-typed-error').textContent='0';$('fix-total-error').textContent='0 / '+(currentConfig.maxErrors??'Auto');
       input.value='';input.disabled=false;input.readOnly=false;errorCount=0;backspacePressCount=0;lastAutoScrolledWordIndex=-1;finished=false;startedAt=0;passageHidden=false;typingMode='screen';modeLocked=false;syncTypingModeButton();highlightEnabled=$('fix-highlight-setting').value==='on';fixFontControls.set(19.2);syncToggleButton($('fix-toggle-highlight'),highlightEnabled,'Highlight: On','Highlight: Off','🖍','🖍','Highlight: show or hide correct and incorrect character colours.');
       $('fix-clock').textContent='00:00:00';
       $('fix-passage-display').innerHTML='';renderPassage();setup.hidden=true;result.hidden=true;game.hidden=false;input.focus();
@@ -169,11 +169,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const bsfScore=TypingMaster.calculateCommittedScore(activePassage,value,elapsed,scoringConfig,'bsf',backspacePressCount,false);
     const crpfScore=TypingMaster.calculateCommittedScore(activePassage,value,elapsed,scoringConfig,'crpf',backspacePressCount,false);
     errorCount=bsfScore.totalErrors;
-    $('fix-typed-error').textContent=String(errorCount);$('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
-    if(errorCount>previousErrors)announce(Math.max(1,currentConfig.maxErrors-previousErrors));
+    $('fix-typed-error').textContent=String(errorCount);const liveLimit=currentConfig.maxErrors??bsfScore.allowedErrors;$('fix-total-error').textContent=errorCount+' / '+liveLimit;
+    if(errorCount>previousErrors)announce(Math.max(1,liveLimit-previousErrors));
     // Keep the attempt alive while either official formula remains within its
     // configured error allowance. The result selector must not inherit a BSF-only fail.
-    if(bsfScore.totalErrors>currentConfig.maxErrors&&crpfScore.totalErrors>currentConfig.maxErrors){finish('Maximum errors reached');return;}
+    if(bsfScore.totalErrors>(currentConfig.maxErrors??bsfScore.allowedErrors)&&crpfScore.totalErrors>(currentConfig.maxErrors??crpfScore.allowedErrors)){finish('Maximum errors reached');return;}
     if(hasTrailingSpace&&words(value).length>=words(activePassage).length){finish('Passage complete');return;}
   }
   input.addEventListener('keydown',e=>{
@@ -233,7 +233,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Keep the threshold visible as 0.00, but do not turn an unset target into a fail.
     const grossPass=currentConfig.minGross<=0||gross>=currentConfig.minGross;
     const netPass=currentConfig.minNet<=0||net>=currentConfig.minNet;
-    const passed=errorCount<=currentConfig.maxErrors&&grossPass&&netPass;
+    const errorLimit=currentConfig.maxErrors??score.allowedErrors;
+    const passed=errorCount<=errorLimit&&grossPass&&netPass;
     const methodName=formula.toUpperCase();
     const status=$('fix-result-status');
     status.textContent=methodName+' '+(passed?'PASS':'FAIL');
@@ -258,12 +259,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     Object.entries(analysisFields).forEach(([id,key])=>{const node=$('fix-analysis-'+id);if(node)node.textContent=String(breakdown[key]??0);});
     $('fix-result-min-gross').textContent=currentConfig.minGross.toFixed(2);
     $('fix-result-min-net').textContent=currentConfig.minNet.toFixed(2);
-    $('fix-result-max-errors').textContent=currentConfig.maxErrors;
+    $('fix-result-max-errors').textContent=String(errorLimit);
     const tones={
       gross: gross>=currentConfig.minGross?'mint':'pink',
       net: net>=currentConfig.minNet?'sky':'pink',
       accuracy: accuracy>=95?'mint':accuracy>=85?'yellow':'pink',
-      errors: errorCount<=currentConfig.maxErrors?'mint':'pink',
+      errors: errorCount<=errorLimit?'mint':'pink',
       allowed: 'lavender', excess: Number(score.excessErrors)>0?'pink':'mint',
       penalty: Number(score.penaltyWpm)>0?'yellow':'mint',
       correctWord: 'sky'
@@ -285,11 +286,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const initialBsf=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,scoringConfig,'bsf',backspacePressCount,true);
     const initialCrpf=TypingMaster.calculateCommittedScore(activePassage,input.value,finalElapsed,scoringConfig,'crpf',backspacePressCount,true);
     errorCount=initialBsf.totalErrors;
-    if(initialBsf.totalErrors>currentConfig.maxErrors&&initialCrpf.totalErrors>currentConfig.maxErrors&&reason==='Passage complete')reason='Maximum errors reached';
+    if(initialBsf.totalErrors>(currentConfig.maxErrors??initialBsf.allowedErrors)&&initialCrpf.totalErrors>(currentConfig.maxErrors??initialCrpf.allowedErrors)&&reason==='Passage complete')reason='Maximum errors reached';
     finalReason=reason;selectedFormula='bsf';
     finished=true;if(interval){clearInterval(interval);interval=null;}input.disabled=true;
     $('fix-typed-error').textContent=String(errorCount);
-    $('fix-total-error').textContent=errorCount+' / '+currentConfig.maxErrors;
+    $('fix-total-error').textContent=errorCount+' / '+(currentConfig.maxErrors??initialBsf.allowedErrors);
     renderSelectedResult();
     game.hidden=true;result.hidden=false;
     // The game element may still own browser fullscreen after it is hidden.
