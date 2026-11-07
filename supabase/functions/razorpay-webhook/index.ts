@@ -263,9 +263,37 @@ Deno.serve(async (req: Request) => {
       }
     } else if (event.event === "payment.failed") {
       const payment = event.payload?.payment?.entity;
-      eventEntityId = typeof payment?.id === "string" ? payment.id : null;
-      // Failed attempts never activate a subscription. The pending order expires automatically.
-      outcome = "ignored";
+      if (!payment || typeof payment.id !== "string" || typeof payment.order_id !== "string") {
+        return json(400, { error: "Malformed payment.failed payload." });
+      }
+      eventEntityId = payment.id;
+      const { data: order, error: orderError } = await serviceClient.from("orders")
+        .select("id,status,total_minor,currency")
+        .eq("provider", "razorpay")
+        .eq("provider_order_id", payment.order_id)
+        .maybeSingle();
+      if (orderError) return json(503, { error: "Could not resolve failed payment order." });
+      if (!order) {
+        console.warn("Failed Razorpay payment has no local order mapping.", payment.order_id, payment.id);
+      } else if (Number(payment.amount) !== Number(order.total_minor) || payment.currency !== order.currency) {
+        console.error("Razorpay failed-payment amount/currency mismatch.", order.id, payment.id);
+        return json(400, { error: "Failed payment amount or currency mismatch." });
+      } else if (order.status === "pending") {
+        // End the failed attempt immediately so the UI can safely create a fresh local
+        // order and release this order's coupon reservation without waiting 30 minutes.
+        const { error: failOrderError } = await serviceClient.from("orders")
+          .update({ status: "failed" })
+          .eq("id", order.id)
+          .eq("status", "pending");
+        if (failOrderError) {
+          console.error("Failed payment order could not be closed.", failOrderError.code, order.id);
+          return json(503, { error: "Failed payment status could not be saved; retry shortly." });
+        }
+        outcome = "processed";
+      } else {
+        // A captured/paid or already-closed order must never be downgraded.
+        outcome = "ignored";
+      }
     } else {
       // Acknowledge unrelated events; configure only order.paid, payment.failed, and refund.processed.
       outcome = "ignored";
