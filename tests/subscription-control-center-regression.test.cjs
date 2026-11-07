@@ -88,3 +88,18 @@ test('typing categories paint cached data immediately and refresh catalogue alon
   assert.match(auth, /setTimeout\(\(\) => \{ initialHeartbeatReady = true; heartbeat\(\); \}, 8000\)/);
   assert.match(auth, /nowMs - lastAttemptAt < 45000/);
 });
+
+test('My Account membership section has premium visual hierarchy without changing subscription data wiring', () => {
+  const root = path.join(__dirname, '..');
+  const account = fs.readFileSync(path.join(root, 'my_account.html'), 'utf8');
+  const accountScript = fs.readFileSync(path.join(root, 'js/my-subscription.js'), 'utf8');
+  assert.match(account, /account-membership-card:before/);
+  assert.match(account, /membershipOrbit/);
+  assert.match(account, /prefers-reduced-motion:\\s*reduce/);
+  assert.match(account, /account-membership-summary article:hover/);
+  assert.match(account, /account-membership-card \.sub-current-state/);
+  assert.match(accountScript, /user_subscriptions/);
+  assert.match(accountScript, /orders/);
+  assert.match(accountScript, /LAST SUCCESSFUL PAYMENT/);
+  assert.match(accountScript, /auth\.getUser\(\)/);
+});
