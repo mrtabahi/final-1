@@ -232,3 +232,15 @@ test('Typing toolbar assigns stable visible glyphs and exam dialog follows the a
   assert.ok(css.includes('#typing-section .typing-controls .compact-tip-control::before'));
   assert.ok(css.includes('-webkit-text-fill-color:#234b70!important'));
 });
+
+
+test('main typing toolbar exposes clear green ON and neutral OFF visual states',()=>{
+ const root=path.join(__dirname,'..');
+ const app=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
+ const css=fs.readFileSync(path.join(root,'css/typing.css'),'utf8');
+ assert.match(app,/const syncToolbarState=\(button,enabled\)/u);
+ assert.match(app,/syncToolbarState\(highlightButton,highlightEnabled\)/u);
+ assert.match(app,/syncToolbarState\(soundButton,soundEnabled\)/u);
+ assert.match(css,/\.typing-controls \.compact-tip-control\.is-active/u);
+ assert.match(css,/content:'ON'/u);
+});
