@@ -62,7 +62,7 @@
 .access-tree-node.access-tree-test{margin-left:12px;padding:8px 10px;border-style:dashed}.access-tree-node.access-tree-test>span:first-child{flex:1}
 .access-tree-toggle{min-width:65px;padding:7px 10px!important;font-size:.7rem!important;font-weight:850!important;letter-spacing:.04em}
 .access-tree-empty{padding:8px;color:#94a3b8;font-size:.78rem}
-@media(hover:hover){.access-tree-branch:hover>summary{border-color:#a5b4fc;background:#eef2ff}.access-tree-branch:hover>.access-tree-children{display:grid}.access-tree-branch:not([open])>.access-tree-children{display:none}.access-tree-branch:hover:not([open])>.access-tree-children{display:grid}}
+@media(hover:hover){.access-tree-branch>summary:hover{border-color:#a5b4fc;background:#eef2ff}}
 @media(max-width:600px){.access-tree-wrap{padding:10px}.access-tree-node,.access-tree-branch>summary{gap:6px;padding:8px}.access-tree-node code{display:none}.access-tree-toggle{min-width:56px;padding:6px!important}.access-tree-node>span:first-child,.access-tree-branch>summary>span:first-child{font-size:.77rem}}
 
 /* Purchase-cap and fixed-expiry plan fields */
@@ -70,3 +70,9 @@
 .sub-admin-form input:disabled{background:#f1f5f9;color:#94a3b8;cursor:not-allowed}
 .sub-plan-limits{margin-top:8px;padding:8px 10px;border:1px solid #dbeafe;border-radius:9px;background:#eff6ff;color:#1e40af;font-size:.74rem;font-weight:700;line-height:1.45}
 @media(max-width:600px){.sub-plan-limits{font-size:.7rem}}
+
+/* Collapsible access groups stay closed until an admin explicitly opens them. */
+.access-tree-branch:not([open])>.access-tree-children{display:none}
+.access-tree-branch[open]>.access-tree-children{display:grid}
+.access-tree-branch>summary{user-select:none}
+.access-tree-branch>summary:focus-visible{outline:3px solid rgba(79,70,229,.22);outline-offset:2px}

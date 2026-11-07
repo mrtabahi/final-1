@@ -89,7 +89,7 @@
   const pageResources=[
     ['index.html','Home'],['Typing_test.html','Typing Tests'],['fix-accuracy.html','Typing Game'],['self-test.html','Self Test'],
     ['materials.html','PDF Library'],['dashboard.html','Start Preparation'],['start_test.html','Typing Test Player'],
-    ['my_results.html','My Results'],['leaderboard.html','Leaderboard'],['my_account.html','My Account'],['premium.html','Plans & Pricing']
+    ['my_results.html','My Results'],['leaderboard.html','Leaderboard'],['my_account.html','My Account'],['premium.html','Plans & Pricing'],['time-attack.html','Target Blitz'],['speed-sprint.html','Velocity Circuit'],['word-accuracy.html','Flawless Forge']
   ];
   const menuFeatureChildren={
     'fix-accuracy.html':['typing-game'],
@@ -98,13 +98,17 @@
     'dashboard.html':['setup-box','typing-interface','typing-formats','custom-passages','calculation-pdf'],
     'start_test.html':['typing-interface'],
     'my_results.html':['test-results-history'],
-    'leaderboard.html':['leaderboard-tools']
+    'leaderboard.html':['leaderboard-tools'],
+    'time-attack.html':['time-attack'],
+    'speed-sprint.html':['speed-sprint'],
+    'word-accuracy.html':['word-accuracy']
   };
   const featureResources=[
     ['self-test','Self Test content'],['typing-game','Typing Game content'],['live-test','Live Test access'],
     ['hard-symbol-tests','Hard & Symbol Tests'],['setup-box','Test setup box'],['typing-interface','Typing interface'],
     ['calculation-pdf','Calculation PDF'],['typing-formats','Typing formats'],['custom-passages','Custom passage uploads'],
-    ['test-results-history','Detailed results & history'],['leaderboard-tools','Leaderboard features'],['pdf-library','PDF calculations & library']
+    ['test-results-history','Detailed results & history'],['leaderboard-tools','Leaderboard features'],['pdf-library','PDF calculations & library'],
+    ['time-attack','Target Blitz arcade'],['speed-sprint','Velocity Circuit arcade'],['word-accuracy','Flawless Forge arcade']
   ];
   const prettyResource=(type,key)=>accessLabels[type+':'+key]||((type==='site'&&key==='*')?'Whole website':key);
   async function setTreeRule(type,key,isFree){
@@ -162,7 +166,7 @@
         return '<details class="access-tree-branch"><summary><span>'+esc(folder.name)+'</span><small>'+(tests||[]).filter(t=>t.folder_id===folder.id).length+' tests</small>'+toggle('folder',folder.id,ruleFor('menu','Typing_test.html'))+'</summary><div class="access-tree-children">'+children+'</div></details>';
       }).join('');
       const featureNodes=featureResources.map(([key,label])=>{accessLabels['feature:'+key]=label;return '<div class="access-tree-node access-tree-leaf"><span>'+esc(label)+'</span><code>'+esc(key)+'</code>'+toggle('feature',key)+'</div>';}).join('');
-      tree.innerHTML='<div class="access-tree-root"><div class="access-tree-node access-tree-root-node"><strong>Decoding HCM</strong><span>Entire website</span>'+toggle('site','*')+'</div><details class="access-tree-branch" open><summary><span>Website menus &amp; pages</span><small>'+pageResources.length+' pages</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+menuNodes+'</div></details><details class="access-tree-branch"><summary><span>Typing Tests</span><small>'+(folders||[]).length+' folders</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+folderNodes+'</div></details><details class="access-tree-branch" open><summary><span>Individual features &amp; interfaces</span><small>'+featureResources.length+' controls</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+featureNodes+'</div></details></div>';
+      tree.innerHTML='<div class="access-tree-root"><div class="access-tree-node access-tree-root-node"><strong>Decoding HCM</strong><span>Entire website</span>'+toggle('site','*')+'</div><details class="access-tree-branch"><summary><span>Website menus &amp; pages</span><small>'+pageResources.length+' pages</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+menuNodes+'</div></details><details class="access-tree-branch"><summary><span>Typing Tests</span><small>'+(folders||[]).length+' folders</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+folderNodes+'</div></details><details class="access-tree-branch"><summary><span>Individual features &amp; interfaces</span><small>'+featureResources.length+' controls</small><span class="access-tree-chevron">⌄</span></summary><div class="access-tree-children">'+featureNodes+'</div></details></div>';
       tree.querySelectorAll('[data-tree-type]').forEach(button=>button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const type=button.dataset.treeType,key=button.dataset.treeKey,isFree=button.dataset.treeFree!=='true';setTreeRule(type,key,isFree);}));
     }catch(err){tree.innerHTML='<div class="admin-error">Could not load access tree: '+esc(err.message||err)+'</div>';}
   }
