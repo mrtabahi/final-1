@@ -86,9 +86,9 @@ test('checkout and coupon preview remain candidate-only without blocking legacy 
   assert.match(checkoutGuards, /Candidate sign-in required/);
 });
 
-test('premium checkout sends the coupon code to the server and displays the server-calculated discount', () => {
+test('premium checkout previews coupons before purchase and sends the code for server-side recalculation', () => {
   assert.match(pricing, /coupon_code:appliedCouponCode/);
-  assert.match(pricing, /securely validated/);
+  assert.match(pricing, /preview_subscription_coupon/);
   assert.match(checkout, /p_coupon_code:/);
   assert.ok(checkout.includes('discount_minor: Number(order.discount_minor)'));
   assert.ok(checkout.includes('coupon_code: order.coupon_code'));
