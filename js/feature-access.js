@@ -165,8 +165,8 @@
         }
       }
       const site=findRule('site',currentPage)||findRule('site','*');
-      const pageFeatureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats'}[currentPage]);
-      const routeAliases=({'fix-accuracy.html':['typing-game','fix-accuracy'],'self-test.html':['self-test'],'materials.html':['pdf-library'],'dashboard.html':['setup-box'],'start_test.html':['typing-interface']}[currentPage]||[]);
+      const pageFeatureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats','time-attack.html':'time-attack','speed-sprint.html':'speed-sprint','word-accuracy.html':'word-accuracy','fix-accuracy-game.html':'typing-game'}[currentPage]);
+      const routeAliases=({'fix-accuracy.html':['typing-game','fix-accuracy'],'self-test.html':['self-test'],'materials.html':['pdf-library'],'dashboard.html':['setup-box'],'start_test.html':['typing-interface'],'time-attack.html':['time-attack'],'speed-sprint.html':['speed-sprint'],'word-accuracy.html':['word-accuracy'],'fix-accuracy-game.html':['typing-game','fix-accuracy']}[currentPage]||[]);
       const pageRule=findRule('menu',currentPage)||findRule('menu','/'+currentPage)||(pageFeatureKey&&findRule('feature',pageFeatureKey))||routeAliases.map(key=>findRule('feature',key)).find(Boolean);
       const effectivePageRule=pageRule||site;
       const pageNeedsPremium=!requestedTestAuthorized&&effectivePageRule&&!effectivePageRule.is_free&&!alwaysPublicPages.has(currentPage)&&currentPage!=='my_account.html';
@@ -222,7 +222,7 @@
       const file=norm(href.split(/[?#]/)[0].split('/').pop());
       const custom=a.getAttribute('data-access-key');
       const customId=custom&&custom.startsWith('feature:')?custom.slice(8):null;
-      const featureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats'}[file]);
+      const featureKey=({'fix-accuracy.html':'typing-game','self-test.html':'self-test','materials.html':'pdf-library','start_test.html':'typing-interface','dashboard.html':'setup-box','typing_test.html':'typing-formats','time-attack.html':'time-attack','speed-sprint.html':'speed-sprint','word-accuracy.html':'word-accuracy','fix-accuracy-game.html':'typing-game'}[file]);
       const linkLabel=norm(a.textContent.replace(/UPGRADE/g,''));
       const labelAliases=linkLabel.includes('preparation')?['preparation','start preparation','setup box']:linkLabel.includes('typing game')?['typing game']:[];
       const rule=(customId&&findRule('feature',customId))||(featureKey&&findRule('feature',featureKey))||findRule('menu',file)||findRule('menu',norm(href))||labelAliases.map(key=>findRule('menu',key)||findRule('feature',key)).find(Boolean);
