@@ -41,7 +41,7 @@
     try {
       const [{ data: settings, error: settingsError }, { data: messages, error: messagesError }] = await Promise.all([
         supabaseClient.from('site_access_settings').select('*').eq('id', 1).maybeSingle(),
-        supabaseClient.from('candidate_login_messages').select('user_id,message,enabled,updated_at,profiles!candidate_login_messages_user_id_fkey(full_name,email)').order('updated_at', { ascending: false }).limit(500)
+        supabaseClient.from('candidate_login_messages').select('user_id,message,enabled,updated_at,profiles!candidate_login_messages_user_id_fkey(full_name,email,avatar_url)').order('updated_at', { ascending: false }).limit(500)
       ]);
       if (settingsError) throw settingsError;
       if (messagesError) throw messagesError;
@@ -67,7 +67,7 @@
       }
       $('login-message-count').textContent = rows.length + ' message' + (rows.length === 1 ? '' : 's');
       list.innerHTML = rows.length ? '<div class="candidate-list">' + rows.map(row => `
-        <article class="candidate-row"><div class="candidate-avatar">✉</div><div class="candidate-main"><strong>${esc(row.profiles?.full_name || 'Candidate')}</strong><span>${esc(emailById.get(String(row.user_id)) || 'Email not available')}</span><small>Updated ${esc(when(row.updated_at))}</small><p>${esc(row.message)}</p></div><div class="candidate-row-meta"><span class="candidate-status ${row.enabled ? 'is-verified' : 'is-pending'}">${row.enabled ? 'Popup enabled' : 'Popup disabled'}</span><button type="button" class="admin-btn admin-btn-secondary" data-remove-login-message="${esc(row.user_id)}">Remove</button></div></article>`).join('') + '</div>' : '<div class="admin-empty">No personalized login messages configured yet.</div>';
+        <article class="candidate-row"><div class="candidate-avatar">${row.profiles?.avatar_url ? `<img src="${esc(row.profiles.avatar_url)}" alt="" loading="lazy">` : "✉"}</div><div class="candidate-main"><strong>${esc(row.profiles?.full_name || 'Candidate')}</strong><span>${esc(emailById.get(String(row.user_id)) || 'Email not available')}</span><small>Updated ${esc(when(row.updated_at))}</small><p>${esc(row.message)}</p></div><div class="candidate-row-meta"><span class="candidate-status ${row.enabled ? 'is-verified' : 'is-pending'}">${row.enabled ? 'Popup enabled' : 'Popup disabled'}</span><button type="button" class="admin-btn admin-btn-secondary" data-remove-login-message="${esc(row.user_id)}">Remove</button></div></article>`).join('') + '</div>' : '<div class="admin-empty">No personalized login messages configured yet.</div>';
     } catch (error) {
       list.innerHTML = '<div class="admin-error">Could not load login controls: ' + esc(error.message) + '</div>';
     }

@@ -13,14 +13,14 @@ document.addEventListener("DOMContentLoaded", async () => {
  };
  try{
   const [ar,mr]=await Promise.all([
-   supabaseClient.from("public_leaderboard_attempts").select("id,candidate_name,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name").limit(300),
+   supabaseClient.from("public_leaderboard_attempts").select("id,candidate_name,avatar_url,language,duration_seconds,created_at,gross_wpm,net_wpm,accuracy,test_name").limit(300),
    supabaseClient.from("manual_leaderboard_entries").select("id,candidate_name,language,test_name,duration_seconds,created_at,gross_wpm,net_wpm,accuracy").limit(300)
   ]);
   if(ar.error)throw ar.error;
   if(mr.error)throw mr.error;
   const all=[
    ...(ar.data||[]).map(a=>({...a,manual:false})),
-   ...(mr.data||[]).map(a=>({...a,manual:true}))
+   ...(mr.data||[]).map(a=>({...a,manual:true,avatar_url:null}))
   ].sort((a,b)=>
    compareField(a,b,"net_wpm",-1)||
    compareField(a,b,"accuracy",-1)||
@@ -28,12 +28,18 @@ document.addEventListener("DOMContentLoaded", async () => {
    String(a.created_at||"").localeCompare(String(b.created_at||""))||
    String(a.id||"").localeCompare(String(b.id||""))
   ).slice(0,50);
-  if(!all.length){body.innerHTML='<tr><td colspan="9">No entries found on leaderboard.</td></tr>';if(message)message.textContent="";return;}
-  body.innerHTML=all.map((a,i)=>`<tr><td><strong>#${i+1}</strong></td><td>${esc(a.candidate_name)}</td><td>${esc(a.language)}</td><td>${esc(a.test_name)}</td><td>${esc(a.duration_seconds)}</td><td>${esc(date(a.created_at))}</td><td>${esc(fmt(a.gross_wpm))}</td><td><strong style="color:var(--primary-blue)">${esc(fmt(a.net_wpm))} WPM</strong></td><td>${a.accuracy==null?"-":esc(fmt(a.accuracy))+"%"}</td></tr>`).join("");
+  if(!all.length){body.innerHTML='<tr><td colspan="10">No entries found on leaderboard.</td></tr>';if(message)message.textContent="";return;}
+  body.innerHTML=all.map((a,i)=>{
+   const initials=String(a.candidate_name||"U").trim().split(/\\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
+   const avatar=a.avatar_url
+    ? '<span class="dh-avatar"><img src="'+esc(a.avatar_url)+'" alt="" loading="lazy"></span>'
+    : '<span class="dh-avatar">'+esc(initials||"U")+'</span>';
+   return '<tr><td><strong>#'+(i+1)+'</strong></td><td class="leaderboard-avatar-cell">'+avatar+'</td><td>'+esc(a.candidate_name)+'</td><td>'+esc(a.language)+'</td><td>'+esc(a.test_name)+'</td><td>'+esc(a.duration_seconds)+'</td><td>'+esc(date(a.created_at))+'</td><td>'+esc(fmt(a.gross_wpm))+'</td><td><strong style="color:var(--primary-blue)">'+esc(fmt(a.net_wpm))+' WPM</strong></td><td>'+(a.accuracy==null?"-":esc(fmt(a.accuracy))+"%")+'</td></tr>';
+  }).join("");
   if(message)message.textContent="";
  }catch(error){
   console.error("Leaderboard load failed",error);
-  body.innerHTML='<tr><td colspan="9">Unable to load leaderboard. Please refresh and try again.</td></tr>';
+  body.innerHTML='<tr><td colspan="10">Unable to load leaderboard. Please refresh and try again.</td></tr>';
   if(message)message.textContent="Leaderboard data could not be loaded. Please try again later.";
  }
 });

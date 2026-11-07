@@ -3,13 +3,13 @@ document.addEventListener('admin-tool-ready',async()=>{
  const gate=await AuthManager.requireAdminGuard();if(!gate?.user||!gate?.profile)return;
  const date=v=>{if(!v)return '-';const d=new Date(v);return Number.isNaN(d.getTime())?'-':d.toLocaleString()};
  async function load(){
-  $('attempts-body').innerHTML='<tr><td colspan="6">Loading…</td></tr>';$('manual-body').innerHTML='<tr><td colspan="6">Loading…</td></tr>';
+  $('attempts-body').innerHTML='<tr><td colspan="7">Loading…</td></tr>';$('manual-body').innerHTML='<tr><td colspan="6">Loading…</td></tr>';
   const [a,m]=await Promise.all([
-   supabaseClient.from('attempts').select('id,candidate_name,duration_seconds,created_at,net_wpm,tests(title)').order('created_at',{ascending:false}).limit(300),
+   supabaseClient.from('attempts').select('id,candidate_name,duration_seconds,created_at,net_wpm,profiles(avatar_url),tests(title)').order('created_at',{ascending:false}).limit(300),
    supabaseClient.from('manual_leaderboard_entries').select('id,candidate_name,test_name,duration_seconds,created_at,net_wpm').order('created_at',{ascending:false}).limit(300)
   ]);
-  if(a.error){$('attempts-body').innerHTML='<tr><td colspan="6">Could not load attempts. '+esc(a.error.message)+'</td></tr>';}else{
-   $('attempts-body').innerHTML=(a.data||[]).map(x=>{const t=Array.isArray(x.tests)?x.tests[0]:x.tests;return `<tr><td>${esc(x.candidate_name)}</td><td>${esc(t?.title||'-')}</td><td>${esc(x.duration_seconds??'-')}</td><td>${esc(date(x.created_at))}</td><td>${esc(fmt(x.net_wpm))}</td><td><button class="btn btn-danger" data-delete-attempt="${esc(x.id)}" type="button">Remove history</button></td></tr>`}).join('')||'<tr><td colspan="6">No attempts found.</td></tr>';
+  if(a.error){$('attempts-body').innerHTML='<tr><td colspan="7">Could not load attempts. '+esc(a.error.message)+'</td></tr>';}else{
+   $('attempts-body').innerHTML=(a.data||[]).map(x=>{const t=Array.isArray(x.tests)?x.tests[0]:x.tests;return `<tr><td class="leaderboard-avatar-cell">${x.profiles?.avatar_url ? `<span class="dh-avatar"><img src="${esc(x.profiles.avatar_url)}" alt="" loading="lazy"></span>` : `<span class="dh-avatar">${esc(String(x.candidate_name||'U').trim().slice(0,1).toUpperCase())}</span>`}</td><td>${esc(x.candidate_name)}</td><td>${esc(t?.title||'-')}</td><td>${esc(x.duration_seconds??'-')}</td><td>${esc(date(x.created_at))}</td><td>${esc(fmt(x.net_wpm))}</td><td><button class="btn btn-danger" data-delete-attempt="${esc(x.id)}" type="button">Remove history</button></td></tr>`}).join('')||'<tr><td colspan="7">No attempts found.</td></tr>';
   }
   if(m.error){$('manual-body').innerHTML='<tr><td colspan="6">Could not load manual entries. '+esc(m.error.message)+'</td></tr>';}else{
    $('manual-body').innerHTML=(m.data||[]).map(x=>`<tr><td>${esc(x.candidate_name)}</td><td>${esc(x.test_name||'-')}</td><td>${esc(x.duration_seconds??'-')}</td><td>${esc(date(x.created_at))}</td><td>${esc(fmt(x.net_wpm))}</td><td><button class="btn btn-danger" data-delete-manual="${esc(x.id)}" type="button">Remove entry</button></td></tr>`).join('')||'<tr><td colspan="6">No manual entries.</td></tr>';
