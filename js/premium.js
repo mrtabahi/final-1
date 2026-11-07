@@ -8,6 +8,7 @@ window.initPremiumPurchase = async (root=document) => {
  const message=(text,error=false)=>{const el=$('premium-message');if(el){el.textContent=text;el.classList.toggle('is-error',error)}};
  const couponInput=$('premium-coupon-code'),couponApply=$('premium-coupon-apply'),couponNote=$('premium-coupon-note');
  let appliedCouponCode='';
+ let user=null;
  let plans=[];
  let couponPreviewByPlan=new Map();
  let couponRequestSequence=0;
@@ -62,7 +63,7 @@ window.initPremiumPurchase = async (root=document) => {
   client.auth.getUser().catch(()=>({data:{user:null}})),
   client.from('subscription_plans').select('id,name,description,price_minor,currency,duration_days,tagline,features,is_featured,expiry_mode,fixed_expiry_date,purchase_limit_total,purchase_limit_per_user').eq('is_active',true).order('sort_order').order('price_minor')
  ]);
- const user=authResult?.data?.user||null;
+ user=authResult?.data?.user||null;
  if(user){
   const {data,error}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(name,description)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
   if(error){state.textContent='Your membership details are temporarily unavailable. Open My Account and try again later.';}
