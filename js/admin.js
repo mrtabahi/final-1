@@ -542,7 +542,7 @@
         box.innerHTML='<div class="admin-empty" role="status">Loading order ledger…</div>';
         try {
             const {data,error}=await supabaseClient.from('orders')
-                .select('id,provider_order_id,currency,total_minor,status,created_at,updated_at,subscription_plans(name)')
+                .select('id,provider_order_id,currency,subtotal_minor,discount_minor,total_minor,coupon_id,status,created_at,updated_at,subscription_plans(name),subscription_coupons(code)')
                 .order('created_at',{ascending:false}).limit(250);
             if(error) throw error;
             if(renderSequence!==viewRenderSequence || currentView!=='payments') return;
@@ -553,7 +553,7 @@
             const renderRows=list=>list.length?list.map(row=>{
                 const plan=Array.isArray(row.subscription_plans)?row.subscription_plans[0]:row.subscription_plans;
                 const statusText=String(row.status||'unknown').toLowerCase();
-                return '<tr><td><strong>'+esc(String(row.id||'').slice(0,8))+'</strong><small style="display:block;color:#91abc5">'+esc(row.provider_order_id||'No provider order ID')+'</small></td><td>'+esc(plan?.name||'Plan unavailable')+'</td><td><span class="admin-ledger-status is-'+escStatus(statusText)+'">'+esc(statusText)+'</span></td><td>'+esc(money(row))+'</td><td>'+esc(formatDate(row.created_at))+'</td></tr>';
+                const coupon=Array.isArray(row.subscription_coupons)?row.subscription_coupons[0]:row.subscription_coupons; const currency=/^[A-Z]{3}$/.test(row.currency||'')?row.currency:'INR'; const fmt=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(value||0)/100); return '<tr><td><strong>'+esc(String(row.id||'').slice(0,8))+'</strong><small style="display:block;color:#91abc5">'+esc(row.provider_order_id||'No provider order ID')+'</small></td><td>'+esc(plan?.name||'Plan unavailable')+'</td><td>'+esc(coupon?.code||'—')+'</td><td><span class="admin-ledger-status is-'+escStatus(statusText)+'">'+esc(statusText)+'</span></td><td>'+esc(fmt(row.subtotal_minor??row.total_minor))+'</td><td>'+esc(fmt(row.discount_minor))+'</td><td><strong>'+esc(money(row))+'</strong></td><td>'+esc(formatDate(row.created_at))+'</td></tr>';
             }).join(''):'<tr><td colspan="5">No orders match these filters.</td></tr>';
             box.innerHTML=
               '<div class="admin-ledger-summary">'+
@@ -562,8 +562,8 @@
                 '<div class="admin-ledger-stat"><span>Pending</span><strong>'+Number(totals.pending||0)+'</strong></div>'+
                 '<div class="admin-ledger-stat"><span>Recorded paid value</span><strong>'+esc(new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(totals.paidAmount/100))+'</strong></div>'+
               '</div>'+
-              '<div class="admin-ledger-toolbar"><input type="search" id="admin-ledger-search" aria-label="Search orders" placeholder="Search order, plan or provider ID…"><select id="admin-ledger-status" aria-label="Filter order status"><option value="">All statuses</option><option>paid</option><option>free</option><option>pending</option><option>failed</option><option>refunded</option><option>cancelled</option></select><button type="button" class="admin-btn admin-btn-secondary" id="admin-ledger-refresh">↻ Refresh</button><button type="button" class="admin-btn admin-btn-primary" id="admin-ledger-export">↓ Export CSV</button></div>'+
-              '<div class="admin-ledger-table-wrap"><table class="admin-ledger-table"><thead><tr><th>Order</th><th>Plan</th><th>Status</th><th>Total</th><th>Created</th></tr></thead><tbody id="admin-ledger-rows">'+renderRows(rows)+'</tbody></table></div>'+
+              '<div class="admin-ledger-toolbar"><input type="search" id="admin-ledger-search" aria-label="Search orders" placeholder="Search order, plan or provider ID…"><select id="admin-ledger-status" aria-label="Filter order status"><option value="">All statuses</option><option>paid</option><option>free</option><option>pending</option><option>failed</option><option>refunded</option><option>cancelled</option></select><button type="button" class="admin-btn admin-btn-secondary" id="admin-ledger-open-plans">◇ Manage plans</button><button type="button" class="admin-btn admin-btn-secondary" id="admin-ledger-refresh">↻ Refresh</button><button type="button" class="admin-btn admin-btn-primary" id="admin-ledger-export">↓ Export CSV</button></div>'+
+              '<div class="admin-ledger-table-wrap"><table class="admin-ledger-table"><thead><tr><th>Order</th><th>Plan</th><th>Coupon</th><th>Status</th><th>Subtotal</th><th>Discount</th><th>Total paid</th><th>Created</th></tr></thead><tbody id="admin-ledger-rows">'+renderRows(rows)+'</tbody></table></div>'+
               '<section class="admin-panel admin-coupon-panel" style="margin-top:18px"><div class="admin-panel-heading"><div><h2>Coupon management</h2><p>Create percentage or fixed discounts with date windows, plan eligibility and redemption caps.</p></div><span class="admin-ledger-status is-succeeded">Server validated</span></div><div id="admin-coupon-workspace"><div class="admin-empty">Loading coupon controls…</div></div></section>'+
               '<p class="admin-module-note">This ledger uses the order records accessible to the current admin session and loads the latest 250 rows. Payment confirmation and refunds remain server-authorized only.</p>';
             window.initAdminCouponManager?.($('admin-coupon-workspace'));
@@ -572,7 +572,7 @@
                 const q=(search.value||'').trim().toLowerCase(), state=(filter.value||'').toLowerCase();
                 const filtered=rows.filter(row=>{
                     const plan=Array.isArray(row.subscription_plans)?row.subscription_plans[0]:row.subscription_plans;
-                    const hay=[row.id,row.provider_order_id,plan?.name,row.status].join(' ').toLowerCase();
+                    const coupon=Array.isArray(row.subscription_coupons)?row.subscription_coupons[0]:row.subscription_coupons; const hay=[row.id,row.provider_order_id,plan?.name,coupon?.code,row.status].join(' ').toLowerCase();
                     return (!q||hay.includes(q))&&(!state||String(row.status||'').toLowerCase()===state);
                 });
                 body.innerHTML=renderRows(filtered);
@@ -582,12 +582,12 @@
             $('admin-ledger-refresh').addEventListener('click',()=>renderPaymentsModule(renderSequence));
             $('admin-ledger-export').addEventListener('click',()=>{
                 const list=applyFilters();
-                downloadAdminCsv('decoding-hcm-orders.csv',['Order ID','Provider order ID','Plan','Status','Currency','Total minor units','Created at'],list.map(row=>{
+                downloadAdminCsv('decoding-hcm-orders.csv',['Order ID','Provider order ID','Plan','Coupon','Status','Currency','Subtotal minor units','Discount minor units','Total minor units','Created at'],list.map(row=>{
                     const plan=Array.isArray(row.subscription_plans)?row.subscription_plans[0]:row.subscription_plans;
-                    return [row.id,row.provider_order_id,plan?.name,row.status,row.currency,row.total_minor,row.created_at];
+                    const coupon=Array.isArray(row.subscription_coupons)?row.subscription_coupons[0]:row.subscription_coupons; return [row.id,row.provider_order_id,plan?.name,coupon?.code,row.status,row.currency,row.subtotal_minor,row.discount_minor,row.total_minor,row.created_at];
                 }));
             });
-            $('admin-ledger-open-plans').addEventListener('click',()=>showAdminView('subscriptions'));
+            $('admin-ledger-open-plans')?.addEventListener('click',()=>showAdminView('subscriptions'));
         } catch(error) {
             if(renderSequence!==viewRenderSequence || currentView!=='payments') return;
             box.innerHTML='<div class="admin-error" role="alert">Could not load the order ledger: '+esc(error.message||error)+'. No payment status or refund action has been performed.</div><button type="button" class="admin-btn admin-btn-secondary" id="admin-ledger-retry">Try again</button><p class="admin-module-note">If access is denied, verify the admin-only database policy before changing permissions. Do not make transaction tables public to fix this screen.</p>';
