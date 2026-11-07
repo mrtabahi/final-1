@@ -57,7 +57,7 @@ test('premium purchase entry points use one responsive modal and preserve checko
   assert.match(premium, /premium-coupon-code/);
   assert.match(premium, /Coupon discount applies only after secure validation/);
   assert.match(premiumScript, /coupon_code:appliedCouponCode/);
-  assert.match(premiumScript, /securely validated against the plan and usage limits/);
+  assert.match(premiumScript, /preview_subscription_coupon/);
   assert.match(modal, /role="dialog"/);
   assert.match(modal, /premium-global-backdrop/);
   assert.match(modal, /initPremiumPurchase/);
