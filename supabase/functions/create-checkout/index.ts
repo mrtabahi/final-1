@@ -50,6 +50,10 @@ Deno.serve(async (req: Request) => {
   const { data: userResult, error: userError } = await userClient.auth.getUser(accessToken);
   if (userError || !userResult.user) return json(401, { error: "Your session is invalid. Please sign in again." });
 
+  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
   const { data: order, error: orderError } = await userClient.rpc("create_checkout_order", {
     p_plan_id: input.plan_id,
     p_coupon_code: typeof input.coupon_code === "string" ? input.coupon_code : null,
@@ -72,7 +76,7 @@ Deno.serve(async (req: Request) => {
   // Razorpay requires a minimum INR order amount of 100 paise (₹1).
   // Never create a provider order for a smaller non-zero balance.
   if (order.currency === "INR" && Number(order.total_minor) > 0 && Number(order.total_minor) < 100) {
-    const { error: closeOrderError } = await userClient.from("orders")
+    const { error: closeOrderError } = await serviceClient.from("orders")
       .update({ status: "failed" })
       .eq("id", order.order_id)
       .eq("status", "pending");
@@ -87,10 +91,6 @@ Deno.serve(async (req: Request) => {
 
   const keyId = Deno.env.get("RAZORPAY_KEY_ID");
   const keySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
-  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
   if (!keyId || !keySecret) {
     console.error("Razorpay test credentials are not configured.");
     const { error: closeOrderError } = await serviceClient.from("orders")
