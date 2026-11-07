@@ -8,6 +8,11 @@ on conflict (id) do update set
   file_size_limit = 3145728,
   allowed_mime_types = array['image/jpeg','image/png','image/webp'];
 
+drop policy if exists profile_avatars_owner_select on storage.objects;
+create policy profile_avatars_owner_select on storage.objects
+for select to authenticated
+using (bucket_id = 'profile-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
 drop policy if exists profile_avatars_owner_insert on storage.objects;
 create policy profile_avatars_owner_insert on storage.objects
 for insert to authenticated
