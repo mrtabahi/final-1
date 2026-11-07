@@ -8,14 +8,63 @@ window.initPremiumPurchase = async (root=document) => {
  const message=(text,error=false)=>{const el=$('premium-message');if(el){el.textContent=text;el.classList.toggle('is-error',error)}};
  const couponInput=$('premium-coupon-code'),couponApply=$('premium-coupon-apply'),couponNote=$('premium-coupon-note');
  let appliedCouponCode='';
- couponApply?.addEventListener('click',()=>{const code=(couponInput?.value||'').trim().toUpperCase();if(!/^[A-Z0-9][A-Z0-9_-]{2,39}$/.test(code)){appliedCouponCode='';if(couponNote)couponNote.textContent='Enter a valid code (3–40 letters, numbers, hyphens or underscores).';return;}appliedCouponCode=code;if(couponNote)couponNote.textContent='Code saved. It will be securely validated against the plan and usage limits before checkout.';couponApply.textContent='Code ready ✓';});
- couponInput?.addEventListener('input',()=>{appliedCouponCode='';if(couponApply)couponApply.textContent='Apply';if(couponNote)couponNote.textContent='Coupon is checked securely when you choose a plan.';});
+ let user=null;
+ let plans=[];
+ let couponPreviewByPlan=new Map();
+ let couponRequestSequence=0;
+ if(couponApply)couponApply.disabled=true;
+ const couponCodePattern=/^[A-Z0-9][A-Z0-9_-]{2,39}$/;
+ const resetCouponState=()=>{
+  appliedCouponCode='';
+  couponPreviewByPlan.clear();
+  couponRequestSequence++;
+  if(couponApply){couponApply.disabled=false;couponApply.textContent='Apply';}
+  if(couponNote)couponNote.textContent='Enter a coupon and apply it to check eligible plans securely.';
+  renderCouponPrices();
+ };
+ couponInput?.addEventListener('input',resetCouponState);
+ couponApply?.addEventListener('click',async()=>{
+  const code=(couponInput?.value||'').trim().toUpperCase();
+  resetCouponState();
+  if(!couponCodePattern.test(code)){if(couponNote)couponNote.textContent='Invalid coupon format. Use 3–40 letters, numbers, hyphens or underscores.';return;}
+  if(!user){if(couponNote)couponNote.textContent='Please sign in before applying a coupon.';return;}
+  if(!plans.length){if(couponNote)couponNote.textContent='Plans are still loading. Please try again.';return;}
+  const requestId=++couponRequestSequence;
+  if(couponApply){couponApply.disabled=true;couponApply.textContent='Checking…';}
+  if(couponNote)couponNote.textContent='Verifying coupon securely for each available plan…';
+  const checks=await Promise.all(plans.map(async plan=>{
+   try{
+    const {data,error}=await client.rpc('preview_subscription_coupon',{p_plan_id:plan.id,p_coupon_code:code});
+    if(error)throw error;
+    if(!data||data.valid!==true)throw new Error('Coupon could not be verified for this plan.');
+    const subtotal=Number(data.subtotal_minor),discount=Number(data.discount_minor),total=Number(data.total_minor);
+    if(!Number.isSafeInteger(subtotal)||!Number.isSafeInteger(discount)||!Number.isSafeInteger(total)||discount<0||total<0||subtotal-discount!==total)throw new Error('Coupon preview returned an invalid amount.');
+    if(total>0&&total<100)throw new Error('This coupon leaves less than ₹1 to pay. Razorpay requires a minimum payment of ₹1.');
+    return {planId:plan.id,data};
+   }catch(error){return {planId:plan.id,error:error?.message||'Coupon is not valid for this plan.'};}
+  }));
+  if(requestId!==couponRequestSequence)return;
+  const valid=checks.filter(item=>item.data);
+  if(!valid.length){
+   const reason=checks.find(item=>item.error)?.error||'This coupon is invalid, inactive, expired, or not eligible for these plans.';
+   if(couponNote)couponNote.textContent=reason;
+   if(couponApply){couponApply.disabled=false;couponApply.textContent='Apply';}
+   return;
+  }
+  appliedCouponCode=code;
+  couponPreviewByPlan=new Map(valid.map(item=>[item.planId,item.data]));
+  renderCouponPrices();
+  const planNames=valid.map(item=>plans.find(p=>p.id===item.planId)?.name).filter(Boolean);
+  if(couponNote)couponNote.textContent='✓ '+code+' applied to '+valid.length+' eligible plan(s)'+(planNames.length?' ('+planNames.join(', ')+')':'')+'. Discounted prices are highlighted below; other plans are not eligible.';
+  if(couponApply){couponApply.disabled=false;couponApply.textContent='Applied ✓';}
+ });
  const state=$('premium-current-state'),grid=$('premium-plan-grid');
  const [authResult,planResult]=await Promise.all([
   client.auth.getUser().catch(()=>({data:{user:null}})),
   client.from('subscription_plans').select('id,name,description,price_minor,currency,duration_days,tagline,features,is_featured,expiry_mode,fixed_expiry_date,purchase_limit_total,purchase_limit_per_user').eq('is_active',true).order('sort_order').order('price_minor')
  ]);
- const user=authResult?.data?.user||null;
+ user=authResult?.data?.user||null;
+ if(couponApply)couponApply.disabled=false;
  if(user){
   const {data,error}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(name,description)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
   if(error){state.textContent='Your membership details are temporarily unavailable. Open My Account and try again later.';}
@@ -25,10 +74,37 @@ window.initPremiumPurchase = async (root=document) => {
  const {data:loadedPlans,error}=planResult;
  if(error){grid.innerHTML='<div class="sub-empty-card">Plans are temporarily unavailable. Please refresh in a moment.</div>'; $('premium-plan-count').textContent='Unavailable';return;}
  const todayIst=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
- const plans=(loadedPlans||[]).filter(p=>p.expiry_mode!=='fixed_date'||(p.fixed_expiry_date&&p.fixed_expiry_date>=todayIst));
+ plans=(loadedPlans||[]).filter(p=>p.expiry_mode!=='fixed_date'||(p.fixed_expiry_date&&p.fixed_expiry_date>=todayIst));
  $('premium-plan-count').textContent=plans.length+' plans';
  if(!plans?.length){grid.innerHTML='<div class="sub-empty-card">No plans are published right now. Please check back soon.</div>';return;}
- grid.innerHTML=plans.map(p=>'<article class="sub-plan-card '+(p.is_featured?'is-featured':'')+'">'+(p.is_featured?'<span class="sub-plan-ribbon">RECOMMENDED</span>':'')+'<span class="sub-eyebrow">PREPARATION PLAN</span><h3>'+esc(p.name)+'</h3><div class="sub-plan-price">'+money(p.price_minor,p.currency)+' <small>/ plan</small></div><div class="sub-plan-duration">'+(p.expiry_mode==='fixed_date'&&p.fixed_expiry_date?'Access until '+new Date(p.fixed_expiry_date+'T12:00:00+05:30').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):Number(p.duration_days)+' days from purchase')+'</div>'+(p.purchase_limit_total||p.purchase_limit_per_user?'<div class="sub-plan-limits">'+(p.purchase_limit_total?'Limited to '+Number(p.purchase_limit_total).toLocaleString('en-IN')+' total purchases':'No overall purchase cap')+(p.purchase_limit_per_user?' · Max '+p.purchase_limit_per_user+' per account':' · Unlimited per account')+'</div>':'')+'<hr class="sub-plan-divider"><ul class="sub-plan-features">'+((Array.isArray(p.features)&&p.features.length)?p.features:['Account-linked plan details','Clear membership validity','Support for access questions']).map(f=>'<li>'+esc(f)+'</li>').join('')+'</ul><button class="sub-btn '+(p.is_featured?'sub-btn-primary':'sub-btn-light')+'" data-choose-plan="'+p.id+'">Choose plan <span aria-hidden="true">→</span></button></article>').join('');
+ grid.innerHTML=plans.map(p=>'<article class="sub-plan-card '+(p.is_featured?'is-featured':'')+'">'+(p.is_featured?'<span class="sub-plan-ribbon">RECOMMENDED</span>':'')+'<span class="sub-eyebrow">PREPARATION PLAN</span><h3>'+esc(p.name)+'</h3><div class="sub-plan-price" data-plan-price="'+p.id+'">'+money(p.price_minor,p.currency)+' <small>/ plan</small></div><div class="sub-plan-duration">'+(p.expiry_mode==='fixed_date'&&p.fixed_expiry_date?'Access until '+new Date(p.fixed_expiry_date+'T12:00:00+05:30').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):Number(p.duration_days)+' days from purchase')+'</div>'+(p.purchase_limit_total||p.purchase_limit_per_user?'<div class="sub-plan-limits">'+(p.purchase_limit_total?'Limited to '+Number(p.purchase_limit_total).toLocaleString('en-IN')+' total purchases':'No overall purchase cap')+(p.purchase_limit_per_user?' · Max '+p.purchase_limit_per_user+' per account':' · Unlimited per account')+'</div>':'')+'<hr class="sub-plan-divider"><ul class="sub-plan-features">'+((Array.isArray(p.features)&&p.features.length)?p.features:['Account-linked plan details','Clear membership validity','Support for access questions']).map(f=>'<li>'+esc(f)+'</li>').join('')+'</ul><button class="sub-btn '+(p.is_featured?'sub-btn-primary':'sub-btn-light')+'" data-choose-plan="'+p.id+'">Choose plan <span aria-hidden="true">→</span></button></article>').join('');
+ 
+ function renderCouponPrices(){
+  if(!grid)return;
+  plans.forEach(plan=>{
+   const card=grid.querySelector('[data-plan-price="'+plan.id+'"]')?.closest('.sub-plan-card');
+   const price=card?.querySelector('[data-plan-price]');
+   if(!card||!price)return;
+   const preview=couponPreviewByPlan.get(plan.id);
+   card.classList.toggle('has-coupon-discount',!!preview&&Number(preview.discount_minor)>0);
+   card.classList.toggle('coupon-not-eligible',!!appliedCouponCode&&!preview);
+   const base=money(plan.price_minor,plan.currency);
+   if(preview&&Number(preview.discount_minor)>0){
+    price.innerHTML='<span class="sub-price-original">'+base+'</span><strong class="sub-price-discounted">'+money(preview.total_minor,preview.currency||plan.currency)+'</strong><small>/ plan</small><span class="sub-coupon-saved">You save '+money(preview.discount_minor,preview.currency||plan.currency)+'</span>';
+    price.classList.remove('coupon-price-flash');
+    void price.offsetWidth;
+    price.classList.add('coupon-price-flash');
+   }else{
+    price.innerHTML=base+' <small>/ plan</small>';
+   }
+   let note=card.querySelector('.sub-coupon-plan-note');
+   if(appliedCouponCode&&!preview){
+    if(!note){note=document.createElement('p');note.className='sub-coupon-plan-note';price.insertAdjacentElement('afterend',note);}
+    note.textContent='This coupon is not valid for this plan.';
+   }else if(note)note.remove();
+  });
+ }
+
  async function checkPendingOrder(btn){
   const orderId=btn.dataset.pendingOrderId;
   if(!orderId)return false;
@@ -61,9 +137,14 @@ window.initPremiumPurchase = async (root=document) => {
  grid.querySelectorAll('[data-choose-plan]').forEach(btn=>btn.addEventListener('click',async()=>{
   if(!user){window.location.href='login.html?redirect=premium.html';return;}
   if(btn.dataset.pendingOrderId){await checkPendingOrder(btn);return;}
+  const planId=btn.dataset.choosePlan;
+  if(appliedCouponCode&&!couponPreviewByPlan.has(planId)){
+   message('This coupon is not valid for the selected plan. Choose an eligible plan or remove the coupon.',true);
+   return;
+  }
   btn.disabled=true;btn.textContent='Preparing secure checkout…';
   try{
-   const {data,error}=await client.functions.invoke('create-checkout',{body:{plan_id:btn.dataset.choosePlan,...(appliedCouponCode?{coupon_code:appliedCouponCode}:{})}});
+   const {data,error}=await client.functions.invoke('create-checkout',{body:{plan_id:planId,...(appliedCouponCode?{coupon_code:appliedCouponCode}:{})}});
    if(error)throw error;
    if(data?.mode==='free'){
     const order=data.order||{};

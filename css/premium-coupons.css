@@ -1,0 +1,13 @@
+/* Secure, plan-specific coupon feedback */
+.premium-right .sub-plan-price{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 9px}
+.premium-right .sub-plan-price .sub-price-original{color:#8b96a8;font-size:.58em;font-weight:650;text-decoration:line-through;letter-spacing:0}
+.premium-right .sub-plan-price .sub-price-discounted{color:#087f5b;font-size:1em;font-weight:950;letter-spacing:-.055em}
+.premium-right .sub-plan-price .sub-coupon-saved{flex-basis:100%;color:#087f5b;font-size:.68rem;font-weight:800;letter-spacing:0}
+.premium-right .sub-plan-price.coupon-price-flash{animation:coupon-price-glow .9s ease-out}
+.premium-right .sub-plan-card.has-coupon-discount{border-color:#21a67a;background:linear-gradient(145deg,#f0fdf7,#fff 68%);box-shadow:0 0 0 3px #21a67a20,0 12px 28px #0b8b6020}
+.premium-right .sub-plan-card.coupon-not-eligible{opacity:.88}
+.premium-right .sub-coupon-plan-note{margin:7px 0 0;color:#9a5b12;font-size:.72rem;font-weight:700}
+.premium-coupon button:disabled{opacity:.65;cursor:wait}
+.premium-coupon-note[aria-invalid="true"]{color:#b42345}
+@keyframes coupon-price-glow{0%{transform:scale(1);filter:brightness(1)}25%{transform:scale(1.08);filter:brightness(1.15);text-shadow:0 0 18px #34d39999}65%{transform:scale(1.035)}100%{transform:scale(1);filter:brightness(1)}}
+@media(prefers-reduced-motion:reduce){.premium-right .sub-plan-price.coupon-price-flash{animation:none}}
