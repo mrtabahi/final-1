@@ -3,6 +3,7 @@
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money = (minor, currency='INR') => new Intl.NumberFormat('en-IN',{style:'currency',currency,maximumFractionDigits:2}).format(Number(minor||0)/100);
+  const dateTimeIST = value => value ? new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'medium',timeZone:'Asia/Kolkata'}).format(new Date(value)) : 'Not available';
   let plans = [], candidates = [], memberships = [], editingId = null;
   const notify = (message, error=false) => { const el=$('subscription-admin-message'); if(el){el.textContent=message;el.className='sub-admin-message'+(error?' is-error':' is-success');} };
   const client = () => (typeof supabaseClient !== 'undefined' ? supabaseClient : window.supabaseClient);
@@ -12,9 +13,10 @@
     const {data,error}=await client().from('subscription_plans').select('*').order('sort_order').order('created_at');
     if(error) throw error;
     plans=data||[];
-    box.innerHTML=plans.length?plans.map(p=>'<article class="sub-admin-plan"><div class="sub-admin-plan-main"><span class="sub-admin-status '+(p.is_active?'is-active':'')+'">'+(p.is_active?'Public · Active':'Draft · Hidden')+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.tagline||p.description||'No short description yet')+'</p><strong>'+money(p.price_minor,p.currency)+' <small>/ '+(p.expiry_mode==='fixed_date'?'Access until '+new Date(p.fixed_expiry_date+'T12:00:00+05:30').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):Number(p.duration_days)+' days from purchase')+'</small></strong><small>'+(p.purchase_limit_total?'Max '+Number(p.purchase_limit_total).toLocaleString('en-IN')+' total purchases':'Unlimited total purchases')+' · '+(p.purchase_limit_per_user?'Max '+p.purchase_limit_per_user+' per account':'Unlimited per account')+'</small><small>'+((Array.isArray(p.features)?p.features:[]).length)+' listed features</small></div><div class="sub-admin-plan-actions"><button class="admin-btn admin-btn-secondary" data-edit-plan="'+p.id+'">Edit</button><button class="admin-btn '+(p.is_active?'admin-btn-secondary':'admin-btn-primary')+'" data-toggle-plan="'+p.id+'">'+(p.is_active?'Unpublish':'Publish')+'</button></div></article>').join(''):'<div class="admin-empty">No plans yet. Create your first plan using the form.</div>';
+    box.innerHTML=plans.length?plans.map(p=>'<article class="sub-admin-plan"><div class="sub-admin-plan-main"><span class="sub-admin-status '+(p.is_active?'is-active':'')+'">'+(p.is_active?'Public · Active':'Draft · Hidden')+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.tagline||p.description||'No short description yet')+'</p><strong>'+money(p.price_minor,p.currency)+' <small>/ '+(p.expiry_mode==='fixed_date'?'Access until '+new Date(p.fixed_expiry_date+'T12:00:00+05:30').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):Number(p.duration_days)+' days from purchase')+'</small></strong><small>'+(p.purchase_limit_total?'Max '+Number(p.purchase_limit_total).toLocaleString('en-IN')+' total purchases':'Unlimited total purchases')+' · '+(p.purchase_limit_per_user?'Max '+p.purchase_limit_per_user+' per account':'Unlimited per account')+'</small><small>'+((Array.isArray(p.features)?p.features:[]).length)+' listed features</small></div><div class="sub-admin-plan-actions"><button class="admin-btn admin-btn-secondary" data-edit-plan="'+p.id+'">Edit</button><button class="admin-btn '+(p.is_active?'admin-btn-secondary':'admin-btn-primary')+'" data-toggle-plan="'+p.id+'">'+(p.is_active?'Unpublish':'Publish')+'</button><button class="admin-btn admin-btn-danger" data-delete-plan="'+p.id+'">Delete</button></div></article>').join(''):'<div class="admin-empty">No plans yet. Create your first plan using the form.</div>';
     box.querySelectorAll('[data-edit-plan]').forEach(b=>b.addEventListener('click',()=>editPlan(b.dataset.editPlan)));
     box.querySelectorAll('[data-toggle-plan]').forEach(b=>b.addEventListener('click',()=>togglePlan(b.dataset.togglePlan)));
+    box.querySelectorAll('[data-delete-plan]').forEach(b=>b.addEventListener('click',()=>deletePlan(b.dataset.deletePlan)));
   }
   function editPlan(id) {
     const p=plans.find(x=>x.id===id); if(!p)return;
@@ -47,19 +49,36 @@
     try{const {error}=await client().from('subscription_plans').update({is_active:!p.is_active,updated_at:new Date().toISOString()}).eq('id',id);if(error)throw error;notify(!p.is_active?'Plan published to the public pricing page.':'Plan unpublished from the public pricing page.');await loadPlans();}
     catch(err){console.error(err);notify(err.message||'Could not update plan status.',true);}
   }
+  async function deletePlan(id) {
+    const p=plans.find(x=>x.id===id);if(!p)return;
+    if(!confirm('Permanently delete plan "'+p.name+'"? Only plans with no purchase or membership history can be deleted. Referenced plans must be unpublished to preserve records.'))return;
+    try{
+      const [orders,subs]=await Promise.all([
+        client().from('orders').select('id',{count:'exact',head:true}).eq('plan_id',id),
+        client().from('user_subscriptions').select('id',{count:'exact',head:true}).eq('plan_id',id)
+      ]);
+      if(orders.error)throw orders.error;if(subs.error)throw subs.error;
+      if((orders.count||0)+(subs.count||0)>0){notify('Cannot delete: this plan has '+(orders.count||0)+' order(s) and '+(subs.count||0)+' membership record(s). Unpublish it to preserve purchase history.',true);return;}
+      const {error}=await client().from('subscription_plans').delete().eq('id',id);if(error)throw error;
+      if(editingId===id)resetForm();notify('Plan deleted.');await loadPlans();
+    }catch(err){console.error(err);notify(err.message||'Could not delete plan.',true);}
+  }
   async function loadMembershipTools() {
     const select=$('sub-member-candidate'); if(!select)return;
     const [people,plansResult,subs]=await Promise.all([
       client().from('profiles').select('id,full_name,email,phone').order('full_name').limit(1000),
       client().from('subscription_plans').select('id,name,duration_days,is_active,expiry_mode,fixed_expiry_date').order('sort_order'),
-      client().from('user_subscriptions').select('id,user_id,plan_id,status,starts_at,ends_at,admin_note,profiles(full_name,email,phone),subscription_plans(name)').order('created_at',{ascending:false}).limit(100)
+      client().rpc('admin_recent_memberships')
     ]);
     if(people.error)throw people.error;if(plansResult.error)throw plansResult.error;if(subs.error)throw subs.error;
     candidates=people.data||[];
     select.innerHTML='<option value="">Choose candidate…</option>'+candidates.map(p=>'<option value="'+p.id+'">'+esc(p.full_name||p.email||p.id)+'</option>').join('');
     $('sub-member-plan').innerHTML='<option value="">Choose plan…</option>'+(plansResult.data||[]).map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+(p.is_active?'Published':'Draft')+(p.expiry_mode==='fixed_date'&&p.fixed_expiry_date?' · Expires '+esc(p.fixed_expiry_date):'')+'</option>').join('');
-    memberships=subs.data||[]; const box=$('subscription-member-list');
-    box.innerHTML=(subs.data||[]).length?(subs.data||[]).map(s=>'<article class="sub-admin-member"><div><strong>'+esc(s.profiles?.full_name||'Candidate')+'</strong><p>'+esc(s.profiles?.email||'Email not available')+'</p><p>'+esc(s.subscription_plans?.name||'Plan')+' · '+esc(s.status)+'</p><small>'+esc(s.starts_at?new Date(s.starts_at).toLocaleDateString():'Start not set')+' → '+esc(s.ends_at?new Date(s.ends_at).toLocaleDateString():'No expiry')+'</small><div class="sub-member-actions"><label>Expiry <input type="date" data-expiry="'+s.id+'" value="'+(s.ends_at?new Date(s.ends_at).toISOString().slice(0,10):'')+'"></label><button type="button" class="admin-btn admin-btn-secondary" data-save-membership="'+s.id+'">Save expiry</button><button type="button" class="admin-btn admin-btn-secondary" data-reset-member="'+s.user_id+'">Send password reset</button><button type="button" class="admin-btn admin-btn-danger" data-expire-membership="'+s.id+'">Expire access</button></div></div><span class="sub-admin-status '+(s.status==='active'&&(!s.ends_at||new Date(s.ends_at)>new Date())?'is-active':'')+'">'+esc(s.status==='active'&&s.ends_at&&new Date(s.ends_at)<=new Date()?'expired':s.status)+'</span></article>').join(''):'<div class="admin-empty">No subscription records yet.</div>';
+    memberships=(subs.data||[]).map(row=>({...row,id:row.membership_id})); const box=$('subscription-member-list');
+    box.innerHTML=memberships.length?memberships.map(s=>{
+      const purchase=s.order_created_at?'<p><strong>Purchased:</strong> '+esc(dateTimeIST(s.order_created_at))+' IST · '+esc(s.order_status||'order')+' · '+esc(money(s.order_total_minor,s.order_currency||'INR'))+'</p>':'<p><strong>Purchase:</strong> Administrative grant / no linked checkout order</p>';
+      return '<article class="sub-admin-member"><div><strong>'+esc(s.candidate_name||'Candidate')+'</strong><p>'+esc(s.candidate_email||'Email not available')+'</p><p>'+esc(s.plan_name||'Plan')+' · '+esc(s.status)+'</p>'+purchase+'<small>Membership: '+esc(s.starts_at?dateTimeIST(s.starts_at):'Start not set')+' → '+esc(s.ends_at?dateTimeIST(s.ends_at):'No expiry')+'</small><div class="sub-member-actions"><label>Expiry <input type="date" data-expiry="'+s.membership_id+'" value="'+(s.ends_at?new Date(s.ends_at).toISOString().slice(0,10):'')+'"></label><button type="button" class="admin-btn admin-btn-secondary" data-save-membership="'+s.membership_id+'">Save expiry</button><button type="button" class="admin-btn admin-btn-secondary" data-reset-member="'+s.user_id+'">Send password reset</button><button type="button" class="admin-btn admin-btn-danger" data-expire-membership="'+s.membership_id+'">Expire access</button></div></div><span class="sub-admin-status '+(s.status==='active'&&(!s.ends_at||new Date(s.ends_at)>new Date())?'is-active':'')+'">'+esc(s.status==='active'&&s.ends_at&&new Date(s.ends_at)<=new Date()?'expired':s.status)+'</span></article>';
+    }).join(''):'<div class="admin-empty">No subscription records yet.</div>';
     box.querySelectorAll('[data-save-membership]').forEach(b=>b.addEventListener('click',()=>saveMembershipExpiry(b.dataset.saveMembership)));
     box.querySelectorAll('[data-expire-membership]').forEach(b=>b.addEventListener('click',()=>expireMembership(b.dataset.expireMembership)));
     box.querySelectorAll('[data-reset-member]').forEach(b=>b.addEventListener('click',()=>sendPasswordReset(b.dataset.resetMember)));
