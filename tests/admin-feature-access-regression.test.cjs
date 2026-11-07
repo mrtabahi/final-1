@@ -107,6 +107,6 @@ test('paid test list and direct URLs use authoritative database entitlement chec
   assert.match(gate, /requestedTestAuthorized=testAccess\?\.data===true/);
   assert.doesNotMatch(gate, /const paidTestCard=a\.closest/);
   assert.match(page, /test-list\.js\?v=20261105-premium-plans-redirect1/);
-  assert.match(page, /feature-access\.js\?v=20261105-instant-access1/);
-  assert.match(start, /feature-access\.js\?v=20261105-instant-access1/);
+  assert.match(page, /feature-access\.js\?v=20261107-premium-modal-coupon1/);
+  assert.match(start, /feature-access\.js\?v=20261107-premium-modal-coupon1/);
 });
