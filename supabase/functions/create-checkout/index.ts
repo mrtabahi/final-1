@@ -56,11 +56,30 @@ Deno.serve(async (req: Request) => {
   });
   if (orderError || !order) {
     console.warn("Checkout order creation rejected.", orderError?.code);
-    return json(400, { error: orderError?.message || "Unable to create checkout order." });
+    const minimumAmountError = orderError?.code === "23514" &&
+      String(orderError?.message || "").includes("orders_razorpay_minimum_amount_check");
+    return json(400, {
+      error: minimumAmountError
+        ? "This coupon leaves less than ₹1 to pay. Razorpay requires a minimum payment of ₹1. Please choose a higher-priced eligible plan or adjust the coupon."
+        : orderError?.message || "Unable to create checkout order.",
+    });
   }
 
   if (order.status === "free" || Number(order.total_minor) === 0) {
     return json(200, { mode: "free", order });
+  }
+
+  // Razorpay requires a minimum INR order amount of 100 paise (₹1).
+  // Never create a provider order for a smaller non-zero balance.
+  if (order.currency === "INR" && Number(order.total_minor) > 0 && Number(order.total_minor) < 100) {
+    const { error: closeOrderError } = await userClient.from("orders")
+      .update({ status: "failed" })
+      .eq("id", order.order_id)
+      .eq("status", "pending");
+    if (closeOrderError) console.error("Could not close below-minimum checkout order.", closeOrderError.code);
+    return json(400, {
+      error: "This coupon leaves less than ₹1 to pay. Razorpay requires a minimum payment of ₹1. Please choose a higher-priced eligible plan or adjust the coupon.",
+    });
   }
   if (order.status !== "pending" || !order.order_id || !Number.isSafeInteger(Number(order.total_minor)) || Number(order.total_minor) <= 0) {
     return json(409, { error: "This order cannot enter paid checkout." });
@@ -101,7 +120,7 @@ Deno.serve(async (req: Request) => {
     if (!response.ok || typeof providerOrder.id !== "string" ||
         Number(providerOrder.amount) !== Number(order.total_minor) ||
         providerOrder.currency !== order.currency) {
-      console.error("Razorpay order creation failed.", response.status, providerOrder?.error?.code);
+      console.error("Razorpay order creation failed.", response.status, providerOrder?.error?.code, providerOrder?.error?.description);
       await serviceClient.from("orders").update({ status: "failed" })
         .eq("id", order.order_id).eq("status", "pending");
       return json(502, { error: "The payment provider could not create checkout. Please try again." });
