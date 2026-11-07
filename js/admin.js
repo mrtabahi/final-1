@@ -1961,6 +1961,7 @@ async function loadDashboard() {
 
                         <tr>
 
+                            <th>Photo</th>
                             <th>Candidate</th>
                             <th>Test</th>
                             <th>Gross WPM</th>
@@ -1980,6 +1981,10 @@ async function loadDashboard() {
                         ${attempts.map(attempt => `
 
                             <tr>
+
+                                <td class="attempt-avatar-cell">
+                                    ${attempt.profiles?.avatar_url ? '<img class="attempt-avatar-image" src="' + esc(attempt.profiles.avatar_url) + '" alt="" loading="lazy">' : esc(String(attempt.candidate_name || "U").trim().slice(0,1).toUpperCase())}
+                                </td>
 
                                 <td>
                                     <strong>
