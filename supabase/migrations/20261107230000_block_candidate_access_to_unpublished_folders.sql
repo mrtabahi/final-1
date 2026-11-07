@@ -25,3 +25,8 @@ $function$;
 
 comment on function public.get_test_for_candidate(uuid) is
   'Returns only active tests in active folders (or folderless tests) that the candidate is entitled to access.';
+
+-- Candidate test loading requires an authenticated session; do not expose this
+-- SECURITY DEFINER RPC to anon/PUBLIC. Preserve authenticated candidate/admin access.
+revoke execute on function public.get_test_for_candidate(uuid) from public, anon;
+grant execute on function public.get_test_for_candidate(uuid) to authenticated;
