@@ -65,7 +65,7 @@
       else node.textContent=initials(name);
     });
     decorate(document.querySelector('a.account-nav-signed-in'), url, name, 28, 'inside-start');
-    decorate(document.getElementById('disp-candidate-name'), url, name, 34, 'inside-start');
+    decorate(document.getElementById('disp-candidate-avatar-slot'), url, name, 34, 'inside-start');
     const reportName = document.getElementById('res-candidate-name');
     if (reportName && reportName.closest('.result-pdf-meta')) {
       const meta = reportName.closest('.result-pdf-meta');
@@ -183,5 +183,9 @@
     } catch(error) { console.debug('Profile avatar unavailable:',error?.message||error); }
   }
   window.DHProfileAvatar = { init, getProfile:()=>currentProfile, refresh:renderSiteIdentity, avatarNode };
+  if (typeof MutationObserver !== 'undefined' && document.body) {
+    const navObserver = new MutationObserver(() => renderSiteIdentity());
+    navObserver.observe(document.body, {subtree:true, attributes:true, attributeFilter:['class']});
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
