@@ -25,9 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch { return null; }
   }
   function renderCategories(folders, refreshing=false) {
-    const selfTestCard = `<a class="category-card category-card-self" href="self-test.html"><div class="category-thumb"><img src="self-test-thumbnail.jpg" alt="" loading="lazy"></div><div class="category-copy"><h2>Self Test</h2><p>Paste your own passage, set a timer and practise with your preferred controls.</p><div class="category-foot"><span>Start personal practice <span aria-hidden="true">→</span></span><span class="category-count">Custom text</span></div></div></a>`;
     const cards = folders.map(folder => `<a class="category-card" data-folder-id="${esc(folder.id)}" href="test-list.html?folder=${encodeURIComponent(String(folder.id))}"><div class="category-thumb" aria-hidden="true">${folder.thumbnail_url ? `<img src="${esc(folder.thumbnail_url)}" alt="" loading="lazy">` : `<span class="category-symbol">${esc(chooseSymbol(folder.name))}</span>`}</div><div class="category-copy"><h2>${esc(folder.name)}</h2><p>${esc(folder.description || 'Practice typing with a set of guided tests.')}</p><div class="category-foot"><span>Explore tests <span aria-hidden="true">→</span></span><span class="category-count">${folder.count} ${folder.count===1?'test':'tests'}</span></div></div></a>`).join('');
-    box.innerHTML = selfTestCard + cards;
+    box.innerHTML = cards;
     box.dataset.cacheState = refreshing ? 'refreshing' : 'fresh';
   }
   const cachedFolders = readCache();
