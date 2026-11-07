@@ -1,0 +1,34 @@
+/* Payments & Coupon Center — focused admin workspace polish */
+.admin-ledger-summary,.admin-roles-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 18px}
+.admin-ledger-stat{min-width:0;padding:16px;border:1px solid #e3e9f3;border-radius:16px;background:linear-gradient(145deg,#fff,#f7f9ff);box-shadow:0 5px 18px rgba(25,42,75,.045)}
+.admin-ledger-stat span{display:block;color:#64748b;font-size:.78rem;font-weight:650}
+.admin-ledger-stat strong{display:block;margin-top:7px;color:#14213b;font-size:1.35rem;letter-spacing:-.035em}
+.admin-ledger-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0}
+.admin-ledger-toolbar input{flex:1 1 260px;min-width:180px}
+.admin-ledger-table-wrap,.admin-table-wrap{overflow:auto;border:1px solid #e6ebf3;border-radius:14px;background:#fff}
+.admin-ledger-table{width:100%;min-width:850px;border-collapse:separate;border-spacing:0}
+.admin-ledger-table th{position:sticky;top:0;z-index:1;background:#f7f9fd;color:#64748b;font-size:.72rem;letter-spacing:.045em;text-transform:uppercase;white-space:nowrap}
+.admin-ledger-table th,.admin-ledger-table td{padding:13px 14px;border-bottom:1px solid #edf1f6;text-align:left;vertical-align:middle}
+.admin-ledger-table tbody tr:hover{background:#fafbff}
+.admin-ledger-status{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid #e4e9f1;border-radius:999px;background:#f7f8fb;color:#596579;font-size:.72rem;font-weight:750;text-transform:capitalize;white-space:nowrap}
+.admin-ledger-status.is-paid,.admin-ledger-status.is-free,.admin-ledger-status.is-succeeded{border-color:#b8efd5;background:#eafbf2;color:#087447}
+.admin-ledger-status.is-pending{border-color:#f5dfaa;background:#fff8e7;color:#93600b}
+.admin-ledger-status.is-failed,.admin-ledger-status.is-refunded,.admin-ledger-status.is-cancelled{border-color:#f4c7c7;background:#fff1f1;color:#b42318}
+.admin-coupon-panel{border:1px solid #e5eaf4;border-radius:18px;background:linear-gradient(180deg,#fff,#fbfcff)}
+.admin-coupon-panel>.admin-panel-heading{padding:2px 2px 14px}
+#admin-coupon-workspace{display:grid;gap:16px}
+#admin-coupon-workspace>.admin-panel{border:1px solid #e7ebf3;border-radius:16px;background:#fff;box-shadow:0 5px 20px rgba(26,43,75,.04)}
+#coupon-form .admin-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#coupon-form .admin-form-field-wide{grid-column:1/-1}
+#coupon-form .admin-input{width:100%;min-height:42px;border:1px solid #dce3ef;border-radius:10px;background:#fff;padding:10px 12px;color:#17243b}
+#coupon-form .admin-input:focus,.admin-ledger-toolbar input:focus{outline:3px solid rgba(99,102,241,.13);border-color:#818cf8}
+#coupon-form select[multiple]{min-height:132px}
+#coupon-form .admin-field-help{display:block;margin-top:6px;color:#718096;font-size:.76rem;line-height:1.45}
+#coupon-form .admin-check{display:flex;align-items:center;gap:9px;margin:12px 0;color:#334155;font-weight:650}
+#coupon-form .admin-modal-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:12px}
+#coupon-list .admin-ledger-table{min-width:980px}
+#coupon-list td strong{letter-spacing:.035em}
+#coupon-list td small{color:#78869b;font-size:.73rem}
+#coupon-list [data-coupon-edit],#coupon-list [data-coupon-toggle]{padding:7px 10px;font-size:.78rem}
+@media(max-width:760px){.admin-ledger-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#coupon-form .admin-form-grid{grid-template-columns:1fr}#coupon-form .admin-form-field-wide{grid-column:auto}.admin-ledger-toolbar>*{width:100%}.admin-ledger-toolbar .admin-btn{width:auto}}
+@media(max-width:420px){.admin-ledger-summary{gap:8px}.admin-ledger-stat{padding:12px}.admin-ledger-stat strong{font-size:1.12rem}}
