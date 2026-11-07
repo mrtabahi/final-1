@@ -131,10 +131,20 @@
       output.toBlob(async blob=>{if(!blob){status('Could not prepare this photo. Try again.',true);return;}close();await onSave(blob);},'image/jpeg',.88);
     };
   }
+  function storagePathFromPublicUrl(url) {
+    if (!url) return null;
+    try {
+      const pathname = new URL(url, window.location.origin).pathname;
+      const marker = '/storage/v1/object/public/' + BUCKET + '/';
+      const index = pathname.indexOf(marker);
+      return index >= 0 ? decodeURIComponent(pathname.slice(index + marker.length)) : null;
+    } catch { return null; }
+  }
   async function saveAvatar(blob) {
-    const path = currentUser.id + '/avatar.jpg';
+    const path = currentUser.id + '/' + Date.now() + '.jpg';
+    const oldPath = storagePathFromPublicUrl(currentProfile.avatar_url);
     status('Uploading and saving your profile photo…');
-    const { error: uploadError } = await client.storage.from(BUCKET).upload(path, blob, { contentType:'image/jpeg', cacheControl:'3600', upsert:true });
+    const { error: uploadError } = await client.storage.from(BUCKET).upload(path, blob, { contentType:'image/jpeg', cacheControl:'3600', upsert:false });
     if (uploadError) throw uploadError;
     const url = client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
     const { data, error } = await client.from('profiles').update({ avatar_url:url }).eq('id',currentUser.id).select('id,avatar_url').maybeSingle();
@@ -143,6 +153,10 @@
       throw error || new Error('Profile photo could not be saved to your account.');
     }
     currentProfile.avatar_url = cacheBust(url);
+    if (oldPath && oldPath !== path) {
+      const { error: cleanupError } = await client.storage.from(BUCKET).remove([oldPath]);
+      if (cleanupError) console.warn('Previous avatar cleanup failed:', cleanupError);
+    }
     setPreview(currentProfile.avatar_url,currentProfile.full_name);
     renderSiteIdentity();
     status('Profile photo updated successfully.');
@@ -150,11 +164,13 @@
   async function deleteAvatar() {
     if (!window.confirm || !await window.confirm('Delete your profile photo? Your name and account details will remain unchanged.')) return;
     status('Removing profile photo…');
-    const path=currentUser.id+'/avatar.jpg';
+    const oldPath = storagePathFromPublicUrl(currentProfile.avatar_url);
     const { error }=await client.from('profiles').update({avatar_url:null}).eq('id',currentUser.id);
     if(error)throw error;
-    const { error: storageError }=await client.storage.from(BUCKET).remove([path]);
-    if(storageError)console.warn('Avatar object cleanup failed:',storageError);
+    if (oldPath) {
+      const { error: storageError }=await client.storage.from(BUCKET).remove([oldPath]);
+      if(storageError)console.warn('Avatar object cleanup failed:',storageError);
+    }
     currentProfile.avatar_url='';
     setPreview('',currentProfile.full_name);
     renderSiteIdentity();
