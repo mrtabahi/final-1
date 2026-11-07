@@ -4,3 +4,5 @@
 #disp-candidate-avatar-slot{display:inline-flex;align-items:center;vertical-align:middle;margin-right:7px}
 #disp-candidate-avatar-slot .dh-avatar{display:inline-grid}
 .dh-result-avatar-column{break-inside:avoid;page-break-inside:avoid}
+
+.candidate-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}.leaderboard-avatar-cell{width:58px;text-align:center;vertical-align:middle}.leaderboard-avatar-cell .dh-avatar{margin:auto}
