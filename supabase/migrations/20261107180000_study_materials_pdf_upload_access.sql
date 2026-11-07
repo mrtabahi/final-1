@@ -14,7 +14,7 @@ alter table public.study_materials
   check (
     (storage_path is not null and char_length(trim(storage_path)) > 0)
     or
-    (telegram_url is not null and telegram_url ~ '^https://(t\\.me|telegram\\.me)/[^[:space:]]+$')
+    (telegram_url is not null and telegram_url ~ '^https://(t[.]me|telegram[.]me)/[^[:space:]]+$')
   );
 
 create index if not exists study_materials_public_order_idx
