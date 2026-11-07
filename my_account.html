@@ -4,7 +4,136 @@
 <link rel="apple-touch-icon" href="/logo.png?v=20261026-branding2">
 <meta name="google-adsense-account" content="ca-pub-2757719583090087">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<script>document.documentElement.classList.add("account-auth-pending");</script><style>html.account-auth-pending body{visibility:hidden!important}</style>
+<script>document.documentElement.classList.add("account-auth-pending");</script><style>html.account-auth-pending body{visibility:hidden!important}
+/* Premium Membership Center — presentation-only enhancement */
+.account-page .account-membership-card{
+ position:relative;isolation:isolate;overflow:hidden;
+ margin:clamp(18px,2.4vw,28px) auto 22px;
+ padding:clamp(23px,3.2vw,38px);
+ border:1px solid rgba(119,145,214,.32);border-radius:28px;
+ background:
+  radial-gradient(ellipse at 92% 8%,rgba(99,102,241,.18),transparent 30%),
+  radial-gradient(ellipse at 7% 100%,rgba(6,182,212,.12),transparent 34%),
+  linear-gradient(135deg,#fff 0%,#f7f8ff 48%,#eef7ff 100%);
+ box-shadow:0 24px 58px rgba(37,52,105,.12),0 4px 12px rgba(37,52,105,.05),inset 0 1px 0 rgba(255,255,255,.95);
+}
+.account-page .account-membership-card:before{
+ content:"";position:absolute;z-index:-1;inset:0 0 auto;height:5px;
+ background:linear-gradient(90deg,#4338ca 0%,#7c3aed 35%,#06b6d4 72%,#38bdf8 100%);
+}
+.account-page .account-membership-card:after{
+ content:"";position:absolute;z-index:-1;right:-58px;top:75px;width:220px;height:220px;border-radius:50%;
+ border:1px solid rgba(99,102,241,.12);
+ box-shadow:0 0 0 22px rgba(99,102,241,.035),0 0 0 48px rgba(6,182,212,.025),0 0 0 78px rgba(99,102,241,.018);
+ pointer-events:none;animation:membershipOrbit 16s ease-in-out infinite alternate;
+}
+.account-page .account-membership-card .sub-section-head{
+ position:relative;z-index:1;align-items:center;margin-bottom:23px;gap:22px;
+}
+.account-page .account-membership-card .sub-eyebrow{
+ display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;
+ color:#5145c8;font-size:.7rem;letter-spacing:.18em;font-weight:950;
+}
+.account-page .account-membership-card .sub-eyebrow:before{
+ content:"";width:8px;height:8px;border-radius:50%;background:#14b8a6;box-shadow:0 0 0 4px rgba(20,184,166,.13);
+}
+.account-page .account-membership-card #account-membership-title{
+ margin:0 0 8px;color:#14213d;font-size:clamp(1.65rem,3.2vw,2.25rem);
+ font-weight:900;letter-spacing:-.055em;line-height:1.12;
+}
+.account-page .account-membership-card .sub-section-head p{
+ max-width:650px;margin:0;color:#586984;font-size:.96rem;line-height:1.7;
+}
+.account-page .account-membership-card .sub-btn-primary{
+ position:relative;overflow:hidden;flex:0 0 auto;min-height:50px;padding:13px 20px;
+ border:1px solid rgba(255,255,255,.24);border-radius:15px;
+ color:#fff;background:linear-gradient(112deg,#5636cf 0%,#7436c8 46%,#d14b76 100%);
+ box-shadow:0 12px 26px rgba(99,55,190,.24),inset 0 1px 0 rgba(255,255,255,.2);
+ transition:transform .22s ease,box-shadow .22s ease,filter .22s ease;
+}
+.account-page .account-membership-card .sub-btn-primary:after{
+ content:"";position:absolute;inset:0;transform:translateX(-120%);
+ background:linear-gradient(105deg,transparent 25%,rgba(255,255,255,.24) 48%,transparent 70%);
+ transition:transform .65s ease;
+}
+.account-page .account-membership-card .sub-btn-primary:hover{
+ transform:translateY(-3px);filter:saturate(1.12);
+ box-shadow:0 17px 32px rgba(99,55,190,.3);
+}
+.account-page .account-membership-card .sub-btn-primary:hover:after{transform:translateX(120%)}
+.account-page .account-membership-card .sub-current-state{
+ position:relative;z-index:1;display:block;min-height:72px;padding:17px 20px 17px 57px;
+ border:1px solid rgba(125,148,205,.25);border-radius:17px;
+ background:linear-gradient(110deg,rgba(239,246,255,.96),rgba(245,243,255,.94) 58%,rgba(236,254,255,.9));
+ color:#52627e;line-height:1.7;box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+}
+.account-page .account-membership-card .sub-current-state:before{
+ content:"✦";position:absolute;left:18px;top:19px;display:grid;place-items:center;
+ width:26px;height:26px;border-radius:9px;color:#fff;font-size:.9rem;
+ background:linear-gradient(140deg,#4f46e5,#0891b2);box-shadow:0 5px 12px rgba(79,70,229,.2);
+}
+.account-page .account-membership-card .sub-current-state strong{
+ color:#172554;font-size:1rem;font-weight:900;
+}
+.account-page .account-membership-details{position:relative;z-index:1;margin-top:16px}
+.account-page .account-membership-summary{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;
+}
+.account-page .account-membership-summary article{
+ position:relative;overflow:hidden;min-height:112px;align-content:start;gap:9px;
+ padding:18px 18px 16px;border:1px solid rgba(142,160,200,.3);border-radius:17px;
+ background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(248,250,255,.95));
+ box-shadow:0 7px 18px rgba(39,57,100,.045),inset 0 1px 0 #fff;
+ transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.account-page .account-membership-summary article:before{
+ content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+ background:linear-gradient(180deg,#6366f1,#06b6d4);opacity:.75;
+}
+.account-page .account-membership-summary article:hover{
+ transform:translateY(-3px);border-color:rgba(99,102,241,.4);
+ box-shadow:0 13px 25px rgba(39,57,100,.09);
+}
+.account-page .account-membership-summary article small{
+ color:#63728e;font-size:.67rem;font-weight:950;letter-spacing:.12em;
+}
+.account-page .account-membership-summary article strong{
+ color:#14213d;font-size:clamp(1.05rem,1.8vw,1.25rem);font-weight:900;letter-spacing:-.025em;
+}
+.account-page .account-membership-summary article span:not(.sub-account-status){
+ color:#71809a;font-size:.8rem;line-height:1.5;
+}
+.account-page .account-membership-summary .sub-account-status{
+ display:inline-flex;align-items:center;gap:6px;width:max-content;
+ padding:6px 11px;border:1px solid #e2e8f0;border-radius:999px;
+ background:#f1f5f9;color:#52627b;font-size:.7rem;font-weight:900;
+}
+.account-page .account-membership-summary .sub-account-status:before{
+ content:"";width:7px;height:7px;border-radius:50%;background:#94a3b8;
+}
+.account-page .account-membership-summary .sub-account-status.is-active{
+ border-color:#a7f3d0;background:#ecfdf5;color:#047857;
+}
+.account-page .account-membership-summary .sub-account-status.is-active:before{
+ background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.13);
+}
+@keyframes membershipOrbit{from{transform:translate3d(0,-8px,0) rotate(-7deg)}to{transform:translate3d(-10px,12px,0) rotate(8deg)}}
+@media(max-width:760px){
+ .account-page .account-membership-card{border-radius:21px;padding:22px 17px}
+ .account-page .account-membership-card .sub-section-head{align-items:flex-start;flex-direction:column}
+ .account-page .account-membership-card .sub-btn-primary{width:100%;box-sizing:border-box}
+ .account-page .account-membership-card:after{right:-130px;top:95px;opacity:.6}
+ .account-page .account-membership-summary{grid-template-columns:1fr}
+ .account-page .account-membership-summary article{min-height:0;padding:16px 17px}
+}
+@media(prefers-reduced-motion:reduce){
+ .account-page .account-membership-card:after{animation:none}
+ .account-page .account-membership-summary article,.account-page .account-membership-card .sub-btn-primary{transition:none}
+ .account-page .account-membership-summary article:hover,.account-page .account-membership-card .sub-btn-primary:hover{transform:none}
+ .account-page .account-membership-card .sub-btn-primary:after{display:none}
+}
+
+</style>
 <title>My Account | Decoding HCM</title>
 <link rel="stylesheet" href="css/main.css?v=20261030-vibrant1"><link rel="stylesheet" href="css/subscription-public.css">
 <style>
