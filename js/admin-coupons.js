@@ -29,30 +29,37 @@
       '<div class="admin-form-field"><label for="coupon-ends">Ends at (optional)</label><input id="coupon-ends" class="admin-input" type="datetime-local"></div>' +
       '<div class="admin-form-field"><label for="coupon-max-uses">Total redemptions</label><input id="coupon-max-uses" class="admin-input" type="number" min="1" max="10000000" step="1" placeholder="Unlimited"></div>' +
       '<div class="admin-form-field"><label for="coupon-max-user">Redemptions per account</label><input id="coupon-max-user" class="admin-input" type="number" min="1" max="1000000" step="1" placeholder="Unlimited"></div>' +
-      '<div class="admin-form-field admin-form-field-wide"><label for="coupon-plans">Eligible plans (empty = all plans)</label><select id="coupon-plans" class="admin-input" multiple size="4"></select></div>' +
+      '<div class="admin-form-field admin-form-field-wide"><label for="coupon-scope">Where can this coupon be used?</label><select id="coupon-scope" class="admin-input"><option value="all_active">All currently active plans</option><option value="selected">Only selected plans</option></select><small class="admin-field-help">“All active plans” saves the current active plan list as an eligibility snapshot. Inactive plans are never offered here.</small><label for="coupon-plans" style="display:block;margin-top:10px">Eligible plans</label><select id="coupon-plans" class="admin-input" multiple size="5" aria-label="Select eligible active plans"></select><small class="admin-field-help" id="coupon-plan-help">All active plans will be selected automatically.</small></div>' +
       '</div><label class="admin-check"><input id="coupon-active" type="checkbox" checked> Active and available for checkout</label>' +
       '<p id="coupon-message" class="admin-form-message" role="status" aria-live="polite"></p>' +
       '<div class="admin-modal-actions"><button type="button" id="coupon-cancel" class="admin-btn admin-btn-secondary" hidden>Cancel edit</button><button type="submit" id="coupon-save" class="admin-btn admin-btn-primary">Create coupon</button></div></form>' +
       '<section class="admin-panel" style="padding:16px;margin:0"><div class="admin-panel-heading"><div><h3>Existing coupons</h3><p>Deactivate codes to stop future use. Past orders keep their discount record.</p></div><button type="button" id="coupon-refresh" class="admin-btn admin-btn-secondary">↻ Refresh</button></div><div id="coupon-list" class="admin-table-wrap"><div class="admin-empty">Loading coupons…</div></div></section>';
     const $ = id => root.querySelector('#' + id);
+    const syncPlanScope = () => {
+      const all=$('coupon-scope').value==='all_active';
+      $('coupon-plans').disabled=all;
+      $('coupon-plan-help').textContent=all?'All '+plans.length+' currently active plan(s) are included.':'Select one or more active plans. Hold Ctrl/Cmd to choose multiple.';
+      $('coupon-plans').querySelectorAll('option').forEach(o=>{if(all)o.selected=true;});
+    };
     const notify = (value,error=false) => { $('coupon-message').textContent=value; $('coupon-message').className='admin-form-message'+(error?' is-error':' is-success'); };
     const reset = () => {
-      editingId=null; $('coupon-form').reset(); $('coupon-type').value='percentage';
+      editingId=null; $('coupon-form').reset(); $('coupon-type').value='percentage'; $('coupon-scope').value='all_active';
       $('coupon-value').max='100'; $('coupon-value').step='1'; $('coupon-value-label').textContent='Discount percentage';
       $('coupon-starts').value=toLocal(new Date().toISOString()); $('coupon-active').checked=true;
       $('coupon-form-title').textContent='Create a coupon'; $('coupon-save').textContent='Create coupon';
       $('coupon-cancel').hidden=true; $('coupon-code').disabled=false;
-      $('coupon-plans').querySelectorAll('option').forEach(o=>o.selected=false);
+      $('coupon-plans').querySelectorAll('option').forEach(o=>o.selected=true); syncPlanScope();
     };
     const load = async () => {
       $('coupon-list').innerHTML='<div class="admin-empty">Loading coupons…</div>';
       const [c,p]=await Promise.all([
         client.from('subscription_coupons').select('*').order('created_at',{ascending:false}).limit(500),
-        client.from('subscription_plans').select('id,name').order('sort_order').order('name')
+        client.from('subscription_plans').select('id,name,price_minor,currency,is_active').eq('is_active',true).order('sort_order').order('name')
       ]);
       if(c.error)throw c.error;if(p.error)throw p.error;
       coupons=c.data||[];plans=p.data||[];
-      $('coupon-plans').innerHTML=plans.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('');
+      $('coupon-plans').innerHTML=plans.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+' · '+esc(money(x.price_minor))+'</option>').join('');
+      syncPlanScope();
       $('coupon-list').innerHTML=coupons.length?
         '<table class="admin-ledger-table"><thead><tr><th>Code</th><th>Discount</th><th>Validity</th><th>Limits</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
         coupons.map(x=>{
@@ -75,7 +82,7 @@
       $('coupon-starts').value=toLocal(x.starts_at);$('coupon-ends').value=toLocal(x.ends_at);
       $('coupon-max-uses').value=x.max_redemptions??'';$('coupon-max-user').value=x.max_redemptions_per_user??'';
       $('coupon-active').checked=!!x.is_active;
-      $('coupon-plans').querySelectorAll('option').forEach(o=>o.selected=(x.plan_ids||[]).includes(o.value));
+      const eligible=new Set(x.plan_ids||[]); const allActive=plans.length>0&&plans.every(p=>eligible.has(p.id)); $('coupon-scope').value=allActive?'all_active':'selected'; $('coupon-plans').querySelectorAll('option').forEach(o=>o.selected=allActive||eligible.has(o.value)); syncPlanScope();
       $('coupon-form-title').textContent='Edit coupon · '+x.code;$('coupon-save').textContent='Save changes';
       $('coupon-cancel').hidden=false;$('coupon-code').scrollIntoView({block:'center',behavior:'smooth'});
     };
@@ -87,6 +94,7 @@
       notify(x.is_active?'Coupon deactivated. Existing orders are unchanged.':'Coupon activated.');
       await load();
     };
+    $('coupon-scope').addEventListener('change',syncPlanScope);
     $('coupon-type').addEventListener('change',()=>{
       const fixed=$('coupon-type').value==='fixed';$('coupon-value').max=fixed?'':'100';
       $('coupon-value').step=fixed?'.01':'1';$('coupon-value-label').textContent=fixed?'Discount amount (₹)':'Discount percentage';
@@ -101,8 +109,8 @@
       const starts=fromLocal($('coupon-starts').value),ends=fromLocal($('coupon-ends').value);
       const maxUses=$('coupon-max-uses').value.trim()===''?null:Number($('coupon-max-uses').value);
       const maxUser=$('coupon-max-user').value.trim()===''?null:Number($('coupon-max-user').value);
-      const planIds=Array.from($('coupon-plans').selectedOptions).map(o=>o.value);
-      if(!/^[A-Z0-9][A-Z0-9_-]{2,39}$/.test(code)||!Number.isSafeInteger(value)||value<=0||
+      const planIds=$('coupon-scope').value==='all_active'?plans.map(p=>p.id):Array.from($('coupon-plans').selectedOptions).map(o=>o.value);
+      if(!/^[A-Z0-9][A-Z0-9_-]{2,39}$/.test(code)||!Number.isSafeInteger(value)||value<=0||planIds.length===0||
         (type==='percentage'&&(!Number.isInteger(raw)||raw>100))||!Number.isSafeInteger(minimum)||minimum<0||
         (maximum!==null&&(!Number.isSafeInteger(maximum)||maximum<=0))||!starts||(ends&&new Date(ends)<=new Date(starts))||
         (maxUses!==null&&(!Number.isInteger(maxUses)||maxUses<1||maxUses>10000000))||
