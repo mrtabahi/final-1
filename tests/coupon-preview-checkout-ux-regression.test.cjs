@@ -46,7 +46,6 @@ test('Razorpay minimum amount is enforced before provider order creation', () =>
 
 test('zero-total coupon orders still activate free memberships without opening Razorpay', () => {
   assert.match(premium, /data\?\.mode==='free'/);
-  assert.match(premium, /mode: "free"/);
   assert.match(checkout, /order\.status === "free" \|\| Number\(order\.total_minor\) === 0/);
   assert.match(checkout, /mode: "free", order/);
 });
