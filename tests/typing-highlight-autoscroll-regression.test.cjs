@@ -140,7 +140,7 @@ test('Main Typing Test loads the shared AuthManager script only once', () => {
 
 test('Fix Accuracy treats the configured maximum error count as inclusive for both formulas', () => {
   const source = fs.readFileSync(path.join(__dirname, '../js/fix-accuracy.js'), 'utf8');
-  assert.ok(source.includes('(currentConfig.maxErrors??bsfScore.allowedErrors)&&crpfScore.totalErrors>(currentConfig.maxErrors??crpfScore.allowedErrors)'));
+  assert.ok(source.includes('bsfScore.totalErrors>(currentConfig.maxErrors??bsfScore.allowedErrors)&&crpfScore.totalErrors>(currentConfig.maxErrors??crpfScore.allowedErrors)'));
   assert.ok(source.includes('const grossPass=currentConfig.minGross<=0||gross>=currentConfig.minGross'));
   assert.ok(source.includes('const netPass=currentConfig.minNet<=0||net>=currentConfig.minNet'));
   assert.ok(source.includes('const passed=errorCount<=errorLimit&&grossPass&&netPass'));
