@@ -110,3 +110,13 @@ test('paid test list and direct URLs use authoritative database entitlement chec
   assert.match(page, /feature-access\.js\?v=20261107-premium-modal-coupon1/);
   assert.match(start, /feature-access\.js\?v=20261107-premium-modal-coupon1/);
 });
+
+
+test('website access tree groups are collapsed by default and expand only on explicit disclosure',()=>{
+ const root=path.join(__dirname,'..');
+ const admin=fs.readFileSync(path.join(root,'js/admin-subscriptions.js'),'utf8');
+ const css=fs.readFileSync(path.join(root,'css/subscription-control-center.css'),'utf8');
+ assert.doesNotMatch(admin,/<details class="access-tree-branch" open>/u);
+ assert.match(css,/\.access-tree-branch:not\(\[open\]\)>\.access-tree-children\{display:none\}/u);
+ assert.doesNotMatch(css,/access-tree-branch:hover:not\(\[open\]\)/u);
+});
