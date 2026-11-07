@@ -35,7 +35,7 @@ test('admin access controls and member lifecycle actions are wired', () => {
   assert.match(gate, /feature-nav-toggle/);
   assert.match(gate, /feature-nav-open/);
   assert.match(testList, /data-test-id/);
-  assert.match(materials, /data-access-key="feature:/);
+  assert.match(materials, /rpc\('get_material_link'/);
   assert.match(admin, /feature-access-tree/);
   assert.match(admin, /pageResources/);
   assert.match(gate, /typeof supabaseClient!=='undefined'/);
