@@ -89,7 +89,7 @@ as $$
          sm.is_free,sm.pinned,(sm.storage_path is not null)
   from public.study_materials sm
   where sm.active=true
-  order by sm.is_pinned desc,sm.sort_order asc,sm.created_at desc;
+  order by sm.pinned desc,sm.sort_order asc,sm.created_at desc;
 $$;
 revoke all on function public.list_material_catalog() from public,anon;
 grant execute on function public.list_material_catalog() to authenticated;
