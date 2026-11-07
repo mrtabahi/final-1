@@ -89,7 +89,7 @@
   const pageResources=[
     ['index.html','Home'],['Typing_test.html','Typing Tests'],['fix-accuracy.html','Typing Game'],['self-test.html','Self Test'],
     ['materials.html','PDF Library'],['dashboard.html','Start Preparation'],['start_test.html','Typing Test Player'],
-    ['my_results.html','My Results'],['leaderboard.html','Leaderboard'],['my_account.html','My Account'],['premium.html','Plans & Pricing']
+    ['my_results.html','My Results'],['leaderboard.html','Leaderboard'],['my_account.html','My Account'],['premium.html','Plans & Pricing'],['time-attack.html','Target Blitz'],['speed-sprint.html','Velocity Circuit'],['word-accuracy.html','Flawless Forge']
   ];
   const menuFeatureChildren={
     'fix-accuracy.html':['typing-game'],
@@ -98,13 +98,17 @@
     'dashboard.html':['setup-box','typing-interface','typing-formats','custom-passages','calculation-pdf'],
     'start_test.html':['typing-interface'],
     'my_results.html':['test-results-history'],
-    'leaderboard.html':['leaderboard-tools']
+    'leaderboard.html':['leaderboard-tools'],
+    'time-attack.html':['time-attack'],
+    'speed-sprint.html':['speed-sprint'],
+    'word-accuracy.html':['word-accuracy']
   };
   const featureResources=[
     ['self-test','Self Test content'],['typing-game','Typing Game content'],['live-test','Live Test access'],
     ['hard-symbol-tests','Hard & Symbol Tests'],['setup-box','Test setup box'],['typing-interface','Typing interface'],
     ['calculation-pdf','Calculation PDF'],['typing-formats','Typing formats'],['custom-passages','Custom passage uploads'],
-    ['test-results-history','Detailed results & history'],['leaderboard-tools','Leaderboard features'],['pdf-library','PDF calculations & library']
+    ['test-results-history','Detailed results & history'],['leaderboard-tools','Leaderboard features'],['pdf-library','PDF calculations & library'],
+    ['time-attack','Target Blitz arcade'],['speed-sprint','Velocity Circuit arcade'],['word-accuracy','Flawless Forge arcade']
   ];
   const prettyResource=(type,key)=>accessLabels[type+':'+key]||((type==='site'&&key==='*')?'Whole website':key);
   async function setTreeRule(type,key,isFree){
