@@ -18,3 +18,9 @@ const CONFIG = {
     DEFAULT_FREE_ERROR_PCT: 0.05, // 5% Permissible free errors
     DEFAULT_PENALTY_PER_ERROR: 10 // 10 words deducted per excess error
 };
+
+(function loadProfileAvatarFeature(){
+  if (typeof document === 'undefined' || document.getElementById('dh-profile-avatar-style')) return;
+  const style=document.createElement('link');style.id='dh-profile-avatar-style';style.rel='stylesheet';style.href='/css/profile-avatar.css?v=20261107-avatar1';document.head.appendChild(style);
+  const script=document.createElement('script');script.src='/js/profile-avatar.js?v=20261107-avatar1';script.async=false;document.head.appendChild(script);
+})();
