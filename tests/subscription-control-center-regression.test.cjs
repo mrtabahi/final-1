@@ -88,3 +88,19 @@ test('typing categories paint cached data immediately and refresh catalogue alon
   assert.match(auth, /setTimeout\(\(\) => \{ initialHeartbeatReady = true; heartbeat\(\); \}, 8000\)/);
   assert.match(auth, /nowMs - lastAttemptAt < 45000/);
 });
+
+test('admin membership history shows Auth email and linked order purchase timestamp; plan deletion preserves history', () => {
+  const root = path.join(__dirname, '..');
+  const moduleScript = fs.readFileSync(path.join(root, 'js/admin-subscriptions.js'), 'utf8');
+  const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20261107200000_admin_membership_purchase_details_rpc.sql'), 'utf8');
+  assert.match(moduleScript, /rpc\('admin_recent_memberships'\)/);
+  assert.match(moduleScript, /candidate_email/);
+  assert.match(moduleScript, /order_created_at/);
+  assert.match(moduleScript, /timeZone:'Asia\/Kolkata'/);
+  assert.match(moduleScript, /data-delete-plan/);
+  assert.match(moduleScript, /Unpublish it to preserve purchase history/);
+  assert.match(migration, /join auth\.users au on au\.id = us\.user_id/);
+  assert.match(migration, /left join public\.orders o on o\.id = us\.order_id/);
+  assert.match(migration, /p\.role = 'admin'/);
+  assert.match(migration, /revoke all on function public\.admin_recent_memberships\(\) from public, anon/i);
+});
