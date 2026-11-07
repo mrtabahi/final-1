@@ -59,7 +59,7 @@
     if (!currentUser || !currentProfile) return;
     const url = currentProfile.avatar_url || '';
     const name = currentProfile.full_name || 'Candidate';
-    document.querySelectorAll('.dh-avatar').forEach(node => {
+    document.querySelectorAll('.dh-avatar:not(.leaderboard-avatar)').forEach(node => {
       node.replaceChildren();
       if (url) { const img=document.createElement('img'); img.src=url; img.alt=''; img.loading='lazy'; img.decoding='async'; img.onerror=()=>{node.textContent=initials(name);}; node.appendChild(img); }
       else node.textContent=initials(name);
