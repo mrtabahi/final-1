@@ -29,6 +29,8 @@ jobs:
         run: node --check js/admin-command-center.js
       - name: Check admin main JavaScript syntax
         run: node --check js/admin.js
+      - name: Check admin coupon JavaScript syntax
+        run: node --check js/admin-coupons.js
       - name: Check feature-access JavaScript syntax
         run: node --check js/feature-access.js
       - name: Test site-wide polish and admin module safety

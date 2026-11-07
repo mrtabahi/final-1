@@ -73,3 +73,5 @@
 
 .sub-plan-card .sub-btn-light{color:#3159c9;background:#f3f6ff;border-color:#dbe5ff}
 .sub-plan-card .sub-btn-light:hover{background:#e8efff;box-shadow:0 8px 18px rgba(49,89,201,.1)}
+
+.sub-plan-card .sub-plan-limits{margin-top:9px;padding:8px 10px;border:1px solid #dbeafe;border-radius:10px;background:#eff6ff;color:#1e40af;font-size:.74rem;font-weight:750;line-height:1.45}
