@@ -8,6 +8,7 @@ const premium = fs.readFileSync(path.join(root, 'js/premium.js'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'premium.html'), 'utf8');
 const styles = fs.readFileSync(path.join(root, 'css/premium-coupons.css'), 'utf8');
 const modal = fs.readFileSync(path.join(root, 'js/premium-modal.js'), 'utf8');
+const featureAccess = fs.readFileSync(path.join(root, 'js/feature-access.js'), 'utf8');
 const checkout = fs.readFileSync(path.join(root, 'supabase/functions/create-checkout/index.ts'), 'utf8');
 const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20261107180000_razorpay_minimum_order_amount.sql'), 'utf8');
 
@@ -30,6 +31,7 @@ test('only eligible plan cards receive server-calculated prices and coupon anima
   assert.match(styles, /prefers-reduced-motion/);
   assert.match(html, /premium-coupons\.css/);
   assert.match(modal, /premium\.js\?v=20261107-coupon-preview1/);
+  assert.match(featureAccess, /premium-modal\.js\?v=20261107-premium-modal-coupon1/);
 });
 
 test('invalidating or editing coupon input clears the applied state and restores plan prices', () => {
