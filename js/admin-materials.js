@@ -18,8 +18,13 @@ document.addEventListener('admin-tool-ready',async()=>{
  async function load(){list.innerHTML='<div class="admin-empty">Loading materials…</div>';const {data,error}=await supabaseClient.from('study_materials').select('*').order('pinned',{ascending:false}).order('sort_order',{ascending:true}).order('created_at',{ascending:false});if(error){list.innerHTML='<div class="admin-error">'+esc(error.message)+'</div>';return;}rows=data||[];render();}
  form.addEventListener('submit',async e=>{
   e.preventDefault();const title=$('material-title').value.trim(),url=$('material-url').value.trim(),file=$('material-file').files?.[0]||null,id=$('material-id').value,existing=rows.find(r=>r.id===id);
-  if(file&&(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf'))){message.textContent='Please choose a PDF file only.';return;}
+  if(file&&!file.name.toLowerCase().endsWith('.pdf')){message.textContent='Please choose a file with the .pdf extension.';return;}
   if(file&&file.size>50*1024*1024){message.textContent='PDF must be 50 MB or smaller.';return;}
+  if(file){
+   let signature='';
+   try{signature=await file.slice(0,5).text();}catch{}
+   if(signature!=='%PDF-'){message.textContent='This file does not contain a valid PDF header. Please choose a real PDF file.';return;}
+  }
   if(url&&!validTelegramLink(url)){message.textContent='Enter a valid https://t.me/... link, or leave it blank when uploading a PDF.';return;}
   if(!file&&!existing?.storage_path&&!url){message.textContent='Choose a PDF file or enter a Telegram post link.';return;}
   let uploadedPath=null;save.disabled=true;save.textContent='Saving…';message.textContent=file?'Uploading PDF securely…':'Saving material…';
