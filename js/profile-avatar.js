@@ -59,6 +59,12 @@
     if (!currentUser || !currentProfile) return;
     const url = currentProfile.avatar_url || '';
     const name = currentProfile.full_name || 'Candidate';
+    document.querySelectorAll('.dh-avatar').forEach(node => {
+      node.replaceChildren();
+      if (url) { const img=document.createElement('img'); img.src=url; img.alt=''; img.loading='lazy'; img.decoding='async'; img.onerror=()=>{node.textContent=initials(name);}; node.appendChild(img); }
+      else node.textContent=initials(name);
+    });
+    decorate(document.querySelector('a.account-nav-signed-in'), url, name, 28, 'inside-start');
     decorate(document.getElementById('disp-candidate-name'), url, name, 34, 'inside-start');
     const reportName = document.getElementById('res-candidate-name');
     if (reportName && reportName.closest('.result-pdf-meta')) {
