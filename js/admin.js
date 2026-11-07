@@ -121,6 +121,8 @@
 
         if ($('admin-avatar')) $('admin-avatar').textContent = name.trim().charAt(0).toUpperCase() || 'A';
         if ($('admin-top-avatar')) $('admin-top-avatar').textContent = name.trim().charAt(0).toUpperCase() || 'A';
+        ['admin-avatar','admin-top-avatar'].forEach(id => { if ($(id)) $(id).dataset.dhAvatarDecorated = ''; });
+        window.DHProfileAvatar?.refresh();
     }
 
 
