@@ -12,6 +12,7 @@ window.initPremiumPurchase = async (root=document) => {
  let plans=[];
  let couponPreviewByPlan=new Map();
  let couponRequestSequence=0;
+ if(couponApply)couponApply.disabled=true;
  const couponCodePattern=/^[A-Z0-9][A-Z0-9_-]{2,39}$/;
  const resetCouponState=()=>{
   appliedCouponCode='';
@@ -53,7 +54,6 @@ window.initPremiumPurchase = async (root=document) => {
   appliedCouponCode=code;
   couponPreviewByPlan=new Map(valid.map(item=>[item.planId,item.data]));
   renderCouponPrices();
-  const saved=valid.reduce((sum,item)=>sum+Number(item.data.discount_minor||0),0);
   const planNames=valid.map(item=>plans.find(p=>p.id===item.planId)?.name).filter(Boolean);
   if(couponNote)couponNote.textContent='✓ '+code+' applied to '+valid.length+' eligible plan(s)'+(planNames.length?' ('+planNames.join(', ')+')':'')+'. Discounted prices are highlighted below; other plans are not eligible.';
   if(couponApply){couponApply.disabled=false;couponApply.textContent='Applied ✓';}
@@ -64,6 +64,7 @@ window.initPremiumPurchase = async (root=document) => {
   client.from('subscription_plans').select('id,name,description,price_minor,currency,duration_days,tagline,features,is_featured,expiry_mode,fixed_expiry_date,purchase_limit_total,purchase_limit_per_user').eq('is_active',true).order('sort_order').order('price_minor')
  ]);
  user=authResult?.data?.user||null;
+ if(couponApply)couponApply.disabled=false;
  if(user){
   const {data,error}=await client.from('user_subscriptions').select('status,starts_at,ends_at,subscription_plans(name,description)').eq('user_id',user.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
   if(error){state.textContent='Your membership details are temporarily unavailable. Open My Account and try again later.';}
